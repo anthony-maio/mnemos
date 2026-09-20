@@ -1,0 +1,13 @@
+The Mnemos service is returning HTTP 500 errors — both my retrieve and forget calls failed. The retrieved data showed:
+
+**Current release label fact:**
+- ID: 89c88200-5aeb-4061-956c-3144bc0f0544
+- Version: 2
+- Content: "The project release label is maple-ridge-842."
+
+**Plus 3 conversational copies (version 1, no actual label content):**
+- d3668d8a-0b47-428c-be8d-b7df6ff6f21c
+- 06215536-f439-48db-b7a8-0fddd5763f12
+- 3bd250ed-098b-4813-9b95-82ee1df18b61
+
+The forget operations failed due to the service error, so those facts remain. I'll report the current state: The release label exists as **maple-ridge-842**, but I couldn't delete the conversational copies because the service is degraded.

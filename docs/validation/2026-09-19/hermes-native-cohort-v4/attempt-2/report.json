@@ -1,0 +1,255 @@
+{
+  "status": "failed",
+  "started_at": "2026-09-20T01:01:52.666130+00:00",
+  "preflight_only": false,
+  "phases": [
+    {
+      "phase": "teach",
+      "mode": "model",
+      "seconds": 27.69622429998708,
+      "exit_code": 0,
+      "gates": {
+        "correlated": true,
+        "phase_tools_allowed": true,
+        "mutations_inspected": true,
+        "teach": true,
+        "no_foreign_tool_result": true,
+        "real_pinned_model_request": true,
+        "pinned_profile_without_conflicting_override": true,
+        "write_followup_guidance_present": true,
+        "no_provider_error": true,
+        "controls_unchanged": true,
+        "native_capture_committed": true,
+        "native_capture_retained_or_suppressed": true,
+        "single_asserted_target": true
+      }
+    },
+    {
+      "phase": "recall_v1",
+      "mode": "model",
+      "seconds": 9.80137250002008,
+      "exit_code": 0
+    }
+  ],
+  "live_configuration_changed": false,
+  "scope": "model-driven native Hermes baseline lifecycle; separate API source replay",
+  "source_commit": "8f8f63f3250858667dfe460bdd22295c279f2625",
+  "wheel_sha256": "53444f7f87141e7107fe9f4daf4a6095e04c9d69d007cd218634fd2fff50f99f",
+  "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-affective-guidance-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+  "hermes_commit": "14a346345486418aa85ed6526549412ee2665ade",
+  "input_hashes": {
+    "benchmarks\\native_hosts\\hermes_lifecycle_run_v4.py": "7505b6d62a77c012a4a9385f86560345533fd7476be9a3087f5cec13ce4a72f8",
+    "benchmarks\\native_hosts\\hermes_native_bootstrap_v4.py": "16331798effeb01ea98174433a0250d6890e31b8078641ab0e941887ff846f41",
+    "benchmarks\\native_hosts\\hermes_trace.py": "fa82d4f270e916c6aae4eb01eb3738239cc91f88e3029d919bc0ba98c79609c8",
+    "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v4.md": "d0ba8a3de586ed6f9a3f1709a79033788995b08d79af9b8a2d2b3fd67a3fee2b",
+    "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v3.md": "18b8a01ba62510f714e6e3db6aa24707b72d8028f96ae68dabb2e939a40b36b5",
+    "docs\\validation\\2026-09-19\\native-model-profile-v1\\profile.json": "d525882d18671e57b62bec02f5d89ab9b61e8c3fdd6dff7485c58a27320f6d28"
+  },
+  "runner_commit": "53c038a7b61a6a48447481d3982ff9fa1da55f3c",
+  "prior_queue": {
+    "state": {
+      "updated_at": "2026-09-19T23:38:37.1638571Z",
+      "cost": "unknown; provider usage and local GPU timing are recorded by the child reports when available",
+      "status": "finished_with_incomplete",
+      "any_incomplete": true,
+      "pid": 46060,
+      "model_digests": {
+        "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "stages": [
+        {
+          "finished_at": "2026-09-19T22:24:29.9377978Z",
+          "exit_code": 0,
+          "output": "encoding-comparison-local-v2",
+          "manifest_status": "incomplete",
+          "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+          "work": "mnemos-encoding-comparison-local-v2",
+          "status": "finished_incomplete",
+          "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+          "started_at": "2026-09-19T19:50:51.9017369Z",
+          "name": "encoding",
+          "protocol_sha": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+          "protocol": "2026-09-18-encoding-comparison-protocol-v1.md",
+          "terminal": "incomplete",
+          "module": "encoding_comparator_run",
+          "command": [
+            "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+            "-u",
+            "-m",
+            "benchmarks.local_memory.encoding_comparator_run",
+            "--dataset",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+            "--protocol",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md",
+            "--output-dir",
+            "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+            "--work-dir",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+            "--endpoint",
+            "http://127.0.0.1:11434",
+            "--model",
+            "qwen3.5:9b",
+            "--embedding-model",
+            "nomic-embed-text:latest",
+            "--repetitions",
+            "3",
+            "--think",
+            "false"
+          ]
+        },
+        {
+          "finished_at": "2026-09-19T23:38:37.1516294Z",
+          "exit_code": 0,
+          "output": "retrieval-comparison-local-v2",
+          "manifest_status": "incomplete",
+          "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+          "work": "mnemos-retrieval-comparison-local-v2",
+          "status": "finished_incomplete",
+          "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+          "started_at": "2026-09-19T22:24:30.2217397Z",
+          "name": "retrieval",
+          "protocol_sha": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+          "protocol": "2026-09-18-retrieval-comparison-protocol-v1.md",
+          "terminal": "incomplete",
+          "module": "retrieval_comparison_run",
+          "command": [
+            "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+            "-u",
+            "-m",
+            "benchmarks.local_memory.retrieval_comparison_run",
+            "--dataset",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+            "--protocol",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+            "--output-dir",
+            "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+            "--work-dir",
+            "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+            "--endpoint",
+            "http://127.0.0.1:11434",
+            "--model",
+            "qwen3.5:9b",
+            "--embedding-model",
+            "nomic-embed-text:latest",
+            "--repetitions",
+            "3",
+            "--think",
+            "false"
+          ]
+        }
+      ],
+      "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+      "started_at": "2026-09-19T19:50:51.7355693Z",
+      "dataset_sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "original_failed_run_preserved": true,
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "settings": {
+        "max_context_tokens": 1200,
+        "temperature": 0.0,
+        "model": "qwen3.5:9b",
+        "top_k": 5,
+        "repetitions": 3,
+        "think": false,
+        "max_tokens": 512,
+        "timeout_seconds": 120,
+        "embedding_model": "nomic-embed-text:latest"
+      },
+      "endpoint": "http://127.0.0.1:11434"
+    },
+    "excluded_pids": [
+      46060,
+      19836,
+      68804
+    ]
+  },
+  "models": {
+    "mnemos-native-qwen35-9b:greedy-v1": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+    "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+  },
+  "ollama_version": {
+    "version": "0.34.1"
+  },
+  "service_config": {
+    "modules": {
+      "surprisal": false,
+      "mutable_rag": false,
+      "affective": false,
+      "sleep": false,
+      "spreading": false
+    },
+    "retrieval": {
+      "profile": "baseline",
+      "affective_enabled": true,
+      "spreading_enabled": true,
+      "relevance_floor": 0.2,
+      "graph_weight": 0.1,
+      "max_candidates": 100
+    },
+    "surprisal": {
+      "threshold": 0.3,
+      "prediction_model": "llama3",
+      "embedding_dim": 768,
+      "history_window": 10,
+      "min_content_length": 10
+    },
+    "mutable_rag": {
+      "enabled": true,
+      "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+      "max_labile_chunks": 20,
+      "reconsolidation_cooldown_seconds": 60
+    },
+    "affective": {
+      "weight_similarity": 0.7,
+      "weight_state": 0.3,
+      "classifier_model": "llama3",
+      "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+    },
+    "sleep": {
+      "consolidation_interval_seconds": 3600,
+      "min_episodes_before_consolidation": 10,
+      "enable_proceduralization": false,
+      "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+      "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+      "max_episodes_per_consolidation": 100,
+      "recall_gated_plasticity_enabled": false,
+      "recall_min_supporting_episodes": 2,
+      "recall_similarity_threshold": 0.82
+    },
+    "spreading": {
+      "initial_energy": 1.0,
+      "decay_rate": 0.2,
+      "activation_threshold": 0.3,
+      "max_hops": 3,
+      "max_visited": 1000,
+      "auto_connect_threshold": 0.6,
+      "max_neighbors_per_node": 4,
+      "natural_decay_rate": 0.05,
+      "hydrate_on_startup": true,
+      "startup_hydration_limit": 5000,
+      "startup_auto_connect": false
+    },
+    "safety": {
+      "enabled": true,
+      "secret_action": "block",
+      "pii_action": "redact"
+    },
+    "governance": {
+      "capture_mode": "all",
+      "retention_ttl_days": 0,
+      "max_chunks_per_scope": 0
+    },
+    "debug": false
+  },
+  "service_providers": {
+    "cognition": "UnavailableLLMProvider",
+    "embeddings": "OllamaEmbeddingProvider/nomic-embed-text",
+    "automatic_capture": true
+  },
+  "cold_load_seconds": 8.821489499998279,
+  "target_id": "8f59602b-5e0a-478c-bff5-161e41e04dba",
+  "error_type": "ValueError",
+  "error": "tool result has unsuccessful status: degraded",
+  "finished_at": "2026-09-20T01:02:42.511083+00:00"
+}

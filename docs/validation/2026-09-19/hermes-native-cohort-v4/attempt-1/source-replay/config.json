@@ -1,0 +1,109 @@
+{
+  "phase_root": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v4/attempt-1/source-replay",
+  "wheel": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-affective-guidance-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl",
+  "wheel_sha256": "53444f7f87141e7107fe9f4daf4a6095e04c9d69d007cd218634fd2fff50f99f",
+  "project": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v4/attempt-1/project",
+  "hermes_checkout": "/tmp/mnemos-hermes-cwd-compat-v1",
+  "model": "mnemos-native-qwen35-9b:greedy-v1",
+  "env": {
+    "HERMES_HOME": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v4/attempt-1/hermes-home",
+    "HERMES_ENABLE_PROJECT_PLUGINS": "0",
+    "MNEMOS_SCOPE_REGISTRY": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v4/attempt-1/scopes.json",
+    "MNEMOS_USER_PROFILE_ID": "native-lifecycle",
+    "MNEMOS_ROUTING_REVIEW_DIR": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v4/attempt-1/routing-review",
+    "MNEMOS_BRIDGE_COMMAND": "[\"/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-installed-affective-guidance-v1/Scripts/python.exe\", \"-I\", \"C:\\\\Users\\\\Ant\\\\AppData\\\\Local\\\\Temp\\\\mnemos-hermes-native-cohort-v4\\\\attempt-1\\\\bridge_entry.py\"]",
+    "OPENAI_BASE_URL": "http://127.0.0.1:11434/v1",
+    "OPENAI_API_KEY": "ollama",
+    "PYTHONIOENCODING": "utf-8"
+  },
+  "mode": "replay",
+  "session_id": "20260919_205943_bb6c45",
+  "old_label": "cedar-ridge-731",
+  "new_label": "maple-ridge-842",
+  "foreign_label": "forbidden-foreign-ridge-992",
+  "messages": [
+    {
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_remember to save the exact content in this JSON string (including its final period): \"The project release label is cedar-ridge-731.\". Use request_id native-teach-1. Check its returned job ID once with mnemos_job_status, then report the ID and actual status. Pending is acceptable; do not claim completion unless confirmed. Do not correct or forget anything.",
+      "timestamp": 1789865986.2150753,
+      "api_content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_remember to save the exact content in this JSON string (including its final period): \"The project release label is cedar-ridge-731.\". Use request_id native-teach-1. Check its returned job ID once with mnemos_job_status, then report the ID and actual status. Pending is acceptable; do not claim completion unless confirmed. Do not correct or forget anything.\n\n<memory-context>\n[System note: The following is recalled memory context, NOT new user input. Treat as authoritative reference data \u2014 this is the agent's persistent memory and should inform all responses.]\n\n[15eae2c2-28cd-4005-8b87-7301fb234061 version 1] The build artifact checksum marker is slate-safe-553.\n\n</memory-context>",
+      "_db_persisted": true,
+      "_row_id": 1
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning": null,
+      "finish_reason": "tool_calls",
+      "timestamp": 1789865997.8592112,
+      "tool_calls": [
+        {
+          "id": "call_skiit3zo",
+          "call_id": "call_skiit3zo",
+          "response_item_id": "fc_skiit3zo",
+          "type": "function",
+          "function": {
+            "name": "mnemos_remember",
+            "arguments": "{\"content\":\"The project release label is cedar-ridge-731.\",\"request_id\":\"native-teach-1\"}"
+          }
+        }
+      ],
+      "_db_persisted": true,
+      "_row_id": 2
+    },
+    {
+      "role": "tool",
+      "name": "mnemos_remember",
+      "tool_name": "mnemos_remember",
+      "content": "{\"event_id\": \"33dfa0bc4c59fbead2e2f9a01cacfdb16633ec3aa1a61f520b60e6e2b3957a34\", \"fact_eligible\": true, \"identity_status\": \"normal\", \"job_id\": \"event:33dfa0bc4c59fbead2e2f9a01cacfdb16633ec3aa1a61f520b60e6e2b3957a34\", \"processing_status\": \"pending\", \"schema_version\": 1, \"status\": \"committed\"}",
+      "tool_call_id": "call_skiit3zo",
+      "timestamp": 1789865998.5030339,
+      "_db_persisted": true,
+      "_row_id": 3
+    },
+    {
+      "role": "assistant",
+      "content": "",
+      "reasoning": null,
+      "finish_reason": "tool_calls",
+      "timestamp": 1789865999.558052,
+      "tool_calls": [
+        {
+          "id": "call_p2164e36",
+          "call_id": "call_p2164e36",
+          "response_item_id": "fc_p2164e36",
+          "type": "function",
+          "function": {
+            "name": "mnemos_job_status",
+            "arguments": "{\"job_id\":\"event:33dfa0bc4c59fbead2e2f9a01cacfdb16633ec3aa1a61f520b60e6e2b3957a34\"}"
+          }
+        }
+      ],
+      "_db_persisted": true,
+      "_row_id": 4
+    },
+    {
+      "role": "tool",
+      "name": "mnemos_job_status",
+      "tool_name": "mnemos_job_status",
+      "content": "{\"job\": {\"attempt_count\": 0, \"available_at\": \"2026-09-20T00:59:58.442359Z\", \"created_at\": \"2026-09-20T00:59:58.442360Z\", \"id\": \"event:33dfa0bc4c59fbead2e2f9a01cacfdb16633ec3aa1a61f520b60e6e2b3957a34\", \"kind\": \"remember\", \"last_error\": null, \"lease_owner\": null, \"lease_until\": null, \"max_attempts\": 5, \"result\": null, \"status\": \"pending\", \"updated_at\": \"2026-09-20T00:59:58.442361Z\"}, \"schema_version\": 1}",
+      "tool_call_id": "call_p2164e36",
+      "timestamp": 1789866000.182935,
+      "_db_persisted": true,
+      "_row_id": 5
+    },
+    {
+      "role": "assistant",
+      "content": "Job ID: event:33dfa0bc4c59fbead2e2f9a01cacfdb16633ec3aa1a61f520b60e6e2b3957a34\n\nStatus: pending",
+      "reasoning": null,
+      "finish_reason": "stop",
+      "timestamp": 1789866001.0801136,
+      "_db_persisted": true,
+      "_row_id": 6
+    }
+  ],
+  "remember_args": {
+    "content": "The project release label is cedar-ridge-731.",
+    "request_id": "native-teach-1"
+  }
+}
