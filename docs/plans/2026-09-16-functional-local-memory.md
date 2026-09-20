@@ -618,7 +618,7 @@ Initial acceptance targets, to be frozen before held-out evaluation:
 - At least 90% Recall@5 for answerable held-out queries and 90% correct abstention for no-answer queries. Compare all profiles under the same scope and context budget.
 - The full profile must not reduce overall retrieval accuracy by more than two percentage points against the baseline. Enable it by default only when it also produces a reproducible benefit in its targeted scenarios within the latency budget; otherwise ship it as evaluated opt-in functionality with the measured result disclosed.
 - On the recorded target machine, warm recall p95 <= 500 ms at 10,000 accepted facts and hook durable-capture p95 <= 100 ms. Report cold start/model load separately. If the selected local model cannot meet the recall budget, classify state asynchronously or accept explicitly supplied state; do not silently send queries to cloud.
-- Run two weeks of daily use on at least two projects. External/general-availability readiness additionally requires the documented external pilot evidence; a single-user internal trial does not satisfy it.
+- Run two weeks of daily use on at least two projects. The [prepared pilot protocol](2026-09-20-local-memory-daily-use-pilot.md) and empty record template are NOT STARTED; preparation does not satisfy this gate. External/general-availability readiness additionally requires the documented external pilot evidence; a single-user internal trial does not satisfy it.
 
 All targets above are proposed engineering gates, not claims of current performance. A failing gate produces a documented limitation and repair task, never an automatic threshold adjustment.
 
