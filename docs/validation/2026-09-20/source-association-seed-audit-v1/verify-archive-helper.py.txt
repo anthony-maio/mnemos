@@ -1,0 +1,82 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+audit_path = repo / '.venv/source-association-seed-audit-v1.json'
+audit = json.loads(audit_path.read_bytes())
+report_path = Path(audit['source_report'])
+raw = report_path.read_bytes()
+report = json.loads(raw)
+assert hashlib.sha256(raw).hexdigest() == audit['source_report_sha256']
+assert audit['rows_examined'] == 30 and len(audit['cases']) == 10
+assert sum(row['controls'].get('lifecycle_pass') is False for row in report['rows']) == 18
+assert sum(row['target']['in_top_k'] for row in report['rows']) == 0
+rows = {(row['embedding_contract'], row['case_id'], row['arm']): row
+        for row in report['rows'] if row['repetition'] == 0}
+seen = set()
+for case in audit['cases']:
+    for arm, observed in case['arms'].items():
+        key = (case['embedding_contract'], case['case_id'], arm)
+        assert key not in seen
+        seen.add(key)
+        row = rows[key]
+        seed = row['candidate_pool']['actual_selected_seed_id']
+        assert observed['seed_id'] == seed
+        assert observed['relevance_floor'] == report['options']['relevance_floor']
+        assert observed['source_edges_active'] == (arm != 'semantic')
+        assert observed['effective_seed_neighbors'] == row['edges'].get(seed, {})
+        relations = [item for item in row['source_diagnostic']['relations'] if seed in item['fact_ids']]
+        assert observed['seed_has_available_source_relation'] == bool(relations)
+        assert {item['relation_id'] for item in observed['seed_source_relation_membership']} == {item['relation_id'] for item in relations}
+        assert observed['returned_ids'] == row['returned_ids']
+        scores = {item['id']: item for item in row['candidate_scores']}
+        actual = row['target']
+        target = observed['target']
+        assert target['id'] == actual['id'] and target['rank'] == actual['rank']
+        assert target['graph_energy'] == actual['energy']
+        assert target['direct_candidate'] == actual['direct_candidate']
+        assert target['in_top_k'] == actual['in_top_k']
+        score = scores.get(target['id'])
+        for field in ('semantic', 'graph_contribution', 'total'):
+            assert target[field] == (score.get(field) if score else None), (key, field)
+        assert target['candidate_status'] == (score['status'] if score else 'not_in_candidate_pool')
+        assert observed['top5_fifth_total_score'] == scores[row['returned_ids'][4]]['total']
+assert seen == set(rows)
+output = repo / 'docs/validation/2026-09-20/source-association-seed-audit-v1'
+assert not output.exists()
+output.mkdir(parents=True)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in ('source-association-seed-audit-v1.json', 'source-association-seed-audit-v1.md'):
+    shutil.copyfile(repo / '.venv' / name, output / name)
+shutil.copyfile(Path(__file__), output / 'verify-archive-helper.py.txt')
+verification = {'status': 'verified', 'rows': len(seen), 'source_report_sha256': audit['source_report_sha256']}
+(output / 'verification.json').write_text(json.dumps(verification, indent=2) + '\n', encoding='utf-8')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in output.iterdir() if p.is_file() and p.name != '.gitattributes'}
+(output / 'index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(output / 'README.md').write_text('''# Saved graph seed and ranking audit
+
+This audit examines repetition zero across the five cases, two embedding
+contracts, and three relation arms of the terminal role-aware measurement.
+The verifier checks all 30 rows against the original report: actual seeds,
+source-relation membership, effective seed neighbors, relevance floor, direct
+candidate membership, target scores/ranks, and the fifth returned score.
+
+In the prefixed scope case, source associations raise the target total from
+0.701867 to 0.724175, while the fifth returned score stays 0.763440. Its rank
+improves from 31 to 20; returned IDs do not change. The target was already
+reachable with semantic edges. In other cases, the selected seed lacks the
+relevant source relation or the target remains outside the candidate pool.
+
+These traces establish seed, candidate, and ranking bottlenecks. They do not
+explain why the embedding model prefers a distractor or establish that a new
+seed strategy would improve held-out retrieval. Available source provenance
+is distinguished from active source edges in the semantic-only arm.
+
+The original 18 lifecycle failures and zero top-five target observations are
+unchanged. No model calls, thresholds, criteria, or production defaults were
+changed. See the JSON for exact values and the Markdown audit for each case.
+''', encoding='utf-8', newline='\n')
+print(json.dumps(verification))

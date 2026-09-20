@@ -1,0 +1,564 @@
+........................................................................ [  4%]
+.......................ss............................................... [  8%]
+........................................................................ [ 12%]
+........................................................................ [ 16%]
+...................................................................FF..F [ 20%]
+F....................................................................... [ 25%]
+........................................................................ [ 29%]
+........................................................................ [ 33%]
+........................................................................ [ 37%]
+........................................................................ [ 41%]
+...............................................ss....................... [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 54%]
+........................................................................ [ 58%]
+........................................................................ [ 62%]
+........................................................................ [ 66%]
+........................................................................ [ 70%]
+........................................................................ [ 75%]
+........................................................................ [ 79%]
+........................................................................ [ 83%]
+...................FFFFFFFFFFF.......................................... [ 87%]
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+.....................................................................    [100%]
+================================== FAILURES ===================================
+____ test_paired_report_has_five_cases_scope_controls_and_rank_arithmetic _____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-validation-forget-preconditions-v1/pytest/test_paired_report_has_five_ca0')
+
+    def test_paired_report_has_five_cases_scope_controls_and_rank_arithmetic(tmp_path: Path) -> None:
+        output = tmp_path / "paired.json"
+        providers: list[RecordingProvider] = []
+    
+        def factory(_label: str) -> RecordingProvider:
+            provider = RecordingProvider()
+            providers.append(provider)
+            return provider
+    
+>       report = run_paired_diagnostic(
+            factory,
+            output,
+            model_metadata={"provider": "fake", "model": "offline-test"},
+            code_sha="test-code",
+        )
+
+tests\test_embedding_prefix_development.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\local_memory\embedding_prefix_development_v1.py:186: in run_paired_diagnostic
+    manifest, dataset_sha, cases = load_cases(manifest_path)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_______________ test_changed_binding_and_resume_are_fail_closed _______________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-validation-forget-preconditions-v1/pytest/test_changed_binding_and_resum0')
+
+    def test_changed_binding_and_resume_are_fail_closed(tmp_path: Path) -> None:
+        output = tmp_path / "paired.json"
+        kwargs: dict[str, Any] = {
+            "model_metadata": {"provider": "fake", "model": "offline-test"},
+            "code_sha": "test-code",
+        }
+>       run_paired_diagnostic(lambda _label: RecordingProvider(), output, **kwargs)
+
+tests\test_embedding_prefix_development.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\local_memory\embedding_prefix_development_v1.py:186: in run_paired_diagnostic
+    manifest, dataset_sha, cases = load_cases(manifest_path)
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_________ test_foreign_exact_match_is_scored_but_cannot_enter_ranking _________
+
+    def test_foreign_exact_match_is_scored_but_cannot_enter_ranking() -> None:
+>       _, _, cases = load_cases()
+                      ^^^^^^^^^^^^
+
+tests\test_embedding_prefix_development.py:127: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+______________ test_invalid_vectors_are_rejected_before_scoring _______________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-validation-forget-preconditions-v1/pytest/test_invalid_vectors_are_rejec0')
+
+    def test_invalid_vectors_are_rejected_before_scoring(tmp_path: Path) -> None:
+>       with pytest.raises(ValueError, match="finite and nonzero"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'finite and nonzero'
+E         Actual message: 'authored source-association dataset changed; use a new protocol'
+
+tests\test_embedding_prefix_development.py:173: AssertionError
+__________ test_same_text_in_two_roles_retains_two_different_vectors __________
+
+    def test_same_text_in_two_roles_retains_two_different_vectors() -> None:
+>       manifest, paired = fixture()
+                           ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_____ test_rejects_incomplete_or_misbound_paired_vectors[missing_control] _____
+
+fault = 'missing_control'
+
+    @pytest.mark.parametrize("fault", ["missing_control", "duplicate_case", "wrong_role", "nan"])
+    def test_rejects_incomplete_or_misbound_paired_vectors(fault: str) -> None:
+>       manifest, paired = fixture()
+                           ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_____ test_rejects_incomplete_or_misbound_paired_vectors[duplicate_case] ______
+
+fault = 'duplicate_case'
+
+    @pytest.mark.parametrize("fault", ["missing_control", "duplicate_case", "wrong_role", "nan"])
+    def test_rejects_incomplete_or_misbound_paired_vectors(fault: str) -> None:
+>       manifest, paired = fixture()
+                           ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_______ test_rejects_incomplete_or_misbound_paired_vectors[wrong_role] ________
+
+fault = 'wrong_role'
+
+    @pytest.mark.parametrize("fault", ["missing_control", "duplicate_case", "wrong_role", "nan"])
+    def test_rejects_incomplete_or_misbound_paired_vectors(fault: str) -> None:
+>       manifest, paired = fixture()
+                           ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+___________ test_rejects_incomplete_or_misbound_paired_vectors[nan] ___________
+
+fault = 'nan'
+
+    @pytest.mark.parametrize("fault", ["missing_control", "duplicate_case", "wrong_role", "nan"])
+    def test_rejects_incomplete_or_misbound_paired_vectors(fault: str) -> None:
+>       manifest, paired = fixture()
+                           ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:61: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+__________ test_lifecycle_requires_exact_authored_corrected_content ___________
+
+    def test_lifecycle_requires_exact_authored_corrected_content() -> None:
+>       manifest, _ = fixture()
+                      ^^^^^^^^^
+
+tests\test_source_association_role_preparation.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_preparation.py:19: in fixture
+    manifest, _, cases = load_cases()
+                         ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_______ test_complete_document_and_query_roles_include_lifecycle_input ________
+
+    def test_complete_document_and_query_roles_include_lifecycle_input() -> None:
+>       manifest, roles = prepared()
+                          ^^^^^^^^^^
+
+tests\test_source_association_role_runner.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_runner.py:16: in prepared
+    manifest, _, _ = load_cases()
+                     ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+________ test_missing_vector_cannot_be_hidden_by_another_role[queries] ________
+
+role = 'queries'
+
+    @pytest.mark.parametrize("role", ["queries", "documents"])
+    def test_missing_vector_cannot_be_hidden_by_another_role(role: str) -> None:
+>       manifest, roles = prepared()
+                          ^^^^^^^^^^
+
+tests\test_source_association_role_runner.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_runner.py:16: in prepared
+    manifest, _, _ = load_cases()
+                     ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+_______ test_missing_vector_cannot_be_hidden_by_another_role[documents] _______
+
+role = 'documents'
+
+    @pytest.mark.parametrize("role", ["queries", "documents"])
+    def test_missing_vector_cannot_be_hidden_by_another_role(role: str) -> None:
+>       manifest, roles = prepared()
+                          ^^^^^^^^^^
+
+tests\test_source_association_role_runner.py:45: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_runner.py:16: in prepared
+    manifest, _, _ = load_cases()
+                     ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+__________ test_completed_grid_keeps_all_eighteen_lifecycle_failures __________
+
+    def test_completed_grid_keeps_all_eighteen_lifecycle_failures() -> None:
+>       manifest, _ = prepared()
+                      ^^^^^^^^^^
+
+tests\test_source_association_role_runner.py:87: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_runner.py:16: in prepared
+    manifest, _, _ = load_cases()
+                     ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+______ test_duplicate_row_does_not_substitute_for_missing_scheduled_row _______
+
+    def test_duplicate_row_does_not_substitute_for_missing_scheduled_row() -> None:
+>       manifest, _ = prepared()
+                      ^^^^^^^^^^
+
+tests\test_source_association_role_runner.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_source_association_role_runner.py:16: in prepared
+    manifest, _, _ = load_cases()
+                     ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-source-forget-preconditions-v1/benchmarks/local_memory/datasets/source-association-development-v1.json')
+
+    def load_cases(path: Path = MANIFEST_PATH) -> tuple[dict[str, Any], str, list[dict[str, Any]]]:
+        raw = path.read_bytes()
+        manifest = json.loads(raw)
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("version") != "source-association-development-v1"
+        ):
+            raise ValueError("unexpected source-association development manifest")
+        cases = manifest.get("graph_cases")
+        if not isinstance(cases, list) or [case.get("id") for case in cases] != list(CASE_IDS):
+            raise ValueError("the diagnostic requires the fixed five source-association cases")
+        if any(case.get("split") != "development" for case in cases):
+            raise ValueError("prefix diagnostic cannot consume heldout cases")
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != EXPECTED_DATASET_SHA256:
+>           raise ValueError("authored source-association dataset changed; use a new protocol")
+E           ValueError: authored source-association dataset changed; use a new protocol
+
+benchmarks\local_memory\embedding_prefix_development_v1.py:53: ValueError
+=========================== short test summary info ===========================
+FAILED tests/test_embedding_prefix_development.py::test_paired_report_has_five_cases_scope_controls_and_rank_arithmetic
+FAILED tests/test_embedding_prefix_development.py::test_changed_binding_and_resume_are_fail_closed
+FAILED tests/test_embedding_prefix_development.py::test_foreign_exact_match_is_scored_but_cannot_enter_ranking
+FAILED tests/test_embedding_prefix_development.py::test_invalid_vectors_are_rejected_before_scoring
+FAILED tests/test_source_association_role_preparation.py::test_same_text_in_two_roles_retains_two_different_vectors
+FAILED tests/test_source_association_role_preparation.py::test_rejects_incomplete_or_misbound_paired_vectors[missing_control]
+FAILED tests/test_source_association_role_preparation.py::test_rejects_incomplete_or_misbound_paired_vectors[duplicate_case]
+FAILED tests/test_source_association_role_preparation.py::test_rejects_incomplete_or_misbound_paired_vectors[wrong_role]
+FAILED tests/test_source_association_role_preparation.py::test_rejects_incomplete_or_misbound_paired_vectors[nan]
+FAILED tests/test_source_association_role_preparation.py::test_lifecycle_requires_exact_authored_corrected_content
+FAILED tests/test_source_association_role_runner.py::test_complete_document_and_query_roles_include_lifecycle_input
+FAILED tests/test_source_association_role_runner.py::test_missing_vector_cannot_be_hidden_by_another_role[queries]
+FAILED tests/test_source_association_role_runner.py::test_missing_vector_cannot_be_hidden_by_another_role[documents]
+FAILED tests/test_source_association_role_runner.py::test_completed_grid_keeps_all_eighteen_lifecycle_failures
+FAILED tests/test_source_association_role_runner.py::test_duplicate_row_does_not_substitute_for_missing_scheduled_row
+15 failed, 1706 passed, 4 skipped in 329.03s (0:05:29)

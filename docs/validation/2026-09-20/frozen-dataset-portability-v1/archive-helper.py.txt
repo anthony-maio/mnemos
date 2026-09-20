@@ -1,0 +1,70 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-forget-preconditions-v1'
+record = json.loads((checks / 'verification.json').read_bytes())
+assert record['status'] == 'failed'
+assert record['checks'][0]['name'] == 'pytest' and record['checks'][0]['status'] == 'failed'
+manifest = Path('benchmarks/local_memory/datasets/source-association-development-v1.json')
+before = temp / 'mnemos-source-forget-preconditions-v1'
+after = temp / 'mnemos-source-forget-preconditions-v2'
+old = (before / manifest).read_bytes()
+new = (after / manifest).read_bytes()
+assert old.replace(b'\r\n', b'\n') == new
+assert hashlib.sha256(new).hexdigest() == '809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741'
+cases = list(ET.parse(checks / 'pytest.xml').getroot().iter('testcase'))
+failures = [{key: case.attrib[key] for key in ('classname', 'name')}
+            for case in cases if case.find('failure') is not None or case.find('error') is not None]
+assert len(failures) == 15 and all(case['classname'] in {
+    'tests.test_embedding_prefix_development', 'tests.test_source_association_role_preparation',
+    'tests.test_source_association_role_runner'} for case in failures), failures
+proof = {
+    'before_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=before, text=True).strip(),
+    'after_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=after, text=True).strip(),
+    'manifest': manifest.as_posix(),
+    'before_sha256': hashlib.sha256(old).hexdigest(), 'before_crlf': old.count(b'\r\n'),
+    'after_sha256': hashlib.sha256(new).hexdigest(), 'after_crlf': new.count(b'\r\n'),
+    'content_equal_after_line_ending_normalization': True,
+    'failed_cases': failures,
+    'repair': 'Disable Git text conversion for this exact frozen dataset; retain its original bytes and strict hash guard.',
+}
+output = repo / 'docs/validation/2026-09-20/frozen-dataset-portability-v1'
+assert not output.exists()
+output.mkdir(parents=True)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in ('verification.json', 'pytest.xml', 'pytest.log'):
+    shutil.copyfile(checks / name, output / name)
+shutil.copyfile(temp / 'mnemos-prefix-portability-green-v1.xml', output / 'fresh-windows-checkout-green.xml')
+shutil.copyfile(Path(__file__), output / 'archive-helper.py.txt')
+(output / 'portability-proof.json').write_text(json.dumps(proof, indent=2) + '\n', encoding='utf-8')
+files = {path.name: {'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+         for path in sorted(output.iterdir()) if path.is_file() and path.name != '.gitattributes'}
+(output / 'index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(output / 'README.md').write_text('''# Frozen dataset Windows checkout repair
+
+The first full source run for copyable forget preconditions finished with
+1,706 passes, 15 failures, and four skips. All failures were in embedding-prefix
+and role-aware preparation/runner tests. Its clean Windows checkout converted the frozen
+source-association JSON from LF to CRLF. The strict hash guard correctly
+rejected the changed bytes before scoring, even though normalized content
+was identical. The full failing run is retained here; package checks did not
+continue after pytest failed.
+
+The repair marks only this dataset `-text` in Git attributes. The dataset,
+its original SHA-256, and the fail-closed hash check are unchanged. A second
+fresh checkout with `core.autocrlf=true` preserves the original bytes; all 21
+prefix, role-preparation, and role-runner tests pass there. Full verification
+of that successor is recorded separately and is not inferred from 21 tests.
+
+`portability-proof.json` binds both source commits, hashes, line-ending counts,
+and failing cases. The index binds the failed source report, its complete
+JUnit/log, the focused successor JUnit, and this archive helper. No model calls
+or evaluation criteria changed. Previous measured negative results remain.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'files': len(files), 'failures': failures, 'proof': proof}))
