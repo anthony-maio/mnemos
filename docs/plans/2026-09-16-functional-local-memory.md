@@ -335,6 +335,13 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [current-package boundary probe](../validation/2026-09-20/hermes-current-package-boundary-v28/README.md)
+passes actual CLI `/new` persistence and provider rotation with verified installed
+product `05c71d2`: one valid outbox capture and zero captures for corrupted evidence.
+It does not exercise service delivery or the full interactive CLI. The repaired
+host's complete SessionDB suite records 1,427 passes, 11 skips, and the previously
+observed baseline WAL failure. The full failure remains preserved.
+
 The [provenance repair follow-up](../validation/2026-09-20/hermes-provenance-repair-v27/README.md)
 reproduces and repairs unmarked compression output acquiring original authority,
 edited hybrid components retaining stale ancestor references, and derived user

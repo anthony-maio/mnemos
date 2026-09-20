@@ -1,0 +1,81 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib
+import json
+import shutil
+import sqlite3
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-current-package-boundary-v28'
+result = json.loads((root / 'integration_api_probe_v28.json').read_bytes())
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=root)
+assert hashlib.sha256(patch).hexdigest() == result['candidate_patch_sha256']
+assert result['status'] == 'passed' and result['verified_installed_python_modules'] == 55
+assert [x['outbox_captures'] for x in result['cases']] == [1, 0]
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'candidate.patch').write_bytes(patch)
+for prefix, suffixes in [('integration_api_probe_v28', ['.json', '.py', '.stdout.log', '.stderr.log']),
+                         ('hermes-state-root-v27', ['.junit.xml', '.stdout.log', '.stderr.log'])]:
+    for suffix in suffixes:
+        shutil.copyfile(root / (prefix + suffix), out / (prefix + suffix))
+for name, digest in result['extra_sources'].items():
+    src = root / name
+    assert hashlib.sha256(src.read_bytes()).hexdigest() == digest
+    dest = out / 'source' / (name + '.txt')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(src, dest)
+inspections = {}
+for case in ['valid', 'corrupt']:
+    src = Path(result['root']) / case
+    with closing(sqlite3.connect((src / 'state.db').as_uri() + '?mode=ro', uri=True)) as original:
+        with closing(sqlite3.connect(out / (case + '.sqlite'))) as backup:
+            original.backup(backup)
+            assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+            assert backup.execute('PRAGMA foreign_key_check').fetchall() == []
+            inspections[case] = {'integrity': 'ok', 'foreign_key_errors': [],
+                'message_count': backup.execute('SELECT count(*) FROM messages').fetchone()[0]}
+            backup.execute('PRAGMA journal_mode=DELETE')
+            backup.commit()
+    if (src / 'outbox.json').exists():
+        shutil.copyfile(src / 'outbox.json', out / (case + '-outbox.json'))
+assert all(x['message_count'] == 1 for x in inspections.values())
+suites = list(ET.parse(out / 'hermes-state-root-v27.junit.xml').getroot().iter('testsuite'))
+assert len(suites) == 1
+stats = suites[0].attrib
+assert (stats['tests'], stats['failures'], stats['errors'], stats['skipped']) == ('1439', '1', '0', '11')
+(out / 'summary.json').write_text(json.dumps({'database_inspection': inspections, 'suite': stats}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Current package through the repaired Hermes session boundary
+
+The actual CLI new_session method passes with a private SessionDB and the
+installed Mnemos 05c71d2 wheel. All 55 installed Python module bytes match the
+wheel, whose SHA-256 is recorded in the result. The tracked host patch and
+untracked source-snapshot helper are bound before and after the probe.
+
+A valid pending original is persisted and produces one correctly identified
+outbox capture. Corrupted evidence produces no capture. Both cases rotate the
+provider to the new session. The probe bypasses the interactive constructor
+and supplies UI scaffolding; persistence, evidence, reset, and provider paths
+are actual methods. This is outbox evidence, not delivered-service or complete
+interactive host acceptance. No live configuration or memory was changed.
+
+The complete SessionDB rerun records 1,427 passes, 11 skips, and one failure:
+test_apply_wal_concurrent_connects_no_eio observes deleted WAL/SHM descriptors
+from earlier test fixtures in its process. The same named failure was observed
+on the earlier untouched baseline. The full failing log remains here; this is
+not a passing full-suite claim and no descriptors were closed to hide it.
+
+The private valid and deliberately corrupted SQLite fixtures pass integrity
+and foreign-key checks. Their connections are closed before evidence indexing.
+T17 remains open for broader host capture, delivery, recovery, and pilot work.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+assert not any(name.endswith(('-wal', '-shm')) for name in files)
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files)}))
