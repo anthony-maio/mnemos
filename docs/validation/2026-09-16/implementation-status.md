@@ -1,12 +1,28 @@
 # Functional local memory implementation status
 
+The [native Hermes v11 cohort](../2026-09-20/hermes-native-cohort-v11/README.md)
+finished zero of three complete lifecycles on `697b672`. Every attempt passed
+teaching, restarted recall, correction, and corrected recall, then failed at
+forgetting. Attempt 1 deleted the target and two selected copies but retained
+two user captures with the labels. Attempt 2 supplied out-of-preview source
+IDs and received HTTP 500. Attempt 3 obtained a preview without applying it.
+All 50 model responses had verified 65,536-token context and positive GPU
+residency; cleanup and independently inspected control state passed for all
+three attempts. No source replay or final recall ran.
+
+The Hermes-only setup does not install shared Codex AGENTS guidance, so this
+cohort cannot measure that repair's effect. The planned three-host v6 run
+remains NOT RUN because this package has no passing native prerequisite.
+Earlier v10 remains one pass and two failures on its own package. Complete
+capture, full-module quality, Desktop, and the operational pilot remain open.
+
 The [shared-guidance package](../2026-09-20/shared-guidance-checkpoint-v1/README.md)
 at `697b672` passes 1,615 source tests with four skips, all six source/package
 checks, 652 isolated installed cases with four matching skips, and seven
 replay assertions. Generated instructions follow the active tool schema;
 provider-owned tools omit unsupported scope fields. The scope firewall is
-unchanged. Native v11 import preflight passed and its fixed three-attempt
-Hermes cohort is running. No native success is claimed for this package yet.
+unchanged. Native v11 import preflight passed; its fixed three-attempt
+cohort has since failed all three lifecycles, as recorded above.
 Earlier package and native records retain their original source bindings.
 
 The [three-host v5 attempt](../2026-09-20/three-host-native-v5/README.md) passed

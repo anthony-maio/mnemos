@@ -10,19 +10,63 @@ Apply [writing-in-anthonys-voice](C:/Users/Ant/.agents/skills/writing-in-anthony
 
 Deliver an article draft, three possible titles, and a separate compact source/claim note. Keep the article close to 2,500 words, excluding source notes. Do not publish it.
 
+## Read this first
+
+The article's central question is whether several agents can share a memory
+that remains useful after a correction, a restart, or a request to forget.
+The work produced tested infrastructure and exposed unresolved behavior in
+real model runs. Do not frame it as a completed launch or proof of the paper's
+claimed advantages.
+
+Start with the [original audit and plan](../plans/2026-09-16-functional-local-memory.md),
+the suggested narrative and capture tradeoff below, the
+[current claim ledger](../validation/2026-09-16/claim-evidence-ledger.md), and
+[Anthony's voice skill](C:/Users/Ant/.agents/skills/writing-in-anthonys-voice/SKILL.md).
+Choose three or four repairs that carry the explanation. Use their linked
+records to check the details. The long checkpoint history below is a research
+reference; the reader does not need a tour of every run or test count.
+
+The strongest concrete examples are stable identities after replay, a
+correction whose acknowledgement is lost, captured copies that survive a
+requested deletion, and shared instructions that conflict with a host's tool
+schema. Explain what each example establishes and what it leaves unresolved.
+Keep fixture observations, native conversations, and proposed operating
+choices distinct. Do not invent Anthony's reactions or daily-use experience.
+
+Return the draft, titles, and claim notes as separate files. In the notes,
+map each quantitative or completion claim to its exact checkpoint and source;
+flag local evidence that needs a public citation before publication. Preserve
+negative results even if they complicate the ending.
+
 ## Latest implementation and native evidence
+
+The [native Hermes v11 cohort](../validation/2026-09-20/hermes-native-cohort-v11/README.md)
+finished zero of three complete lifecycles on `697b672`. Every attempt passed
+teaching, restarted recall, correction, and corrected recall, then failed at
+forgetting. Attempt 1 deleted the target and two selected copies but retained
+two user captures with the labels. Attempt 2 supplied out-of-preview source
+IDs and received HTTP 500. Attempt 3 obtained a preview without applying it.
+All 50 model responses had verified 65,536-token context and positive GPU
+residency; cleanup and independently inspected control state passed for all
+three attempts. No source replay or final recall ran.
+
+The Hermes-only setup does not install shared Codex AGENTS guidance, so this
+cohort cannot measure that repair's effect. The planned three-host v6 run
+remains NOT RUN because this package has no passing native prerequisite.
+Earlier v10 remains one pass and two failures on its own package. Complete
+capture, full-module quality, Desktop, and the operational pilot remain open.
 
 The [shared-guidance package checkpoint](../validation/2026-09-20/shared-guidance-checkpoint-v1/README.md)
 records 1,615 source tests passed with four skips, six successful source/package
 checks, 652 installed cases passed with four matching skips, and seven replay
 assertions. It repairs the conflict seen in the v5 trace between shared
 instructions and Hermes tool schemas. This is a verified instruction/dispatch
-repair; its effect on native completion has not yet been demonstrated. A new
-three-attempt prerequisite cohort is running under unchanged requirements.
+repair; its effect on native completion has not yet been demonstrated. The new
+three-attempt prerequisite cohort failed all three lifecycles under unchanged requirements.
 
-Checkout addendum: the [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect discovered after packet v21. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open, and packet v21 does not contain this later addendum.
+The [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open. Packet v22 includes this record.
 
-The portable v21 packet is a working snapshot through the v4 attempt. It includes the partial cross-host success and the correction failure below. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
+The portable v22 packet is a working snapshot through the verified shared-guidance package and native Hermes v11 failures. It includes the earlier partial cross-host success and the later v5 failure. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
 
 The [three-host v5 attempt](../validation/2026-09-20/three-host-native-v5/README.md) passed
 both teaching phases, then failed at Hermes recall on unsupported scope
@@ -555,5 +599,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v21 packet includes the three-host v2 and v3 failures and the v4 teaching/restarted-recall result followed by correction failure, selected native records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v22 packet adds the verified shared-guidance package, worker repair, native v5 failure, and all three failed v11 attempts. It also includes the three-host v2 and v3 failures and the v4 teaching/restarted-recall result followed by correction failure, selected native records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

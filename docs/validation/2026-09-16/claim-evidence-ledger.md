@@ -1,5 +1,21 @@
 # Mnemos claim and evidence ledger
 
+The [native Hermes v11 cohort](../2026-09-20/hermes-native-cohort-v11/README.md)
+finished zero of three complete lifecycles on `697b672`. Every attempt passed
+teaching, restarted recall, correction, and corrected recall, then failed at
+forgetting. Attempt 1 deleted the target and two selected copies but retained
+two user captures with the labels. Attempt 2 supplied out-of-preview source
+IDs and received HTTP 500. Attempt 3 obtained a preview without applying it.
+All 50 model responses had verified 65,536-token context and positive GPU
+residency; cleanup and independently inspected control state passed for all
+three attempts. No source replay or final recall ran.
+
+The Hermes-only setup does not install shared Codex AGENTS guidance, so this
+cohort cannot measure that repair's effect. The planned three-host v6 run
+remains NOT RUN because this package has no passing native prerequisite.
+Earlier v10 remains one pass and two failures on its own package. Complete
+capture, full-module quality, Desktop, and the operational pilot remain open.
+
 The [three-host v5 attempt](../2026-09-20/three-host-native-v5/README.md) passed
 both teaching phases, then failed at Hermes recall on unsupported scope
 arguments. Query-only retries retrieved both facts but do not clear the

@@ -1,0 +1,67 @@
+"""Inspect terminal synthetic databases without maintenance or model calls."""
+from pathlib import Path
+import hashlib
+import json
+import sqlite3
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v11')
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+result = {'cohort_sha256': sha(root / 'cohort.json'), 'attempts': []}
+for number in (1, 2, 3):
+    directory = root / f'attempt-{number}'
+    report = json.loads((directory / 'report.json').read_text(encoding='utf-8'))
+    assert report['status'] == 'failed' and report.get('finished_at') and not report.get('cleanup_error')
+    assert not (directory / 'runtime.json').exists()
+    database = directory / 'memory.sqlite'
+    before = sha(database)
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as connection:
+        connection.row_factory = sqlite3.Row
+        connection.execute('PRAGMA query_only=ON')
+        connection.execute('BEGIN')
+        facts = [dict(r) for r in connection.execute('SELECT id,content,version,metadata FROM memory_chunks ORDER BY id')]
+        events = [dict(r) for r in connection.execute('SELECT id,role,content,source,scope_id,metadata,occurred_at FROM episodic_events ORDER BY id')]
+        evidence = [dict(r) for r in connection.execute('SELECT fact_id,source_event_id,excerpt FROM fact_evidence ORDER BY fact_id,source_event_id')]
+        suppression_count = connection.execute('SELECT COUNT(*) FROM memory_suppressions').fetchone()[0]
+    assert sha(database) == before
+    controls = json.loads((directory / 'controls.json').read_text(encoding='utf-8'))
+    ids = {r['id'] for r in controls['facts']}
+    contents = {r['content'] for r in controls['facts']}
+    source_ids = {r['source_event_id'] for r in controls['evidence']}
+    def ordered(rows):
+        return sorted(json.dumps(r, sort_keys=True) for r in rows)
+    unchanged = (
+        ordered(controls['facts']) == ordered([r for r in facts if r['id'] in ids or r['content'] in contents])
+        and ordered(controls['events']) == ordered([r for r in events if r['id'] in source_ids])
+        and ordered(controls['evidence']) == ordered([r for r in evidence if r['fact_id'] in ids]))
+    assert unchanged
+    entry = {'attempt': number, 'database_sha256': before, 'read_only_inspection': True,
+             'controls_unchanged': unchanged, 'target_id': report['target_id'],
+             'target_retained': any(f['id'] == report['target_id'] for f in facts),
+             'suppression_count': suppression_count,
+             'report_sha256': sha(directory / 'report.json')}
+    if number == 2:
+        path = directory / 'forget/trace.jsonl'
+        trace = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
+        preview = next(r['result'] for r in trace if r['operation'] == 'tool_result' and r['name'] == 'mnemos_forget_preview')
+        calls = [r for r in trace if r['operation'] == 'tool_result' and r['name'] == 'mnemos_forget_related']
+        source_ids = {r['source_event_id'] for r in preview['source_events']}
+        candidate_ids = {r['fact_id'] for r in preview['candidates']}
+        assert len(calls) == 2 and calls[0]['args'] == calls[1]['args']
+        args = calls[0]['args']
+        assert args['preview_digest'] == preview['preview_digest'] and args['preview_limit'] == preview['limit']
+        assert set(args['selected_fact_ids']) == candidate_ids
+        unknown = sorted(set(args['selected_source_event_ids']) - source_ids)
+        assert len(unknown) == 2 and suppression_count == 0
+        entry['selection_diagnosis'] = {
+            'trace_sha256': sha(path), 'preview_candidate_count': len(candidate_ids),
+            'preview_source_count': len(source_ids), 'digest_and_limit_match': True,
+            'selected_facts_match_all_candidates': True,
+            'unknown_selected_source_ids': unknown,
+            'repeat_calls_identical': True, 'suppression_count_after_failure': suppression_count,
+            'server_traceback_available': False,
+            'explanation': 'The recorded request satisfies the unknown-source rejection branch before required-source validation or mutation.'}
+    result['attempts'].append(entry)
+print(json.dumps(result, indent=2))
