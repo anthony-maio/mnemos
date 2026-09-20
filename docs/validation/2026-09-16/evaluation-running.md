@@ -1,13 +1,30 @@
 # Real-model evaluation status
 
+The [stale-preview rejection repair](../2026-09-20/stale-preview-checkpoint-v1/README.md)
+at `f2f7414` passes 1,547 source tests with 4 skips,
+all six source/package checks, 650 isolated installed cases with
+4 matching skips, and seven replay assertions. The native v9 failure
+used the preceding `e419c2a` wheel and remains failed. No native model has
+run the repaired package yet.
+
+In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
+their required sources, and the preview digest, but changed the preview
+limit from 100 to 20. The limit is part of the digest. The old installed
+wheel reproduces an opaque HTTP 500 for that mismatch. The repair preserves
+the rejection and rollback while returning a typed, noncommitted HTTP 409
+that tells the caller to obtain a fresh preview and reuse its digest and
+limit. It does not fix arguments, select sources, retry deletion, or drain
+pending captures. The tested stale-version path has the same contract;
+other validation and unexpected internal errors retain their prior handling.
+
 The [context-verified Hermes v9 cohort](../2026-09-20/hermes-native-cohort-v9/README.md)
 finished zero of three full lifecycles on `e419c2a`. All 39 model responses
 had verified 65,536-token serving context and positive GPU residency; all
 three attempts established cleanup. Attempt 1 omitted restarted retrieval.
 Attempt 2 passed through corrected recall, then inspected related candidates
 without applying deletion. Attempt 3 reached three deletion calls, each
-returning degraded HTTP 500 with no committed receipt. The service errors
-need separate diagnosis. No source replay or final recall ran.
+returning degraded HTTP 500 with no committed receipt. The stale-preview rejection was later reproduced and repaired as described
+above; the original native result remains failed. No source replay or final recall ran.
 
 Both forget previews reached subsequent recorded HTTP requests intact,
 with ten candidates and ten required source IDs. The

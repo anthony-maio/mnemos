@@ -1,0 +1,68 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+_____________ test_stale_preview_limit_is_known_noncommitted_409 ______________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-stale-preview-old-wheel-v1/pytest/test_stale_preview_limit_is_kn0')
+
+    @pytest.mark.asyncio
+    async def test_stale_preview_limit_is_known_noncommitted_409(tmp_path: Path) -> None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
+            before = _snapshot(domain)
+            client.outbox.append(
+                {
+                    "event_id": "queued-before-stale-rejection",
+                    "context": context.model_dump(mode="json"),
+                    "content": "pending capture",
+                }
+            )
+            client._outbox_drained = False  # noqa: SLF001
+            result = json.loads(
+                await dispatch_tool(
+                    client,
+                    context,
+                    "mnemos_forget_related",
+                    {
+                        "fact_id": target.id,
+                        "expected_version": target.version,
+                        "preview_digest": preview["preview_digest"],
+                        "preview_limit": 20,
+                        "selected_fact_ids": [copy.id],
+                        "selected_source_event_ids": candidate["required_source_event_ids"],
+                    },
+                )
+            )
+>           assert result == {
+                "schema_version": 1,
+                "status": "rejected",
+                "committed": False,
+                "error": "related_forget_preview_stale",
+                "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+            }
+E           AssertionError: assert {'schema_vers...d': True, ...} == {'schema_vers...w_stale', ...}
+E             
+E             Omitting 2 identical items, use -vv to show
+E             Differing items:
+E             {'error': 'Mnemos service returned HTTP 500'} != {'error': 'related_forget_preview_stale'}
+E             {'status': 'degraded'} != {'status': 'rejected'}
+E             Left contains 1 more item:
+E             {'degraded': True}...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+C:\Users\Ant\AppData\Local\Temp\mnemos-stale-preview-old-wheel-v1\tests\test_related_forget_service_errors.py:243: AssertionError
+=========================== short test summary info ===========================
+FAILED ::test_stale_preview_limit_is_known_noncommitted_409 - AssertionError:...
+1 failed in 2.76s

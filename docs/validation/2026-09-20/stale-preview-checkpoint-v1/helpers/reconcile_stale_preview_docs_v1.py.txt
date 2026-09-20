@@ -1,0 +1,48 @@
+from pathlib import Path
+import json
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+v = json.loads((temp/'mnemos-package-checks-stale-preview-v1/verification.json').read_text(encoding='utf-8'))
+i = json.loads((temp/'mnemos-installed-checks-stale-preview-v1/installation.json').read_text(encoding='utf-8'))
+assert v['status']==i['status']=='passed'
+assert v['source_commit']==i['bindings_after']['commit']
+s=v['checks'][0]['counts']; installed=i['contract']['junit_summary']
+source_passes=s['tests']-s['skipped']; installed_passes=installed['tests']-installed['skipped']
+files=[Path('docs/handoffs/substack-local-memory.md'),Path('docs/client-compatibility-matrix.md')]+[Path('docs/validation/2026-09-16')/name for name in ['implementation-status.md','claim-evidence-ledger.md','progress.md','evaluation-running.md']]
+for relative in files:
+    p=repo/relative
+    prefix='../validation/2026-09-20/' if p.parent.name=='handoffs' else 'validation/2026-09-20/' if p.parent.name=='docs' else '../2026-09-20/'
+    intro=f'''The [stale-preview rejection repair]({prefix}stale-preview-checkpoint-v1/README.md)
+at `{v['source_commit'][:7]}` passes {source_passes:,} source tests with {s['skipped']} skips,
+all six source/package checks, {installed_passes:,} isolated installed cases with
+{installed['skipped']} matching skips, and seven replay assertions. The native v9 failure
+used the preceding `e419c2a` wheel and remains failed. No native model has
+run the repaired package yet.
+
+In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
+their required sources, and the preview digest, but changed the preview
+limit from 100 to 20. The limit is part of the digest. The old installed
+wheel reproduces an opaque HTTP 500 for that mismatch. The repair preserves
+the rejection and rollback while returning a typed, noncommitted HTTP 409
+that tells the caller to obtain a fresh preview and reuse its digest and
+limit. It does not fix arguments, select sources, retry deletion, or drain
+pending captures. The tested stale-version path has the same contract;
+other validation and unexpected internal errors retain their prior handling.
+
+'''
+    text=p.read_text(encoding='utf-8')
+    if p.parent.name=='handoffs':
+        anchor='## Latest implementation and native evidence\n\n'
+        text=text.replace(anchor,anchor+intro,1)
+        text=text.replace('portable v17 packet','portable v18 packet')
+    else:
+        at=text.index('\n\n')+2;text=text[:at]+intro+text[at:]
+    text=text.replace('The service errors\nneed separate diagnosis.', 'The stale-preview rejection was later reproduced and repaired as described\nabove; the original native result remains failed.',1)
+    if p.name=='implementation-status.md':
+        text=text.replace('Latest verified package `e419c2a` passes 1,500 source tests and 648 installed contract cases, with 4/4 respective skips and seven replay assertions.',f'Latest verified package `{v["source_commit"][:7]}` passes {source_passes:,} source tests and {installed_passes:,} installed contract cases, with {s["skipped"]}/{installed["skipped"]} respective skips and seven replay assertions.')
+        text=text.replace('native v8 and the context-verified v9 each failed all three complete lifecycles on this package. V9 also exposed degraded HTTP 500 deletion responses that require diagnosis.','native v8 and the context-verified v9 each failed all three complete lifecycles on the preceding `e419c2a` package. V9 exposed stale-preview HTTP 500 responses; the new package repairs their error contract and has no new native observation yet.')
+    p.write_text(text,encoding='utf-8')
+p=repo/'docs/plans/2026-09-16-functional-local-memory.md'
+p.write_text(p.read_text(encoding='utf-8').replace('2026-09-20-v17.zip','2026-09-20-v18.zip'),encoding='utf-8')
+print(json.dumps({'source_passes':source_passes,'installed_passes':installed_passes,'commit':v['source_commit']}))

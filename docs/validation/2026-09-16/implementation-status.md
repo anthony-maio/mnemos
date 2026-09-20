@@ -1,13 +1,30 @@
 # Functional local memory implementation status
 
+The [stale-preview rejection repair](../2026-09-20/stale-preview-checkpoint-v1/README.md)
+at `f2f7414` passes 1,547 source tests with 4 skips,
+all six source/package checks, 650 isolated installed cases with
+4 matching skips, and seven replay assertions. The native v9 failure
+used the preceding `e419c2a` wheel and remains failed. No native model has
+run the repaired package yet.
+
+In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
+their required sources, and the preview digest, but changed the preview
+limit from 100 to 20. The limit is part of the digest. The old installed
+wheel reproduces an opaque HTTP 500 for that mismatch. The repair preserves
+the rejection and rollback while returning a typed, noncommitted HTTP 409
+that tells the caller to obtain a fresh preview and reuse its digest and
+limit. It does not fix arguments, select sources, retry deletion, or drain
+pending captures. The tested stale-version path has the same contract;
+other validation and unexpected internal errors retain their prior handling.
+
 The [context-verified Hermes v9 cohort](../2026-09-20/hermes-native-cohort-v9/README.md)
 finished zero of three full lifecycles on `e419c2a`. All 39 model responses
 had verified 65,536-token serving context and positive GPU residency; all
 three attempts established cleanup. Attempt 1 omitted restarted retrieval.
 Attempt 2 passed through corrected recall, then inspected related candidates
 without applying deletion. Attempt 3 reached three deletion calls, each
-returning degraded HTTP 500 with no committed receipt. The service errors
-need separate diagnosis. No source replay or final recall ran.
+returning degraded HTTP 500 with no committed receipt. The stale-preview rejection was later reproduced and repaired as described
+above; the original native result remains failed. No source replay or final recall ran.
 
 Both forget previews reached subsequent recorded HTTP requests intact,
 with ten candidates and ten required source IDs. The
@@ -826,7 +843,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, seven real-provider profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Applied length/noise and vector/lexical/hybrid/full comparisons have a separate frozen protocol. | The local lifecycle matrix is terminal: 4,150 observations complete and 50 partial across five of seven profiles, following no-fact extraction and unavailable correction targets. This does not pass acceptance. Graph has zero eligible cases; affective supplied-state ranking improves while classifier fidelity remains poor. The independent supplemental v2 encoding run is terminal and incomplete: 34 partial observations out of 1,800, with all 1,320 automatic-policy decisions observed per arm. Retrieval is also terminal and incomplete: 589 of 600 session observations complete, 900 query rows, and 3,600 strategy results. All three alternative strategies have zero paired quality delta against full on eligible rows. These are conditional diagnostics; complete-run quality acceptance remains open. Follow the [evaluation record](evaluation-running.md), [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md), and [retrieval terminal archive](../2026-09-19/retrieval-terminal-local-v1/README.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `e419c2a` passes 1,500 source tests and 648 installed contract cases, with 4/4 respective skips and seven replay assertions. Ordinary memory and captured evidence now have separate retrieval views; native v8 and the context-verified v9 each failed all three complete lifecycles on this package. V9 also exposed degraded HTTP 500 deletion responses that require diagnosis. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `f2f7414` passes 1,547 source tests and 650 installed contract cases, with 4/4 respective skips and seven replay assertions. Ordinary memory and captured evidence now have separate retrieval views; native v8 and the context-verified v9 each failed all three complete lifecycles on the preceding `e419c2a` package. V9 exposed stale-preview HTTP 500 responses; the new package repairs their error contract and has no new native observation yet. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

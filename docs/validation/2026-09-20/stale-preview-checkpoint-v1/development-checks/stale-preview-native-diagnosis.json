@@ -1,0 +1,50 @@
+{
+  "native_runtime_commit": "e419c2aa615e037e639a74b14615889d03f4e47f",
+  "trace": "docs/validation/2026-09-20/hermes-native-cohort-v9/attempt-3/forget/trace.jsonl",
+  "trace_sha256": "071d922770b440f7a3fedb12a9e00c201f3ab486c2940fd096333904a844095d",
+  "preview_limit": 100,
+  "candidate_count": 10,
+  "required_source_count": 10,
+  "apply_calls": [
+    {
+      "preview_limit": 20,
+      "digest_matches_returned_preview": true,
+      "facts_equal_all_preview_candidates": true,
+      "sources_equal_all_required_sources": true,
+      "result": {
+        "schema_version": 1,
+        "status": "degraded",
+        "committed": false,
+        "degraded": true,
+        "error": "Mnemos service returned HTTP 500"
+      }
+    },
+    {
+      "preview_limit": 20,
+      "digest_matches_returned_preview": true,
+      "facts_equal_all_preview_candidates": false,
+      "sources_equal_all_required_sources": false,
+      "result": {
+        "schema_version": 1,
+        "status": "degraded",
+        "committed": false,
+        "degraded": true,
+        "error": "Mnemos service returned HTTP 500"
+      }
+    },
+    {
+      "preview_limit": 20,
+      "digest_matches_returned_preview": true,
+      "facts_equal_all_preview_candidates": false,
+      "sources_equal_all_required_sources": false,
+      "result": {
+        "schema_version": 1,
+        "status": "degraded",
+        "committed": false,
+        "degraded": true,
+        "error": "Mnemos service returned HTTP 500"
+      }
+    }
+  ],
+  "interpretation": "The first apply exactly copied candidate/source selections and digest but used a different limit. Storage hashes the limit. The trace does not include a server traceback; a separate disposable regression reproduces the error path."
+}

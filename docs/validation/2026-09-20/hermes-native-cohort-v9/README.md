@@ -17,6 +17,13 @@ They were not outer process timeouts. No attempt reached source replay or
 final recall. The HTTP 500 responses require separate service-side diagnosis;
 the model's own statement that its arguments were correct is not evidence.
 
+The later [stale-preview repair](../stale-preview-checkpoint-v1/README.md)
+identified the limit mismatch: preview 100, apply 20. The first apply copied
+all candidate/source IDs and the digest correctly. The old installed wheel
+reproduces the opaque HTTP 500 for the changed limit; the new verified
+package returns a typed rejection. This does not change v9's result, and no
+native model has yet run that repair.
+
 ## Request and context evidence
 
 [Boundary analysis](boundary-analysis.json) verifies every recorded request's

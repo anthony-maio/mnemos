@@ -1,0 +1,116 @@
+"""Preserve source and installed evidence for the narrow stale-preview error repair."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-stale-preview-v1'
+installed = temp / 'mnemos-installed-checks-stale-preview-v1'
+output = repo / 'docs/validation/2026-09-20/stale-preview-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text())
+installation = json.loads((installed / 'installation.json').read_text())
+contract = json.loads((installed / 'contract.json').read_text())
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v38.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v38.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py', 'inspect_stale_preview_native_v1.py', 'reconcile_stale_preview_docs_v1.py', 'package_substack_handoff_v18.py', 'verify_substack_packet_v18.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+for p in sorted((repo / '.venv').glob('stale-preview-*')):
+    if not p.is_file() or p.suffix not in {'.log', '.xml', '.json', '.stdout'}: continue
+    copy(p, Path('development-checks') / p.name)
+red = temp / 'mnemos-stale-preview-old-wheel-v1'
+for name in ('probe.py', 'origin.json', 'red.xml', 'package-binding.json', 'tests/__init__.py', 'tests/test_related_forget.py', 'tests/test_related_forget_service_errors.py'):
+    copy(red / name, Path('old-wheel-reproduction') / (name + ('.txt' if name.endswith('.py') else '')))
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f'''# Stale related-forget previews return an actionable rejection
+
+Frozen source `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,} isolated
+installed cases with {i['skipped']} matching skips, and seven replay assertions.
+The installed run verifies case outcomes, import origins, and package bytes
+against the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+## Observed defect and repair
+
+The [native v9 cohort](../hermes-native-cohort-v9/README.md) failed all three
+lifecycles on `e419c2a`. Attempt 3 requested a preview with limit 100, then
+used its digest with limit 20 in every apply call. The first call copied all
+ten candidate IDs and their required sources exactly. The limit is part of
+the preview digest, so matching IDs did not make this a valid apply request.
+The trace lacks a server traceback; the separate disposable regression
+reproduces the old installed wheel's opaque HTTP 500 for this mismatch.
+
+Storage still rejects a stale digest and rolls back. A typed ValueError
+subclass now lets the service return noncommitted HTTP 409 with a fixed safe
+code and a message to obtain a fresh preview and reuse its digest and limit.
+The client accepts only the exact known response for `forget_related` and
+returns it before replaying pending captures. Hermes receives the rejection.
+No model arguments, selections, digest checks, or deletion rules are changed.
+
+The changed-target-version path has the same rejection. Incomplete previews,
+unrelated validation errors, unexpected ValueError failures, malformed 409
+responses, and other operations retain their existing handling. Private
+exception details and selected memory IDs are not included in the response.
+
+## Evidence boundaries
+
+The archived old-wheel test fails because Hermes receives degraded HTTP 500
+instead of the expected rejection. Its import origin and all 62 installed
+package files were checked against the original wheel. This reproduction was
+run after implementation, against the unchanged old installation. An earlier
+development failure was observed but its terminal output was not saved.
+
+The repaired focused run passes 75 cases with two opt-in WSL integration
+skips, including
+the real authenticated service/client/Hermes path, unchanged database state,
+pending-outbox preservation, valid apply, and unexpected-error behavior.
+The full frozen and installed reports establish the package result above.
+The [native argument diagnosis](development-checks/stale-preview-native-diagnosis.json)
+preserves the original preview/apply comparison without editing or replaying
+that native evidence.
+
+No native model has run this new package. V9 remains zero of three; the
+repair does not prove that the model will recover from the rejection or
+complete deletion. Native lifecycle, three-host continuity, complete capture,
+real-model quality, Desktop, and the operational pilot remain open. No live
+host configuration, source, or memory was changed. The evidence index binds
+the raw files; this README is outside that index.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(output), 'files': len(files), 'source_commit': commit, 'source_passes': s['tests']-s['skipped'], 'source_skips': s['skipped'], 'installed_passes': i['tests']-i['skipped'], 'installed_skips': i['skipped'], 'wheel': wheel}))

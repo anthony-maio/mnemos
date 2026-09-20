@@ -1,0 +1,33 @@
+"""Summarize original native arguments without replaying or editing the evidence."""
+from pathlib import Path
+import hashlib
+import json
+
+repo = Path(__file__).resolve().parents[1]
+path = repo/'docs/validation/2026-09-20/hermes-native-cohort-v9/attempt-3/forget/trace.jsonl'
+rows = [json.loads(line) for line in path.read_text(encoding='utf-8').splitlines()]
+preview = next(r['result'] for r in rows if r['operation']=='tool_result' and r['name']=='mnemos_forget_preview')
+applies = [r for r in rows if r['operation']=='tool_result' and r['name']=='mnemos_forget_related']
+candidate_ids = {c['fact_id'] for c in preview['candidates']}
+source_ids = {s for c in preview['candidates'] for s in c['required_source_event_ids']}
+result = {
+    'native_runtime_commit': 'e419c2aa615e037e639a74b14615889d03f4e47f',
+    'trace': path.relative_to(repo).as_posix(),
+    'trace_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+    'preview_limit': preview['limit'], 'candidate_count': len(candidate_ids),
+    'required_source_count': len(source_ids),
+    'apply_calls': [
+        {'preview_limit':r['args']['preview_limit'],
+         'digest_matches_returned_preview': r['args']['preview_digest']==preview['preview_digest'],
+         'facts_equal_all_preview_candidates':set(r['args']['selected_fact_ids'])==candidate_ids,
+         'sources_equal_all_required_sources':set(r['args']['selected_source_event_ids'])==source_ids,
+         'result':r['result']}
+        for r in applies
+    ],
+    'interpretation': 'The first apply exactly copied candidate/source selections and digest but used a different limit. Storage hashes the limit. The trace does not include a server traceback; a separate disposable regression reproduces the error path.'
+}
+assert result['preview_limit']==100 and len(applies)==3
+assert all(a['preview_limit']==20 and a['digest_matches_returned_preview'] for a in result['apply_calls'])
+assert result['apply_calls'][0]['facts_equal_all_preview_candidates']
+assert result['apply_calls'][0]['sources_equal_all_required_sources']
+print(json.dumps(result,indent=2))

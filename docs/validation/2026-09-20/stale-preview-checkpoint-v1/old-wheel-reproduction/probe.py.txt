@@ -1,0 +1,10 @@
+from pathlib import Path
+import sys, json
+import mnemos
+import pytest
+root=Path(__file__).resolve().parent
+expected=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-installed-retrieval-views-v1/Lib/site-packages').resolve()
+assert Path(mnemos.__file__).resolve().is_relative_to(expected)
+(root/'origin.json').write_text(json.dumps({'mnemos':mnemos.__file__,'installed_verified_commit':'e419c2aa615e037e639a74b14615889d03f4e47f'},indent=2))
+sys.path.insert(0,str(root))
+raise SystemExit(pytest.main(['-q',str(root/'tests/test_related_forget_service_errors.py')+'::test_stale_preview_limit_is_known_noncommitted_409','--junitxml',str(root/'red.xml'),'--basetemp',str(root/'pytest')]))
