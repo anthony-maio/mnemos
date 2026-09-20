@@ -77,6 +77,30 @@ async def test_repetition_keeps_all_three_arms_and_real_control_observations(
 
 
 @pytest.mark.asyncio
+async def test_observation_uses_configured_visit_budget_beyond_legacy_default(
+    tmp_path: Path,
+) -> None:
+    case, vectors, options = _synthetic_case()
+    source_id = case["facts"][0]["source_event_id"]
+    for fact in case["facts"][:15]:
+        fact["source_event_id"] = source_id
+    source = next(event for event in case["events"] if event["id"] == source_id)
+    source["content"] = " ".join(fact["content"] for fact in case["facts"][:15])
+    database = tmp_path / "wide-source.sqlite"
+    populate_source_association_fixture(case, vectors, database)
+    engine, store = open_measurement_engine(database, case, vectors, options)
+    try:
+        result = await observe_retrieval(
+            engine, store, case, vectors, options, arm="source_association"
+        )
+        assert len(result["independent_activation"]) == 15
+        assert len(result["activation"]) == 15
+        assert result["controls"]["activation_oracle_pass"] is True
+    finally:
+        await engine.aclose()
+
+
+@pytest.mark.asyncio
 async def test_semantic_view_matches_untouched_production_retrieval_and_restart(
     tmp_path: Path,
 ) -> None:

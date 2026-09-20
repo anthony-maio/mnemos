@@ -174,7 +174,10 @@ async def observe_retrieval(
                 effective.setdefault(right, {})[left] = weight
         actual_all_energy = (
             engine.spreading_activation.activate(
-                seed, filter_fn=lambda node: node.id in allowed_ids
+                seed,
+                filter_fn=lambda node: node.id in allowed_ids,
+                max_hops=options["max_hops"],
+                max_visited=options["max_visited"],
             )
             if seed is not None
             else {}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="7.646" timestamp="2026-09-20T06:06:34.807422-04:00" hostname="Aurora"><testcase classname="tests.test_source_association_measurement" name="test_observation_uses_configured_visit_budget_beyond_legacy_default" time="7.114"><failure message="AssertionError: assert 13 == 15&#10; +  where 13 = len({'shared_capture_triplet-crate': 1.0, 'shared_capture_triplet-contact': 0.8, 'shared_capture_triplet-distractor-01': 0.8, 'shared_capture_triplet-distractor-02': 0.8, ...})">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4237/test_observation_uses_configur0')
+
+    @pytest.mark.asyncio
+    async def test_observation_uses_configured_visit_budget_beyond_legacy_default(tmp_path: Path) -&gt; None:
+        case, vectors, options = _synthetic_case()
+        source_id = case["facts"][0]["source_event_id"]
+        for fact in case["facts"][:15]:
+            fact["source_event_id"] = source_id
+        source = next(event for event in case["events"] if event["id"] == source_id)
+        source["content"] = " ".join(fact["content"] for fact in case["facts"][:15])
+        database = tmp_path / "wide-source.sqlite"
+        populate_source_association_fixture(case, vectors, database)
+        engine, store = open_measurement_engine(database, case, vectors, options)
+        try:
+            result = await observe_retrieval(engine, store, case, vectors, options, arm="source_association")
+            assert len(result["independent_activation"]) == 15
+&gt;           assert len(result["activation"]) == 15
+E           AssertionError: assert 13 == 15
+E            +  where 13 = len({'shared_capture_triplet-crate': 1.0, 'shared_capture_triplet-contact': 0.8, 'shared_capture_triplet-distractor-01': 0.8, 'shared_capture_triplet-distractor-02': 0.8, ...})
+
+tests\test_source_association_measurement.py:93: AssertionError</failure></testcase></testsuite></testsuites>
