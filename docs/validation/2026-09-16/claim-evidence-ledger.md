@@ -1,5 +1,15 @@
 # Mnemos claim and evidence ledger
 
+The [Codex outage run](../2026-09-20/native-codex-outage-v1/README.md) now observes
+one stopped-service raw-capture recovery on verified product `9722d92`.
+Two exact native messages became two pending jobs after restart, with zero
+facts; receipt accounting, physical identities, replay, second restart, and
+cleanup passed. Its [package checkpoint](../2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
+passes 1,857 source tests and 703 installed cases, four skips each, all six
+source/package checks, and seven replay assertions. Generated Codex MCP and
+hook configuration explicitly pins runtime, SQLite storage, and disabled
+autostart. This does not close extraction, broader outages, or pilot gates.
+
 The [Claude outage successor](../2026-09-20/native-claude-outage-v2/README.md)
 observes raw capture recovery for one conversation on verified product `a64afb7`.
 Two native messages map to three queued entries including a provisional

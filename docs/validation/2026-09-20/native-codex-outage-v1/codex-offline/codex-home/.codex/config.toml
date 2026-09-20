@@ -1,0 +1,87 @@
+[mcp_servers]
+
+[mcp_servers.mnemos]
+command = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe"
+args = ["-m", "mnemos.mcp_server"]
+
+[mcp_servers.mnemos.env]
+MNEMOS_CONFIG_PATH = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-outage-v1\\settings.toml"
+MNEMOS_SCOPE_REGISTRY = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-outage-v1\\scopes.json"
+MNEMOS_USER_PROFILE_ID = "native-codex-outage-v1"
+MNEMOS_RUNTIME_DESCRIPTOR = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-outage-v1\\runtime.json"
+MNEMOS_AUTO_START = "false"
+MNEMOS_RUNTIME_DIR = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-outage-v1"
+MNEMOS_STORE_TYPE = "sqlite"
+MNEMOS_SQLITE_PATH = "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-outage-v1\\memory.sqlite"
+MNEMOS_HOST = "codex"
+
+[[hooks.SessionStart]]
+matcher = "startup|resume|clear|compact"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+additionalContextLimit = 1200
+
+[[hooks.UserPromptSubmit]]
+
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+additionalContextLimit = 1200
+
+[[hooks.PreCompact]]
+matcher = "manual|auto"
+
+[[hooks.PreCompact.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 10
+
+[[hooks.PostCompact]]
+matcher = "manual|auto"
+
+[[hooks.PostCompact.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 3
+
+[[hooks.SessionEnd]]
+matcher = "other"
+
+[[hooks.SessionEnd.hooks]]
+type = "command"
+command = "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-codex-runtime-env-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtb3V0YWdlLXYxXFxydW50aW1lLmpzb24iLCJNTkVNT1NfQVVUT19TVEFSVCI6ImZhbHNlIiwiTU5FTU9TX1JVTlRJTUVfRElSIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MSIsIk1ORU1PU19TVE9SRV9UWVBFIjoic3FsaXRlIiwiTU5FTU9TX1NRTElURV9QQVRIIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LW91dGFnZS12MVxcbWVtb3J5LnNxbGl0ZSJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 3
+
+[hooks.state]
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:pre_compact:0:0']
+trusted_hash = "sha256:420df480add360d2a4277479022cd7a1f07740cd26a10974b675054c2af8b04d"
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:post_compact:0:0']
+trusted_hash = "sha256:79d9accffe13d297d3e065d3b17083faf939cc672d4d34a0b21b3b6926411dc2"
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:session_start:0:0']
+trusted_hash = "sha256:43acef6faddc42f856e442751ce158d10dee218e2aa9b54cfa5b3ef412e2b22a"
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:session_end:0:0']
+trusted_hash = "sha256:0d33d2b75f467ac0923d96236f7adeb98de4fc4fca9bc13bc562eb1d23716541"
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:user_prompt_submit:0:0']
+trusted_hash = "sha256:721d158f9f5fdfe83c3a3b32a8be467d15a60597478be5b251c312427a22af34"
+
+[hooks.state.'C:\Users\Ant\AppData\Local\Temp\mnemos-native-codex-outage-v1\codex-offline\codex-home\.codex\config.toml:stop:0:0']
+trusted_hash = "sha256:0911459efef47f216fc040ef8c144cf37c7e579dcf5dcae8284aba5e8f7bf469"
+
+[windows]
+sandbox = "unelevated"
+
+[projects.'c:\users\ant\appdata\local\temp\mnemos-native-codex-outage-v1\project']
+trust_level = "trusted"

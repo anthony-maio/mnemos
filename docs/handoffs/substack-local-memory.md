@@ -40,6 +40,17 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The latest [package checkpoint](../validation/2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
+is product `9722d92`: 1,857 source tests and 703 installed cases pass, with
+four skips each, all six source/package checks, and seven replay assertions.
+It explicitly carries runtime, SQLite storage, and disabled-autostart settings
+into generated Codex MCP and hooks. The [native Codex outage run](../validation/2026-09-20/native-codex-outage-v1/README.md)
+then passed one stopped-service recovery: two exact native messages, two queued
+entries, two pending jobs, zero facts, stable replay and restart, and cleanup.
+This extends the raw-capture evidence below; it does not establish extraction
+or general reliability. The full-model matrix is still running, with partial
+observations retained. These records also postdate portable packet v27.
+
 The [successor Claude outage attempt](../validation/2026-09-20/native-claude-outage-v2/README.md)
 passed on repaired product `a64afb7`. Two native messages remained buffered
 while the service was stopped, then reached the disposable database after

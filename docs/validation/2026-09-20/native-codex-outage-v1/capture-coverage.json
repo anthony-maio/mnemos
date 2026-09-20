@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "status": "bounded_text_receipts_matched",
+  "expected_messages": 2,
+  "covered_messages": 2,
+  "duplicate_receipts": 0,
+  "provisional_receipts": [],
+  "unmatched_receipts": [],
+  "excluded_receipts": [],
+  "identity_conflicts": [],
+  "messages": [
+    {
+      "identity": "codex-offline:codex:01a0bf69-2c98-7370-a182-66775449e9f8:user:UserPromptSubmit:01a0bf69-3a7f-7d01-8959-a8f313b4fa97",
+      "host": "codex",
+      "phase": "codex-offline",
+      "role": "user",
+      "native_line": 8,
+      "content_sha256": "c37734a3785e5195df700a43c4abfd2b8d1bc1b9ada9aee446a3fbeb92bf00b4",
+      "content_bytes": 185,
+      "capture_supported": true,
+      "message_covered": true,
+      "receipt_indices": [
+        2
+      ],
+      "durable_event_ids": [
+        "2042de9d22b9a92b6266c1c484ca0018c3138e53780c91ca08bdeeb02d304bd5"
+      ],
+      "suppressed": false,
+      "processing_statuses": [
+        "pending"
+      ],
+      "job_statuses": [
+        "pending"
+      ]
+    },
+    {
+      "identity": "codex-offline:codex:01a0bf69-2c98-7370-a182-66775449e9f8:assistant:Stop:01a0bf69-3a7f-7d01-8959-a8f313b4fa97",
+      "host": "codex",
+      "phase": "codex-offline",
+      "role": "assistant",
+      "native_line": 11,
+      "content_sha256": "524c6c95c141defb9db307b6ea34dac3ccd5124fae4f02743e3a12b50332343a",
+      "content_bytes": 30,
+      "capture_supported": true,
+      "message_covered": true,
+      "receipt_indices": [
+        3
+      ],
+      "durable_event_ids": [
+        "b0b155e1fef0b66a1ccf7059665ee8de58d3e246f6f777a06b9e7e2f4ba7670d"
+      ],
+      "suppressed": false,
+      "processing_statuses": [
+        "pending"
+      ],
+      "job_statuses": [
+        "pending"
+      ]
+    }
+  ],
+  "limits": [
+    "Coverage is conditional on the supplied native records being complete.",
+    "Committed receipts do not prove exactly-once callbacks or retained facts.",
+    "Pending/deferred/suppressed receipts and final job states are separate observations.",
+    "No provider wire, outage, Desktop, multi-turn, or daily-use guarantee follows."
+  ]
+}

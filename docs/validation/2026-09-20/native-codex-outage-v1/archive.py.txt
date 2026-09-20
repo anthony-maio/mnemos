@@ -1,0 +1,81 @@
+"""Archive only the disposable native outage evidence and bound helpers."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+repo = Path(__file__).resolve().parent.parent
+runtime = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-codex-outage-v1")
+archive = repo / "docs/validation/2026-09-20/native-codex-outage-v1"
+report = json.loads((runtime / "report.json").read_bytes())
+assert report["status"] == "native_codex_service_outage_raw_capture_observed"
+assert report["cleanup_established"] is True and not (runtime / "runtime.json").exists()
+assert not list(runtime.rglob("auth.json"))
+archive.mkdir(parents=True, exist_ok=False)
+(archive / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+
+def copy(source, relative):
+    target = archive / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+
+for relative in [
+    "report.json", "state-after-recovery.json", "final-state.json", "outbox-before-recovery.json",
+    "capture-coverage.json", "dispatch-records.json", "health-responses.json",
+    "injected-module-configs.json", "service.log", "codex-offline/process.json",
+    "codex-offline/codex-home/.codex/config.toml",
+]:
+    copy(runtime / relative, relative)
+transcript = Path(report["native_transcript"]["path"])
+assert transcript.resolve().is_relative_to(runtime.resolve())
+assert hashlib.sha256(transcript.read_bytes()).hexdigest() == report["native_transcript"]["sha256"]
+import sys
+sys.path.insert(0, str(repo))
+from benchmarks.native_hosts.codex_service_outage_v1 import require_codex_transcript, PROMPT, ACK, MODEL
+from benchmarks.native_hosts.capture_coverage import expected_messages
+raw_lines = transcript.read_bytes().splitlines()
+native = [json.loads(line) for line in raw_lines]
+require_codex_transcript(native, prompt=PROMPT, acknowledgement=ACK, model=MODEL)
+projection = []
+for row in native:
+    kind = row.get("type")
+    payload = row.get("payload", {})
+    selected = {"type": "omitted"}
+    if kind == "session_meta":
+        selected = {"type": kind, "payload": {"id": payload["id"]}}
+    elif kind == "turn_context":
+        selected = {"type": kind, "payload": {k: payload[k] for k in ("model", "turn_id")}}
+    elif kind == "event_msg" and payload.get("type") in {"task_started", "user_message", "task_complete"}:
+        selected = {"type": kind, "payload": {k: payload[k] for k in ("type", "turn_id", "message") if k in payload}}
+    elif kind == "response_item" and payload.get("role") == "assistant" and payload.get("phase") == "final_answer":
+        selected = {"type": kind, "payload": {k: payload[k] for k in ("type", "role", "phase", "content")}}
+    projection.append(selected)
+require_codex_transcript(projection, prompt=PROMPT, acknowledgement=ACK, model=MODEL)
+assert expected_messages("codex", "codex-offline", native) == expected_messages("codex", "codex-offline", projection)
+(archive / "native-projection.jsonl").write_bytes(b"".join((json.dumps(row, ensure_ascii=True)+"\n").encode() for row in projection))
+(archive / "native-source-bindings.json").write_text(json.dumps({
+    "source_sha256": report["native_transcript"]["sha256"],
+    "source_bytes": transcript.stat().st_size,
+    "source_line_sha256": [hashlib.sha256(line).hexdigest() for line in raw_lines],
+    "projection_preserves_line_positions": True,
+    "full_source_tool_and_exact_text_gates_passed": True,
+}, indent=2)+"\n",encoding="ascii")
+source_map = {}
+for relative, expected in report["input_hashes"].items():
+    path = repo / relative
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == expected
+    destination = "sources/native_hosts/" + path.name if path.suffix == ".py" else "protocol.md"
+    copy(path, destination)
+    source_map[relative] = destination
+(archive / "sources/native_hosts/__init__.py").write_bytes(b"")
+copy(repo / ".venv/native-codex-outage-gates-v2.xml", "successor-gates.junit.xml")
+copy(Path(__file__), "archive.py.txt")
+(archive / "source-map.json").write_bytes((json.dumps(source_map, indent=2) + "\n").encode())
+files = {
+    path.relative_to(archive).as_posix(): {
+        "bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+    for path in sorted(archive.rglob("*")) if path.is_file()
+}
+(archive / "evidence-index.json").write_bytes((json.dumps({"files": files}, indent=2) + "\n").encode())
+print(json.dumps({"archive": str(archive), "files": len(files)}))

@@ -1,5 +1,13 @@
 # Local memory host validation
 
+The [Codex outage run](2026-09-20/native-codex-outage-v1/README.md)
+passes one stopped-service raw-capture recovery on verified product `9722d92`.
+Two exact native messages remained buffered, then persisted after restart with
+two pending jobs and zero facts. Receipt accounting, physical identities,
+replay, second restart, and cleanup passed. Generated MCP and hook settings
+explicitly pin disposable runtime/storage and disabled autostart. This adds
+bounded Codex outage evidence; extraction and wider reliability remain open.
+
 The [native Claude outage v2 observation](2026-09-20/native-claude-outage-v2/README.md)
 on verified product `a64afb7` passed one bounded raw-capture recovery run. The
 service was stopped before the native turn, and Claude produced two exact text
