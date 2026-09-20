@@ -1,0 +1,94 @@
+FF.                                                                      [100%]
+================================== FAILURES ===================================
+___________ test_missing_source_selection_is_known_noncommitted_409 ___________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3962/test_missing_source_selection_0')
+
+    @pytest.mark.asyncio
+    async def test_missing_source_selection_is_known_noncommitted_409(tmp_path: Path) -> None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
+            before = _snapshot(domain)
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": [copy.id],
+                    "selected_source_event_ids": [],
+                },
+                queue_on_failure=False,
+            )
+>           assert result == {
+                "schema_version": 1,
+                "status": "rejected",
+                "committed": False,
+                "error": "related_forget_source_selection_required",
+                "message": "Review and select every required source event before applying related forget.",
+            }
+E           AssertionError: assert {'schema_vers...d': True, ...} == {'schema_vers...equired', ...}
+E             
+E             Omitting 2 identical items, use -vv to show
+E             Differing items:
+E             {'error': 'Mnemos service returned HTTP 500'} != {'error': 'related_forget_source_selection_required'}
+E             {'status': 'degraded'} != {'status': 'rejected'}
+E             Left contains 1 more item:
+E             {'degraded': True}...
+E             
+E             ...Full output truncated (4 lines hidden), use '-vv' to show
+
+tests\test_related_forget_service_errors.py:109: AssertionError
+________________ test_explicit_source_selection_still_commits _________________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3962/test_explicit_source_selection0')
+
+    @pytest.mark.asyncio
+    async def test_explicit_source_selection_still_commits(tmp_path: Path) -> None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {"context": context.model_dump(mode="json"), "fact_id": target.id, "expected_version": target.version},
+                queue_on_failure=False,
+            )
+            candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": [copy.id],
+                    "selected_source_event_ids": candidate["required_source_event_ids"],
+                },
+                queue_on_failure=False,
+            )
+            assert result["status"] == "committed"
+>           assert result["committed"] is True
+                   ^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'committed'
+
+tests\test_related_forget_service_errors.py:151: KeyError
+=========================== short test summary info ===========================
+FAILED tests/test_related_forget_service_errors.py::test_missing_source_selection_is_known_noncommitted_409
+FAILED tests/test_related_forget_service_errors.py::test_explicit_source_selection_still_commits
+2 failed, 1 passed in 3.71s

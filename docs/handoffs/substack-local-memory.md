@@ -130,6 +130,25 @@ quality acceptance.
 
 ## Latest verified repair
 
+The [source-selection rejection checkpoint](../validation/2026-09-19/related-forget-error-checkpoint-v1/README.md)
+at `e454a85` passes 1,427 source tests with 4 skips, all six source/package
+checks, 604 isolated installed cases with 4 matching skips, and seven
+replay assertions. Wheel SHA-256:
+`94011300cda669ddcabefe9e9077af0f2aa01b6ed5f23bc13c8e6b7f2a5fbf35`.
+
+Native v6 attempt 3 exposed a useful distinction: storage correctly refused
+to delete selected copies without their required source events, but reported
+the refusal as HTTP 500. The repair gives that specific validation failure a
+typed HTTP 409 response with a fixed explanation. The client and Hermes
+preserve it as rejected and noncommitted, without retrying the invalid
+mutation or draining pending captures. Other validation paths remain separate.
+The [regressions](../../tests/test_related_forget_service_errors.py) cover
+rollback, correct explicit selection, and safe transport behavior. No native
+model has run this package, and clearer errors do not establish better model
+selection or completed erasure. Keep the v6 results above unchanged.
+
+## Package used by native v6
+
 The [Hermes reviewed-copy checkpoint](../validation/2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
 at `db932be` passes 1,383 source tests with 4 skips, all six source/package
 checks, 595 isolated installed cases with 4 matching skips, and seven

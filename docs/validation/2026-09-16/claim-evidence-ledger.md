@@ -1,14 +1,14 @@
 # Mnemos claim and evidence ledger
 
-Current package checkpoint: [Hermes reviewed-copy tools](../2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
-on `db932be` passes 1,383 source tests (4 skips), all six source/package
-checks, 595 installed cases (4 matching skips), and seven replay assertions.
-Hermes exposes eight scoped tools, including the existing service's reviewed
-copy preview/apply operations. New fixtures cover explicit selection, safe
-empty defaults, stale-preview rejection, scope isolation, and preservation
-of unselected advisory candidates. A complete bounded preview does not
-establish exhaustive semantic-copy discovery. The eight-tool v6 native
-result follows, with the earlier six-tool v5 outcome preserved below.
+Current package checkpoint: [source-selection rejection repair](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
+on `e454a85` passes 1,427 source tests (4 skips), all six source/package
+checks, 604 installed cases (4 matching skips), and seven replay assertions.
+Omitting source events required by selected related facts now returns a
+specific HTTP 409 rejection through the authenticated client and Hermes,
+with no mutation, invalid-request retry, or incidental outbox replay. The
+existing generic failures remain for other validation paths and unexpected
+errors. No native model has run this repaired package. The v6 failures below
+remain bound to their earlier `db932be` runtime and unchanged outcomes.
 
 The [fixed Hermes v6 cohort](../2026-09-19/hermes-native-cohort-v6/README.md)
 on verified `db932be` finished zero of three full lifecycles. All three

@@ -1,10 +1,14 @@
 # Client compatibility and observed evidence
 
-Current provider package: [reviewed-copy tools](validation/2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
-on `db932be` passes 1,383 source tests and 595 installed cases, with 4/4
-respective skips and seven replay assertions. It exposes eight Hermes tools;
-the new preview/apply tools now have native-model observations, but all three
-v6 lifecycle attempts failed. Historical six-tool results retain their bindings.
+Current provider package: [source-selection rejection repair](validation/2026-09-19/related-forget-error-checkpoint-v1/README.md)
+on `e454a85` passes 1,427 source tests (4 skips), all six source/package
+checks, 604 installed cases (4 matching skips), and seven replay assertions.
+Omitting source events required by selected related facts now returns a
+specific HTTP 409 rejection through the authenticated client and Hermes,
+with no mutation, invalid-request retry, or incidental outbox replay. The
+existing generic failures remain for other validation paths and unexpected
+errors. No native model has run this repaired package. The v6 failures below
+remain bound to their earlier `db932be` runtime and unchanged outcomes.
 
 Latest native observation: the [fixed Hermes v6 cohort](validation/2026-09-19/hermes-native-cohort-v6/README.md)
 on verified `db932be` finished zero of three full lifecycles. All three
