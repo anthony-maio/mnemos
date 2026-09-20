@@ -433,6 +433,13 @@ The expected-version canonical-collision contract requires review before a
 repair. Forgetting and final replay did not run. All modules were disabled;
 the preserved failure is structural, not a semantic extraction measurement.
 
+The subsequent [captured correction merge](../validation/2026-09-20/captured-correction-merge.md)
+repairs the unverified captured-destination case in source, preserving the
+target ID and transferred evidence through correction, rollback, restart and
+reviewed forgetting. The expanded suite passed 74 tests; 13 focused tests pass
+after the final retired-ID and pending-job guards. Full-suite and rebuilt-wheel
+Hermes verification remain open. Asserted-destination collisions remain rejected.
+
 The [prompt-blinded semantic review](../validation/2026-09-20/extraction-authored-semantic-review-v1/README.md)
 finds better qualification retention in the candidate's successful outputs,
 but its runtime failure remains. The [thinking-disabled diagnostic](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)

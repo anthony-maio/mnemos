@@ -2253,6 +2253,63 @@ class SQLiteStore(MemoryStore):
             self.store(merged)
             return merged
 
+    def _absorb_captured_duplicate_locked(self, candidate: MemoryChunk) -> MemoryChunk:
+        """Transfer unverified duplicate evidence inside a correction transaction."""
+        scope, scope_id = _chunk_scope(candidate)
+        key = compute_canonical_key(
+            candidate.content, scope, scope_id, candidate.metadata.get("user_profile_id")
+        )
+        row = self._conn.execute(
+            f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE canonical_key=?",
+            (key,),
+        ).fetchone()
+        if row is None:
+            return candidate
+        duplicate = self._row_to_chunk(row)
+        if duplicate.id == candidate.id:
+            return candidate
+        if (
+            candidate.metadata.get("assertion_status") != "asserted"
+            or duplicate.metadata.get("source") != "captured_passthrough"
+            or duplicate.metadata.get("assertion_status") != "unknown"
+            or duplicate.version != 1
+            or self.list_fact_revisions(duplicate.id)
+            or self._conn.execute(
+                "SELECT 1 FROM memory_jobs WHERE status != 'completed' "
+                "AND json_extract(payload, '$.target_fact_id')=? LIMIT 1",
+                (duplicate.id,),
+            ).fetchone()
+        ):
+            return candidate
+        metadata = _merge_canonical_metadata(duplicate, candidate)
+        metadata["absorbed_captured_ids"] = list(
+            dict.fromkeys(
+                [
+                    *candidate.metadata.get("absorbed_captured_ids", []),
+                    *duplicate.metadata.get("absorbed_captured_ids", []),
+                    *duplicate.metadata.get("merged_duplicate_ids", []),
+                    duplicate.id,
+                ]
+            )
+        )
+        # Move evidence before deleting the raw row; its FK otherwise cascades.
+        self._conn.execute(
+            "UPDATE fact_evidence SET fact_id=? WHERE fact_id=?", (candidate.id, duplicate.id)
+        )
+        if self._sqlite_vec_enabled and self._vec_table_exists():
+            self._conn.execute(
+                "DELETE FROM memory_vec WHERE rowid IN (SELECT rowid FROM memory_chunks WHERE id=?)",
+                (duplicate.id,),
+            )
+        self._invalidate_graph_derivation_locked({candidate.id, duplicate.id})
+        self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (duplicate.id,))
+        return candidate.model_copy(
+            update={
+                "metadata": metadata,
+                "observation_count": candidate.observation_count + duplicate.observation_count,
+            }
+        )
+
     @staticmethod
     def _scope_sql(filter_fn: Callable[[MemoryChunk], bool] | None) -> tuple[str, list[Any], bool]:
         """Compile engine-owned scope predicates before loading or ranking candidates."""
@@ -2795,6 +2852,11 @@ class SQLiteStore(MemoryStore):
                             suppressed_ids.add(candidate.id)
                             continue
                     prior = self.get(candidate.id)
+                    versioned = (expected_version is not None and index == 0) or candidate.id in (
+                        expected_versions or {}
+                    )
+                    if versioned:
+                        candidate = self._absorb_captured_duplicate_locked(candidate)
                     accepted = self.upsert_canonical(candidate)
                     if (
                         (expected_version is not None and index == 0)
@@ -3688,6 +3750,11 @@ class SQLiteStore(MemoryStore):
             self._conn.execute(
                 "INSERT INTO memory_suppressions VALUES (?, ?, ?, NULL, 'explicit_forget', ?)",
                 (str(uuid4()), fact_id, key, stamp),
+            )
+        for absorbed_id in chunk.metadata.get("absorbed_captured_ids", []):
+            self._conn.execute(
+                "INSERT INTO memory_suppressions VALUES (?, ?, NULL, NULL, 'explicit_forget', ?)",
+                (str(uuid4()), absorbed_id, stamp),
             )
         for event_id in event_ids:
             shared = (

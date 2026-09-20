@@ -443,6 +443,9 @@ class MnemosEngine:
         self, chunk: MemoryChunk, *, _rebuild_source_ids: set[str] | None = None
     ) -> None:
         """Refresh one fact from bounded scoped neighbors, including unhydrated rows."""
+        for absorbed_id in chunk.metadata.get("absorbed_captured_ids", []):
+            if self.store.get(absorbed_id) is None:
+                self.spreading_activation.remove_node(absorbed_id)
         if not self.config.modules.spreading or not chunk.embedding:
             return
         scope, scope_id = _chunk_scope_data(chunk)

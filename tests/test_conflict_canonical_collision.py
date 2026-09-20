@@ -79,6 +79,37 @@ def _metadata(status: str) -> dict[str, str]:
     }
 
 
+def test_captured_duplicate_with_pending_correction_is_not_absorbed(tmp_path):
+    store = SQLiteStore(str(tmp_path / "pending-correction.sqlite"))
+    try:
+        target = store.upsert_canonical(_chunk("Use cedar", status="asserted", chunk_id="target"))
+        raw = _chunk("Use birch", status="unknown", chunk_id="raw")
+        raw.metadata["source"] = "captured_passthrough"
+        store.upsert_canonical(raw)
+        store.enqueue_job(
+            DurableJob(id="other-correction", kind="correct", payload={"target_fact_id": raw.id})
+        )
+        source = _event()
+        store.append_episodic_event(source)
+        store.enqueue_job(_job(source.id))
+        job = store.claim_jobs(owner="worker", job_id="job-1")[0]
+        with pytest.raises(CorrectionCanonicalCollisionError):
+            store.commit_fact_and_job(
+                job.id,
+                owner="worker",
+                lease_token=job.lease_token,
+                chunks=[target.reconsolidate(raw.content)],
+                expected_version=target.version,
+                processed_event_ids=[source.id],
+            )
+        assert store.get(raw.id).content == raw.content
+        assert store.get(target.id).content == target.content
+        assert store.get_job("other-correction").payload["target_fact_id"] == raw.id
+        assert store.get_job("other-correction").status == "pending"
+    finally:
+        store.close()
+
+
 def _chunk(content: str, *, status: str, chunk_id: str) -> MemoryChunk:
     return MemoryChunk(
         id=chunk_id,
