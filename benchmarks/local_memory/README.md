@@ -223,6 +223,14 @@ records the frozen source checks, installed adapter cases, and offline preparati
 
 ## Performance storage location
 
+Extraction evidence resolution was tightened on September 20: every declared
+runtime source must resolve to a dataset event before the exact-text support
+proxy can accept a fact. Previously a valid source could mask additional
+missing or unmapped sources. Raw judgments now include
+`source_resolution_complete`. This is a scoring correctness repair, not a
+semantic precision measurement. Preserve earlier scores with their original
+code revision; do not silently recompute historical reports.
+
 Choose the data volume explicitly when measuring capture and 10,000-fact
 recall. Durable outbox flushes and SQLite commits depend on that volume.
 

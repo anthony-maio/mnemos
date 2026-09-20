@@ -1414,6 +1414,7 @@ class OllamaEvaluatorAdapter:
             accepted = bool(
                 matched
                 and observed_events
+                and len(observed_events) == len(source_ids)
                 and all(
                     event.role == "user"
                     and event.write_mode in {"automatic", "explicit"}
@@ -1429,6 +1430,8 @@ class OllamaEvaluatorAdapter:
                     "content_nonempty": bool(content),
                     "matched_supported_fact_id": matched.fact_id if matched else None,
                     "observed_source_event_ids": [event.event_id for event in observed_events],
+                    "source_resolution_complete": bool(source_ids)
+                    and len(observed_events) == len(source_ids),
                     "accepted": accepted,
                     "judgement": "exact_frozen_text_and_evidence_proxy",
                 }
