@@ -42,7 +42,11 @@ from ..types import (
     RetrievalFeedbackEvent,
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
-from ..errors import RelatedForgetPreviewStale, RelatedForgetSourceSelectionRequired
+from ..errors import (
+    RelatedForgetPreviewStale,
+    RelatedForgetSelectionInvalid,
+    RelatedForgetSourceSelectionRequired,
+)
 from .embeddings import cosine_similarity
 
 
@@ -3781,10 +3785,10 @@ class SQLiteStore(MemoryStore):
                 selected_facts = [item for item in selected_fact_ids if item != fact_id]
                 unknown_facts = set(selected_facts) - set(candidates)
                 if unknown_facts:
-                    raise ValueError("Selection is not present in the forget preview")
+                    raise RelatedForgetSelectionInvalid()
                 unknown_sources = set(selected_source_event_ids) - set(sources)
                 if unknown_sources:
-                    raise ValueError("Source selection is not present in the forget preview")
+                    raise RelatedForgetSelectionInvalid()
                 selected_sources = set(selected_source_event_ids)
                 for selected_id in selected_facts:
                     candidate = candidates[selected_id]

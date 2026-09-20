@@ -41,6 +41,7 @@ from urllib.parse import urlsplit
 from .jobs import FactNotFoundError, JobNotFoundError
 from .errors import (
     RelatedForgetPreviewStale,
+    RelatedForgetSelectionInvalid,
     RelatedForgetSourceSelectionRequired,
 )
 from .observability import (
@@ -513,6 +514,18 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     "committed": False,
                     "error": RelatedForgetPreviewStale.code,
                     "message": RelatedForgetPreviewStale.safe_message,
+                },
+            )
+            return
+        except RelatedForgetSelectionInvalid:
+            self._write_json(
+                409,
+                {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "rejected",
+                    "committed": False,
+                    "error": RelatedForgetSelectionInvalid.code,
+                    "message": RelatedForgetSelectionInvalid.safe_message,
                 },
             )
             return

@@ -10,6 +10,10 @@ RELATED_FORGET_PREVIEW_STALE = "related_forget_preview_stale"
 RELATED_FORGET_PREVIEW_STALE_MESSAGE = (
     "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit."
 )
+RELATED_FORGET_SELECTION_INVALID = "related_forget_selection_invalid"
+RELATED_FORGET_SELECTION_INVALID_MESSAGE = (
+    "Selected related-forget IDs must come from the reviewed preview."
+)
 
 
 class RelatedForgetSourceSelectionRequired(ValueError):
@@ -30,3 +34,13 @@ class RelatedForgetPreviewStale(ValueError):
 
     def __init__(self) -> None:
         super().__init__("Forget preview is stale")
+
+
+class RelatedForgetSelectionInvalid(ValueError):
+    """A selected fact or source was not present in the reviewed preview."""
+
+    code = RELATED_FORGET_SELECTION_INVALID
+    safe_message = RELATED_FORGET_SELECTION_INVALID_MESSAGE
+
+    def __init__(self) -> None:
+        super().__init__("Selection is not present in the reviewed forget preview")

@@ -23,6 +23,8 @@ from .memory_safety import MemoryWriteFirewall
 from .errors import (
     RELATED_FORGET_PREVIEW_STALE,
     RELATED_FORGET_PREVIEW_STALE_MESSAGE,
+    RELATED_FORGET_SELECTION_INVALID,
+    RELATED_FORGET_SELECTION_INVALID_MESSAGE,
     RELATED_FORGET_SOURCE_SELECTION_MESSAGE,
     RELATED_FORGET_SOURCE_SELECTION_REQUIRED,
 )
@@ -446,6 +448,23 @@ class MnemosClient:
                     "committed": False,
                     "error": RELATED_FORGET_PREVIEW_STALE,
                     "message": RELATED_FORGET_PREVIEW_STALE_MESSAGE,
+                }
+            if (
+                isinstance(result, dict)
+                and set(result) == expected_keys
+                and type(result.get("schema_version")) is int
+                and result.get("schema_version") == SCHEMA_VERSION
+                and result.get("status") == "rejected"
+                and result.get("committed") is False
+                and result.get("error") == RELATED_FORGET_SELECTION_INVALID
+                and result.get("message") == RELATED_FORGET_SELECTION_INVALID_MESSAGE
+            ):
+                return {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "rejected",
+                    "committed": False,
+                    "error": RELATED_FORGET_SELECTION_INVALID,
+                    "message": RELATED_FORGET_SELECTION_INVALID_MESSAGE,
                 }
             raise ServiceClientError("Mnemos service returned HTTP 409")
         if response.status_code >= 400:

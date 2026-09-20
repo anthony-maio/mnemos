@@ -332,9 +332,76 @@ async def test_out_of_preview_selection_rejection_does_not_leak_fact_identity(
             },
             queue_on_failure=False,
         )
-        assert result["status"] == "degraded"
+        assert result == {
+            "schema_version": 1,
+            "status": "rejected",
+            "committed": False,
+            "error": "related_forget_selection_invalid",
+            "message": "Selected related-forget IDs must come from the reviewed preview.",
+        }
         assert foreign_id not in json.dumps(result)
         assert _snapshot(domain)["suppressions"] == []
+    finally:
+        await client.close()
+        service.stop()
+        domain.engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_out_of_preview_source_rejection_preserves_snapshot_and_hermes_path(
+    tmp_path: Path,
+) -> None:
+    service, domain, context = _runtime(tmp_path)
+    client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    try:
+        _, target, copy = await _seed_overlap(domain, context)
+        preview = await client.request(
+            "forget_preview",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": target.id,
+                "expected_version": target.version,
+            },
+            queue_on_failure=False,
+        )
+        client.outbox.append(
+            {
+                "event_id": "queued-before-invalid-source",
+                "context": context.model_dump(mode="json"),
+                "content": "pending capture",
+            }
+        )
+        client._outbox_drained = False  # noqa: SLF001
+        before = _snapshot(domain)
+        payload = {
+            "fact_id": target.id,
+            "expected_version": target.version,
+            "preview_digest": preview["preview_digest"],
+            "preview_limit": preview["limit"],
+            "selected_fact_ids": [copy.id],
+            "selected_source_event_ids": ["source-not-in-reviewed-preview"],
+        }
+
+        result = await client.request(
+            "forget_related",
+            {"context": context.model_dump(mode="json"), **payload},
+            queue_on_failure=False,
+        )
+        assert result == {
+            "schema_version": 1,
+            "status": "rejected",
+            "committed": False,
+            "error": "related_forget_selection_invalid",
+            "message": "Selected related-forget IDs must come from the reviewed preview.",
+        }
+        hermes_result = json.loads(
+            await dispatch_tool(client, context, "mnemos_forget_related", payload)
+        )
+        assert hermes_result == result
+        assert _snapshot(domain) == before
+        pending = client.outbox.pending()
+        assert len(pending) == 1
+        assert pending[0]["payload"]["event_id"] == "queued-before-invalid-source"
     finally:
         await client.close()
         service.stop()
@@ -385,6 +452,17 @@ async def test_unexpected_value_error_remains_degraded_500(tmp_path: Path) -> No
         (
             "forget_related",
             {
+                "schema_version": 1,
+                "status": "rejected",
+                "committed": False,
+                "error": "related_forget_selection_invalid",
+                "message": "Selected related-forget IDs must come from the reviewed preview.",
+                "private": "do-not-forward",
+            },
+        ),
+        (
+            "forget_related",
+            {
                 "schema_version": True,
                 "status": "rejected",
                 "committed": False,
@@ -402,6 +480,16 @@ async def test_unexpected_value_error_remains_degraded_500(tmp_path: Path) -> No
                 "committed": False,
                 "error": "related_forget_source_selection_required",
                 "message": "Review and select every required source event before applying related forget.",
+            },
+        ),
+        (
+            "inspect",
+            {
+                "schema_version": 1,
+                "status": "rejected",
+                "committed": False,
+                "error": "related_forget_selection_invalid",
+                "message": "Selected related-forget IDs must come from the reviewed preview.",
             },
         ),
     ],
