@@ -1,0 +1,61 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-discovery-preflight-v10')
+output = repo / 'docs/validation/2026-09-20/hermes-native-discovery-preflight-v10'
+report = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'preflight_passed'
+trace = [json.loads(line) for line in (source / 'preflight/trace.jsonl').read_text(encoding='utf-8').splitlines()]
+assert not any(row['operation'] in {'model_request', 'model_response', 'tool_result', 'bridge_response'} for row in trace)
+names = next(row['tool_names'] for row in trace if row['operation'] == 'preflight_complete')
+assert len(names) == 8 and {'mnemos_forget_preview', 'mnemos_forget_related'} <= set(names)
+assert not (source / 'model-readiness').exists()
+assert not (source / 'runtime.json').exists()
+suite = ET.parse(repo / '.venv/native-v10-offline-v1.xml').getroot().find('testsuite')
+assert suite is not None and suite.attrib['tests'] == '123'
+assert suite.attrib['failures'] == suite.attrib['errors'] == suite.attrib['skipped'] == '0'
+output.mkdir(parents=True, exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+paths = ['host-environment-before.txt', 'host-environment-after.txt', 'report.json', 'host-compatibility.patch', 'preflight/trace.jsonl', 'preflight/stdout.log', 'preflight/stderr.log']
+for relative, digest in report['input_hashes'].items():
+    path = Path(relative)
+    name = path.name + ('.txt' if path.suffix == '.py' else '')
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    paths.append(name)
+for name in paths:
+    target = output / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, target)
+shutil.copyfile(__file__, output / (Path(__file__).name + '.txt'))
+shutil.copyfile(repo / '.venv/native-v10-offline-v1.xml', output / 'native-v10-offline-v1.xml')
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+seconds = report['phases'][0]['seconds']
+(output / 'README.md').write_text(f'''# Native Hermes stale-preview package discovery preflight
+
+The pinned Hermes checkout discovered all eight Mnemos tools from the verified
+`f2f7414` wheel, resolved the disposable project/home, and shut down without a
+model request, tool dispatch, bridge call, or service mutation. The phase took
+{seconds:.3f} seconds. The readiness helper and request observer imported but did not run.
+Live host configuration and memory were unchanged.
+
+The archived offline JUnit report passes 123 native workflow, process cleanup,
+trace, request recording, and readiness cases. This is separate from the import-only host check.
+The runner and v10 protocol were committed as `9f5e9c4` before the preflight.
+
+The isolated source, live interpreter revision, and dependency inventory
+match v9. Formatting passes the two new harness files and expanded cohort
+tests; mypy passes the two new harness files. No model or tool response was
+substituted during this import-only check.
+
+This is import/configuration evidence, not native-model lifecycle acceptance.
+The v10 cohort separately binds its committed runner, readiness helper,
+protocol, and unchanged evaluator. The evidence index binds the raw files;
+this README is outside that index.
+''', encoding='utf-8')
+print(json.dumps({'files': len(files), 'path': str(output)}))
