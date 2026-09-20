@@ -30,3 +30,9 @@ a configuration diagnostic, not a memory-quality or native lifecycle test.
 Even if the new alias fixes context provisioning, it does not prove why
 earlier models omitted actions or misselected deletion arguments. Preserve
 all earlier failures and qualify their unverified effective-context claims.
+
+Preparation note: the first launch failed before any HTTP request because
+the logger accessed `Request.method` instead of `Request.get_method()`.
+Preserve that zero-request report. Correct the logger in a new committed
+snapshot and use a fresh output directory before the three scheduled calls;
+no inference outcome or observation is discarded or repeated by this repair.

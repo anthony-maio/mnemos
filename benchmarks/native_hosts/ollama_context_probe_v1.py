@@ -48,7 +48,7 @@ def main() -> int:
             data=body,
             headers={"Content-Type": "application/json"},
         )
-        row: dict[str, Any] = {"label": label, "route": route, "method": req.method}
+        row: dict[str, Any] = {"label": label, "route": route, "method": req.get_method()}
         record["requests"].append(row)
         save()
         started = time.monotonic()
