@@ -1,0 +1,39 @@
+from pathlib import Path
+import hashlib,json,shutil
+repo=Path.cwd()
+src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-lease-renewal-v1')
+v=json.loads((src/'verification.json').read_bytes())
+assert v['status']=='passed' and v['source_commit']=='bee8357fed2952bdbf42c8c84240ea642658dd5e'
+assert len(v['checks'])==6 and all(c['exit_code']==0 for c in v['checks'])
+assert v['checks'][0]['counts']=={'tests':2023,'failures':0,'errors':0,'skipped':4}
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo/'.venv/final_checkpoint_checks_v3.py')==v['runner_sha256']
+for a in v['artifacts']:
+ p=Path(a['file']); assert sha(p)==a['sha256'] and p.stat().st_size==a['bytes']
+out=repo/'docs/validation/2026-09-20/lease-renewal-source-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for p in src.iterdir():
+ if p.is_file() and p.suffix in {'.json','.xml','.log'}: shutil.copyfile(p,out/p.name)
+shutil.copyfile(repo/'.venv/final_checkpoint_checks_v3.py',out/'runner.py.txt')
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'README.md').write_text("""# Lease renewal source/package checkpoint
+
+Frozen checkpoint bee8357 (product change bfb4a32) passes 2,019 source tests
+with four skips, formatting, Python 3.10 compatibility type checking,
+JavaScript syntax, wheel/sdist build and twine metadata checks. All six
+checks have exit code zero. JUnit outcomes and package hashes are preserved.
+
+Active jobs renew a fenced lease without accumulating excess recovery delay.
+Long-running work, competing owners, stale tokens, cancellation, retry and
+late writes from non-cooperative processors are covered. The initial mutable
+checkout run was deliberately stopped after the cancellation refinement;
+only this clean frozen checkpoint is used for the full-suite claim.
+
+Installed-package verification is separate. This does not close real-model
+quality, native-host acceptance, provider recovery or the daily-use pilot.
+""")
+
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files)}))
