@@ -129,6 +129,29 @@ returns reasoning separately from its final response. Mnemos uses only the
 final response and reports a provider error when it is empty or not text.
 See [Ollama thinking configuration](https://docs.ollama.com/capabilities/thinking).
 
+The same section accepts `max_tokens` (positive integer, default 512),
+`timeout` (positive seconds, default 30.0), and `temperature` (nonnegative,
+default 0.1). These values reach the managed service's generation provider
+and survive configuration save/reload. They have no environment overrides.
+For an explicit reasoning experiment, the tested configuration was:
+
+```toml
+[providers.ollama]
+think = true
+max_tokens = 8192
+timeout = 180.0
+temperature = 0.0
+```
+
+Explicitly enabled reasoning with structured output uses Ollama's chat API
+and consumes only final message content. Other requests keep the generate
+route. Reasoning and the final answer share the output budget; a short budget
+can finish before a valid final answer exists. The local Qwen3.5:9b diagnostic
+returned a qualified historical fact through chat with this larger budget;
+constrained generate calls still returned no final answer. This is a bounded
+development result, not a recommended default or a quality acceptance result.
+[Requests, failures, and limits](validation/2026-09-20/ollama-reasoning-channel-diagnostic-v1/README.md).
+
 In a four-case development probe, `qwen3.5:9b` with `think = false` returned
 four runtime-valid extraction responses through the provider. Three matched
 the predefined exact proxy; the model omitted a stated editor preference.

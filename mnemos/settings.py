@@ -365,6 +365,9 @@ class OllamaProviderSettings(BaseModel):
 
     base_url: str = "http://localhost:11434"
     think: StrictBool | Literal["low", "medium", "high", "max"] | None = None
+    max_tokens: int = Field(default=512, strict=True, gt=0)
+    timeout: float = Field(default=30.0, strict=True, gt=0, allow_inf_nan=False)
+    temperature: float = Field(default=0.1, strict=True, ge=0, allow_inf_nan=False)
 
 
 class ProvidersSettings(BaseModel):

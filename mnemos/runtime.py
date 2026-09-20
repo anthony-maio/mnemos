@@ -220,6 +220,9 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
             base_url=settings.base_url_for("ollama") or "http://localhost:11434",
             model=settings.llm.model or "llama3",
             think=settings.providers.ollama.think,
+            max_tokens=settings.providers.ollama.max_tokens,
+            timeout=settings.providers.ollama.timeout,
+            temperature=settings.providers.ollama.temperature,
         )
 
     if provider in {"openai", "openclaw", "openrouter"}:
