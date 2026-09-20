@@ -70,9 +70,19 @@ These authored judgments are not an aggregate accuracy claim.
 The [thinking-disabled follow-up](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)
 completed all 40 calls but lost required memories and falsely cited unrelated
 source events for an existing control fact. Zero runtime errors did not make
-the output trustworthy. That setting is not adopted. A complete comparison
-with thinking retained and a larger token budget is pending. Neither live
-settings nor the production extraction prompt have changed. Earlier negatives remain.
+the output trustworthy. That setting is not adopted. The [larger-budget comparison](../validation/2026-09-20/extraction-larger-budget-v1/README.md)
+has finished all 40 calls. All parsed statuses and ordered proposals match the
+8,192-token run exactly; the candidate again exhausted its budget without a
+final answer on P03. Neither live settings nor the production extraction prompt
+have changed. Earlier negatives remain.
+
+The [captured correction repair](../validation/2026-09-20/captured-correction-merge.md)
+adds another concrete failure and repair: correcting an old statement to text
+already stored as raw evidence previously left the job pending. The source fix
+keeps the correction target ID and transfers the raw duplicate's evidence in
+one transaction. Rollback, restart, project isolation, graph cleanup and reviewed
+forgetting pass the focused checks. Full package validation is running on
+26c9ddb; do not describe this as a verified installed upgrade yet.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../validation/2026-09-20/history-context-diagnostic-v1/README.md)
