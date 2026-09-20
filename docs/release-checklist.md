@@ -4,7 +4,7 @@ Use this checklist before tagging a release candidate or making category-definin
 
 ## Functional local memory acceptance
 
-The functional-local-memory implementation remains unreleased as of September 19, 2026. The [implementation status](validation/2026-09-16/implementation-status.md) records current observations, preserved failures, and gates still open. Before release:
+The functional-local-memory implementation remains unreleased as of September 20, 2026. The [implementation status](validation/2026-09-16/implementation-status.md) preserves historical observations; the [implementation plan](plans/2026-09-16-functional-local-memory.md) links the latest checkpoints and open gates. Source `cc940ac` passes 2,034 tests with four skips; its isolated installed wheel passes 859 cases with four matching skips and the replay probe. Real-model extraction, full-module recovery, quality acceptance and the daily-use pilot remain open. Before release:
 
 - Freeze one source commit and validate its wheel outside the source checkout.
 - Verify scope isolation, durable retry, restart, expected-version correction, forget/replay suppression, backup/restore, and reindex identity on the persistent service.
