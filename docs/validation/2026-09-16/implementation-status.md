@@ -1,5 +1,12 @@
 # Functional local memory implementation status
 
+The [source-association vector preparation](../2026-09-20/source-association-vectors-v1/README.md)
+is complete: 364 frozen Nomic vectors, all independently matched to raw
+responses, with unchanged model/input bindings and observed GPU residency.
+The five development cases were committed before preparation. The semantic,
+source-only, and combined graph comparison is still NOT RUN; previous graph
+failures and T18 quality gates remain unchanged.
+
 The [selection-rejection package](../2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
 checks, 655 isolated installed cases with four matching skips, and seven
