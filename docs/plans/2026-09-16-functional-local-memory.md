@@ -561,6 +561,18 @@ finds only three of 30 recorded combinations could reach top five under its
 optimistic assumptions; 15 lack the target candidate altogether. This is a
 structural diagnostic, not retrieval improvement or a changed graph default.
 
+The [fresh v2 corpus review](../validation/2026-09-20/fresh-corpus-semantic-review-v2/README.md)
+records ineffective corrections, incorrect old-source links, neutral state
+paraphrases and singleton retrieval pools. New drafts are being revised before
+inference; none is frozen or accepted. Zero exact overlap does not establish
+semantic independence.
+
+The [extraction evidence scoring repair](../validation/2026-09-20/extraction-evidence-resolution-v1/README.md)
+passes 113 focused and adjacent tests, Black and compatibility mypy on e082790.
+Every claimed source must now resolve before the exact-text proxy accepts a
+fact. Earlier scores remain bound to their original code; this is not semantic
+precision or a new full-suite claim. Packaged engine code is unchanged.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Latest verified source [6ec8259](../validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1/README.md)

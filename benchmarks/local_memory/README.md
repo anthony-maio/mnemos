@@ -221,7 +221,7 @@ latency gate. Production retrieval defaults and host configuration are unchanged
 The [retrieval checkpoint](../../docs/validation/2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
 records the frozen source checks, installed adapter cases, and offline preparation.
 
-## Performance storage location
+## Extraction evidence resolution
 
 Extraction evidence resolution was tightened on September 20: every declared
 runtime source must resolve to a dataset event before the exact-text support
@@ -230,6 +230,8 @@ missing or unmapped sources. Raw judgments now include
 `source_resolution_complete`. This is a scoring correctness repair, not a
 semantic precision measurement. Preserve earlier scores with their original
 code revision; do not silently recompute historical reports.
+
+## Performance storage location
 
 Choose the data volume explicitly when measuring capture and 10,000-fact
 recall. Durable outbox flushes and SQLite commits depend on that volume.
