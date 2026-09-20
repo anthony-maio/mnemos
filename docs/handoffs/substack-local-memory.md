@@ -40,8 +40,21 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
-Packet v23 includes this verified package record and the preceding native
-failures. The engineering goal remains open.
+Packet v24 adds the source-association development measurements to the verified
+package record and preceding native failures. The engineering goal remains open.
+
+The [source-association repeat measurement](../validation/2026-09-20/source-association-measurement-v2/README.md)
+completed 45 observations across five cases, three arms, and three deterministic
+repetitions. After a measurement-helper repair, all non-lifecycle controls
+passed, but no arm produced a target path or target top-five result. Nine
+lifecycle controls failed because preserving a shared source conflicts with
+the existing deletion behavior. The corrected fact survived at version 2 and
+the forgotten fact stayed absent after replay and restart. These findings do
+not establish retrieval utility. The [original failed measurement](../validation/2026-09-20/source-association-measurement-v1/README.md),
+[helper regression](../validation/2026-09-20/source-association-visit-budget-v1/README.md),
+and [frozen-vector preparation](../validation/2026-09-20/source-association-vectors-v1/README.md)
+are retained. This gives the writer a concrete example of checking the
+measurement itself without turning an unsuccessful experiment into a success.
 
 The [selection-rejection package](../validation/2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
@@ -77,7 +90,7 @@ three-attempt prerequisite cohort failed all three lifecycles under unchanged re
 
 The [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open. Packet v23 includes this record.
 
-The portable v23 packet is a working snapshot through the verified selection-rejection package and the preceding native Hermes v11 failures. It includes the earlier partial cross-host success and the later v5 failure. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
+The portable v24 packet is a working snapshot through the source-association repeat measurement, verified selection-rejection package, and preceding native Hermes v11 failures. It includes the earlier partial cross-host success and the later v5 failure. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
 
 The [three-host v5 attempt](../validation/2026-09-20/three-host-native-v5/README.md) passed
 both teaching phases, then failed at Hermes recall on unsupported scope

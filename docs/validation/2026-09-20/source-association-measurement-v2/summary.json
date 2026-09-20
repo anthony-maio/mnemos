@@ -1,0 +1,140 @@
+{
+  "schema_version": "source-association-measurement-v1",
+  "measurement_status": "complete",
+  "execution_complete": true,
+  "controls_pass": false,
+  "coverage_pass": false,
+  "source_commit": "d5b8577389d2a522c0b18ae59d29d6f4a4929a3c",
+  "started_at": "2026-09-20T10:09:56.587238+00:00",
+  "finished_at": "2026-09-20T10:11:09.433342+00:00",
+  "manifest_sha256": "809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741",
+  "vector_artifact_sha256": "bb66da961d731c80a9bb965f72db082371f5faac2f13b32ff268bb408a7420cb",
+  "protocol_sha256": "5413df50194a00315cd56bf22221921ff48de57e62eac1ced2bb5f71618dd4d4",
+  "model": "nomic-embed-text:latest",
+  "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+  "embedding_text_contract": {
+    "document_prefix": "",
+    "query_prefix": "",
+    "symmetric_prefix": "",
+    "symmetry": "symmetric"
+  },
+  "options": {
+    "activation_threshold": 0.3,
+    "context_budget_tokens": 4096,
+    "decay": 0.2,
+    "fanout_limit": 16,
+    "graph_weight": 0.1,
+    "max_candidates": 100,
+    "max_hops": 3,
+    "max_visited": 1000,
+    "neighbor_budget": 4,
+    "relevance_floor": 0.2,
+    "repetitions": 3,
+    "semantic_edge_threshold": 0.6,
+    "source_edge_weight": 1.0,
+    "top_k": 5
+  },
+  "expected_rows": 45,
+  "independent_cases": 5,
+  "summary_by_arm": {
+    "combined": {
+      "direct_target_rows": 6,
+      "rows": 15,
+      "structural_path_rows": 0,
+      "target_top5_rows": 0
+    },
+    "semantic": {
+      "direct_target_rows": 6,
+      "rows": 15,
+      "structural_path_rows": 0,
+      "target_top5_rows": 0
+    },
+    "source_association": {
+      "direct_target_rows": 6,
+      "rows": 15,
+      "structural_path_rows": 0,
+      "target_top5_rows": 0
+    }
+  },
+  "cases_with_shared_source_relations": [
+    "revision_forget_replay",
+    "scope_isolation_pair",
+    "shared_capture_triplet",
+    "shared_extraction_batch"
+  ],
+  "control_failures": [
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    }
+  ],
+  "measurement_sha256": "9956a15b7e987569d1bf2a0f4be9ee8e8d5eb68b1d9cdfc70c03f1c830fefffe"
+}
