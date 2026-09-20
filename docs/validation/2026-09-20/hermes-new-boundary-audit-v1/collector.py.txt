@@ -1,0 +1,46 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import sqlite3
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+base = Path('/tmp/mnemos-hermes-base-14a3463-v1')
+out = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory/docs/validation/2026-09-20/hermes-new-boundary-audit-v1')
+result = json.loads((candidate / 'integration_api_probe_v10.json').read_bytes())
+patch = Path('/tmp/mnemos-hermes-root-new-v10.patch')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(patch) == result['candidate_patch_sha256']
+assert result['status'] == 'passed' and result['verified_installed_python_modules'] == 55
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+names = [f'integration_api_probe_v{v}.{ext}' for v in (9, 10) for ext in ('py', 'stdout.log', 'stderr.log')]
+names += ['integration_api_probe_v10.json', 'hermes-state-complete-v2.stdout.log',
+          'hermes-state-complete-v2.junit.xml', 'hermes-state-complete-v3.stdout.log',
+          'hermes-state-complete-v3.junit.xml', 'affected-boundary-v2.stdout.log',
+          'affected-boundary-v2.junit.xml', 'wal-isolated-v1.stdout.log']
+for name in names:
+    shutil.copyfile(candidate / name, out / name)
+for name in ('hermes-state-base-v1.stdout.log', 'hermes-state-base-v1.junit.xml'):
+    shutil.copyfile(base / name, out / name)
+shutil.copyfile(patch, out / 'candidate.patch')
+shutil.copyfile(Path(__file__), out / 'collector.py.txt')
+databases = {'v9-uncommitted': Path('/tmp/mnemos-hermes-root-new-v9-_mn1nj2h/valid/state.db'),
+             'v10-committed': Path(result['root']) / 'valid/state.db',
+             'v10-tampered': Path(result['root']) / 'corrupt/state.db'}
+inspections = {}
+for label, path in databases.items():
+    with sqlite3.connect(path.as_uri() + '?mode=ro', uri=True) as source:
+        with sqlite3.connect(out / (label + '.sqlite')) as target:
+            source.backup(target)
+            assert target.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
+            target.row_factory = sqlite3.Row
+            inspections[label] = {'integrity': 'ok',
+                'sessions': [dict(row) for row in target.execute('SELECT id, ended_at FROM sessions')],
+                'messages': [dict(row) for row in target.execute('SELECT id, session_id, role, content FROM messages')]}
+assert len(inspections['v9-uncommitted']['messages']) == 0
+assert len(inspections['v10-committed']['messages']) == len(inspections['v10-tampered']['messages']) == 1
+(out / 'database-inspections.json').write_text(json.dumps(inspections, indent=2) + '\n')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'candidate_patch': sha(patch)}))

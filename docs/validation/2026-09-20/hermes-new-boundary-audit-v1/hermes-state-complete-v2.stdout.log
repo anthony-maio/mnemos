@@ -1,0 +1,266 @@
+........................................................................ [  5%]
+........................................................................ [ 10%]
+.....................s...............ss.s.sss........................... [ 15%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 30%]
+........................................................................ [ 35%]
+........................................................................ [ 40%]
+.F...................................................................... [ 45%]
+........................................................................ [ 50%]
+...............................FF....................................... [ 56%]
+..................FF.................................................... [ 61%]
+.....................................................s.................. [ 66%]
+........................................................................ [ 71%]
+........................................................................ [ 76%]
+.....................................................s.................. [ 81%]
+........................................................................ [ 86%]
+............................................................s........... [ 91%]
+........................................................................ [ 96%]
+.....s........................................                           [100%]
+=================================== FAILURES ===================================
+_________ TestApplyWalProbe.test_apply_wal_concurrent_connects_no_eio __________
+
+self = <tests.hermes_state.test_hermes_state.TestApplyWalProbe object at 0x792eecfa6010>
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-53/test_apply_wal_concurrent_conn0')
+
+    def test_apply_wal_concurrent_connects_no_eio(self, tmp_path):
+        """20 threads calling connect() on the same DB must not see disk I/O error."""
+        import sys
+        import threading
+        import sqlite3
+        from hermes_state_wal import apply_wal_with_fallback
+    
+        db_path = tmp_path / "concurrent.db"
+        errors = []
+    
+        def _connect_cycle():
+            for _ in range(5):
+                try:
+                    conn = sqlite3.connect(str(db_path))
+                    apply_wal_with_fallback(conn)
+                    conn.close()
+                except sqlite3.OperationalError as exc:
+                    if "disk i/o error" in str(exc).lower():
+                        errors.append(exc)
+    
+        threads = [threading.Thread(target=_connect_cycle) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    
+        assert not errors, f"disk I/O errors from concurrent connects: {errors}"
+    
+        # Linux-only: no (deleted) WAL/SHM FDs should accumulate.
+        if sys.platform == "linux":
+            import os
+    
+            fd_dir = f"/proc/{os.getpid()}/fd"
+            deleted_fds = []
+            for fd_name in os.listdir(fd_dir):
+                try:
+                    target = os.readlink(os.path.join(fd_dir, fd_name))
+                    if "(deleted)" in target and (
+                        "wal" in target.lower() or "shm" in target.lower()
+                    ):
+                        deleted_fds.append(target)
+                except OSError:
+                    pass
+>           assert not deleted_fds, f"stale deleted WAL/SHM FDs: {deleted_fds}"
+E           AssertionError: stale deleted WAL/SHM FDs: ['/tmp/pytest-of-anthony/pytest-53/test_close_after_halt_runs_no_0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_close_after_halt_runs_no_0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_iter_finds_self_after_wal0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_iter_finds_self_after_wal0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_second_sessiondb_open_ref0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_second_sessiondb_open_ref0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_iter_holders_flags_orphan0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_iter_holders_flags_orphan0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_writer_halts_after_own_wa0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_writer_halts_after_own_wa0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_retirement_preserves_reco0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_retirement_preserves_reco0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_retirement_preserves_reco1/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_retirement_preserves_reco1/state.db-shm (deleted)']
+E           assert not ['/tmp/pytest-of-anthony/pytest-53/test_close_after_halt_runs_no_0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/py...tate.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-53/test_second_sessiondb_open_ref0/state.db-shm (deleted)', ...]
+
+tests/hermes_state/test_hermes_state.py:4901: AssertionError
+_______ test_child_with_rebuilt_env_keeping_marker_refuses_production_db _______
+
+    def test_child_with_rebuilt_env_keeping_marker_refuses_production_db():
+        """THE regression: a child whose env was rebuilt from scratch (PYTEST_*
+        stripped, HERMES_HOME lost) but which keeps the marker must still refuse
+        to open the production state.db."""
+        env = _minimal_env(HERMES_TEST_ISOLATION="/tmp/pytest-isolation-root")
+>       result = _spawn_probe(env)
+                 ^^^^^^^^^^^^^^^^^
+
+tests/hermes_state/test_isolation_marker_env.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = {'PATH': '/home/anthony/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/...cal/OpenAI/Codex/bin/eab8377aebac6c07', 'HOME': '/home/anthony', 'HERMES_TEST_ISOLATION': '/tmp/pytest-isolation-root'}
+
+    def _spawn_probe(env: dict) -> dict:
+        """Run the guard probe in a real child process with exactly *env*."""
+        proc = subprocess.run(
+            [sys.executable, "-c", _CHILD_PROBE.format(repo=str(REPO_ROOT))],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=60,
+        )
+>       assert proc.returncode == 0, proc.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state.py", line 30, in <module>
+E             from hermes_state_common import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state_common.py", line 14, in <module>
+E             from agent.context_compressor import (LEGACY_SUMMARY_PREFIX, SUMMARY_PREFIX, _MERGED_PRIOR_CONTEXT_HEADER,
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/context_compressor.py", line 18, in <module>
+E             from agent.auxiliary_client import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/auxiliary_client.py", line 116, in <module>
+E             from agent.credential_pool import load_pool
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/credential_pool.py", line 21, in <module>
+E             from hermes_cli.config import load_env
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/config.py", line 33, in <module>
+E             import yaml
+E         ModuleNotFoundError: No module named 'yaml'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python', '-c', '\nimport json, os, sys\ns...date-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n').returncode
+
+tests/hermes_state/test_isolation_marker_env.py:53: AssertionError
+_____________ test_child_bypass_env_disarms_guard_even_with_marker _____________
+
+    def test_child_bypass_env_disarms_guard_even_with_marker():
+        """The sanctioned escape hatch for children that genuinely need a real
+        DB: HERMES_STATE_DB_GUARD_BYPASS=1, not marker-stripping."""
+        env = _minimal_env(
+            HERMES_TEST_ISOLATION="/tmp/pytest-isolation-root",
+            HERMES_STATE_DB_GUARD_BYPASS="1",
+        )
+>       result = _spawn_probe(env)
+                 ^^^^^^^^^^^^^^^^^
+
+tests/hermes_state/test_isolation_marker_env.py:115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+env = {'PATH': '/home/anthony/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/...', 'HOME': '/home/anthony', 'HERMES_TEST_ISOLATION': '/tmp/pytest-isolation-root', 'HERMES_STATE_DB_GUARD_BYPASS': '1'}
+
+    def _spawn_probe(env: dict) -> dict:
+        """Run the guard probe in a real child process with exactly *env*."""
+        proc = subprocess.run(
+            [sys.executable, "-c", _CHILD_PROBE.format(repo=str(REPO_ROOT))],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=60,
+        )
+>       assert proc.returncode == 0, proc.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 4, in <module>
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state.py", line 30, in <module>
+E             from hermes_state_common import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state_common.py", line 14, in <module>
+E             from agent.context_compressor import (LEGACY_SUMMARY_PREFIX, SUMMARY_PREFIX, _MERGED_PRIOR_CONTEXT_HEADER,
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/context_compressor.py", line 18, in <module>
+E             from agent.auxiliary_client import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/auxiliary_client.py", line 116, in <module>
+E             from agent.credential_pool import load_pool
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/credential_pool.py", line 21, in <module>
+E             from hermes_cli.config import load_env
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/config.py", line 33, in <module>
+E             import yaml
+E         ModuleNotFoundError: No module named 'yaml'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python', '-c', '\nimport json, os, sys\ns...date-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n').returncode
+
+tests/hermes_state/test_isolation_marker_env.py:53: AssertionError
+_____ TestSubprocessChildCovered.test_child_without_hermes_home_is_refused _____
+
+self = <tests.hermes_state.test_live_db_isolation_guard.TestSubprocessChildCovered object at 0x792eecec5e10>
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-53/test_child_without_hermes_home0')
+
+    def test_child_without_hermes_home_is_refused(self, tmp_path):
+        """A subprocess child of a test (no HERMES_HOME) must be blocked.
+    
+        This is the real leak vector: tests spawning ``python -m ...``
+        children that never import the hermetic conftest. The guard is
+        env-activated (PYTEST_CURRENT_TEST / PYTEST_VERSION are inherited),
+        so the child's argless SessionDB() must fail hard instead of
+        opening the developer's real state.db.
+        """
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("HERMES_HOME", "PYTEST_PLUGINS", "PYTHONPATH")
+        }
+        env["PYTEST_CURRENT_TEST"] = "tests/fake.py::test_child (call)"
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+        code = (
+            "from hermes_state import SessionDB\n"
+            "SessionDB()\n"
+        )
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=120,
+        )
+        assert proc.returncode != 0
+>       assert "live-system guard" in proc.stderr
+E       assert 'live-system guard' in 'Traceback (most recent call last):\n  File "<string>", line 1, in <module>\n  File "/tmp/mnemos-hermes-compaction-ori...idate-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n'
+E        +  where 'Traceback (most recent call last):\n  File "<string>", line 1, in <module>\n  File "/tmp/mnemos-hermes-compaction-ori...idate-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n' = CompletedProcess(args=['/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python', '-c', 'from hermes_state import ...date-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n').stderr
+
+tests/hermes_state/test_live_db_isolation_guard.py:175: AssertionError
+_____ TestSubprocessChildCovered.test_child_with_tmp_hermes_home_succeeds ______
+
+self = <tests.hermes_state.test_live_db_isolation_guard.TestSubprocessChildCovered object at 0x792eecec6390>
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-53/test_child_with_tmp_hermes_hom0')
+
+    def test_child_with_tmp_hermes_home_succeeds(self, tmp_path):
+        """Same child, hermetic HERMES_HOME: must work — no false positive."""
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if k not in ("PYTEST_PLUGINS", "PYTHONPATH")
+        }
+        env["PYTEST_CURRENT_TEST"] = "tests/fake.py::test_child (call)"
+        env["HERMES_HOME"] = str(tmp_path / "child-home")
+        env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2])
+        code = (
+            "from hermes_state import SessionDB\n"
+            "db = SessionDB()\n"
+            "db.close()\n"
+            "print('OK', db.db_path)\n"
+        )
+        proc = subprocess.run(
+            [sys.executable, "-c", code],
+            capture_output=True,
+            text=True,
+            env=env,
+            timeout=120,
+        )
+>       assert proc.returncode == 0, proc.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "<string>", line 1, in <module>
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state.py", line 30, in <module>
+E             from hermes_state_common import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_state_common.py", line 14, in <module>
+E             from agent.context_compressor import (LEGACY_SUMMARY_PREFIX, SUMMARY_PREFIX, _MERGED_PRIOR_CONTEXT_HEADER,
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/context_compressor.py", line 18, in <module>
+E             from agent.auxiliary_client import (
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/auxiliary_client.py", line 116, in <module>
+E             from agent.credential_pool import load_pool
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/agent/credential_pool.py", line 21, in <module>
+E             from hermes_cli.config import load_env
+E           File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/config.py", line 33, in <module>
+E             import yaml
+E         ModuleNotFoundError: No module named 'yaml'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python', '-c', "from hermes_state import ...date-v1/hermes_cli/config.py", line 33, in <module>\n    import yaml\nModuleNotFoundError: No module named \'yaml\'\n').returncode
+
+tests/hermes_state/test_live_db_isolation_guard.py:200: AssertionError
+=============================== warnings summary ===============================
+tests/hermes_state/test_journal_mode_config.py::test_real_db_openers_honor_configured_delete
+  /home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages/discord/player.py:30: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_hermes_state.py::TestApplyWalProbe::test_apply_wal_concurrent_connects_no_eio
+FAILED tests/hermes_state/test_isolation_marker_env.py::test_child_with_rebuilt_env_keeping_marker_refuses_production_db
+FAILED tests/hermes_state/test_isolation_marker_env.py::test_child_bypass_env_disarms_guard_even_with_marker
+FAILED tests/hermes_state/test_live_db_isolation_guard.py::TestSubprocessChildCovered::test_child_without_hermes_home_is_refused
+FAILED tests/hermes_state/test_live_db_isolation_guard.py::TestSubprocessChildCovered::test_child_with_tmp_hermes_home_succeeds
+5 failed, 1398 passed, 11 skipped, 1 warning in 166.00s (0:02:46)
