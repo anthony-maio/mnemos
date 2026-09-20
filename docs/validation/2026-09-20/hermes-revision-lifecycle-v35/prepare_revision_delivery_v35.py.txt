@@ -1,0 +1,24 @@
+from pathlib import Path
+import json
+
+base = Path(__file__).parent
+checks = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-captured-merge-v1')
+verification = json.loads((checks / 'verification.json').read_bytes())
+assert verification['status'] == 'passed'
+assert verification['source_commit'] == '26c9ddbb218df44ddba6d9b06a09fd258cdd3efc'
+artifact = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+wheel = '/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-captured-merge-v1/dist/' + Path(artifact['file']).name
+source = (base / 'hermes_revision_delivery_v34.py').read_text().replace('v34', 'v35')
+old = "wheel = Path('/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-generation-settings-v2/dist/mnemos_memory-0.7.0-py3-none-any.whl')"
+assert old in source
+source = source.replace(old, f"wheel = Path({wheel!r})\nboundary['wheel_sha256'] = {artifact['sha256']!r}")
+source = source.replace("'modules': config.modules.model_dump(), 'phases': [],", "'modules': config.modules.model_dump(), 'phases': [],\n              'source_commit': '26c9ddbb218df44ddba6d9b06a09fd258cdd3efc',")
+source = source.replace("        inspected = await call('inspect'", "        assert all(j.status == 'completed' for j in store.list_jobs())\n        inspected = await call('inspect'")
+source = source.replace("        outbox.write_bytes(original)\n        replay_forgotten", """        correction_replay = await call('capture', {
+            **entries[0]['payload'], 'event_id': 'revision-lifecycle-v35-correction',
+            'content': 'Use birch export format.', 'source_kind': 'explicit_correction'})
+        assert correction_replay['processing_status'] == 'suppressed', correction_replay
+        outbox.write_bytes(original)
+        replay_forgotten""")
+(base / 'hermes_revision_delivery_v35.py').write_text(source)
+print(json.dumps({'wheel': wheel, 'sha256': artifact['sha256']}))

@@ -81,8 +81,11 @@ adds another concrete failure and repair: correcting an old statement to text
 already stored as raw evidence previously left the job pending. The source fix
 keeps the correction target ID and transfers the raw duplicate's evidence in
 one transaction. Rollback, restart, project isolation, graph cleanup and reviewed
-forgetting pass the focused checks. Full package validation is running on
-26c9ddb; do not describe this as a verified installed upgrade yet.
+forgetting pass the focused checks. Source 26c9ddb passes 2,012 tests with four
+skips and all six source/package checks. The [rebuilt-wheel v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md)
+also passes correction, restart, reviewed forgetting and original/correction
+source replay. All five modules were disabled. The broader installed contract
+suite remains open; do not describe this as a live host upgrade.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../validation/2026-09-20/history-context-diagnostic-v1/README.md)

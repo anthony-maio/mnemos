@@ -438,7 +438,10 @@ repairs the unverified captured-destination case in source, preserving the
 target ID and transferred evidence through correction, rollback, restart and
 reviewed forgetting. The expanded suite passed 74 tests; 13 focused tests pass
 after the final retired-ID and pending-job guards. Full-suite and rebuilt-wheel
-Hermes verification remain open. Asserted-destination collisions remain rejected.
+Hermes verification are now recorded by the [installed v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md):
+all six phases pass with all five modules disabled. Source 26c9ddb passes 2,012
+tests with four skips and all six source/package checks. The broader installed
+contract suite remains in progress. Asserted-destination collisions remain rejected.
 
 The [prompt-blinded semantic review](../validation/2026-09-20/extraction-authored-semantic-review-v1/README.md)
 finds better qualification retention in the candidate's successful outputs,
