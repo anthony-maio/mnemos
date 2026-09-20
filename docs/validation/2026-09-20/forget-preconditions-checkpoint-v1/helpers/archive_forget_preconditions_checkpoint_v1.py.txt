@@ -1,0 +1,102 @@
+"""Preserve verified source and installed evidence for out-of-preview selection rejection."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-forget-preconditions-v2'
+installed = temp / 'mnemos-installed-checks-forget-preconditions-v3'
+output = repo / 'docs/validation/2026-09-20/forget-preconditions-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((installed / 'installation.json').read_text(encoding='utf-8'))
+contract = json.loads((installed / 'contract.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == 'e6887deb89608dca34f7bbb463b5d0a3ba973011'
+assert commit == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v41.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v41.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+copy(temp / 'mnemos-installed-checks-forget-preconditions-v2/installation.json', Path('installed-input-rejection.json'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f"""# Copyable forget preconditions package checkpoint
+
+Frozen source `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,} isolated
+installed cases with {i['skipped']} matching skips, and seven replay assertions.
+Installed validation compares individual case outcomes, import origins, and
+package bytes against the frozen source and wheel.
+
+The archived initial installed-check invocation supplied a directory where
+the runner required the report file. It rejected the input before executing
+any installation command. The passing invocation uses the verified report.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+## Changes and preserved protections
+
+The [development record](../forget-apply-preconditions-development-v1/README.md)
+records six new tests and 108 adjacent checks. Complete previews now return
+the target ID, expected version, digest, and matching limit under the exact
+apply-request field names. Incomplete previews return null preconditions.
+The object makes no deletion selections and never repairs caller arguments.
+Existing scope, version, digest, completeness, selection, and dependency
+checks remain unchanged. MCP also now advertises preview as read-only;
+a stray first docstring previously hid the correct description.
+
+The first clean-checkout full run failed 15 benchmark tests because Git
+converted a frozen JSON fixture to CRLF. The [portability record](../frozen-dataset-portability-v1/README.md)
+retains that complete failure and the repair. Git attributes now preserve
+the original bytes; the dataset, original hash, and strict check are unchanged.
+
+## Evidence limits
+
+The preceding [native v13 cohort](../hermes-native-cohort-v13/README.md)
+finished zero of three complete lifecycles on `db21750`. It did not test this
+package. Copyable fields are a model-interface hypothesis, not a native
+reliability result. Out-of-preview selections must still be rejected.
+
+No native cohort has run this checkpoint. Three-host continuity, complete
+capture, full-module quality, Desktop, and the operational pilot remain open.
+The role-aware graph result remains zero top-five targets with 18 failed
+lifecycle controls. No live host configuration or memory data changed.
+The evidence index binds raw files; this README is outside the index.
+""", encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(output), 'files': len(files), 'source_commit': commit,
+                  'source_passes': s['tests']-s['skipped'], 'source_skips': s['skipped'],
+                  'installed_passes': i['tests']-i['skipped'], 'installed_skips': i['skipped'],
+                  'wheel': wheel}))

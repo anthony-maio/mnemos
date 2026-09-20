@@ -40,6 +40,27 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [copyable-preconditions package](../validation/2026-09-20/forget-preconditions-checkpoint-v1/README.md)
+at `e6887de` passes 1,721 source tests with four skips, all six source/package
+checks, 675 isolated installed cases with four matching skips, and seven
+replay assertions. Complete forget previews now return the four apply
+preconditions under their exact request names, without choosing records or
+changing deletion checks. MCP's misleading preview description is corrected.
+Native validation of this package remains open; v13 below tested `db21750`.
+
+The [clean-checkout failure](../validation/2026-09-20/frozen-dataset-portability-v1/README.md)
+is retained: Git line-ending conversion caused 15 benchmark hash failures.
+The successor preserves the original dataset bytes through Git attributes;
+the dataset, its original hash, and strict guard are unchanged. The
+[saved graph seed audit](../validation/2026-09-20/source-association-seed-audit-v1/README.md)
+independently verifies 30 representative rows. It identifies seed/candidate
+and score bottlenecks, with no new target reachability beyond semantic edges
+and no improvement in target top-five retrieval. Existing negatives remain.
+
+These package and audit records postdate portable packet v26. The
+checkout handoff is newer; refresh the portable packet at final
+acceptance before describing the engineering work as finished.
+
 The [role-aware graph measurement](../validation/2026-09-20/source-association-role-measurement-v1/README.md)
 completed all 90 observations across five authored cases, two embedding
 contracts, three relation arms, and three deterministic repetitions. Task
@@ -73,7 +94,7 @@ found valid extraction abstentions followed by absent correction targets. It
 does not establish a parser or target-resolution defect. The historical-memory
 policy question is pending; prior labels and negative results remain fixed.
 
-Portable packet v26 includes these results and the voice guide. It remains
+Portable packet v26 includes the graph and v13 results below and the voice guide. It remains
 a working research snapshot; reconcile it again at final acceptance.
 
 The [native Hermes v12 cohort](../validation/2026-09-20/hermes-native-cohort-v12/README.md)
