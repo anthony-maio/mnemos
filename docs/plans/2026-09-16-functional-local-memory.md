@@ -417,6 +417,12 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
+The [terminal authored comparison](../validation/2026-09-20/extraction-authored-holdout-terminal-v1/README.md)
+records all 40 calls. Production has 20 runtime-valid responses; the history-only
+candidate has 19 and one empty final response. Every call and the original
+pre-execution rubric ambiguities are preserved. Semantic review is separate;
+runtime validity does not establish correctness or close T18.
+
 The [Qwen3.5 service follow-up](../validation/2026-09-20/historical-claim-service-v3-verified/README.md)
 passes all seven bounded development cases on source `05c71d2`, including three
 explicit correction/restart/forget/replay lifecycles and four abstention controls.
@@ -426,7 +432,8 @@ The [production-prompt comparison](../validation/2026-09-20/history-production-p
 records 36 runtime-valid responses but retains semantic failures. The separate
 [20-case comparison preparation](../validation/2026-09-20/extraction-authored-holdout-preparation-v1/README.md)
 freezes both prompt arms and records rubric ambiguities before execution.
-Its execution remains incomplete; no prompt adoption or T18 acceptance is claimed.
+Its execution is now complete in the terminal record above; no prompt adoption
+or T18 acceptance is claimed.
 
 Subsequent [historical-claim service development](../validation/2026-09-20/historical-claim-service-v1/README.md)
 completes three positive correction/restart/retrieval/forget/replay lifecycles

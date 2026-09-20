@@ -38,9 +38,11 @@ do not establish general accuracy or justify replacing the production prompt.
 
 A separate [20-case comparison](../2026-09-20/extraction-authored-holdout-preparation-v1/README.md)
 uses the same managed provider and settings for both prompt arms, with its cases
-and ambiguity review frozen before execution. Its final results and semantic
-review remain pending at this checkpoint. Neither live settings nor the
-production extraction prompt have changed. Earlier negative results remain.
+and ambiguity review frozen before execution. The [terminal record](../2026-09-20/extraction-authored-holdout-terminal-v1/README.md)
+contains all 40 calls: production has 20 runtime-valid responses; the candidate
+has 19 and one empty-response failure. No failed call was selectively rerun.
+Semantic review remains separate and pending at this checkpoint. Neither live
+settings nor the production extraction prompt have changed. Earlier negatives remain.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../2026-09-20/history-context-diagnostic-v1/README.md)
