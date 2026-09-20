@@ -531,7 +531,13 @@ Acceptance: install instructions match the release artifact; no synthetic result
 
 Additional deliverable requested September 19: finalize a research and writing handoff for a roughly 2,500-word Substack article in Anthony's voice. The [handoff](../handoffs/substack-local-memory.md) must identify the final verified checkpoint, original promises, concrete repairs, measured results and failures, source locations, unresolved claims, and a suggested narrative. Apply Anthony's requested `writing-in-anthonys-voice` skill. The handoff is complete only after its evidence and open items are reconciled with the final validation state; the article itself and publication are separate work.
 
-The working export is `mnemos-substack-research-packet-2026-09-20-v27.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. The verified copyable-preconditions package, all native v14 outcomes, successful bounded three-host v7 run, preserved checkout failure, graph seed audit, earlier graph measurements, and remaining failed controls are included. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
+The latest working export is `mnemos-substack-research-packet-2026-09-20-v29.zip`
+in the workspace's `deliverables` directory. Its [verification record](../validation/2026-09-20/substack-packet-v29/README.md)
+binds source snapshot 60d572c, all 6,593 manifest-indexed files and all 140 local
+handoff links. It includes the voice skill, current product checks, Hermes v35,
+rejected extraction experiments and graph diagnostics. The temperature-only
+run is represented by preparation, not a terminal result. Refresh at final
+acceptance; this working packet does not close engineering or research gates.
 
 Run final repository checks in an isolated environment: `python -m pytest -q`, `python -m black --check .`, `python -m mypy .`, `python -m build`, `python -m twine check dist/*`. Run the built wheel outside the source tree so imports cannot accidentally validate the checkout.
 
