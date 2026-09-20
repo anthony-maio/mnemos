@@ -1,11 +1,13 @@
 # Client compatibility and observed evidence
 
-Latest observation: the [fixed Hermes v3 cohort](validation/2026-09-19/hermes-native-cohort-v3/README.md)
-has zero complete lifecycles out of three attempts on the verified `68693f8`
-wheel. Each native host saved the exact requested fact but skipped the required
-job-status call. Maintenance confirmed one asserted target per store. Capture,
-scope, and provider checks passed; recall, correction, forgetting, and replay
-were not reached. The three-host native driver remains NOT RUN.
+Latest native observation: the [fixed Hermes v4 cohort](validation/2026-09-19/hermes-native-cohort-v4/README.md)
+finished zero of three full lifecycles on the verified `8f8f63f` wheel. All
+teach phases saved the exact fact and checked job status. Attempt 1 reached
+final recall, which exposed recaptured forget narration; attempt 2 failed on
+bridge encoding; attempt 3 announced a correction without calling the tool.
+The [subsequent repair package](validation/2026-09-19/native-repairs-checkpoint-v1/README.md)
+passes regression/source/installed checks on `fd83fb2`; it has not had a new
+native-model lifecycle run. The three-host driver remains NOT RUN.
 
 Earlier native lifecycle observation: the [Hermes v2 attempt](validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md)
 stopped at teach after the model used the wrong returned job ID. The

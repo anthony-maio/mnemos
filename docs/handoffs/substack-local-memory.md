@@ -12,14 +12,21 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest native result and portable primary sources
 
-The [fixed Hermes v3 cohort](../validation/2026-09-19/hermes-native-cohort-v3/README.md)
-ran all three planned attempts on verified runtime `68693f8`. All stopped at
-teach because the model omitted the requested job-status tool call. It saved
-the exact fact each time, and maintenance confirmed one asserted target in
-each store. No recall, correction, forgetting, or replay phase ran. The write
-path evidence and the failed lifecycle result both belong in the account.
-The three-host driver remains unrun; do not turn three repeated writes into
-three successful lifecycle demonstrations.
+The [fixed Hermes v4 cohort](../validation/2026-09-19/hermes-native-cohort-v4/README.md)
+ran all three planned attempts on verified runtime `8f8f63f`. All three teach
+phases saved the exact fact and called job status. Full lifecycles still
+finished zero for three. Attempt 1 passed correction, restarted recall,
+forgetting, and known-source replay, then retrieved the deleted value from
+newly captured assistant narration. Attempt 2 failed on locale-encoded bridge
+output. Attempt 3 retrieved and inspected a fact, then announced a correction
+without calling the correction tool. Preserve the difference between a model
+claim and an observed mutation. The three-host driver remains unrun.
+
+The earlier [v3 cohort](../validation/2026-09-19/hermes-native-cohort-v3/README.md)
+also failed all three attempts, at teach, because each model omitted the
+job-status call. Its results remain separate. V4's later progress is useful
+evidence, but is not a completed integration or a controlled estimate of the
+guidance change's effect.
 
 The packet now includes [dated website and paper snapshots](../validation/2026-09-19/writer-primary-sources-v1/README.md),
 with original URLs, retrieval timestamps, response metadata, and hashes. These
@@ -56,6 +63,26 @@ Status prose can lag newer artifacts. Resolve disagreements against the commit-b
 
 The hardware interruption is available as context: Anthony reported that the remote dual-3090 machine failed and moved the work to a local RTX 4080 with 16 GB. Treat the failure history as user-reported; do not infer an electrical cause. Colab was considered and tabled. Include this only if it helps explain the experimental constraints.
 
+## Capture choices worth explaining
+
+Anthony asked for advice about automatic conversation capture versus saving
+only facts an agent explicitly selects. Present this as an engineering
+tradeoff, not a settled personal preference or a proven deployment decision.
+Automatic capture preserves source context and reduces omissions, but adds
+noise, extraction cost, sensitive material, and opportunities to recapture
+stale assistant claims. Explicit selection makes intent clearer and reduces
+volume, but depends on the agent noticing what matters and actually calling
+the tool. The native v4 results illustrate both problems directly.
+
+The proposed operating approach is a hybrid: opt-in local capture as source
+material, conservative promotion into durable facts, explicit remember and
+correct actions when intent is clear, source-backed retrieval, and deletion
+that covers known copies and replay. Captured conversation is not itself an
+asserted fact. Describe this as the design direction; the open capture,
+quality, and lifecycle gates prevent a claim that daily operation is already
+dependable. Do not turn automatic capture into permission to retain every
+project or all private conversation indefinitely.
+
 ## Current evaluation update
 
 Native evidence has a further qualification: the new [offline trace checks](../validation/2026-09-19/three-host-runner-offline-v1/README.md)
@@ -81,6 +108,39 @@ quality acceptance.
 
 ## Latest verified repair
 
+The [native failure repair checkpoint](../validation/2026-09-19/native-repairs-checkpoint-v1/README.md)
+at `fd83fb2` passes 1,351 source tests with 4 skips, all six source/package
+checks, 569 installed cases with 4 matching skips, and seven replay
+assertions. Wheel SHA-256: `4958c5ef7a509fefecacc0666d87f578b46e94e1a33a896831468c0f971bf895`.
+It fixes explicit UTF-8 bridge output, typed missing-fact errors, and delayed
+assistant capture that quotes a forgotten fact ID. The end-to-end regression
+fails against preserved `8f8f63f` source and passes after the repair, including
+restart, separate scope controls, and explicit reteaching with a new ID.
+
+The assistant-ID safeguard conservatively suppresses an entire automatic
+assistant event when it mixes an erased ID with unrelated material. It covers
+exact token IDs, including native UUIDs; it does not establish arbitrary
+paraphrase erasure or deletion of every historical raw source. User captures
+and explicit writes remain eligible. The three earlier native v4 failures are
+unchanged, and this repaired package has not had a new native-model run.
+
+## Package used by native v4
+
+The [affective parsing and write-guidance checkpoint](../validation/2026-09-19/affective-guidance-checkpoint-v1/README.md)
+at `8f8f63f` passes 1,324 source tests with 4 skips, all six source/package
+checks, 543 installed cases with 2 matching skips, and the installed replay
+probe. Its wheel SHA-256 is
+`53444f7f87141e7107fe9f4daf4a6095e04c9d69d007cd218634fd2fff50f99f`.
+This is the package used by native v4. The parser accepts signed decimals and
+scientific notation, rejects malformed or nonfinite triplets, and preserves
+prior state on failure. Replaying 300 archived responses changed zero states,
+so the original 33/300 classifier-fidelity result remains negative. The
+[fidelity review](../validation/2026-09-19/affective-fidelity-review.md) also
+explains that the gold vectors were authored synthetic labels, with no
+independent human calibration in the archive.
+
+## Earlier verified repairs
+
 The [job lookup error checkpoint](../validation/2026-09-19/job-not-found-checkpoint-v1/README.md)
 at `68693f8` passes 1,308 source tests with 4 skips, all six
 source/package checks, 533 installed cases with 2 matching skips,
@@ -90,7 +150,7 @@ and direct callers retain the `KeyError` contract. This repair leaves the
 failed native lifecycle intact: it does not substitute the right job ID for
 the model or claim that its pending write finished processing.
 
-The current wheel SHA-256 is `2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8`. The prior package below
+That checkpoint's wheel SHA-256 is `2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8`. The prior package below
 remains the runtime used for both failed native lifecycle attempts; do not
 attribute those runs to this newer wheel.
 
@@ -200,5 +260,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v7 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all three fixed-cohort failures, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v8 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, both fixed-cohort runs (all six attempts failed), the latest repair evidence, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

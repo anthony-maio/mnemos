@@ -1,0 +1,40 @@
+FFFFFF...                                                                [100%]
+================================== FAILURES ===================================
+_________ test_missing_and_cross_scope_facts_return_same_404[inspect] _________
+test_service_fact_errors.py:41: in test_missing_and_cross_scope_facts_return_same_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+_________ test_missing_and_cross_scope_facts_return_same_404[correct] _________
+test_service_fact_errors.py:41: in test_missing_and_cross_scope_facts_return_same_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+_________ test_missing_and_cross_scope_facts_return_same_404[forget] __________
+test_service_fact_errors.py:41: in test_missing_and_cross_scope_facts_return_same_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+____________________ test_erased_fact_returns_404[inspect] ____________________
+test_service_fact_errors.py:65: in test_erased_fact_returns_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+____________________ test_erased_fact_returns_404[correct] ____________________
+test_service_fact_errors.py:65: in test_erased_fact_returns_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+____________________ test_erased_fact_returns_404[forget] _____________________
+test_service_fact_errors.py:65: in test_erased_fact_returns_404
+    assert response.status_code == 404
+E   assert 500 == 404
+E    +  where 500 = <Response [500 Internal Server Error]>.status_code
+=========================== short test summary info ===========================
+FAILED test_service_fact_errors.py::test_missing_and_cross_scope_facts_return_same_404[inspect]
+FAILED test_service_fact_errors.py::test_missing_and_cross_scope_facts_return_same_404[correct]
+FAILED test_service_fact_errors.py::test_missing_and_cross_scope_facts_return_same_404[forget]
+FAILED test_service_fact_errors.py::test_erased_fact_returns_404[inspect] - a...
+FAILED test_service_fact_errors.py::test_erased_fact_returns_404[correct] - a...
+FAILED test_service_fact_errors.py::test_erased_fact_returns_404[forget] - as...
+6 failed, 3 passed in 15.41s

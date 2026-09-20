@@ -1,15 +1,20 @@
 # Mnemos claim and evidence ledger
 
-Current package checkpoint: [job lookup errors](../2026-09-19/job-not-found-checkpoint-v1/README.md)
-on `68693f8` passes 1,308 source tests (4 skips), all six package
-checks, 533 installed cases (2 matching skips), and 7 replay
-assertions. Missing or inaccessible jobs return a generic 404; unexpected
-internal errors remain 500. The [fixed Hermes v3 cohort](../2026-09-19/hermes-native-cohort-v3/README.md)
-then failed all three native lifecycle attempts: each saved the exact fact but
-omitted the required job-status call. Maintenance materialized one asserted
-target per attempt; later lifecycle phases were not reached. Three-host
-continuity, complete capture, real-model quality acceptance, Desktop, and the
-pilot remain open.
+Current package checkpoint: [native failure repairs](../2026-09-19/native-repairs-checkpoint-v1/README.md)
+on `fd83fb2` passes 1,351 source tests (4 skips), all six source/package
+checks, 569 installed cases (4 matching skips), and seven replay assertions.
+The bridge writes explicit UTF-8; missing or inaccessible inspect/correct/forget
+targets return a generic 404; automatic assistant captures quoting a forgotten
+fact ID are suppressed transactionally. Explicit user writes remain available.
+These are regression and package results, not a new native-model run.
+
+The [fixed Hermes v4 cohort](../2026-09-19/hermes-native-cohort-v4/README.md)
+on the earlier verified `8f8f63f` wheel finished zero of three full lifecycles.
+All three teach phases checked job status. Attempt 1 reached final recall,
+which exposed recaptured forget narration; attempt 2 failed on bridge encoding;
+attempt 3 announced a correction without invoking it. All outcomes remain
+preserved. Three-host continuity, complete capture, real-model quality
+acceptance, Desktop, and the pilot remain open.
 
 ## Earlier native-host observation: v2
 
@@ -24,7 +29,7 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-Current package evidence is the [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+Earlier package evidence is the [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
 at `3730fd9`: 1,247 source passes with four skips, six source/package checks,
 530 installed passes with two matching skips, and seven replay assertions.
 The [actual host persistence fixture](../2026-09-19/hermes-native-rows-contract-v3/README.md)
@@ -115,13 +120,13 @@ This closes the bounded mixed-host replay observation, not automatic daemon
 recovery, complete capture, real-provider quality, or daily-use acceptance.
 Earlier records below retain their original source bindings and limitations.
 
-The latest [retrieval strategy checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
+The earlier [retrieval strategy checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
 is bound to `fc72cc2`: 1,105 source passes, four skips, all six repository
 checks, and nine installed adapter passes. It isolates vector, lexical, hybrid,
 and full retrieval against identical accepted snapshots. Complete reports
 require all expected comparison rows and verified provider provenance; quality
 kinds have separate intervals. The wheel is byte-identical to the preceding
-package. The prepared artifact is `NOT RUN`, with zero observations. These
+package. At that preparation checkpoint the artifact was `NOT RUN`, with zero observations; the later terminal retrieval archive supersedes that execution status. These
 checks establish implementation behavior, not comparative model quality or
 GPU, native-host, latency, or pilot acceptance.
 
@@ -482,7 +487,7 @@ identify the source revision, configuration, and limitations. Historical results
 remain attributed to the source that produced them.
 
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
-- [Current assistant-suppression package index](../2026-09-18/assistant-suppression-package-checkpoint-v1/evidence-index.json): source `5af3d15`, 1,030 tests with four skips, six source/package checks, 360 selected installed cases with two matching skips, and seven synthetic replay assertions.
+- [Historical assistant-suppression package index](../2026-09-18/assistant-suppression-package-checkpoint-v1/evidence-index.json): source `5af3d15`, 1,030 tests with four skips, six source/package checks, 360 selected installed cases with two matching skips, and seven synthetic replay assertions.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [Service/runtime package checkpoint index](../2026-09-17/service-runtime-package-checkpoint-v1/evidence-index.json): source `56182d9`, all six source/package checks, 87 installed contract cases, and seven synthetic Stop replay assertions. This is separate from native host and real-model evidence.
 - [Host provenance package checkpoint index](../2026-09-17/host-provenance-package-checkpoint-v1/evidence-index.json): source `8d865a5`, 903 passing source tests with four skips, 110 passing installed contract cases with two matching skips, and seven synthetic Stop replay assertions.
