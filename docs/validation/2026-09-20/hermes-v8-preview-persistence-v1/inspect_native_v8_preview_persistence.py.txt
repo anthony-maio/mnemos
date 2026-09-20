@@ -1,0 +1,64 @@
+"""Read only the disposable Hermes databases; compare previews to native traces."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import sqlite3
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v8')
+out = repo / 'docs/validation/2026-09-20/hermes-v8-preview-persistence-v1'
+out.mkdir(parents=True, exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+report = {'scope': 'saved host messages, not outbound HTTP bodies', 'attempts': []}
+for number in (2, 3):
+    attempt = root / f'attempt-{number}'
+    db = attempt / 'hermes-home/state.db'
+    before = hashlib.sha256(db.read_bytes()).hexdigest()
+    trace_path = attempt / 'forget/trace.jsonl'
+    trace = [json.loads(line) for line in trace_path.read_text(encoding='utf-8').splitlines()]
+    previews = [r['result'] for r in trace if r['operation'] == 'tool_result'
+                and r['name'] == 'mnemos_forget_preview' and r['result'].get('status') == 'preview']
+    connection = sqlite3.connect(db.as_uri() + '?mode=ro', uri=True)
+    connection.row_factory = sqlite3.Row
+    try:
+        rows = [dict(row) for row in connection.execute(
+            "SELECT id,session_id,content,api_content,tool_call_id,active,compacted,_compressed_summary "
+            "FROM messages WHERE role='tool' AND tool_name='mnemos_forget_preview' ORDER BY id")]
+        selected = []
+        for row in rows:
+            content = row['content']
+            parsed = json.loads(content)
+            if parsed.get('status') != 'preview':
+                continue
+            assert parsed in previews, 'Persisted preview differs from traced result'
+            assert row['active'] == 1 and row['compacted'] == row['_compressed_summary'] == 0
+            name = f'attempt-{number}-message-{row["id"]}.json'
+            (out / name).write_bytes(content.encode('utf-8'))
+            selected.append({**{k:v for k,v in row.items() if k != 'content'},
+                             'content_file': name, 'characters': len(content),
+                             'matches_traced_result': True,
+                             'preview_digest': parsed['preview_digest'],
+                             'candidate_count': len(parsed['candidates']),
+                             'source_count': len(parsed['source_events'])})
+        assert len(selected) == len(previews)
+        session_ids = {row['session_id'] for row in selected}
+        assert len(session_ids) == 1
+        session = next(iter(session_ids))
+        message_states = [dict(row) for row in connection.execute(
+            'SELECT id,role,tool_name,length(content) AS characters,active,compacted,_compressed_summary,finish_reason '
+            'FROM messages WHERE session_id=? ORDER BY id', (session,))]
+        spillover = attempt / 'hermes-home/cache/spillover'
+        assert not spillover.exists() or not any(p.is_file() for p in spillover.rglob('*'))
+    finally:
+        connection.close()
+    assert hashlib.sha256(db.read_bytes()).hexdigest() == before
+    report['attempts'].append({'attempt': number, 'database': str(db), 'database_sha256': before,
+        'database_unchanged': True, 'trace_sha256': hashlib.sha256(trace_path.read_bytes()).hexdigest(),
+        'previews': selected, 'message_states': message_states, 'spillover_files': []})
+(out / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(__file__, out / (Path(__file__).name + '.txt'))
+files = {p.name: {'bytes':p.stat().st_size, 'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files':files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'path':str(out), 'attempts':len(report['attempts']), 'files':len(files)}))
