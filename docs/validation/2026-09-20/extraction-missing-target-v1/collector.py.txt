@@ -1,0 +1,55 @@
+from pathlib import Path
+from collections import Counter
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-missing-target-v1')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((source / 'status.json').read_bytes())
+assert state['status'] == 'completed'
+prep = json.loads((source / 'preparation.json').read_bytes())
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+for name, digest in prep['files'].items():
+    assert sha(source / name) == digest
+rows = [json.loads(x) for x in (source / 'observations.jsonl').read_text().splitlines()]
+assert len(rows) == state['processed'] == 40
+assert len({(r['case_id'], r['arm'], r['repetition']) for r in rows}) == 40
+assert sum(r['status'] == 'error' for r in rows) == state['errors']
+counts = {arm: dict(Counter(r['status'] for r in rows if r['arm'] == arm))
+          for arm in ['production', 'history_only']}
+out = repo / 'docs/validation/2026-09-20/extraction-missing-target-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in list(prep['files']) + ['preparation.json', 'status.json', 'observations.jsonl', 'stdout.log', 'stderr.log', 'diagnostic-contract.json']:
+    target = out / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, target)
+proposals = [{k: r.get(k) for k in ['case_id', 'arm', 'status', 'proposals', 'error_type', 'error']} for r in rows]
+(out / 'proposal-review.json').write_text(json.dumps(proposals, indent=2) + '\n')
+(out / 'runtime-summary.json').write_text(json.dumps(counts, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text(f'''# Missing-target prompt diagnostic
+
+All 40 calls completed on the same 20 previously executed authored cases,
+with two prompt arms and one repetition. Runtime outcomes: {json.dumps(counts)}.
+Only the candidate prompt clause changed. Source 05c71d2, model identity,
+think=true, 8,192-token budget, temperature zero and 180-second timeout remain
+bound in preparation.json. No selective retries or production adoption occurred.
+
+The candidate repairs P03's PDF correction output but introduces empty-final
+length failures on P02, P09 and P10, each at 8,192 generated tokens. It also
+returns no fact for P05, dropping the expressly requested uncertainty that the
+original candidate preserved. The change is rejected for adoption. Successful
+JSON parsing is not semantic acceptance. All proposals and original rubric
+ambiguities remain available for review; no aggregate accuracy is claimed.
+
+This is diagnostic reuse, not unseen held-out data, a five-module ablation,
+or native-host proof. The original production and candidate comparisons are
+preserved. No facts were committed and T18 remains open.
+''')
+
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'counts': counts}))

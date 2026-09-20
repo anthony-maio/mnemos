@@ -1,0 +1,11 @@
+{
+  "comparison": "Previously executed development cases; not unseen holdout data.",
+  "changed_setting": "candidate_clause only",
+  "added_clause": "Choose the operation by matching EXISTING FACTS, not by whether the source uses the word correction. For an explicit user correction with no matching stored fact, use add and preserve the new value and the earlier value's obsolete status. Do not invent a target ID or imply the earlier item was stored. Use correct only for a matching stored target with its current version. This does not make assistant suggestions, questions, or hypothetical corrections eligible. ",
+  "reason": "Clarify add versus correct when the source refers to an earlier statement absent from stored targets. Larger token budget did not change any proposals or repair P03.",
+  "unchanged": "Production prompt, source, schemas, cases, identities, ordering, model, think=true, max_tokens=8192, temperature=0, timeout=180, rubric and repetitions.",
+  "calls": 40,
+  "selective_retry": false,
+  "semantic_acceptance": "Preserve all failures. Review original authored required meanings, uncertainty and forbidden overclaims; no aggregate binary score. The copied legacy criterion field in inputs is not the authored rubric; use extraction_holdout_authored_v1.json.",
+  "original_observations_sha256": "5781f3c9568e41e8d3333e0b2f37478de80ff3a1414e8a5f883466119abdd6d3"
+}

@@ -1,0 +1,49 @@
+from pathlib import Path
+from datetime import datetime, timezone
+from urllib.request import urlopen
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+prior = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-authored-holdout-v1')
+out = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-missing-target-v1')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((prior / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 40
+assert sha(prior / 'observations.jsonl') == state['observations_sha256']
+prep = json.loads((prior / 'preparation.json').read_bytes())
+for name, digest in prep['files'].items():
+    assert sha(prior / name) == digest
+inputs = json.loads((prior / 'inputs.json').read_bytes())
+assert inputs['think'] is True and inputs['max_tokens'] == 8192
+assert all('reference_request' not in case for case in inputs['cases'])
+before = dict(inputs)
+clause = ('Choose the operation by matching EXISTING FACTS, not by whether the source uses the word correction. '
+          'For an explicit user correction with no matching stored fact, use add and preserve the new value '
+          "and the earlier value's obsolete status. Do not invent a target ID or imply the earlier item was stored. "
+          'Use correct only for a matching stored target with its current version. '
+          'This does not make assistant suggestions, questions, or hypothetical corrections eligible. ')
+inputs['candidate_clause'] += clause
+assert [k for k in before if before[k] != inputs[k]] == ['candidate_clause']
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == prep['model']['digest']
+out.mkdir(exist_ok=False)
+(out / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+for name in ['runner.py', 'extraction_holdout_authored_v1.json', 'extraction_holdout_rubric_review_v1.json']:
+    shutil.copyfile(prior / name, out / name)
+shutil.copyfile(__file__, out / 'prepare.py.txt')
+(out / 'diagnostic-contract.json').write_text(json.dumps({
+    'comparison': 'Previously executed development cases; not unseen holdout data.',
+    'changed_setting': 'candidate_clause only', 'added_clause': clause,
+    'reason': 'Clarify add versus correct when the source refers to an earlier statement absent from stored targets. Larger token budget did not change any proposals or repair P03.',
+    'unchanged': 'Production prompt, source, schemas, cases, identities, ordering, model, think=true, max_tokens=8192, temperature=0, timeout=180, rubric and repetitions.',
+    'calls': 40, 'selective_retry': False,
+    'semantic_acceptance': 'Preserve all failures. Review original authored required meanings, uncertainty and forbidden overclaims; no aggregate binary score. The copied legacy criterion field in inputs is not the authored rubric; use extraction_holdout_authored_v1.json.',
+    'original_observations_sha256': state['observations_sha256']
+}, indent=2) + '\n')
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'source_commit': prep['source_commit'],
+    'source_files': prep['source_files'], 'model': model,
+    'parent_preparation_sha256': sha(prior / 'preparation.json'),
+    'files': {p.name: sha(p) for p in sorted(out.iterdir())}}
+(out / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n')
+print(json.dumps({'root': str(out), 'calls': 40, 'started': False}))
