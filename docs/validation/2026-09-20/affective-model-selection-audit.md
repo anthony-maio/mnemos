@@ -27,8 +27,10 @@ from the configured shared provider unless a separate classifier is selected;
 do not silently redirect the current local workload to another model or cloud.
 The [development repair](affective-model-selection-development-v1/README.md)
 now implements that request contract. Eighteen initial failures become
-passing regressions, and an expanded 83-case focused run passes. Full source
-and installed-package validation remain pending at this development checkpoint.
+passing regressions, and an expanded 83-case focused run passes. The subsequent
+[package checkpoint](affective-classifier-model-checkpoint-v1/README.md)
+passes 1,962 source tests and 761 installed cases, with four skips each,
+all six source/package checks, and seven replay assertions.
 The [configuration note](../../configuration/affective-classifier-model.md)
 explains inheritance, custom-provider capability, and the saved-value change.
 

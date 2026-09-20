@@ -21,3 +21,6 @@ for the saved-configuration behavior change.
 
 The index binds original test results, candidate sources, and collection
 inputs. This README is outside the index.
+
+Subsequent [full package verification](../affective-classifier-model-checkpoint-v1/README.md)
+passes on `ac1a838`; the original focused evidence above remains unchanged.

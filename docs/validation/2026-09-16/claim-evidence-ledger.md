@@ -1,5 +1,14 @@
 # Mnemos claim and evidence ledger
 
+The latest [verified package](../2026-09-20/affective-classifier-model-checkpoint-v1/README.md)
+is `ac1a838`: 1,962 source tests and 761 isolated installed cases pass, with
+four skips each, all six source/package checks, and seven replay assertions.
+The Python affective classifier honors explicit model selection on supported
+providers while preserving the shared default. Unsupported selections fail
+visibly; configured selection is not a claim of measured classifier accuracy.
+The earlier fidelity result and incomplete matrix remain unchanged. Hermes
+host integration, broader recovery, Desktop, quality, and the pilot remain open.
+
 The [contract-v4 real-model matrix](../2026-09-20/contract-v4-terminal-v1/README.md)
 is terminal and incomplete: 4,150 complete observations and 50 partial out
 of 4,200. Baseline and sleep-disabled profiles complete all 600 observations;
@@ -8,15 +17,15 @@ the other five retain failed correction targets after extraction selected
 are preserved. The repaired synthetic scenarios were previously observed;
 they are not an unseen holdout. This does not close quality acceptance.
 
-The latest [verified package](../2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
+The preceding [verified package](../2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
 is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.
 Original-row provenance preserves copied-message identity and forget
 suppression; marked summaries remain capture-only. These checks establish
 the adapter contract. The isolated Hermes compatibility candidate still
 needs integration review and does not establish a live host upgrade.
-The classifier-model selection repair has focused checks only and is not
-part of this verified package. Full-module quality and the pilot remain open.
+The classifier-model selection repair belongs to the newer checkpoint above.
+Full-module quality and the pilot remain open.
 
 The isolated Hermes identity candidate now passes the
 [undo/retry capture boundary](../2026-09-20/hermes-rewind-capture-v1/README.md)
