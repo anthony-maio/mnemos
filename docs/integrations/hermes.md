@@ -113,7 +113,8 @@ Automatic correction and forgetting across the two memory stores still need
 an exact identity mapping and native validation.
 
 The provider exposes `mnemos_remember`, `mnemos_retrieve`, `mnemos_inspect`,
-`mnemos_correct`, `mnemos_forget`, and `mnemos_job_status` through Hermes'
+`mnemos_correct`, `mnemos_forget`, `mnemos_forget_preview`,
+`mnemos_forget_related`, and `mnemos_job_status` through Hermes'
 native memory tool dispatcher. The initialized session supplies scope; tool
 arguments cannot override project, profile, host, or session. Retrieval defaults
 to the project. Correction and forgetting require an exact fact ID and its
@@ -135,7 +136,31 @@ follow-up; a native trace must still demonstrate that the host performs it.
 Inspect the fact and job status after an
 uncertain response, especially when multiple corrections were queued against
 the same version.
-These explicit tools do not perform fuzzy matching or bulk deletion.
+For retained conversational copies, inspect the target and call
+`mnemos_forget_preview` with its current version. Review the returned facts
+and source events, including each candidate's selection restrictions. The
+preview includes current and historical assertions, advisory similarity
+candidates, a completeness flag, a limit, and a digest. Similarity is only a
+review aid; it does not authorize deletion. A normal top-five retrieval is
+not a complete inventory of copies. A complete preview means its returned
+selection and source dependencies fit the bound; it does not mean semantic
+search found every paraphrase. Inspect `similarity_search` for search limits
+and truncation.
+
+Apply the reviewed selection through `mnemos_forget_related`, using the
+unchanged digest, matching `preview_limit`, and explicit fact/source IDs from
+that preview. The target is always removed. Omitted or empty selection lists
+remove no additional facts or sources. The service rejects stale or
+incomplete previews, out-of-preview IDs, and unsafe source selections
+without applying the deletion. Regenerate a stale preview; request a larger
+limit for a truncated preview, up to 500. If it remains incomplete, report
+that limit rather than claiming complete erasure. Neither tool queues a
+deletion for later replay when the service is unavailable.
+
+These two tools expose the existing reviewed-copy service API. Their
+availability does not establish that a native model will select every
+relevant copy or perform the deletion. Unindexed paraphrases, external
+transcripts, and Hermes' separate built-in store remain outside this workflow.
 
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.
 With checkpoint enforcement enabled by an operator, a failed or unavailable

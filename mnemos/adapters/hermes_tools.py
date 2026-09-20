@@ -97,6 +97,65 @@ _SCHEMAS = (
         },
     },
     {
+        "name": "mnemos_forget_preview",
+        "description": (
+            "Preview the exact and advisory related facts and source events for a reviewed "
+            "forget operation. The preview is read-only, bounded by limit, and reports "
+            "whether it is complete. Similarity candidates "
+            "are advisory only and are never deleted automatically. Reuse the returned "
+            "preview_digest when applying reviewed selections. A complete bounded preview "
+            "does not prove that every semantic copy was found; inspect similarity_search "
+            "truncation and exhaustive fields before claiming broad erasure."
+        ),
+        "parameters": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "fact_id": {"type": "string", "minLength": 1, "maxLength": 512},
+                "expected_version": {"type": "integer", "minimum": 1},
+                "limit": {"type": "integer", "minimum": 1, "maximum": 500, "default": 100},
+            },
+            "required": ["fact_id", "expected_version"],
+        },
+    },
+    {
+        "name": "mnemos_forget_related",
+        "description": (
+            "Apply a reviewed related-forget preview using the unchanged preview_digest and "
+            "matching preview_limit. The target fact is always forgotten; "
+            "additional facts and source events require exact IDs from the matching preview. "
+            "An empty selection is target-only. Do not infer or add IDs outside the preview."
+        ),
+        "parameters": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "fact_id": {"type": "string", "minLength": 1, "maxLength": 512},
+                "expected_version": {"type": "integer", "minimum": 1},
+                "preview_digest": {"type": "string", "pattern": "^[0-9a-fA-F]{64}$"},
+                "preview_limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "default": 100,
+                },
+                "selected_fact_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 512},
+                    "default": [],
+                },
+                "selected_source_event_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {"type": "string", "minLength": 1, "maxLength": 512},
+                    "default": [],
+                },
+            },
+            "required": ["fact_id", "expected_version", "preview_digest"],
+        },
+    },
+    {
         "name": "mnemos_job_status",
         "description": (
             "Read durable status for one Mnemos job. Use the exact job_id returned by "
@@ -118,6 +177,8 @@ _TO_OPERATION = {
     "mnemos_remember": "remember",
     "mnemos_correct": "correct",
     "mnemos_forget": "forget",
+    "mnemos_forget_preview": "forget_preview",
+    "mnemos_forget_related": "forget_related",
     "mnemos_job_status": "job",
 }
 _ALLOWED = {
@@ -126,6 +187,15 @@ _ALLOWED = {
     "mnemos_remember": {"content", "source_ref", "request_id"},
     "mnemos_correct": {"fact_id", "content", "expected_version", "source_ref", "request_id"},
     "mnemos_forget": {"fact_id", "expected_version"},
+    "mnemos_forget_preview": {"fact_id", "expected_version", "limit"},
+    "mnemos_forget_related": {
+        "fact_id",
+        "expected_version",
+        "preview_digest",
+        "preview_limit",
+        "selected_fact_ids",
+        "selected_source_event_ids",
+    },
     "mnemos_job_status": {"job_id"},
 }
 
@@ -153,6 +223,8 @@ def _validate(name: str, args: Any) -> str | None:
         "mnemos_remember": {"content", "request_id"},
         "mnemos_correct": {"fact_id", "content", "expected_version", "request_id"},
         "mnemos_forget": {"fact_id", "expected_version"},
+        "mnemos_forget_preview": {"fact_id", "expected_version"},
+        "mnemos_forget_related": {"fact_id", "expected_version", "preview_digest"},
         "mnemos_job_status": {"job_id"},
     }[name]
     if required - args.keys():
@@ -164,15 +236,20 @@ def _validate(name: str, args: Any) -> str | None:
         "job_id": 512,
         "source_ref": 4096,
         "request_id": 256,
+        "preview_digest": 64,
     }
     for key, value in args.items():
         if key in string_limits and (not isinstance(value, str) or not value.strip()):
             return f"{key} must be a non-empty string"
         if key in string_limits and len(value) > string_limits[key]:
             return f"{key} is too long"
-        if key in {"top_k", "max_context_tokens", "expected_version"} and (
-            isinstance(value, bool) or not isinstance(value, int)
-        ):
+        if key in {
+            "top_k",
+            "max_context_tokens",
+            "expected_version",
+            "limit",
+            "preview_limit",
+        } and (isinstance(value, bool) or not isinstance(value, int)):
             return f"{key} must be an integer"
         if key == "expected_version" and value < 1:
             return "expected_version must be positive"
@@ -180,6 +257,22 @@ def _validate(name: str, args: Any) -> str | None:
             return "top_k is out of bounds"
         if key == "max_context_tokens" and not 0 <= value <= 32000:
             return "max_context_tokens is out of bounds"
+        if key in {"limit", "preview_limit"} and not 1 <= value <= 500:
+            return f"{key} is out of bounds"
+        if key == "preview_digest" and (
+            len(value) != 64 or any(char not in "0123456789abcdefABCDEF" for char in value)
+        ):
+            return "preview_digest must be 64 hexadecimal characters"
+    for key in ("selected_fact_ids", "selected_source_event_ids"):
+        if key in args:
+            value = args[key]
+            if not isinstance(value, list) or len(value) > 500:
+                return f"{key} must be a list of at most 500 IDs"
+            if any(
+                not isinstance(item, str) or not 1 <= len(item) <= 512 or not item.strip()
+                for item in value
+            ):
+                return f"{key} must contain non-empty IDs"
     return None
 
 
@@ -199,6 +292,25 @@ async def dispatch_tool(
                 "top_k": args.get("top_k", 5),
                 "max_context_tokens": args.get("max_context_tokens", 1200),
                 "profile": "baseline",
+            }
+        )
+    elif tool_name == "mnemos_forget_preview":
+        payload.update(
+            {
+                "fact_id": args["fact_id"],
+                "expected_version": args["expected_version"],
+                "limit": args.get("limit", 100),
+            }
+        )
+    elif tool_name == "mnemos_forget_related":
+        payload.update(
+            {
+                "fact_id": args["fact_id"],
+                "expected_version": args["expected_version"],
+                "preview_digest": args["preview_digest"],
+                "preview_limit": args.get("preview_limit", 100),
+                "selected_fact_ids": args.get("selected_fact_ids", []),
+                "selected_source_event_ids": args.get("selected_source_event_ids", []),
             }
         )
     elif tool_name == "mnemos_remember":

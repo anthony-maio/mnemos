@@ -44,6 +44,8 @@ def test_schemas_are_narrow_and_scope_is_provider_owned():
         "mnemos_remember",
         "mnemos_correct",
         "mnemos_forget",
+        "mnemos_forget_preview",
+        "mnemos_forget_related",
         "mnemos_job_status",
     }
     for schema in schemas:
@@ -125,6 +127,103 @@ def test_mutations_require_exact_identity_and_version():
         )
     )
     assert extra["status"] == "rejected"
+    assert client.calls == []
+
+
+def test_reviewed_forget_tools_inject_scope_and_defaults():
+    client = RecordingClient()
+    preview = json.loads(
+        asyncio.run(
+            dispatch_tool(
+                client,
+                context(),
+                "mnemos_forget_preview",
+                {"fact_id": "fact-1", "expected_version": 1},
+            )
+        )
+    )
+    assert preview == client.result
+    operation, payload, queued = client.calls[-1]
+    assert operation == "forget_preview"
+    assert payload["context"] == context().model_dump(mode="json")
+    assert payload["limit"] == 100
+    assert queued is False
+
+    related = json.loads(
+        asyncio.run(
+            dispatch_tool(
+                client,
+                context(),
+                "mnemos_forget_related",
+                {
+                    "fact_id": "fact-1",
+                    "expected_version": 1,
+                    "preview_digest": "a" * 64,
+                },
+            )
+        )
+    )
+    assert related == client.result
+    operation, payload, queued = client.calls[-1]
+    assert operation == "forget_related"
+    assert payload["preview_limit"] == 100
+    assert payload["selected_fact_ids"] == []
+    assert payload["selected_source_event_ids"] == []
+    assert queued is False
+
+
+@pytest.mark.parametrize(
+    "name,args",
+    [
+        (
+            "mnemos_forget_preview",
+            {"fact_id": "f", "expected_version": 1, "limit": 0},
+        ),
+        (
+            "mnemos_forget_related",
+            {
+                "fact_id": "f",
+                "expected_version": 1,
+                "preview_digest": "z" * 64,
+            },
+        ),
+        (
+            "mnemos_forget_related",
+            {
+                "fact_id": "f",
+                "expected_version": 1,
+                "preview_digest": "a" * 64,
+                "selected_fact_ids": ["f"] * 501,
+            },
+        ),
+        (
+            "mnemos_forget_preview",
+            {"fact_id": "f", "expected_version": 1, "context": {}},
+        ),
+        (
+            "mnemos_forget_related",
+            {
+                "fact_id": "f",
+                "expected_version": 1,
+                "preview_digest": "a" * 64,
+                "allowed_scopes": ["global"],
+            },
+        ),
+        (
+            "mnemos_forget_related",
+            {
+                "fact_id": "f",
+                "expected_version": 1,
+                "preview_digest": "a" * 64,
+                "selected_fact_ids": ["f" * 513],
+            },
+        ),
+    ],
+)
+def test_reviewed_forget_tools_reject_invalid_arguments(name, args):
+    client = RecordingClient()
+    result = json.loads(asyncio.run(dispatch_tool(client, context(), name, args)))
+    assert result["status"] == "rejected"
     assert client.calls == []
 
 

@@ -465,7 +465,14 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             "exact ID before your final answer and report its actual status. Only a completed "
             "job confirms processing; pending or leased does not. "
             "Built-in Hermes memory removals affect its own store; use mnemos_forget to remove "
-            "a shared Mnemos fact."
+            "a shared Mnemos fact. For a fact with retained conversation copies, call "
+            "mnemos_forget_preview first, review its exact and advisory candidates, then "
+            "call mnemos_forget_related with the unchanged preview_digest and only explicitly "
+            "selected IDs. The target is always removed; empty selections remove no additional "
+            "facts or sources. An incomplete preview must be regenerated and never treated as "
+            "a complete erasure. Even a complete bounded preview does not prove that every "
+            "semantic copy was found; inspect its similarity_search truncation and exhaustive "
+            "fields before claiming broad erasure."
         )
 
     def prefetch(self, query: str, *, session_id: str = "") -> str:

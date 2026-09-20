@@ -6,15 +6,17 @@ checks, 569 installed cases (4 matching skips), and seven replay assertions.
 The bridge writes explicit UTF-8; missing or inaccessible inspect/correct/forget
 targets return a generic 404; automatic assistant captures quoting a forgotten
 fact ID are suppressed transactionally. Explicit user writes remain available.
-These are regression and package results, not a new native-model run.
+These counts establish package checks; the separate native result follows.
 
-The [fixed Hermes v4 cohort](../2026-09-19/hermes-native-cohort-v4/README.md)
-on the earlier verified `8f8f63f` wheel finished zero of three full lifecycles.
-All three teach phases checked job status. Attempt 1 reached final recall,
-which exposed recaptured forget narration; attempt 2 failed on bridge encoding;
-attempt 3 announced a correction without invoking it. All outcomes remain
-preserved. Three-host continuity, complete capture, real-model quality
-acceptance, Desktop, and the pilot remain open.
+The [fixed Hermes v5 cohort](../2026-09-19/hermes-native-cohort-v5/README.md)
+on verified `fd83fb2` finished zero of three full lifecycles. All three
+attempts passed teaching, restarted recall, correction, and restarted
+corrected recall. Attempts 1 and 2 deleted the target and suppressed original
+source replay, but older conversational copies remained in the final model
+request. Attempt 3 announced a deletion without calling the tool. No
+provider-error gate failed. The earlier v3 and v4 outcomes remain preserved.
+Three-host continuity, complete capture, real-model quality acceptance,
+Desktop, and the pilot remain open.
 
 ## September 19: native Hermes successor stops on wrong job ID
 
