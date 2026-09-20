@@ -34,6 +34,38 @@ diagnostic only: one of five renamed development cases had a path at degree
 16, and its target was still absent from the top five. Neither result is
 reinterpreted as evidence for a production change.
 
+## Frozen preparation and pre-measurement controls
+
+Vector preparation completed at source `326322f`. The immutable artifact is
+`docs/validation/2026-09-20/source-association-vectors-v1/artifact.json`, SHA-256
+`bb66da961d731c80a9bb965f72db082371f5faac2f13b32ff268bb408a7420cb`.
+The authored manifest SHA-256 is
+`809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741`.
+All 364 vectors were independently checked against saved raw responses. Query,
+document, and symmetric prefixes are empty. Measurement makes no provider
+calls and enables spreading only; the other four cognition modules are off.
+Extraction and correction candidates are explicitly authored fixture inputs.
+
+The runner is `benchmarks/local_memory/run_source_association.py`. It records
+committed source hashes, this protocol's digest, repository status, each
+SQLite artifact, and all observations. Each case/repetition creates independent
+forward and reverse fixtures. Every arm is observed before and after reopening,
+with an additional target-edge cut. Semantic output is compared against an
+untouched production call. Score and budget reconstruction and an independent
+path enumeration check each observation. The lifecycle case also records
+actual leased correction, forget, stable-identity replay, and restart, then
+queries each arm from the resulting state.
+
+Before observing any Nomic-backed ranks, the synthetic lifecycle check found
+that the protocol's shared-source preservation expectation is not met by
+`SQLiteStore.forget_fact`: it deliberately uses
+`preserve_shared_sources=False`, erases the source and associated evidence,
+and leaves replay suppression. Remaining fact rows survive. Retain this
+failed development control; do not change the protocol's expectation or
+production deletion behavior to obtain a passing result. The planned 45 rows
+may complete while `coverage_pass` remains false. Such execution does not
+justify a production association channel or a quality claim.
+
 ## Question and boundary
 
 The current graph derives scoped mutual semantic nearest-neighbor edges. The
