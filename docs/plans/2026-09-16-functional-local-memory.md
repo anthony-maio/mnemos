@@ -563,8 +563,10 @@ structural diagnostic, not retrieval improvement or a changed graph default.
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Current verified product [cc940ac](../validation/2026-09-20/project-identity-source-checkpoint-v1/README.md)
-passes 2,034 source tests with four skips and all six source/package checks.
+Latest verified source [6ec8259](../validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1/README.md)
+passes 2,055 tests with four skips and all six source/package checks. Its wheel
+is byte-identical to the cc940ac artifact already verified below; the new code
+changes evaluation contracts and registry preflight, not the packaged engine.
 The [installed check](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md)
 passes 859 cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git

@@ -12,7 +12,7 @@ Working checkout: `D:/Development/mnemos/mnemos/.worktrees/functional-local-memo
 
 ## Start with the actual state
 
-The latest verified product source is `cc940ac5bb8826e5e68528812fc86f0ad7154a4e`. It passes **2,034 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its isolated installed wheel passes **859 selected cases with four matching skips**, installed-origin checks and the replay probe. These counts are different test selections, not independent estimates of reliability. See the [source checkpoint](../validation/2026-09-20/project-identity-source-checkpoint-v1/README.md) and [installed checkpoint](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md).
+The latest verified source is `6ec82597214ee24f4f8aa48847175f2950dc2b94`. It passes **2,055 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its wheel is byte-identical to the cc940ac build whose isolated installed check passed **859 selected cases with four matching skips**, installed-origin checks and the replay probe. These counts are different test selections, not independent estimates of reliability. See the [source checkpoint](../validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1/README.md) and [installed checkpoint](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md).
 
 Verified wheel SHA-256: `dd4427e4d403fc9149db03d49c273fd8b60bcd032b64b5b489a405ddd4416c87`. This identifies the tested build, not a published release.
 
