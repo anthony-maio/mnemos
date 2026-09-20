@@ -394,6 +394,15 @@ Run: `py -3.13 -m pytest -q tests/test_local_memory_benchmark.py tests/test_retr
 
 ### T19 - Reconcile release, documentation, and research claims
 
+Current package evidence: [product `244613a`](../validation/2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
+passes 1,976 source tests and 775 isolated installed cases, with four skips
+each, all six source/package checks, and seven replay assertions. This closes
+package verification for the separate Hermes evidence callback; native host
+integration and final acceptance remain open. The
+[historical-claim comparison](../validation/2026-09-20/historical-claim-development-v1/README.md)
+adds 144 development responses and model-dependent qualification failures.
+It does not replace the incomplete matrix or establish held-out quality.
+
 Depends on: T17, T18.
 
 Files: `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/client-compatibility-matrix.md`, `docs/release-checklist.md`, `docs/retrieval-benchmarks.md`, `docs/handoffs/substack-local-memory.md`, `tests/test_docs_consistency.py`; website changes in a separately reviewed checkout.

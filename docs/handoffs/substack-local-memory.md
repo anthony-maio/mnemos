@@ -12,14 +12,31 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
-The latest [verified package](../validation/2026-09-20/affective-classifier-model-checkpoint-v1/README.md)
-is `ac1a838`: 1,962 source tests and 761 isolated installed cases pass, with
+The latest [verified package](../validation/2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
+is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.
-The Python affective classifier honors explicit model selection on supported
-providers while preserving the shared default. Unsupported selections fail
-visibly; configured selection is not a claim of measured classifier accuracy.
-The earlier fidelity result and incomplete matrix remain unchanged. Hermes
-host integration, broader recovery, Desktop, quality, and the pilot remain open.
+Compatible Hermes hosts can provide a separate durable evidence snapshot;
+an explicit empty snapshot captures nothing. Native IDs, origins, and summary
+classification are validated before enqueue. These are adapter and package
+checks; actual host compaction integration, broader recovery, Desktop,
+real-model quality, and the operational pilot remain open.
+
+The preceding [classifier-model package](../validation/2026-09-20/affective-classifier-model-checkpoint-v1/README.md)
+`ac1a838` passed 1,962 source tests and 761 installed cases, with four skips
+each. It honors explicit classifier model selection on supported providers
+without changing their shared default. Model selection is not evidence of
+classifier accuracy.
+
+The [historical-claim development comparison](../validation/2026-09-20/historical-claim-development-v1/README.md)
+preserves 144 real-model responses across two models and two prompt arms.
+Qwen3.5:9b abstained on the five historical/attributed cases in both arms.
+Qwen2.5:14b proposed facts, but its baseline sometimes dropped historical or
+uncertainty qualifications; the candidate clarification preserved those
+qualifications in the observed examples. Both models abstained on the four
+negative controls. This is authored development evidence, not independent
+semantic scoring or a held-out result. No production prompt or live model
+selection changed; service commit, correction, retrieval, and forgetting
+still need qualification-preservation validation.
 
 The [contract-v4 real-model matrix](../validation/2026-09-20/contract-v4-terminal-v1/README.md)
 is terminal and incomplete: 4,150 complete observations and 50 partial out
@@ -29,14 +46,14 @@ the other five retain failed correction targets after extraction selected
 are preserved. The repaired synthetic scenarios were previously observed;
 they are not an unseen holdout. This does not close quality acceptance.
 
-The preceding [verified package](../validation/2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
+The earlier [verified package](../validation/2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
 is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.
 Original-row provenance preserves copied-message identity and forget
 suppression; marked summaries remain capture-only. These checks establish
 the adapter contract. The isolated Hermes compatibility candidate still
 needs integration review and does not establish a live host upgrade.
-The classifier-model selection repair belongs to the newer checkpoint above.
+Classifier model selection and the separate evidence callback were verified later.
 Full-module quality and the pilot remain open.
 A real host database fixture shows copied rows becoming new observations
 and an authored summary placement being merged into an ordinary assistant
