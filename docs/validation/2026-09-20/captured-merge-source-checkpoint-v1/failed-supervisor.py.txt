@@ -1,0 +1,38 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import json, os, subprocess, time
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-captured-merge-v1'
+record_path = temp / 'mnemos-captured-merge-installed-supervisor-v1.json'
+assert not record_path.exists()
+record = {'pid': os.getpid(), 'status': 'waiting_source_checks', 'started_at': datetime.now(timezone.utc).isoformat()}
+def save():
+    record_path.write_text(json.dumps(record, indent=2) + '\n')
+save()
+try:
+    while True:
+        verification = json.loads((checks / 'verification.json').read_bytes())
+        if verification['status'] != 'running':
+            break
+        time.sleep(5)
+    assert verification['status'] == 'passed', verification['status']
+    assert verification['source_commit'] == '26c9ddbb218df44ddba6d9b06a09fd258cdd3efc'
+    command = [str(repo / '.venv/Scripts/python.exe'),
+        str(repo / '.venv/run_combined_installed_check_v49.py'),
+        '--checks', str(checks), '--snapshot', str(temp / 'mnemos-source-captured-merge-v1'),
+        '--commit', verification['source_commit'],
+        '--output', str(temp / 'mnemos-installed-checks-captured-merge-v1'),
+        '--environment', str(temp / 'mnemos-installed-env-captured-merge-v1'),
+        '--replay-fixture', str(temp / 'mnemos-installed-replay-captured-merge-v1')]
+    record.update(status='running_installed_checks', command=command)
+    save()
+    result = subprocess.run(command, cwd=repo, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    record.update(status='completed' if result.returncode == 0 else 'failed', exit_code=result.returncode)
+except Exception as exc:
+    record.update(status='failed', error_type=type(exc).__name__, error=str(exc))
+    raise
+finally:
+    record['updated_at'] = datetime.now(timezone.utc).isoformat()
+    save()

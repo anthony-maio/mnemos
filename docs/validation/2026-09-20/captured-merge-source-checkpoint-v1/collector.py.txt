@@ -1,0 +1,55 @@
+from pathlib import Path
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = temp / 'mnemos-package-checks-captured-merge-v1'
+v = json.loads((source / 'verification.json').read_bytes())
+assert v['status'] == 'passed' and v['source_commit'] == '26c9ddbb218df44ddba6d9b06a09fd258cdd3efc'
+assert len(v['checks']) == 6 and all(c['exit_code'] == 0 for c in v['checks'])
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == v['runner_sha256']
+assert v['checks'][0]['counts'] == {'tests': 2016, 'failures': 0, 'errors': 0, 'skipped': 4}
+for artifact in v['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+out = repo / 'docs/validation/2026-09-20/captured-merge-source-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/final_checkpoint_checks_v3.py', out / 'runner.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+# Preserve the launcher mistake separately from the still-running corrected run.
+failure = temp / 'mnemos-installed-checks-captured-merge-v1/installation.json'
+failed = json.loads(failure.read_bytes())
+assert failed['status'] == 'failed' and failed['commands'] == []
+shutil.copyfile(failure, out / 'installed-preflight-failure-v1.json')
+shutil.copyfile(repo / '.venv/run_captured_merge_installed_when_ready_v1.py', out / 'failed-supervisor.py.txt')
+(out / 'README.md').write_text('''# Captured-correction merge source/package checkpoint
+
+Frozen product 26c9ddb passes 2,012 source tests with four skips, formatting,
+Python 3.10 compatibility type checking across 150 files, JavaScript syntax,
+wheel/sdist build, and twine metadata checks. All six checks have exit code 0.
+Raw logs, JUnit, exact artifact hashes, environment and runner are preserved.
+
+The full-suite run uses a clean detached checkout and fresh test storage outside
+Git. Both wheel and source distribution were hashed after successful build.
+The recorded wheel is 308,573 bytes, SHA-256
+ee0533bf1ae3b2de55ad0c1e0182aa3e5fedb57aba99bc95f0975d119a3baa9a.
+
+The first broader installed-suite launcher supplied the check directory instead
+of verification.json. It failed before any installation command. That failure
+and launcher are preserved here. A corrected attempt uses new output and
+environment directories; its result is separate. This archive does not claim
+that broader installed suite passed. The independently completed Hermes v35
+installed lifecycle is recorded in its own archive.
+
+This does not close full-module quality, broader native-host resilience, the
+daily-use pilot or final release acceptance. No live installation or publication
+occurred.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files)}))
