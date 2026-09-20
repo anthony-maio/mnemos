@@ -1,0 +1,44 @@
+from pathlib import Path
+import hashlib,json,shutil,xml.etree.ElementTree as ET
+repo=Path.cwd();src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-evaluation-contract-v5')
+v=json.loads((src/'verification.json').read_bytes())
+assert v['status']=='passed' and v['source_commit']=='6ec82597214ee24f4f8aa48847175f2950dc2b94'
+assert len(v['checks'])==6 and all(c['exit_code']==0 for c in v['checks'])
+counts=v['checks'][0]['counts'];assert counts['failures']==counts['errors']==0
+cases=list(ET.parse(src/'pytest.xml').getroot().iter('testcase'))
+for name,minimum in [('test_contract_v5',10),('test_evaluation_registry_identity',11)]:
+ selected=[c for c in cases if name in c.attrib.get('classname','')]
+ assert len(selected)==minimum and all(len(c)==0 for c in selected),(name,len(selected))
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo/'.venv/final_checkpoint_checks_v3.py')==v['runner_sha256']
+for a in v['artifacts']:
+ p=Path(a['file']);assert sha(p)==a['sha256'] and p.stat().st_size==a['bytes']
+old=json.loads((repo/'docs/validation/2026-09-20/project-identity-installed-checkpoint-v1/installation.json').read_bytes())
+new_wheels=[a for a in v['artifacts'] if a['file'].endswith('.whl')];assert len(new_wheels)==1
+same=new_wheels[0]['sha256']==old['bindings_after']['wheel_sha256']
+out=repo/'docs/validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1';out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for p in src.iterdir():
+ if p.is_file() and p.suffix in {'.json','.xml','.log'}:shutil.copyfile(p,out/p.name)
+shutil.copyfile(repo/'.venv/final_checkpoint_checks_v3.py',out/'runner.py.txt');shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'wheel-comparison.json').write_text(json.dumps({'new_wheel_sha256':new_wheels[0]['sha256'],'previous_installed_wheel_sha256':old['bindings_after']['wheel_sha256'],'byte_identical':same,'new_installed_run':False},indent=2)+'\n')
+(out/'README.md').write_text(f'''# Evaluation contract v5 source/package checkpoint
+
+Frozen source 6ec8259 passes {counts['tests']-counts['skipped']:,} tests with {counts['skipped']} skips and
+all six source/package checks. All ten v5 contract tests and eleven evaluation
+registry tests are included and pass. Formatting, Python 3.10 type checking,
+JavaScript, build and package metadata checks pass.
+
+The v5 path retains generic lifecycle/scope/body/state checks and global source
+identities while leaving historical dataset rules intact. No fresh dataset or
+unseen evaluation is established by unit tests that reuse old contract fixtures.
+Original model outcomes, labels and thresholds remain unchanged.
+
+Wheel byte equality with the previously verified installed artifact: {same}.
+See wheel-comparison.json for exact hashes. No new installed run is claimed.
+Full semantic quality, module benefit, provider recovery and pilot acceptance
+remain open. The independent extraction comparison uses its own frozen source.
+''')
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in out.iterdir() if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files),'counts':counts,'wheel_identical':same}))
