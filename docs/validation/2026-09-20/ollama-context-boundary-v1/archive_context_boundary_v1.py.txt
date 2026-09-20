@@ -1,0 +1,44 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-ollama-context-boundary-v2')
+failed = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-ollama-context-boundary-v1')
+target = repo / 'docs/validation/2026-09-20/ollama-context-boundary-v1'
+profile_dir = repo / 'docs/validation/2026-09-20/native-model-profile-v2'
+r = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+f = json.loads((failed / 'report.json').read_text(encoding='utf-8'))
+assert r['status'] == 'completed' and r['context_restored'] and r['loaded_contexts'] == [65536,16384,65536]
+assert f['status'] == 'failed' and not f['requests'] and not f['observations']
+target.mkdir(parents=True, exist_ok=False)
+(target / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file(): shutil.copyfile(path, target / path.name)
+shutil.copyfile(failed / 'report.json', target / 'pre-request-failure.json')
+for label, record in [('executed',r),('pre-request-failure',f)]:
+    raw = subprocess.check_output(['git','show',record['runner_commit']+':benchmarks/native_hosts/ollama_context_probe_v1.py'],cwd=repo)
+    assert hashlib.sha256(raw).hexdigest() == record['runner_sha256']
+    (target / (label + '-runner.py.txt')).write_bytes(raw)
+shutil.copyfile(__file__, target / (Path(__file__).name + '.txt'))
+shutil.copyfile(repo / 'docs/plans/2026-09-20-ollama-context-boundary-protocol-v1.md', target / 'protocol.md')
+files = {p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(target.iterdir()) if p.is_file()}
+(target / 'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+profile_dir.mkdir(parents=True, exist_ok=False)
+profile = {
+    'created_at':r['finished_at'],'model':'mnemos-native-qwen35-9b:greedy-ctx64k-v2',
+    'digest':r['new_digest'],'base_model':'qwen3.5:9b',
+    'base_digest':'6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7',
+    'derived_from':'mnemos-native-qwen35-9b:greedy-v1',
+    'parameters':r['parameters'],'same_weight_blob':r['same_weight_blob'],
+    'same_template_model_info_capabilities':True,
+    'existing_models_unchanged':r['existing_models_unchanged'],
+    'ollama_version':json.loads((source/'version.response').read_text()),
+    'openai_endpoint_observed_context':65536,
+    'context_probe_report_sha256':hashlib.sha256((source/'report.json').read_bytes()).hexdigest(),
+    'native_observation':'NOT RUN',
+}
+(profile_dir/'profile.json').write_text(json.dumps(profile,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'files':len(files),'archive':str(target),'profile':str(profile_dir)}))

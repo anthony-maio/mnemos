@@ -1,0 +1,162 @@
+{
+  "status": "completed",
+  "started_at": "2026-09-20T06:02:11.209255+00:00",
+  "runner_sha256": "925187a1c41cde5295977316bf9a32ab1a027546f9067823066f92877730d2a9",
+  "runner_commit": "1e716770ce571348bc38bf0cd35e65f7b721657c",
+  "requests": [
+    {
+      "label": "version",
+      "route": "/api/version",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "25a9c64aeab65deae9034269d94de609cf27607ca277c5035cf28bd344771d07",
+      "seconds": 0.03191349998814985
+    },
+    {
+      "label": "tags-before",
+      "route": "/api/tags",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "71527e0758838f3d84c02513d85c53b095d01cbb32087fe8fe2b349c08a36262",
+      "seconds": 0.09590149999712594
+    },
+    {
+      "label": "old-show",
+      "route": "/api/show",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "0923d96fe74ce5540e0a8729f7327833159d2e180ddbaa274180e3ed973c30c5",
+      "seconds": 0.030974100023740903
+    },
+    {
+      "label": "ps-before",
+      "route": "/api/ps",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "a6fe9ec6e26a38d99fca418b69826e0238b7a2bb319ff05eb153a6fcfd1fa28d",
+      "seconds": 0.025718100019730628
+    },
+    {
+      "label": "old-native-api",
+      "route": "/api/chat",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "52684e20b9731b96ef23ac6ed57748ae04bb315b64621eafd807548d423e365d",
+      "seconds": 4.804722500004573
+    },
+    {
+      "label": "old-native-api-ps",
+      "route": "/api/ps",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "badeda93dd506cb4f3775680c8cb8805459c1b462bd567e18b7a49fbe839db4e",
+      "seconds": 0.02570119997835718
+    },
+    {
+      "label": "old-openai-api",
+      "route": "/v1/chat/completions",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "715fb636cae309690014cdd4ab7e987d9b23449a0161cc74cf3a44dc636ce281",
+      "seconds": 5.27843729997403
+    },
+    {
+      "label": "old-openai-api-ps",
+      "route": "/api/ps",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "ba065d3a43b1932bcff089a02a294bea4936ac0965f39e9006b99179e15c9286",
+      "seconds": 0.025462299992796034
+    },
+    {
+      "label": "create-context-alias",
+      "route": "/api/create",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "912d0c07da7bdb22cdae025b96da26d01523aaab7362edb28544e3949deb369d",
+      "seconds": 0.08586839999770746
+    },
+    {
+      "label": "new-show",
+      "route": "/api/show",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "c92cb7cc6e68634536c6148673f879846f3be9f389cc65e18e98133ef6163386",
+      "seconds": 0.07583879999583587
+    },
+    {
+      "label": "new-openai-api",
+      "route": "/v1/chat/completions",
+      "method": "POST",
+      "http_status": 200,
+      "response_sha256": "23d023169e9d0a5279fe4849e254b452303868831cba37ea8c6b911fa760479d",
+      "seconds": 5.880779700004496
+    },
+    {
+      "label": "new-openai-api-ps",
+      "route": "/api/ps",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "9ac5b086f49cbfc25e65b208979eac29ed04d82083b70b87cc1910d706c393df",
+      "seconds": 0.02648229998885654
+    },
+    {
+      "label": "tags-after",
+      "route": "/api/tags",
+      "method": "GET",
+      "http_status": 200,
+      "response_sha256": "e2145f20263c9ea87029eb91e00308d42c21c5fcb70cf1798a6457777459ca0a",
+      "seconds": 0.12569970000186004
+    }
+  ],
+  "observations": [
+    {
+      "label": "old-native-api",
+      "model": "mnemos-native-qwen35-9b:greedy-v1",
+      "route": "/api/chat",
+      "requested_context": 65536,
+      "loaded_context": 65536,
+      "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+      "size_vram": 8044454869,
+      "response_complete": true
+    },
+    {
+      "label": "old-openai-api",
+      "model": "mnemos-native-qwen35-9b:greedy-v1",
+      "route": "/v1/chat/completions",
+      "requested_context": 65536,
+      "loaded_context": 16384,
+      "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+      "size_vram": 6014380276,
+      "response_complete": true
+    },
+    {
+      "label": "new-openai-api",
+      "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+      "route": "/v1/chat/completions",
+      "requested_context": 65536,
+      "loaded_context": 65536,
+      "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+      "size_vram": 8044454869,
+      "response_complete": true
+    }
+  ],
+  "new_digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+  "existing_models_unchanged": true,
+  "same_weight_blob": "FROM D:\\OllamaModels\\blobs\\sha256-dec52a44569a2a25341c4e4d3fee25846eed4f6f0b936278e3a3c900bb99d37c",
+  "parameters": {
+    "top_p": "0.95",
+    "num_ctx": "65536",
+    "presence_penalty": "0",
+    "seed": "42",
+    "temperature": "0",
+    "top_k": "20"
+  },
+  "loaded_contexts": [
+    65536,
+    16384,
+    65536
+  ],
+  "context_restored": true,
+  "finished_at": "2026-09-20T06:02:27.771700+00:00"
+}
