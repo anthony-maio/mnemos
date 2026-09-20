@@ -1,5 +1,15 @@
 # Functional local memory implementation status
 
+Current source candidate: `697b672` makes generated shared instructions follow
+the active host's tool schemas. MCP scope selectors are conditional; native
+provider-owned tools omit them, and write/consolidation tools are requested
+only when exposed. The scope firewall is unchanged. Targeted verification
+passed 90 cases with two opt-in host skips; formatting and strict Python 3.10
+type checks passed. Full source/package verification is running in the
+isolated `mnemos-source-shared-guidance-v1` checkout. No new installed or
+native result is claimed yet. Earlier package and native records below keep
+their original source bindings.
+
 The [three-host v5 attempt](../2026-09-20/three-host-native-v5/README.md) passed
 both teaching phases, then failed at Hermes recall on unsupported scope
 arguments. Query-only retries retrieved both facts but do not clear the
