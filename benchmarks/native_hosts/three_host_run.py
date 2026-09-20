@@ -67,6 +67,8 @@ from .three_host_contract import (
 )
 from .three_host_runtime import ThreeHostRuntime, PROTOCOL
 
+CODEX_MODEL = "gpt-5.5"
+
 
 def save(path: Path, value: Any) -> None:
     path.write_text(json.dumps(value, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -398,6 +400,8 @@ def main() -> int:
         for path in Path(__file__).parent.glob("*.py")
     ]
     inputs.append(PROTOCOL)
+    inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v2.md")
+    inputs.append("docs/validation/2026-09-20/codex-tool-mode-diagnostic-v1/selected-catalog.json")
     inputs.append("docs/plans/2026-09-19-three-host-continuity-protocol-v1.md")
     inputs.append("docs/validation/2026-09-20/native-model-profile-v2/profile.json")
     inputs.append("docs/validation/2026-09-19/native-hermes-local-v4/host-compatibility.patch")
@@ -445,7 +449,8 @@ def main() -> int:
         "phases": [],
         "live_configuration_changed": False,
         "preflight_only": args.preflight_only,
-        "codex_mode": "prospective direct tools via --disable code_mode_host; observed only if native correlation passes",
+        "codex_mode": "pinned gpt-5.5 with --disable code_mode_host; direct tools require native ID correlation",
+        "codex_requested_model": CODEX_MODEL,
     }
     save(runtime.root / "report.json", report)
     env = PhaseEnvironment(
@@ -477,6 +482,7 @@ def main() -> int:
                     executable=args.codex_executable,
                     auth_source=Path.home() / ".codex/auth.json",
                     disable_code_mode_host=True,
+                    model=CODEX_MODEL,
                 )
             else:
                 process = run_claude_phase(

@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -195,6 +196,24 @@ def _save_result(path: Path, result: dict[str, Any]) -> None:
     (path / "process.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 
 
+def _codex_observed_models(home: Path) -> list[Any]:
+    """Read model observations only from the fresh disposable Codex home."""
+    sessions = home / "sessions"
+    observations: list[Any] = []
+    if not sessions.is_dir():
+        return observations
+    for path in sorted(sessions.rglob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if record.get("type") != "turn_context":
+                continue
+            payload = record.get("payload")
+            observations.append(payload.get("model") if isinstance(payload, dict) else None)
+    return observations
+
+
 def _cleanup_phase(
     directory: Path,
     result: dict[str, Any],
@@ -283,6 +302,7 @@ def run_codex_phase(
     auth_source: Path,
     max_seconds: int = 180,
     disable_code_mode_host: bool = False,
+    model: str | None = None,
 ) -> dict[str, Any]:
     """Run an interactive Codex phase in the caller's terminal and return provenance.
 
@@ -293,6 +313,10 @@ def run_codex_phase(
         raise ValueError("The frozen Codex phase deadline is 180 seconds")
     if not sys.stdin.isatty() or not sys.stdout.isatty():
         raise ValueError("Native Codex requires the observed terminal invocation mode")
+    if model is not None and (
+        not isinstance(model, str) or re.fullmatch(r"[A-Za-z0-9._-]{1,128}", model) is None
+    ):
+        raise ValueError("Codex model must be a nonempty safe model slug")
     directory = _phase_root(config, phase)
     command = [
         str(executable),
@@ -304,6 +328,7 @@ def run_codex_phase(
         "--cd",
         str(config.project),
         "--no-alt-screen",
+        *(["--model", model] if model is not None else []),
         prompt,
     ]
     result: dict[str, Any] = {
@@ -315,6 +340,7 @@ def run_codex_phase(
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "max_seconds": max_seconds,
         "code_mode_host_disabled": disable_code_mode_host,
+        "requested_model": model,
     }
     auth = None
     process = None
@@ -342,6 +368,12 @@ def run_codex_phase(
         result["status"] = (
             "completed" if process.returncode == 0 and not result["timed_out"] else "failed"
         )
+        if model is not None and result["status"] == "completed":
+            observed = _codex_observed_models(codex_home)
+            result["observed_models"] = observed
+            result["model_verified"] = bool(observed) and all(item == model for item in observed)
+            if not result["model_verified"]:
+                raise ValueError("Codex model observation is missing or mismatched")
     except BaseException as exc:
         result["status"] = "failed"
         result["exception_type"] = type(exc).__name__

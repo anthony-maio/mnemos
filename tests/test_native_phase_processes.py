@@ -120,6 +120,140 @@ def test_codex_setup_failure_records_failure_before_auth_copy(config, monkeypatc
     assert "pid" not in record
 
 
+def _run_codex_pinned(
+    config, source, monkeypatch, *, model="codex-pinned", observed_model=None, observations=None
+):
+    home = config.root / "codex-home" / ".codex"
+    home.mkdir(parents=True)
+    monkeypatch.setattr(phases, "_prepare_codex", lambda *args: (home, {"CODEX_HOME": str(home)}))
+    monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))
+
+    def launch(command, **kwargs):
+        observed = model if observed_model is None else observed_model
+        values = [observed] if observations is None else observations
+        sessions = Path(kwargs["env"]["CODEX_HOME"]) / "sessions"
+        sessions.mkdir(parents=True)
+        (sessions / "session.jsonl").write_text(
+            "".join(
+                json.dumps({"type": "turn_context", "payload": {"model": value}}) + "\n"
+                for value in values
+            )
+        )
+        return FakeProcess()
+
+    monkeypatch.setattr(phases.subprocess, "Popen", launch)
+    source.write_text("synthetic credential")
+    return phases.run_codex_phase(
+        config,
+        phase="codex-pinned",
+        prompt="synthetic prompt",
+        executable=Path("codex.exe"),
+        auth_source=source,
+        model=model,
+    )
+
+
+def test_codex_model_pin_is_command_bound_and_verified(config, tmp_path, monkeypatch):
+    result = _run_codex_pinned(config, tmp_path / "auth.json", monkeypatch)
+    assert result["requested_model"] == "codex-pinned"
+    assert result["observed_models"] == ["codex-pinned"]
+    assert result["model_verified"] is True
+    command = json.loads((config.root / "codex-pinned" / "process.json").read_text())["command"]
+    assert command[command.index("--model") + 1] == "codex-pinned"
+
+
+def test_codex_legacy_mode_has_no_model_pin_or_observation_requirement(
+    config, tmp_path, monkeypatch
+):
+    home = config.root / "codex-home" / ".codex"
+    home.mkdir(parents=True)
+    monkeypatch.setattr(phases, "_prepare_codex", lambda *args: (home, {"CODEX_HOME": str(home)}))
+    monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))
+    process = FakeProcess()
+    monkeypatch.setattr(phases.subprocess, "Popen", lambda *args, **kwargs: process)
+    source = tmp_path / "auth.json"
+    source.write_text("synthetic credential")
+    result = phases.run_codex_phase(
+        config,
+        phase="codex-legacy",
+        prompt="synthetic prompt",
+        executable=Path("codex.exe"),
+        auth_source=source,
+    )
+    assert result["requested_model"] is None
+    assert "observed_models" not in result
+    command = json.loads((config.root / "codex-legacy" / "process.json").read_text())["command"]
+    assert "--model" not in command
+
+
+def test_codex_model_pin_rejects_missing_observation(config, tmp_path, monkeypatch):
+    home = config.root / "codex-home" / ".codex"
+    home.mkdir(parents=True)
+    monkeypatch.setattr(phases, "_prepare_codex", lambda *args: (home, {"CODEX_HOME": str(home)}))
+    monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.subprocess, "Popen", lambda *args, **kwargs: FakeProcess())
+    source = tmp_path / "auth.json"
+    source.write_text("synthetic credential")
+    with pytest.raises(ValueError, match="model observation"):
+        phases.run_codex_phase(
+            config,
+            phase="codex-missing-model",
+            prompt="synthetic prompt",
+            executable=Path("codex.exe"),
+            auth_source=source,
+            model="codex-pinned",
+        )
+
+
+def test_codex_model_pin_rejects_mismatched_observation(config, tmp_path, monkeypatch):
+    with pytest.raises(ValueError, match="model observation"):
+        _run_codex_pinned(
+            config,
+            tmp_path / "auth.json",
+            monkeypatch,
+            model="codex-pinned",
+            observed_model="wrong-model",
+        )
+    record = json.loads((config.root / "codex-pinned" / "process.json").read_text())
+    assert record["requested_model"] == "codex-pinned"
+    assert record["observed_models"] == ["wrong-model"]
+    assert record["model_verified"] is False
+    assert record["status"] == "failed"
+
+
+@pytest.mark.parametrize("observations", [["codex-pinned", "wrong-model"], ["codex-pinned", None]])
+def test_codex_model_pin_rejects_later_bad_observation(config, tmp_path, monkeypatch, observations):
+    with pytest.raises(ValueError, match="model observation"):
+        _run_codex_pinned(
+            config,
+            tmp_path / "auth.json",
+            monkeypatch,
+            observations=observations,
+        )
+    record = json.loads((config.root / "codex-pinned" / "process.json").read_text())
+    assert record["status"] == "failed"
+    assert record["auth_copy_removed"] is True
+
+
+@pytest.mark.parametrize("model", ["", "bad/model", "x" * 129])
+def test_codex_model_pin_validates_slug_before_phase(config, model, monkeypatch):
+    monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))
+    with pytest.raises(ValueError, match="model"):
+        phases.run_codex_phase(
+            config,
+            phase="codex-invalid-model",
+            prompt="synthetic prompt",
+            executable=Path("codex.exe"),
+            auth_source=Path("unused"),
+            model=model,
+        )
+    assert not (config.root / "codex-invalid-model").exists()
+
+
 class FakeProcess:
     pid = 12345
 
