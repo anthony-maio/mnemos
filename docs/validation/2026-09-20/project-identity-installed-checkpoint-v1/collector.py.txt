@@ -1,0 +1,46 @@
+from pathlib import Path
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = temp / 'mnemos-installed-checks-project-identity-v1'
+record = json.loads((source / 'installation.json').read_bytes())
+contract = json.loads((source / 'contract.json').read_bytes())
+assert record['status'] == contract['status'] == 'passed'
+assert record['bindings_after']['commit'] == 'cc940ac5bb8826e5e68528812fc86f0ad7154a4e'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert record['runner_sha256'] == sha(repo / '.venv/run_combined_installed_check_v52.py')
+assert record['bindings_before']['checks_sha256'] == sha(temp / 'mnemos-package-checks-project-identity-v1/verification.json')
+for command in record['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(source / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+out = repo / 'docs/validation/2026-09-20/project-identity-installed-checkpoint-v1'
+assert not (out / 'evidence-index.json').exists()
+out.mkdir(exist_ok=True)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+for name in ['run_combined_installed_check_v52.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(__file__, out / 'collector.py.txt')
+summary = record['contract']['junit_summary']
+assert any('test_noncooperative_processor_is_fenced_after_cancellation_grace' in str(x) for x in json.loads((source / 'expected-contract-cases.json').read_bytes()))
+assert any('test_inherited_git_environment_cannot_select_another_projects_identity' in str(x) for x in json.loads((source / 'expected-contract-cases.json').read_bytes()))
+(out / 'README.md').write_text(f'''# Project identity installed-package checkpoint
+
+Frozen checkpoint cc940ac passes {summary['tests'] - summary['skipped']} installed
+cases with {summary['skipped']} skips. Every selected result matches the frozen
+source JUnit, including skip reasons. Project identity, inherited Git overrides,
+lease renewal, durable jobs and MCP compatibility are included. Installed
+module origins, wheel bytes, source/test hashes and replay checks pass.
+
+The previous installed failure remains preserved; this new checkpoint includes
+its resolver repair and the additional environment-isolation regression. It
+does not establish full-module semantic quality, broader native-host recovery
+or the daily-use pilot. No live installation or publication occurred.
+''')
+
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'junit': summary}))

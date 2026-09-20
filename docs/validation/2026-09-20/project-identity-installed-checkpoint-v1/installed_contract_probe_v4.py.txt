@@ -1,0 +1,413 @@
+"""Run the selected contract tests against one installed wheel only.
+
+The frozen JUnit outcome is part of the contract. The installed run must keep
+the same case set, pass/skip status, and skip reason for every selected case.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+
+def _hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalized_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=snapshot, text=True).strip()
+
+
+def _module_origins(site_packages: Path) -> dict[str, str]:
+    origins: dict[str, str] = {}
+    for name, module in sorted(sys.modules.items()):
+        if name != "mnemos" and not name.startswith("mnemos."):
+            continue
+        origin = getattr(module, "__file__", None)
+        if origin:
+            resolved = Path(str(origin)).resolve()
+            if not resolved.is_relative_to(site_packages):
+                raise RuntimeError(f"Loaded {name} outside installed package: {resolved}")
+            origins[name] = str(resolved)
+            continue
+
+        # Namespace packages, including ``mnemos.adapters`` in some wheels,
+        # legitimately have no __file__.  Their complete __path__ must still
+        # resolve under the installed site so an external checkout cannot be
+        # silently imported.
+        raw_paths = getattr(module, "__path__", None)
+        if raw_paths is None:
+            raise RuntimeError(f"Loaded {name} has no package origin or namespace path")
+        paths = [Path(str(item)).resolve() for item in raw_paths]
+        if not paths:
+            raise RuntimeError(f"Loaded namespace {name} has no package paths")
+        outside = [path for path in paths if not path.is_relative_to(site_packages)]
+        if outside:
+            raise RuntimeError(f"Loaded namespace {name} outside installed package: {outside[0]}")
+        origins[name] = "namespace:" + os.pathsep.join(str(path) for path in paths)
+    return origins
+
+
+def _selected_hashes(snapshot: Path, tests: list[str]) -> dict[str, str]:
+    paths = [snapshot / "tests" / "__init__.py", snapshot / "tests" / "conftest.py"]
+    paths.extend(snapshot / item for item in tests)
+    paths.append(snapshot / "benchmarks" / "scenarios" / "local-memory-continuity.jsonl")
+    result: dict[str, str] = {}
+    for path in paths:
+        if not path.is_file():
+            raise RuntimeError(f"Selected frozen input is missing: {path}")
+        relative = path.relative_to(snapshot).as_posix()
+        result[relative] = _normalized_hash(path)
+    return result
+
+
+def _skip_reason(node: ET.Element) -> str | None:
+    skipped = node.find("skipped")
+    if skipped is None:
+        return None
+    return json.dumps(
+        {
+            "message": skipped.attrib.get("message"),
+            "text": (skipped.text or "").strip(),
+            "type": skipped.attrib.get("type"),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _case_outcome(node: ET.Element) -> tuple[str, str | None]:
+    if node.find("failure") is not None or node.find("error") is not None:
+        return "failed", None
+    if node.find("skipped") is not None:
+        return "skipped", _skip_reason(node)
+    return "passed", None
+
+
+def _junit_summary(path: Path) -> dict[str, int]:
+    root = ET.parse(path).getroot()
+
+    # pytest normally writes <testsuites><testsuite .../></testsuites>, while
+    # some runners write a single <testsuite>. Sum only leaf suites so nested
+    # layouts are not counted twice.
+    suites = [
+        node
+        for node in root.iter("testsuite")
+        if not any(child.tag == "testsuite" for child in node)
+    ]
+    if not suites and root.tag == "testsuite":
+        suites = [root]
+
+    def integer(name: str) -> int:
+        return sum(int(suite.attrib.get(name, "0")) for suite in suites)
+
+    summary = {
+        "tests": integer("tests"),
+        "failures": integer("failures"),
+        "errors": integer("errors"),
+        "skipped": integer("skipped"),
+    }
+    if summary["tests"] <= 0:
+        raise RuntimeError("JUnit reported no selected tests")
+    if any(summary[key] for key in ("failures", "errors")):
+        raise RuntimeError(f"JUnit reported failures or errors: {summary}")
+    return summary
+
+
+def _assert_expected_cases(path: Path, expected_path: Path) -> dict[str, object]:
+    expected = json.loads(expected_path.read_text(encoding="utf-8"))
+    modules = {str(item["module"]) for item in expected}
+
+    def key(classname: str, name: str) -> tuple[str, str]:
+        parts = classname.split(".")
+        matches = [index for index, part in enumerate(parts) if part in modules]
+        if len(matches) != 1:
+            raise RuntimeError(f"Unexpected test module: {classname}")
+        return (".".join(parts[matches[0] :]), name)
+
+    expected_cases = {
+        key(str(item["classname"]), str(item["name"])): (
+            str(item["outcome"]),
+            item.get("skip_reason"),
+        )
+        for item in expected
+    }
+    if not expected_cases or len(expected_cases) != len(expected):
+        raise RuntimeError("Expected frozen test cases are empty or duplicated")
+    actual = list(ET.parse(path).getroot().iter("testcase"))
+    actual_keys = [
+        key(node.attrib.get("classname", ""), node.attrib.get("name", "")) for node in actual
+    ]
+    if set(actual_keys) != set(expected_cases) or len(actual_keys) != len(expected_cases):
+        raise RuntimeError("Installed contract case set differs from the successful frozen run")
+    if len(set(actual_keys)) != len(actual_keys):
+        raise RuntimeError("Installed contract contains duplicate selected cases")
+    for node in actual:
+        classname = node.attrib.get("classname", "")
+        name = node.attrib.get("name", "")
+        case_key = key(classname, name)
+        actual_outcome, actual_reason = _case_outcome(node)
+        expected_outcome, expected_reason = expected_cases[case_key]
+        if actual_outcome == "failed":
+            raise RuntimeError("Selected contract case failed or errored: " f"{classname}::{name}")
+        if actual_outcome != expected_outcome or actual_reason != expected_reason:
+            raise RuntimeError(
+                "Installed contract outcome differs from frozen case: "
+                f"{classname}::{name}; expected {expected_outcome}/{expected_reason!r}, "
+                f"got {actual_outcome}/{actual_reason!r}"
+            )
+    expected_counts = {
+        outcome: sum(1 for item_outcome, _ in expected_cases.values() if item_outcome == outcome)
+        for outcome in ("passed", "skipped")
+    }
+    actual_counts = {
+        outcome: sum(1 for node in actual if _case_outcome(node)[0] == outcome)
+        for outcome in ("passed", "skipped")
+    }
+    return {
+        "expected_cases": len(expected_cases),
+        "actual_cases": len(actual_keys),
+        "selected_cases": len(actual_keys),
+        "expected_outcomes": expected_counts,
+        "actual_outcomes": actual_counts,
+        "module_normalization": "discard package prefix before exact module segment; preserve class suffix",
+    }
+
+
+def _self_test_junit(path: Path, rows: list[tuple[str, str, str, str | None]]) -> None:
+    root = ET.Element("testsuites")
+    suite = ET.SubElement(root, "testsuite")
+    for classname, name, outcome, reason in rows:
+        node = ET.SubElement(suite, "testcase", {"classname": classname, "name": name})
+        if outcome == "skipped":
+            details = json.loads(reason or "{}")
+            ET.SubElement(
+                node,
+                "skipped",
+                {
+                    key: str(value)
+                    for key, value in details.items()
+                    if key in {"message", "type"} and value is not None
+                },
+            ).text = str(details.get("text") or "")
+        elif outcome == "failed":
+            ET.SubElement(node, "failure")
+    ET.ElementTree(root).write(path, encoding="utf-8", xml_declaration=True)
+
+
+def _run_self_tests() -> int:
+    import tempfile
+
+    with tempfile.TemporaryDirectory(prefix="mnemos-contract-parity-") as raw:
+        root = Path(raw)
+        expected = [
+            {
+                "module": "test_cross_host_contract",
+                "classname": "tests.test_cross_host_contract",
+                "name": "test_pass",
+                "outcome": "passed",
+                "skip_reason": None,
+            },
+            {
+                "module": "test_hosts",
+                "classname": "tests.test_hosts",
+                "name": "test_platform",
+                "outcome": "skipped",
+                "skip_reason": json.dumps(
+                    {"message": "Windows only", "text": "", "type": None},
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            },
+        ]
+        expected_path = root / "expected.json"
+        expected_path.write_text(json.dumps(expected), encoding="utf-8")
+        good = root / "good.xml"
+        _self_test_junit(
+            good,
+            [
+                ("tests.test_cross_host_contract", "test_pass", "passed", None),
+                (
+                    "tests.test_hosts",
+                    "test_platform",
+                    "skipped",
+                    expected[1]["skip_reason"],
+                ),
+            ],
+        )
+        summary = _assert_expected_cases(good, expected_path)
+        assert summary["expected_outcomes"] == {"passed": 1, "skipped": 1}
+        assert summary["actual_outcomes"] == summary["expected_outcomes"]
+
+        rejected_count = 0
+
+        def rejected(rows: list[tuple[str, str, str, str | None]]) -> None:
+            nonlocal rejected_count
+            candidate = root / f"bad-{rejected_count}.xml"
+            rejected_count += 1
+            _self_test_junit(candidate, rows)
+            try:
+                _assert_expected_cases(candidate, expected_path)
+            except RuntimeError:
+                return
+            raise AssertionError("Expected contract parity control to fail")
+
+        rejected(
+            [
+                ("tests.test_cross_host_contract", "test_pass", "skipped", '{"message":"x"}'),
+                ("tests.test_hosts", "test_platform", "passed", None),
+            ]
+        )
+        rejected([("tests.test_cross_host_contract", "test_pass", "passed", None)])
+        rejected(
+            [
+                ("tests.test_cross_host_contract", "test_pass", "passed", None),
+                (
+                    "tests.test_hosts",
+                    "test_platform",
+                    "skipped",
+                    '{"message":"new skip"}',
+                ),
+            ]
+        )
+    print("contract parity self-tests passed")
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--self-test", action="store_true")
+    parser.add_argument("--site-packages", type=Path)
+    parser.add_argument("--wheel", type=Path)
+    parser.add_argument("--snapshot", type=Path)
+    parser.add_argument("--commit")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--expected-cases", type=Path)
+    parser.add_argument("--tests", nargs="+")
+    args = parser.parse_args()
+
+    if args.self_test:
+        return _run_self_tests()
+    if any(
+        value is None
+        for value in (
+            args.site_packages,
+            args.wheel,
+            args.snapshot,
+            args.commit,
+            args.output,
+            args.expected_cases,
+            args.tests,
+        )
+    ):
+        parser.error("all installed-probe arguments are required unless --self-test is used")
+
+    snapshot = args.snapshot.resolve()
+    site_packages = args.site_packages.resolve()
+    wheel = args.wheel.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit("Refusing to overwrite contract evidence")
+    if not site_packages.is_dir() or site_packages.is_relative_to(snapshot):
+        raise SystemExit("The installed package directory must be outside the source snapshot")
+    if not wheel.is_file():
+        raise SystemExit("The verified wheel does not exist")
+    if _git(snapshot, "rev-parse", "HEAD") != args.commit:
+        raise SystemExit("Frozen source commit differs")
+    if _git(snapshot, "status", "--porcelain"):
+        raise SystemExit("Frozen source snapshot has changes")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    record: dict[str, object] = {
+        "schema_version": 1,
+        "probe": "installed_package_contract",
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": args.commit,
+        "source_snapshot": str(snapshot),
+        "site_packages": str(site_packages),
+        "wheel": {"path": str(wheel), "sha256": _hash(wheel)},
+        "selected_tests": list(args.tests),
+        "selected_input_hashes": _selected_hashes(snapshot, args.tests),
+        "python": sys.version,
+    }
+    try:
+        os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        sys.path.insert(0, str(site_packages))
+        import mnemos  # noqa: PLC0415
+
+        imported = Path(str(mnemos.__file__)).resolve()
+        if not imported.is_relative_to(site_packages):
+            raise RuntimeError(f"mnemos imported outside installed package: {imported}")
+        record["imported_mnemos"] = str(imported)
+        record["distribution"] = {
+            "name": "mnemos-memory",
+            "version": importlib.metadata.version("mnemos-memory"),
+            "origin": str(importlib.metadata.distribution("mnemos-memory").locate_file("")),
+        }
+        record["module_origins_before"] = _module_origins(site_packages)
+
+        basetemp = (site_packages.parent.parent / "validation-fixtures").resolve()
+        if basetemp.exists():
+            raise RuntimeError(f"Validation fixture root must be fresh: {basetemp}")
+        if basetemp.is_relative_to(snapshot):
+            raise RuntimeError("Validation fixture root must be outside the source snapshot")
+        basetemp.mkdir(parents=True)
+        try:
+            _git(basetemp, "rev-parse", "--show-toplevel")
+        except subprocess.CalledProcessError:
+            pass
+        else:
+            raise RuntimeError(f"Validation fixture root is inside a Git repository: {basetemp}")
+        record["pytest_basetemp"] = str(basetemp)
+        junit = output.with_name("contract.junit.xml")
+        pytest_args = [
+            "--import-mode=importlib",
+            "-p",
+            "pytest_asyncio.plugin",
+            "--basetemp",
+            str(basetemp),
+            f"--junitxml={junit}",
+            *(str(snapshot / item) for item in args.tests),
+        ]
+        import pytest  # noqa: PLC0415
+
+        exit_code = pytest.main(pytest_args)
+        record["pytest_exit_code"] = int(exit_code)
+        record["junit"] = str(junit)
+        if exit_code != 0:
+            raise RuntimeError(f"Selected contract tests exited with {exit_code}")
+        record["junit_summary"] = _junit_summary(junit)
+        record["case_summary"] = _assert_expected_cases(junit, args.expected_cases)
+        record["module_origins_after"] = _module_origins(site_packages)
+        current_hashes = _selected_hashes(snapshot, args.tests)
+        if current_hashes != record["selected_input_hashes"]:
+            raise RuntimeError("Frozen selected test or fixture bytes changed during probe")
+        if _git(snapshot, "rev-parse", "HEAD") != args.commit or _git(
+            snapshot, "status", "--porcelain"
+        ):
+            raise RuntimeError("Frozen source snapshot changed during probe")
+        record["status"] = "passed"
+    except Exception as exc:
+        record.update({"status": "failed", "error_type": type(exc).__name__, "error": str(exc)})
+    finally:
+        record["finished_at"] = datetime.now(timezone.utc).isoformat()
+        output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"status": record["status"], "output": str(output)}))
+    return 0 if record["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
