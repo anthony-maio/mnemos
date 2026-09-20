@@ -12,15 +12,32 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
-The unfinished Hermes host patch has a preserved
+The [real-service historical-claim probe](../validation/2026-09-20/historical-claim-service-v1/README.md)
+completes all three positive lifecycles using local Qwen2.5:14b and Nomic:
+capture, extracted fact, explicit same-ID correction, restart, retrieval,
+reviewed forget, and suppression of both original and correction replays.
+Sleep extraction alone is enabled. Three of four zero-fact controls fail:
+fiction, hypothetical consideration, and an assistant suggestion become
+qualified durable memories. The question abstains. These seven authored
+development cases do not establish general quality, and the candidate prompt
+is not adopted. V1's pre-inference runner error and all V2 results remain
+preserved; no production prompt or live model setting changed.
+
+The [independent Hermes repair checks](../validation/2026-09-20/hermes-component-repair-v1/README.md)
+now pass all six reproduced write/projection, unchanged hybrid-copy, and
+component-tamper checks. The original failures and intermediate partial
+repair are preserved below. This is an isolated host candidate; broader
+host-suite and installed lifecycle verification remain open.
+
+The unfinished Hermes host patch originally produced a preserved
 [component-write failure record](../validation/2026-09-20/hermes-component-write-audit-v1/README.md):
 its new evidence projection missed a single-message write and rejected three
 valid transcript shapes. Keep this isolated candidate failure separate from
 the verified Mnemos package and from live Hermes behavior. Do not describe
-compaction integration as finished until a verified successor closes it.
+compaction integration as finished until broader installed host validation closes it.
 
 The subsequent [hybrid-copy audit](../validation/2026-09-20/hermes-hybrid-copy-audit-v1/README.md)
-shows why the host's real restore path matters: an unchanged summary/user
+showed why the host's real restore path matters: an unchanged summary/user
 carrier preserves the user's identity but gives the copied summary a new
 identity. A separate component-tamper check is rejected correctly. These are
 bounded fixture observations from the unfinished candidate.
@@ -48,8 +65,8 @@ uncertainty qualifications; the candidate clarification preserved those
 qualifications in the observed examples. Both models abstained on the four
 negative controls. This is authored development evidence, not independent
 semantic scoring or a held-out result. No production prompt or live model
-selection changed; service commit, correction, retrieval, and forgetting
-still need qualification-preservation validation.
+selection changed. The successor service probe above supplies bounded
+lifecycle evidence and preserves three failed zero-fact controls.
 
 The [contract-v4 real-model matrix](../validation/2026-09-20/contract-v4-terminal-v1/README.md)
 is terminal and incomplete: 4,150 complete observations and 50 partial out

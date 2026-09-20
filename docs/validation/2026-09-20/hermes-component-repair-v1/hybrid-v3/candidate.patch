@@ -1,0 +1,1091 @@
+diff --git a/agent/conversation_compression.py b/agent/conversation_compression.py
+index f282354b35..889f7a364c 100644
+--- a/agent/conversation_compression.py
++++ b/agent/conversation_compression.py
+@@ -1582,7 +1582,7 @@ def _adopt_live_compression_child(
+     child = row_getter(session_db, child_session_id)
+     if not isinstance(child, dict) or child.get("ended_at") is not None:
+         return None
+-    recovered = loader(session_db, child_session_id)
++    recovered = loader(session_db, child_session_id, include_row_ids=True)
+     if not (isinstance(recovered, list) and recovered):
+         return None
+     # Revalidate after loading: the tip may have rotated or a competing
+@@ -2805,7 +2805,7 @@ def _adopt_grown_durable_parent(agent: Any, lease: _CompressionLease, messages:
+     durable_loader = getattr(type(lease.db), "get_messages_as_conversation", None)
+     if not callable(durable_loader):
+         return None
+-    durable_parent = durable_loader(lease.db, lease.sid)
++    durable_parent = durable_loader(lease.db, lease.sid, include_row_ids=True)
+     if not (isinstance(durable_parent, list) and len(durable_parent) > len(messages)):
+         return None
+     # In-memory carries this turn's un-persisted user tail; flush it via the normal
+@@ -2832,7 +2832,7 @@ def _adopt_grown_durable_parent(agent: Any, lease: _CompressionLease, messages:
+         )
+         return None
+     # Re-read after the flush so the adopted snapshot carries the just-persisted tail.
+-    durable_parent = durable_loader(lease.db, lease.sid)
++    durable_parent = durable_loader(lease.db, lease.sid, include_row_ids=True)
+     if not (isinstance(durable_parent, list) and len(durable_parent) > len(messages)):
+         return None
+     logger.info(
+@@ -2850,6 +2850,27 @@ def _pre_compress_memory_context(agent: Any, messages: list, checkpoint_required
+     memory_context = ""
+     memory_manager = getattr(agent, "_memory_manager", None)
+     evidence_messages = _direct_messages_for_pre_compress_memory(messages)
++    # Providers with the v2 checkpoint contract receive the raw durable projection when available.
++    # The model-facing message list remains unchanged, and older stores/providers keep the prior path.
++    session_db = getattr(agent, "_session_db", None)
++    evidence_loader = getattr(session_db, "get_memory_evidence", None)
++    session_id = getattr(agent, "session_id", None)
++    if callable(evidence_loader) and session_id:
++        try:
++            durable_evidence = evidence_loader(session_id)
++        except Exception:
++            # A required checkpoint must not claim durability after provenance
++            # validation failed. Best-effort legacy compression may retain the
++            # old path when no checkpoint is required.
++            if checkpoint_required:
++                raise
++            logger.debug("Durable memory-evidence projection unavailable", exc_info=True)
++        else:
++            # An empty projection is authoritative. It represents a validated
++            # session with no durable evidence and must not be replaced by the
++            # model-facing transcript.
++            if isinstance(durable_evidence, list):
++                evidence_messages = durable_evidence
+     if checkpoint_required:
+         supports_checkpoint = getattr(memory_manager, "supports_pre_compress_checkpoint", None)
+         if memory_manager is None or not callable(supports_checkpoint):
+diff --git a/agent/memory_manager.py b/agent/memory_manager.py
+index d7f9caa632..e1374b02f2 100644
+--- a/agent/memory_manager.py
++++ b/agent/memory_manager.py
+@@ -7,6 +7,7 @@ registered at a time (tool-schema bloat, conflicting backends).
+ from __future__ import annotations
+ 
+ import contextvars
++import copy
+ import inspect
+ import json
+ import logging
+@@ -473,12 +474,28 @@ class MemoryManager:
+ 
+     @staticmethod
+     def _provider_sync_accepts(provider: MemoryProvider, keyword: str) -> bool:
+-        """Whether ``sync_turn`` accepts ``keyword`` (uninspectable → assume yes)."""
+         params = _signature_params(provider.sync_turn)
+         return params is None or _has_var_kwargs(params) or keyword in params
+ 
++    @staticmethod
++    def _provider_hook_accepts(provider: MemoryProvider, hook: str, keyword: str) -> bool:
++        params = _signature_params(getattr(provider, hook))
++        return params is None or _has_var_kwargs(params) or keyword in params
++
++    @staticmethod
++    def _provider_supports_memory_evidence(provider: MemoryProvider) -> bool:
++        try:
++            return int(getattr(provider, "memory_evidence_api_version", 0)) >= 1
++        except (TypeError, ValueError):
++            return False
++
++    @staticmethod
++    def _snapshot_memory_evidence(evidence_messages):
++        return None if evidence_messages is None else copy.deepcopy(evidence_messages)
++
+     def sync_all(self, user_content: str, assistant_content: str, *, session_id: str = "",
+                  messages: Optional[List[Dict[str, Any]]] = None,
++                 evidence_messages: Optional[List[Dict[str, Any]]] = None,
+                  turn_author: Optional[Dict[str, Any]] = None) -> None:
+         """Sync a completed turn to all providers on the background worker.
+ 
+@@ -488,15 +505,30 @@ class MemoryManager:
+         """
+         providers = list(self._providers)
+         clean_user_content = self._strip_skill_scaffolding(user_content) if providers else None
+-        if not clean_user_content:
++        evidence_snapshot = self._snapshot_memory_evidence(evidence_messages)
++        # An explicit evidence snapshot is authoritative even when the host
++        # callback has no user text. Callers use this only for committed
++        # durable rows; an omitted snapshot retains the legacy empty-turn
++        # short circuit.
++        if not clean_user_content and evidence_snapshot is None:
+             return
++        clean_user_content = clean_user_content or ""
+         optional_kwargs = {"messages": messages, "turn_author": turn_author}
+ 
+         def _sync(provider: MemoryProvider) -> None:
++            evidence_capable = (
++                evidence_snapshot is not None
++                and self._provider_supports_memory_evidence(provider)
++                and self._provider_sync_accepts(provider, "evidence_messages")
++            )
++            if not clean_user_content and not evidence_capable:
++                return
+             kwargs: Dict[str, Any] = {"session_id": session_id}
+             for keyword, value in optional_kwargs.items():
+                 if value is not None and self._provider_sync_accepts(provider, keyword):
+                     kwargs[keyword] = value
++            if evidence_capable:
++                kwargs["evidence_messages"] = evidence_snapshot
+             provider.sync_turn(clean_user_content, assistant_content, **kwargs)
+ 
+         self._submit_background(
+@@ -607,12 +639,29 @@ class MemoryManager:
+ 
+         self._each_provider("on_turn_start failed", _tick)
+ 
+-    def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
+-        self._each_provider("on_session_end failed", lambda p: p.on_session_end(messages), level=logging.WARNING,
+-                            exc_info=True)
+-
+-    def commit_session_boundary_async(self, messages: List[Dict[str, Any]], *, new_session_id: str,
+-                                      parent_session_id: str = "", reason: str = "new_session") -> None:
++    def on_session_end(
++        self, messages: List[Dict[str, Any]], *,
++        evidence_messages: Optional[List[Dict[str, Any]]] = None,
++    ) -> None:
++        evidence_snapshot = self._snapshot_memory_evidence(evidence_messages)
++
++        def _end(provider: MemoryProvider) -> None:
++            kwargs = {}
++            if (
++                evidence_snapshot is not None
++                and self._provider_supports_memory_evidence(provider)
++                and self._provider_hook_accepts(provider, "on_session_end", "evidence_messages")
++            ):
++                kwargs["evidence_messages"] = evidence_snapshot
++            provider.on_session_end(messages, **kwargs)
++
++        self._each_provider("on_session_end failed", _end, level=logging.WARNING, exc_info=True)
++
++    def commit_session_boundary_async(
++        self, messages: List[Dict[str, Any]], *, new_session_id: str,
++        parent_session_id: str = "", reason: str = "new_session",
++        evidence_messages: Optional[List[Dict[str, Any]]] = None,
++    ) -> None:
+         """Queue old-session extraction + provider rebinding as ONE serialized task.
+ 
+         ``on_session_end`` (LLM-bound, seconds) must run strictly BEFORE ``on_session_switch`` rebinds
+@@ -631,10 +680,11 @@ class MemoryManager:
+         if not self._providers:
+             return
+         snapshot = list(messages or [])
++        evidence_snapshot = self._snapshot_memory_evidence(evidence_messages)
+ 
+         def _run() -> None:  # both hooks already guard per-provider
+             try:
+-                self.on_session_end(snapshot)
++                self.on_session_end(snapshot, evidence_messages=evidence_snapshot)
+             except Exception as e:  # pragma: no cover
+                 logger.warning("Session-boundary extraction failed: %s", e)
+             try:
+diff --git a/agent/memory_provider.py b/agent/memory_provider.py
+index 938fd0b003..101d6269d8 100644
+--- a/agent/memory_provider.py
++++ b/agent/memory_provider.py
+@@ -78,6 +78,7 @@ class MemoryProvider(ABC):
+     # Providers that durably checkpoint every successful on_pre_compress() set this to
+     # PRE_COMPRESS_CHECKPOINT_API_VERSION; 1 = best-effort legacy.
+     pre_compress_checkpoint_api_version = 1
++    memory_evidence_api_version = 0
+ 
+     @property
+     @abstractmethod
+@@ -124,6 +125,7 @@ class MemoryProvider(ABC):
+     def sync_turn(
+         self, user_content: str, assistant_content: str, *,
+         session_id: str = "", messages: Optional[List[Dict[str, Any]]] = None,
++        evidence_messages: Optional[List[Dict[str, Any]]] = None,
+         turn_author: Optional[Dict[str, Any]] = None,
+     ) -> None:
+         """Persist a completed turn (non-blocking). ``messages`` is the OpenAI-style list so far.
+@@ -153,7 +155,10 @@ class MemoryProvider(ABC):
+         on an uninitialized instance on every inbound message, so keep it cheap and read-only."""
+         return {}
+ 
+-    def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
++    def on_session_end(
++        self, messages: List[Dict[str, Any]], *,
++        evidence_messages: Optional[List[Dict[str, Any]]] = None,
++    ) -> None:
+         """End-of-session extraction; fires only at real session boundaries, never per-turn."""
+ 
+     def on_session_switch(
+diff --git a/hermes_cli/cli_agent_setup_mixin.py b/hermes_cli/cli_agent_setup_mixin.py
+index c7d5f69683..81f7a3248d 100644
+--- a/hermes_cli/cli_agent_setup_mixin.py
++++ b/hermes_cli/cli_agent_setup_mixin.py
+@@ -582,7 +582,7 @@ class CLIAgentSetupMixin:
+                 f"Cannot resume session: {resume_limit_error}",
+                 f"[bold red]Cannot resume session:[/] {_escape(resume_limit_error)}")
+             return False
+-        restored = self._session_db.get_messages_as_conversation(self.session_id, repair_alternation=True)
++        restored = self._session_db.get_messages_as_conversation(self.session_id, repair_alternation=True, include_row_ids=True)
+         if restored:
+             restored = [m for m in restored if m.get("role") != "session_meta"]
+             self.conversation_history = restored
+diff --git a/hermes_cli/cli_session_mixin.py b/hermes_cli/cli_session_mixin.py
+index 31e3332c3b..d6b6cc1c74 100644
+--- a/hermes_cli/cli_session_mixin.py
++++ b/hermes_cli/cli_session_mixin.py
+@@ -8,6 +8,7 @@ inside each method (``from cli import ...``) — never at module load time (impo
+ from __future__ import annotations
+ 
+ import contextlib
++import logging
+ import os
+ import shutil
+ import sys
+@@ -20,6 +21,9 @@ from rich.markup import escape as _escape
+ from typing import Any, Dict, List, Optional
+ 
+ 
++logger = logging.getLogger(__name__)
++
++
+ def _user_turn_indices(history: list) -> list[int]:
+     """Indices of *real* user turns: excludes ephemeral scaffolding, display_kind timeline
+     rows and compaction handoffs — the same predicate as resume turn counting."""
+@@ -573,14 +577,28 @@ class CLISessionMixin:
+             # end strictly before switch, without blocking /new. No history → switch inline.
+             _mm = getattr(self.agent, "_memory_manager", None)
+             with contextlib.suppress(Exception):
+-                if _mm is not None and _boundary_snapshot:
+-                    _mm.commit_session_boundary_async(
+-                        _boundary_snapshot, new_session_id=self.session_id,
+-                        parent_session_id=old_session_id or "", reason="new_session")
+-                elif _mm is not None:
+-                    _mm.on_session_switch(
+-                        self.session_id, parent_session_id=old_session_id or "",
+-                        reset=True, reason="new_session")
++                if _mm is not None:
++                    _boundary_evidence = None
++                    evidence_loaded = False
++                    if old_session_id:
++                        try:
++                            _boundary_evidence = self.agent._memory_evidence_snapshot(old_session_id)
++                        except Exception:
++                            logger.warning(
++                                "Durable memory evidence unavailable at session boundary",
++                                exc_info=True,
++                            )
++                        else:
++                            evidence_loaded = True
++                    if _boundary_snapshot or evidence_loaded:
++                        _mm.commit_session_boundary_async(
++                            _boundary_snapshot, new_session_id=self.session_id,
++                            parent_session_id=old_session_id or "", reason="new_session",
++                            evidence_messages=_boundary_evidence)
++                    else:
++                        _mm.on_session_switch(
++                            self.session_id, parent_session_id=old_session_id or "",
++                            reset=True, reason="new_session")
+             self._notify_session_boundary("on_session_reset")
+ 
+         if not silent:
+@@ -750,7 +768,7 @@ class CLISessionMixin:
+         if self._session_db is not None and self.session_id:
+             try:
+                 truncated = self._session_db.rewind_user_turn(
+-                    self.session_id, -1, warm_history=warm_history, require_retryable=True).prefix
++                    self.session_id, -1, warm_history=warm_history, require_retryable=True, adopt_row_ids=True).prefix
+             except Exception as exc:
+                 print(f"(x_x) Retry rewind failed; history was not changed: {exc}")
+                 return None
+@@ -793,7 +811,7 @@ class CLISessionMixin:
+         if self._session_db is not None and self.session_id:
+             try:
+                 outcome = self._session_db.rewind_user_turn(
+-                    self.session_id, target_ordinal, warm_history=warm_history)
++                    self.session_id, target_ordinal, warm_history=warm_history, adopt_row_ids=True)
+                 truncated = outcome.prefix
+                 # Canonical editable prefill: the raw carrier holds the reference-summary wrapper.
+                 removed_text = outcome.live_text or removed_text
+diff --git a/hermes_state.py b/hermes_state.py
+index 71b91c19f7..41136402b2 100644
+--- a/hermes_state.py
++++ b/hermes_state.py
+@@ -1543,7 +1543,7 @@ class SessionDB(
+         "id, role, content, tool_call_id, tool_calls, tool_name, effect_disposition, "
+         "finish_reason, reasoning, reasoning_content, reasoning_details, "
+         "codex_reasoning_items, codex_message_items, platform_message_id, observed, "
+-        "_compressed_summary, timestamp, active, api_content, display_kind, display_metadata"
++        "_compressed_summary, _compressed_summary_has_user_turn, timestamp, active, api_content, display_kind, display_metadata"
+     )
+ 
+     # ── Meta key/value (scheduler bookkeeping) ──
+diff --git a/hermes_state_common.py b/hermes_state_common.py
+index 5868886951..d0136e9fb9 100644
+--- a/hermes_state_common.py
++++ b/hermes_state_common.py
+@@ -418,6 +418,7 @@ CREATE TABLE IF NOT EXISTS messages (
+     platform_message_id TEXT,
+     observed INTEGER DEFAULT 0,
+     _compressed_summary INTEGER NOT NULL DEFAULT 0,
++    _compressed_summary_has_user_turn INTEGER NOT NULL DEFAULT 0,
+     active INTEGER NOT NULL DEFAULT 1,
+     compacted INTEGER NOT NULL DEFAULT 0,
+     api_content TEXT,
+@@ -427,6 +428,32 @@ CREATE TABLE IF NOT EXISTS messages (
+     display_order INTEGER
+ );
+ 
++CREATE TABLE IF NOT EXISTS message_origins (
++    message_id INTEGER PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
++    origin_session_id TEXT NOT NULL,
++    origin_row_id INTEGER NOT NULL,
++    origin_cwd TEXT NOT NULL
++);
++
++CREATE INDEX IF NOT EXISTS idx_message_origins_origin
++    ON message_origins(origin_session_id, origin_row_id);
++
++CREATE TABLE IF NOT EXISTS message_evidence_components (
++    message_id INTEGER NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
++    component_ordinal INTEGER NOT NULL,
++    component_kind TEXT NOT NULL CHECK(component_kind IN ('retained_original', 'derived_summary')),
++    role TEXT NOT NULL,
++    content TEXT NOT NULL,
++    origin_session_id TEXT NOT NULL,
++    origin_row_id INTEGER NOT NULL,
++    origin_cwd TEXT NOT NULL,
++    PRIMARY KEY(message_id, component_ordinal),
++    UNIQUE(message_id, origin_row_id)
++);
++
++CREATE INDEX IF NOT EXISTS idx_message_evidence_components_origin
++    ON message_evidence_components(origin_session_id, origin_row_id);
++
+ CREATE TABLE IF NOT EXISTS session_model_usage (
+     session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+     model TEXT NOT NULL,
+diff --git a/hermes_state_compression.py b/hermes_state_compression.py
+index 2370176231..8432c6b40a 100644
+--- a/hermes_state_compression.py
++++ b/hermes_state_compression.py
+@@ -284,7 +284,7 @@ class SessionCompressionMixin:
+                 conn, parent, parent_session_id=parent_session_id, child_session_id=child_session_id,
+                 source=source, model=model, model_config=model_config, system_prompt=system_prompt,
+                 cwd=cwd, profile_name=profile_name)
+-            total_messages, total_tool_calls = self._insert_message_rows(conn, child_session_id, messages)
++            total_messages, total_tool_calls = self._insert_message_rows(conn, child_session_id, messages, preserve_origins=True)
+             if watermark is not None:
+                 # Clone the parent's concurrent tail into the child after the handoff;
+                 # originals stay in the closed parent for lineage recovery.
+diff --git a/hermes_state_messages.py b/hermes_state_messages.py
+index 856e012ca6..01935d18a6 100644
+--- a/hermes_state_messages.py
++++ b/hermes_state_messages.py
+@@ -9,7 +9,7 @@ import logging
+ import time
+ from typing import Any, Dict, List, Optional, Tuple
+ 
+-from agent.context_compressor import _DB_PERSISTED_MARKER as _DB_PERSISTED_MARKER_KEY, split_user_originated_turn
++from agent.context_compressor import ContextCompressor, _DB_PERSISTED_MARKER as _DB_PERSISTED_MARKER_KEY, split_user_originated_turn
+ from agent.memory_manager import sanitize_context
+ from agent.message_sanitization import _sanitize_surrogates
+ from hermes_cli.timefmt import coerce_epoch
+@@ -20,12 +20,38 @@ from hermes_state_common import (
+ logger = logging.getLogger("hermes_state")  # caplog tests pin the origin module's name
+ 
+ # One INSERT shape for every message writer (append, batch, replace, compact, import).
++def _memory_text(value: Any) -> str:
++    if isinstance(value, str):
++        return value.strip()
++    if isinstance(value, list):
++        pieces = []
++        for item in value:
++            if isinstance(item, str):
++                pieces.append(item)
++            elif isinstance(item, dict) and item.get("type") in {"text", "input_text"}:
++                if isinstance(item.get("text"), str):
++                    pieces.append(item["text"])
++        return "".join(pieces).strip()
++    return ""
++
++
++def _canonical_memory_text(value: Any) -> str:
++    text = _memory_text(value)
++    candidate = {"role": "user", "content": text}
++    unwrapped = ContextCompressor._strip_context_summary_handoff_message(candidate)
++    text = _memory_text(unwrapped.get("content")) if unwrapped is not None else text
++    prior_header = "[PRIOR CONTEXT " + chr(0x2014) + " for reference only; not a new message]"
++    while text.startswith(prior_header):
++        text = text[len(prior_header):].lstrip()
++    return text
++
++
+ _INSERT_MESSAGE_SQL = """INSERT INTO messages (session_id, role, content, tool_call_id,
+                    tool_calls, tool_name, effect_disposition, timestamp, token_count, finish_reason,
+                    reasoning, reasoning_content, reasoning_details, codex_reasoning_items,
+-                   codex_message_items, platform_message_id, observed, _compressed_summary, active, api_content, display_kind,
++                   codex_message_items, platform_message_id, observed, _compressed_summary, _compressed_summary_has_user_turn, active, api_content, display_kind,
+                    display_metadata, display_identity)
+-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
++                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
+ _BUMP_GENERATION_SQL = """
+             INSERT INTO conversation_generations (source, session_key, generation)
+             VALUES (?, ?, 1)
+@@ -259,7 +285,8 @@ class SessionMessagesMixin:
+             *(self._reasoning_json_text(_reasoning(k))
+               for k in ("reasoning_details", "codex_reasoning_items", "codex_message_items")),
+             msg.get("platform_message_id") or msg.get("message_id"),
+-            1 if msg.get("observed") else 0, 1 if msg.get("_compressed_summary") else 0, 1,
++            1 if msg.get("observed") else 0, 1 if msg.get("_compressed_summary") else 0,
++            1 if msg.get("_compressed_summary_has_user_turn") else 0, 1,
+             _str_or_none(msg.get("api_content")), _str_or_none(msg.get("display_kind")),
+             display_metadata, self._display_identity(self._display_dedupe_key(identity_row)))
+ 
+@@ -299,6 +326,12 @@ class SessionMessagesMixin:
+             self._check_transcript_write_guards(conn, session_id, compression_lock_holder,
+                 turn_lease_holder=turn_lease_holder, turn_lease_ttl_seconds=turn_lease_ttl_seconds)
+             msg_id = conn.execute(_INSERT_MESSAGE_SQL, params).lastrowid
++            if _memory_text(msg.get("content")) and msg.get("role") in {"user", "assistant"}:
++                msg["_row_id"] = int(msg_id)
++                self._insert_origin(conn, int(msg_id), session_id, None)
++                self._insert_evidence_components(
++                    conn, int(msg_id), session_id, msg, None, None
++                )
+             self._bump_session_counters(conn, session_id, 1, _tool_calls_count(tool_calls), unit=True)
+             return msg_id
+         # THE critical write (failure aborts the turn): long patience so a sibling legitimately
+@@ -490,19 +523,327 @@ class SessionMessagesMixin:
+         row = self._read_one("SELECT role FROM messages WHERE id = ? AND session_id = ? AND active = 1", (int(row_id), session_id))
+         return row[0] if row else None
+ 
+-    def _insert_message_rows(self, conn, session_id: str, messages: List[Dict[str, Any]]) -> tuple[int, int]:
+-        """Insert *messages* as fresh active rows in the caller's txn -> ``(inserted, tool_call_count)``.
+-        Never touches sessions.* counters (callers reconcile differently); reasoning kept for assistant rows."""
++    @staticmethod
++    def _validated_memory_origin(origin: Any) -> Optional[Dict[str, Any]]:
++        if origin is None:
++            return None
++        if not isinstance(origin, dict) or set(origin) != {"version", "session_id", "row_id", "cwd"}:
++            raise ValueError("_memory_origin must contain exactly version, session_id, row_id, cwd")
++        if type(origin.get("version")) is not int or origin.get("version") != 1 or type(origin.get("row_id")) is not int or origin["row_id"] <= 0:
++            raise ValueError("_memory_origin has an invalid version or row_id")
++        if not all(isinstance(origin.get(key), str) and origin[key].strip() for key in ("session_id", "cwd")):
++            raise ValueError("_memory_origin requires non-empty session_id and cwd")
++        return {"version": 1, "session_id": origin["session_id"],
++                "row_id": origin["row_id"], "cwd": origin["cwd"]}
++
++    def _origin_for_row(self, conn, row_id: int) -> Dict[str, Any]:
++        row = conn.execute(
++            "SELECT m.id, m.session_id, s.cwd, o.origin_session_id, o.origin_row_id, o.origin_cwd "
++            "FROM messages AS m JOIN sessions AS s ON s.id = m.session_id "
++            "LEFT JOIN message_origins AS o ON o.message_id = m.id WHERE m.id = ?", (int(row_id),)
++        ).fetchone()
++        if row is None:
++            raise ValueError(f"message row {row_id} is not available for memory evidence")
++        if row["origin_session_id"] is not None:
++            return {"version": 1, "session_id": str(row["origin_session_id"]),
++                    "row_id": int(row["origin_row_id"]), "cwd": str(row["origin_cwd"])}
++        cwd = str(row["cwd"] or "").strip()
++        return {"version": 1, "session_id": str(row["session_id"]),
++                "row_id": int(row["id"]), "cwd": cwd}
++
++    def _source_origins_for_insert(self, conn, session_id: str, messages: List[Dict[str, Any]]) -> List[Optional[Dict[str, Any]]]:
++        origins: List[Optional[Dict[str, Any]]] = []
++        for msg in messages:
++            source_id = msg.get("_row_id")
++            if source_id is None:
++                if msg.get("_memory_origin") is not None:
++                    raise ValueError("a new memory row cannot supply _memory_origin")
++                origins.append(None)
++                continue
++            if isinstance(source_id, bool) or not isinstance(source_id, int) or source_id <= 0:
++                raise ValueError("retained memory row has an invalid _row_id")
++            source = conn.execute("SELECT session_id, role, content, _compressed_summary, _compressed_summary_has_user_turn FROM messages WHERE id = ?", (source_id,)).fetchone()
++            if source is None:
++                raise ValueError(f"retained memory row {source_id} is missing")
++            lineage = conn.execute(
++                "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
++                "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
++                "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
++                (session_id, source["session_id"]),
++            ).fetchone()
++            if lineage is None:
++                raise ValueError(f"retained memory row {source_id} is outside the session lineage")
++            if msg.get("_compressed_summary") is True and msg.get("_compressed_summary_has_user_turn") is True:
++                handoff, live = split_user_originated_turn(msg)
++                retained = conn.execute(
++                    "SELECT origin_session_id, origin_row_id, origin_cwd, role, content "
++                    "FROM message_evidence_components WHERE message_id = ? "
++                    "AND component_kind = 'retained_original' LIMIT 1",
++                    (source_id,),
++                ).fetchone()
++                if handoff is None or live is None or retained is None:
++                    raise ValueError(f"hybrid memory evidence row {source_id} has no verified origin")
++                if (
++                    str(retained["role"]) != str(live.get("role"))
++                    or _memory_text(self._decode_content(retained["content"])) != _canonical_memory_text(live.get("content"))
++                ):
++                    raise ValueError(f"hybrid memory evidence row {source_id} does not match its source")
++                supplied = self._validated_memory_origin(msg.get("_memory_origin"))
++                carrier_origin = self._origin_for_row(conn, source_id)
++                if supplied is not None and supplied != carrier_origin:
++                    raise ValueError(f"hybrid memory evidence row {source_id} has a conflicting carrier origin")
++                origin = {
++                    "version": 1, "session_id": str(retained["origin_session_id"]),
++                    "row_id": int(retained["origin_row_id"]), "cwd": str(retained["origin_cwd"]),
++                }
++                self._component_origin_is_in_lineage(conn, session_id, origin)
++                origins.append(origin)
++                continue
++            if msg.get("_memory_evidence_kind") == "derived_summary":
++                component = conn.execute(
++                    "SELECT component_kind, role, content, origin_session_id, origin_row_id, origin_cwd "
++                    "FROM message_evidence_components WHERE message_id = ? "
++                    "AND component_kind = 'derived_summary' LIMIT 1",
++                    (source_id,),
++                ).fetchone()
++                if component is None or str(component["role"]) != str(msg.get("role")):
++                    raise ValueError(f"derived memory evidence row {source_id} is not a verified summary")
++                component_content = self._decode_content(component["content"])
++                wrapper = bool(msg.get("_compressed_summary")) and bool(
++                    msg.get("_compressed_summary_has_user_turn")
++                )
++                if component_content == msg.get("content") and not wrapper:
++                    origin = {
++                        "version": 1, "session_id": str(component["origin_session_id"]),
++                        "row_id": int(component["origin_row_id"]), "cwd": str(component["origin_cwd"]),
++                    }
++                    supplied = self._validated_memory_origin(msg.get("_memory_origin"))
++                    if supplied is not None and supplied != origin:
++                        raise ValueError(f"derived memory evidence row {source_id} has a conflicting _memory_origin")
++                elif wrapper:
++                    handoff, live = split_user_originated_turn(msg)
++                    retained = conn.execute(
++                        "SELECT origin_session_id, origin_row_id, origin_cwd, role, content "
++                        "FROM message_evidence_components WHERE message_id = ? "
++                        "AND component_kind = 'retained_original' LIMIT 1",
++                        (source_id,),
++                    ).fetchone()
++                    if handoff is None or live is None or retained is None:
++                        raise ValueError(f"derived memory evidence row {source_id} has no verified hybrid origin")
++                    if (
++                        str(retained["role"]) != str(live.get("role"))
++                        or self._decode_content(retained["content"]) != live.get("content")
++                    ):
++                        raise ValueError(f"derived memory evidence row {source_id} does not match its source")
++                    supplied = self._validated_memory_origin(msg.get("_memory_origin"))
++                    carrier_origin = self._origin_for_row(conn, source_id)
++                    if supplied is not None and supplied != carrier_origin:
++                        raise ValueError(f"derived memory evidence row {source_id} has a conflicting carrier origin")
++                    origin = {
++                        "version": 1, "session_id": str(retained["origin_session_id"]),
++                        "row_id": int(retained["origin_row_id"]), "cwd": str(retained["origin_cwd"]),
++                    }
++                else:
++                    raise ValueError(f"derived memory evidence row {source_id} does not match its source")
++                self._component_origin_is_in_lineage(conn, session_id, origin)
++                origins.append(origin)
++                continue
++            source_content = self._decode_content(source["content"])
++            content_matches = (
++                bool(_memory_text(source_content))
++                and _canonical_memory_text(source_content) == _canonical_memory_text(msg.get("content"))
++            )
++            if not content_matches and msg.get("_compressed_summary") and msg.get("_compressed_summary_has_user_turn"):
++                _, live_view = split_user_originated_turn(msg)
++                content_matches = live_view is not None and source_content == live_view.get("content")
++            if source["role"] != msg.get("role") or not content_matches:
++                raise ValueError(f"retained memory row {source_id} does not match its source")
++            origin = self._origin_for_row(conn, source_id)
++            supplied = self._validated_memory_origin(msg.get("_memory_origin"))
++            if supplied is not None and supplied != origin:
++                raise ValueError(f"retained memory row {source_id} has a conflicting _memory_origin")
++            origins.append(origin)
++        return origins
++
++    def _insert_origin(self, conn, message_id: int, session_id: str, origin: Optional[Dict[str, Any]]) -> None:
++        if origin is None:
++            row = conn.execute("SELECT cwd FROM sessions WHERE id = ?", (session_id,)).fetchone()
++            cwd = str(row["cwd"] or "") if row else ""
++            if not cwd:
++                return
++            origin = {"version": 1, "session_id": session_id, "row_id": message_id, "cwd": cwd}
++        conn.execute(
++            "INSERT INTO message_origins(message_id, origin_session_id, origin_row_id, origin_cwd) VALUES (?, ?, ?, ?)",
++            (message_id, origin["session_id"], origin["row_id"], origin["cwd"]),
++        )
++
++    def _component_origin_is_in_lineage(self, conn, session_id: str, origin: Dict[str, Any]) -> None:
++        row = conn.execute(
++            "SELECT role, content FROM messages WHERE id = ? AND session_id = ?",
++            (origin["row_id"], origin["session_id"]),
++        ).fetchone()
++        if row is None:
++            raise ValueError("memory evidence component origin row is missing")
++        lineage = conn.execute(
++            "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
++            "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
++            "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
++            (session_id, origin["session_id"]),
++        ).fetchone()
++        if lineage is None:
++            raise ValueError("memory evidence component origin is outside the session lineage")
++        if not origin["cwd"].strip():
++            raise ValueError("memory evidence component origin has no verified cwd")
++
++    def _insert_evidence_components(
++        self, conn, message_id: int, session_id: str, msg: Dict[str, Any],
++        source_id: Optional[int], source_origin: Optional[Dict[str, Any]],
++    ) -> None:
++        content = msg.get("content")
++        if msg.get("role") not in {"user", "assistant"}:
++            if (
++                msg.get("_memory_evidence_kind") is not None
++                or msg.get("_memory_origin") is not None
++                or msg.get("_compressed_summary") is True
++            ):
++                raise ValueError("memory evidence requires a user or assistant role")
++            return
++        if not _memory_text(content):
++            if (
++                msg.get("_memory_evidence_kind") is not None
++                or msg.get("_memory_origin") is not None
++                or msg.get("_compressed_summary") is True
++            ):
++                raise ValueError("memory evidence requires non-empty text content")
++            return
++        summary = msg.get("_compressed_summary") is True
++        hybrid = summary and msg.get("_compressed_summary_has_user_turn") is True
++        existing = []
++        if source_id is not None:
++            existing = conn.execute(
++                "SELECT component_ordinal, component_kind, role, content, origin_session_id, origin_row_id, origin_cwd "
++                "FROM message_evidence_components WHERE message_id = ? ORDER BY component_ordinal",
++                (source_id,),
++            ).fetchall()
++        components = []
++        carrier_unchanged = False
++        if hybrid and source_id is not None and existing:
++            source_row = conn.execute(
++                "SELECT content FROM messages WHERE id = ?", (source_id,)
++            ).fetchone()
++            carrier_unchanged = (
++                source_row is not None
++                and source_row["content"] == self._encode_content(msg.get("content"))
++            )
++        if hybrid and carrier_unchanged:
++            components = []
++            for row in existing:
++                origin = {
++                    "version": 1, "session_id": str(row["origin_session_id"]),
++                    "row_id": int(row["origin_row_id"]), "cwd": str(row["origin_cwd"]),
++                }
++                self._component_origin_is_in_lineage(conn, session_id, origin)
++                components.append((
++                    str(row["component_kind"]),
++                    {"role": str(row["role"]), "content": self._decode_content(row["content"])},
++                    origin,
++                ))
++        elif hybrid:
++            if source_origin is None or not source_origin.get("cwd"):
++                raise ValueError("hybrid memory evidence requires a verified original origin")
++            handoff, live = split_user_originated_turn(msg)
++            if handoff is None or live is None:
++                raise ValueError("hybrid memory evidence has no verified live user component")
++            handoff = dict(handoff)
++            live = dict(live)
++            handoff["content"] = _memory_text(handoff.get("content"))
++            live["content"] = _canonical_memory_text(live.get("content"))
++            if not handoff["content"] or not live["content"]:
++                raise ValueError("hybrid memory evidence has no capturable text component")
++            summary_origin = {
++                "version": 1, "session_id": session_id, "row_id": message_id,
++                "cwd": str(conn.execute("SELECT cwd FROM sessions WHERE id = ?", (session_id,)).fetchone()["cwd"] or ""),
++            }
++            self._component_origin_is_in_lineage(conn, session_id, summary_origin)
++            self._component_origin_is_in_lineage(conn, session_id, source_origin)
++            components = [
++                ("derived_summary", handoff, summary_origin),
++                ("retained_original", live, source_origin),
++            ]
++        elif existing:
++            selected_existing = existing
++            if msg.get("_memory_evidence_kind") == "derived_summary":
++                selected_existing = [
++                    row for row in existing
++                    if str(row["component_kind"]) == "derived_summary"
++                    and str(row["role"]) == str(msg.get("role"))
++                    and self._decode_content(row["content"]) == msg.get("content")
++                ]
++                if not selected_existing:
++                    raise ValueError("derived memory evidence has no matching durable component")
++            for row in selected_existing:
++                origin = {
++                    "version": 1, "session_id": str(row["origin_session_id"]),
++                    "row_id": int(row["origin_row_id"]), "cwd": str(row["origin_cwd"]),
++                }
++                self._component_origin_is_in_lineage(conn, session_id, origin)
++                components.append((
++                    str(row["component_kind"]),
++                    {"role": str(row["role"]), "content": self._decode_content(row["content"])},
++                    origin,
++                ))
++        else:
++            if source_origin is None:
++                source_origin = self._origin_for_row(conn, message_id)
++            if not source_origin.get("cwd"):
++                return
++            self._component_origin_is_in_lineage(conn, session_id, source_origin)
++            kind = "derived_summary" if summary else "retained_original"
++            components = [(kind, {"role": msg.get("role", "unknown"), "content": _memory_text(msg.get("content"))}, source_origin)]
++        if not components:
++            return
++        seen_origins = set()
++        for ordinal, (kind, component, origin) in enumerate(components):
++            role = str(component.get("role") or "")
++            content = component.get("content")
++            if role not in {"user", "assistant"} or not isinstance(content, str) or not content:
++                raise ValueError("memory evidence component has invalid role or content")
++            key = (origin["session_id"], int(origin["row_id"]))
++            if key in seen_origins:
++                raise ValueError("memory evidence components reuse one canonical row")
++            seen_origins.add(key)
++            conn.execute(
++                "INSERT INTO message_evidence_components("
++                "message_id, component_ordinal, component_kind, role, content, "
++                "origin_session_id, origin_row_id, origin_cwd) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
++                (
++                    message_id, ordinal, kind, role, self._encode_content(content),
++                    origin["session_id"], origin["row_id"], origin["cwd"],
++                ),
++            )
++
++    def _insert_message_rows(self, conn, session_id: str, messages: List[Dict[str, Any]], *,
++                             preserve_origins: bool = False) -> tuple[int, int]:
++        """Insert rows in the caller transaction; compression carries can preserve validated origins."""
++        source_origins = self._source_origins_for_insert(conn, session_id, messages) if preserve_origins else [None] * len(messages)
+         now_ts = time.time()
+         inserted = tool_calls_total = 0
+-        for msg in messages:
++        for index, msg in enumerate(messages):
+             role = msg.get("role", "unknown")
+             tool_calls = _parse_tool_calls(msg.get("tool_calls"))
+             message_timestamp = _coerce_timestamp(msg.get("timestamp"), now_ts)
+             cur = conn.execute(_INSERT_MESSAGE_SQL, self._message_row_params(
+                 session_id, role, msg, tool_calls, message_timestamp, keep_reasoning=role == "assistant"))
+             if cur.lastrowid is not None:
++                source_id = msg.get("_row_id") if preserve_origins else None
+                 msg["_row_id"] = cur.lastrowid
++                if preserve_origins:
++                    self._insert_origin(conn, int(cur.lastrowid), session_id, source_origins[index])
++                self._insert_evidence_components(
++                    conn, int(cur.lastrowid), session_id, msg,
++                    source_id if isinstance(source_id, int) else None,
++                    source_origins[index] if preserve_origins else None,
++                )
+             inserted += 1
+             tool_calls_total += _tool_calls_count(tool_calls)
+             now_ts = max(now_ts, message_timestamp) + 1e-6
+@@ -566,20 +907,67 @@ class SessionMessagesMixin:
+         return [int(r["id"]) for r in rows], sum(_tool_calls_len(r["tool_calls"]) for r in rows)
+ 
+     def _clone_message_rows(self, conn, tail_ids: List[int], *, session_id: Optional[str] = None) -> None:
+-        """Pure-SQL clone of *tail_ids* as fresh live rows (new id/display order, active=1, compacted=0;
+-        message payload columns stay byte-exact and FTS triggers index the clones), into *session_id* when given."""
++        """Clone tail rows with byte-exact payload and durable canonical-origin mappings."""
+         retarget = session_id is not None
+-        # A clone is a newly positioned display generation. Copy its indexed
+-        # identity, but let the insert trigger assign order from rows that are
+-        # still display-visible (the source may just have become rewind-only).
+         skip = ("id", "active", "compacted", "display_order") + (("session_id",) if retarget else ())
+         col_list = ", ".join(c for c in self._message_column_names(conn) if c not in skip)
+-        conn.execute(
+-            f"INSERT INTO messages ({col_list}, {'session_id, ' if retarget else ''}active, compacted) "
+-            f"SELECT {col_list}, {'?, ' if retarget else ''}1, 0 FROM messages "
+-            f"WHERE id IN ({_placeholders(tail_ids)}) ORDER BY id",
+-            [session_id, *tail_ids] if retarget else tail_ids)
+-
++        for source_id in tail_ids:
++            origin = self._origin_for_row(conn, int(source_id))
++            params = ([session_id] if retarget else []) + [int(source_id)]
++            cur = conn.execute(
++                f"INSERT INTO messages ({col_list}, {'session_id, ' if retarget else ''}active, compacted) "
++                f"SELECT {col_list}, {'?, ' if retarget else ''}1, 0 FROM messages WHERE id = ?",
++                params,
++            )
++            if cur.rowcount != 1 or cur.lastrowid is None:
++                raise ValueError(f"cannot clone missing message row {source_id}")
++            new_id = int(cur.lastrowid)
++            target_session = session_id or origin["session_id"]
++            self._insert_origin(conn, new_id, target_session, origin)
++            components = conn.execute(
++                "SELECT component_ordinal, component_kind, role, content, origin_session_id, origin_row_id, origin_cwd "
++                "FROM message_evidence_components WHERE message_id = ? ORDER BY component_ordinal",
++                (int(source_id),),
++            ).fetchall()
++            if not components:
++                source_row = conn.execute(
++                    "SELECT role, content, _compressed_summary FROM messages WHERE id = ?",
++                    (int(source_id),),
++                ).fetchone()
++                if source_row is None or bool(source_row["_compressed_summary"]):
++                    raise ValueError(
++                        f"message row {source_id} has no durable evidence components"
++                    )
++                components = [{
++                    "component_ordinal": 0,
++                    "component_kind": "retained_original",
++                    "role": str(source_row["role"]),
++                    "content": source_row["content"],
++                    "origin_session_id": origin["session_id"],
++                    "origin_row_id": origin["row_id"],
++                    "origin_cwd": origin["cwd"],
++                }]
++            seen_origins = set()
++            for component in components:
++                component_origin = {
++                    "version": 1, "session_id": str(component["origin_session_id"]),
++                    "row_id": int(component["origin_row_id"]), "cwd": str(component["origin_cwd"]),
++                }
++                self._component_origin_is_in_lineage(conn, target_session, component_origin)
++                key = (component_origin["session_id"], component_origin["row_id"])
++                if key in seen_origins:
++                    raise ValueError(f"message row {source_id} has duplicate evidence origins")
++                seen_origins.add(key)
++                conn.execute(
++                    "INSERT INTO message_evidence_components("
++                    "message_id, component_ordinal, component_kind, role, content, "
++                    "origin_session_id, origin_row_id, origin_cwd) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
++                    (
++                        new_id, int(component["component_ordinal"]), str(component["component_kind"]),
++                        str(component["role"]), component["content"],
++                        component_origin["session_id"], component_origin["row_id"], component_origin["cwd"],
++                    ),
++                )
+     def archive_and_compact(self, session_id: str, compacted_messages: List[Dict[str, Any]],
+         model_config_patch: Optional[Dict[str, Any]] = None, watermark: Optional[int] = None,
+         lock_holder: Optional[str] = None, tail_count: int = 0) -> int:
+@@ -632,7 +1020,7 @@ class SessionMessagesMixin:
+                 conn.execute(f"{_ARCHIVE_ACTIVE_SQL} AND id NOT IN ({placeholders})", [session_id, *rewind_ids])
+             else:
+                 conn.execute(_ARCHIVE_ACTIVE_SQL, (session_id,))
+-            inserted, tool_calls_total = self._insert_message_rows(conn, session_id, compacted_messages)
++            inserted, tool_calls_total = self._insert_message_rows(conn, session_id, compacted_messages, preserve_origins=True)
+             if tail_ids:
+                 self._clone_message_rows(conn, tail_ids)
+                 inserted += len(tail_ids)
+@@ -836,6 +1224,12 @@ class SessionMessagesMixin:
+         msg.pop("display_order", None)
+         if summary_flag and msg.pop("_compressed_summary", 0):
+             msg["_compressed_summary"] = True
++        else:
++            msg.pop("_compressed_summary", None)
++        if summary_flag and msg.pop("_compressed_summary_has_user_turn", 0):
++            msg["_compressed_summary_has_user_turn"] = True
++        else:
++            msg.pop("_compressed_summary_has_user_turn", None)
+         msg["content"] = self._decode_content(msg["content"])
+         if msg.get("tool_calls"):
+             msg["tool_calls"] = _json_or(
+@@ -975,6 +1369,107 @@ class SessionMessagesMixin:
+             f"FROM messages WHERE session_id IN ({_placeholders(session_ids)})"
+             f"{active_clause} ORDER BY id", tuple(session_ids))
+ 
++    def _validate_component_read(self, current_session_id: str, component: Dict[str, Any]) -> None:
++        origin_session = str(component["origin_session_id"])
++        origin_row = int(component["origin_row_id"])
++        origin_cwd = str(component["origin_cwd"])
++        if not origin_cwd.strip():
++            raise ValueError("memory evidence component origin has no verified cwd")
++        source = self._read_one(
++            "SELECT session_id, role, content, _compressed_summary, _compressed_summary_has_user_turn FROM messages WHERE id = ?",
++            (origin_row,),
++        )
++        if source is None or str(source["session_id"]) != origin_session:
++            raise ValueError("memory evidence component origin row is missing")
++        lineage = self._read_one(
++            "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
++            "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
++            "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
++            (current_session_id, origin_session),
++        )
++        if lineage is None:
++            raise ValueError("memory evidence component origin is outside the session lineage")
++        role = str(component["role"])
++        content = self._decode_content(component["content"])
++        if component["component_kind"] == "retained_original":
++            if str(source["role"]) != role or _canonical_memory_text(self._decode_content(source["content"])) != _canonical_memory_text(content):
++                raise ValueError("retained memory evidence component no longer matches its source")
++        elif component["component_kind"] == "derived_summary":
++            # The component row is the durable classification. When the
++            # carrier still has its marker, independently re-split it to
++            # detect role/content tampering. Once a host has dropped the
++            # marker, the persisted component remains the authoritative
++            # classification and cannot be reconstructed from the carrier.
++            if bool(source["_compressed_summary_has_user_turn"]):
++                carrier = {
++                    "role": str(source["role"]),
++                    "content": self._decode_content(source["content"]),
++                    "_compressed_summary": True,
++                    "_compressed_summary_has_user_turn": True,
++                }
++                handoff, live = split_user_originated_turn(carrier)
++                expected = handoff if handoff and handoff.get("role") == role else live
++                if expected is None or _canonical_memory_text(expected.get("content")) != _canonical_memory_text(content):
++                    raise ValueError("derived memory evidence component no longer matches its source")
++        else:
++            raise ValueError("unknown memory evidence component kind")
++
++    def get_memory_evidence(self, session_id: str) -> List[Dict[str, Any]]:
++        """Return durable component evidence with canonical IDs and restored classification."""
++        rows = self.get_messages(session_id)
++        evidence: List[Dict[str, Any]] = []
++        for row in rows:
++            message_id = row.pop("id", None)
++            if not isinstance(message_id, int) or message_id <= 0:
++                continue
++            components = self._read_all(
++                "SELECT component_ordinal, component_kind, role, content, "
++                "origin_session_id, origin_row_id, origin_cwd "
++                "FROM message_evidence_components WHERE message_id = ? ORDER BY component_ordinal",
++                (message_id,),
++            )
++            if not components:
++                if bool(row.get("_compressed_summary")):
++                    raise ValueError("summary memory row has no durable evidence components")
++                if not isinstance(row.get("content"), str) or not row.get("content"):
++                    continue
++                origin = self._read_one(
++                    "SELECT origin_session_id, origin_row_id, origin_cwd "
++                    "FROM message_origins WHERE message_id = ?", (message_id,),
++                )
++                if origin is None:
++                    continue
++                components = [{
++                    "component_ordinal": 0, "component_kind": "retained_original",
++                    "role": row.get("role"), "content": self._encode_content(row.get("content")),
++                    "origin_session_id": origin["origin_session_id"],
++                    "origin_row_id": origin["origin_row_id"], "origin_cwd": origin["origin_cwd"],
++                }]
++            for component in components:
++                component_dict = dict(component)
++                self._validate_component_read(session_id, component_dict)
++                item = dict(row)
++                item["role"] = str(component["role"])
++                item["content"] = self._decode_content(component["content"])
++                item["_row_id"] = int(component["origin_row_id"])
++                item["_memory_origin"] = {
++                    "version": 1,
++                    "session_id": str(component["origin_session_id"]),
++                    "row_id": int(component["origin_row_id"]),
++                    "cwd": str(component["origin_cwd"]),
++                }
++                if component["component_kind"] == "derived_summary":
++                    item["_compressed_summary"] = True
++                    item["_compressed_summary_has_user_turn"] = False
++                    item["_memory_evidence_kind"] = "derived_summary"
++                    item["_memory_evidence_provisional"] = True
++                else:
++                    item["_compressed_summary"] = False
++                    item["_compressed_summary_has_user_turn"] = False
++                    item["_memory_evidence_kind"] = "retained_original"
++                evidence.append(item)
++        return evidence
++
+     def get_messages_as_conversation(self, session_id: str, include_ancestors: bool = False,
+                                      include_inactive: bool = False, repair_alternation: bool = False,
+                                      include_row_ids: bool = False,
+@@ -1044,6 +1539,8 @@ class SessionMessagesMixin:
+                 msg["display_metadata"] = decoded
+             if include_summary_markers and row["_compressed_summary"]:
+                 msg["_compressed_summary"] = True
++            if include_summary_markers and row["_compressed_summary_has_user_turn"]:
++                msg["_compressed_summary_has_user_turn"] = True
+             msg.update(
+                 (col, row[col]) for col in ("timestamp", "tool_call_id", "tool_name", "effect_disposition") if row[col])
+             if row["tool_calls"]:
+diff --git a/run_agent.py b/run_agent.py
+index 43ab361f07..123eee2b62 100644
+--- a/run_agent.py
++++ b/run_agent.py
+@@ -879,6 +879,14 @@ class AIAgent(
+             },
+         )
+ 
++    def _memory_evidence_snapshot(self, session_id: str = ""):
++        session_db = getattr(self, "_session_db", None)
++        loader = getattr(session_db, "get_memory_evidence", None)
++        chosen = session_id or getattr(self, "session_id", "")
++        if callable(loader) and chosen:
++            return loader(chosen)
++        return None
++
+     def shutdown_memory_provider(self, messages: list = None) -> None:
+         """Shut down the memory provider and context engine at session end (idempotent: gateway cleanup and
+         ``close()`` may both call it)."""
+@@ -887,7 +895,14 @@ class AIAgent(
+         self._memory_provider_shutdown = True
+         if self._memory_manager:
+             try:
+-                self._memory_manager.on_session_end(messages or [])
++                try:
++                    evidence_messages = self._memory_evidence_snapshot()
++                except Exception:
++                    logger.warning("Durable memory evidence unavailable during shutdown", exc_info=True)
++                    evidence_messages = []
++                self._memory_manager.on_session_end(
++                    messages or [], evidence_messages=evidence_messages
++                )
+             except Exception as e:
+                 logger.warning("Memory provider on_session_end failed during shutdown: %s", e, exc_info=True)
+             _quietly(lambda: self._memory_manager.shutdown_all())
+@@ -897,7 +912,16 @@ class AIAgent(
+         """Flush end-of-session extraction on session_id rotation (/new, compression) without tearing providers
+         down."""
+         if self._memory_manager:
+-            _quietly(lambda: self._memory_manager.on_session_end(messages or []))
++            def _end_memory_session() -> None:
++                try:
++                    evidence_messages = self._memory_evidence_snapshot()
++                except Exception:
++                    logger.warning("Durable memory evidence unavailable at session boundary", exc_info=True)
++                    evidence_messages = []
++                self._memory_manager.on_session_end(
++                    messages or [], evidence_messages=evidence_messages
++                )
++            _quietly(_end_memory_session)
+         _notify_context_engine_session_end(self, messages)
+ 
+     def _sync_external_memory_for_turn(self, *, original_user_message: Any, final_response: Any, interrupted: bool,
+@@ -918,10 +942,19 @@ class AIAgent(
+         # Flatten multimodal parts to text (newline-joined for memory).
+         user_text = _summarize_user_message_for_log(original_user_message, sep="\n")
+         response_text = _summarize_user_message_for_log(final_response, sep="\n")
+-        if not (user_text and response_text):
+-            return
+         try:
+-            sync_kwargs = {"session_id": self.session_id or "", **({"messages": messages} if messages is not None else {})}
++            try:
++                evidence_messages = self._memory_evidence_snapshot()
++            except Exception:
++                logger.warning("Durable memory evidence unavailable after turn commit", exc_info=True)
++                return
++            if not (user_text and response_text) and evidence_messages is None:
++                return
++            sync_kwargs = {
++                "session_id": self.session_id or "",
++                **({"messages": messages} if messages is not None else {}),
++                **({"evidence_messages": evidence_messages} if evidence_messages is not None else {}),
++            }
+             # Stashed by build_turn_context() for this turn, None on a human turn.
+             turn_author = getattr(self, "_turn_author", None)
+             if turn_author is not None:
+diff --git a/tests/hermes_state/test_rewind_surfaces_invariant.py b/tests/hermes_state/test_rewind_surfaces_invariant.py
+index 44cbac499f..ef4106ba95 100644
+--- a/tests/hermes_state/test_rewind_surfaces_invariant.py
++++ b/tests/hermes_state/test_rewind_surfaces_invariant.py
+@@ -109,7 +109,7 @@ def test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_i
+     cli._session_db, cli.session_id, cli.conversation_history, cli.agent = db, "shape-cli", warm, None
+     cli._prefill_input_buffer = MagicMock()
+     cli.undo_last(1)
+-    assert len(cli.conversation_history) == 4 and not any("_row_id" in m for m in cli.conversation_history)
++    assert len(cli.conversation_history) == 4 and [m["_row_id"] for m in cli.conversation_history] == [1, 2, 3, 4]
+ 
+     installed, _view, _count = _rewind_via("tui", db, "shape-tui", 1)
+     assert [m["_row_id"] for m in installed] == [row[0] for row in _active_rows(db, "shape-tui") if row[3]]

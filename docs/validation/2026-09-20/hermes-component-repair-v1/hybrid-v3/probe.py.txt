@@ -1,0 +1,60 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+
+host = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+root = Path('/tmp/mnemos-hermes-root-hybrid-audit-v3')
+root.mkdir(exist_ok=False)
+sys.path.insert(0, str(host))
+sys.path.append('/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages')
+from hermes_state import SessionDB
+from agent.context_compressor import ContextCompressor
+
+diff = subprocess.check_output(['git', 'diff', '--binary'], cwd=host)
+(root / 'candidate.patch').write_bytes(diff)
+result = {'patch_sha256_before': hashlib.sha256(diff).hexdigest(), 'cases': []}
+def hybrid(name):
+    db = SessionDB(root / (name + '.sqlite'))
+    db.create_session('parent', 'cli', cwd=str(root), model='fixture')
+    db.append_message('parent', 'user', 'Keep the original request.')
+    carrier = db.get_messages_as_conversation('parent', include_row_ids=True)[0]
+    compressor = ContextCompressor('fixture')
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, 'Derived summary.', 'user', False)
+    db.publish_compression_child(parent_session_id='parent', child_session_id='child', source='cli',
+                                 messages=[carrier], require_compression_lease=False)
+    return db
+
+for name in ('copy_model_carrier', 'tamper_copied_summary'):
+    db = hybrid(name)
+    row = {'case': name}
+    try:
+        row['first'] = db.get_memory_evidence('child')
+        if name == 'copy_model_carrier':
+            messages = db.get_messages_as_conversation('child', include_row_ids=True, repair_alternation=True)
+            db.publish_compression_child(parent_session_id='child', child_session_id='grandchild', source='cli',
+                                         messages=messages, require_compression_lease=False)
+            row['second'] = db.get_memory_evidence('grandchild')
+            row['same_origins'] = [m['_memory_origin'] for m in row['first']] == [m['_memory_origin'] for m in row['second']]
+        else:
+            messages = db.get_memory_evidence('child')
+            db.publish_compression_child(parent_session_id='child', child_session_id='grandchild', source='cli',
+                                         messages=messages, require_compression_lease=False)
+            db._execute_write(lambda conn: conn.execute(
+                "UPDATE message_evidence_components SET content = ?, role = 'assistant' "
+                "WHERE message_id IN (SELECT id FROM messages WHERE session_id = 'grandchild') "
+                "AND component_kind = 'derived_summary'", ('Tampered derived text.',)))
+            row['after_tamper'] = db.get_memory_evidence('grandchild')
+        row['status'] = 'completed'
+    except Exception as exc:
+        row.update(status='error', error_type=type(exc).__name__, error=str(exc))
+    finally:
+        db.close()
+    result['cases'].append(row)
+after = subprocess.check_output(['git', 'diff', '--binary'], cwd=host)
+result['patch_sha256_after'] = hashlib.sha256(after).hexdigest()
+result['stable_patch'] = diff == after
+(root / 'result.json').write_text(json.dumps(result, indent=2, default=str) + '\n')
+print(json.dumps(result, default=str))

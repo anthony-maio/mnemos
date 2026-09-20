@@ -1,0 +1,203 @@
+{
+  "host_commit": "14a346345486418aa85ed6526549412ee2665ade",
+  "patch_sha256": "55ccf93ce4508ae16d608557f6079c401db90f0b71d9bf0e16e54ae36e295743",
+  "cases": [
+    {
+      "case": "single_user",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Preserve this original user statement."
+        }
+      ],
+      "write_result": 1,
+      "stored_rows": [
+        {
+          "id": 1,
+          "session_id": "single_user",
+          "role": "user",
+          "content": "Preserve this original user statement.",
+          "tool_call_id": null,
+          "tool_calls": null,
+          "tool_name": null,
+          "effect_disposition": null,
+          "timestamp": 1789927496.3896346,
+          "token_count": null,
+          "finish_reason": null,
+          "reasoning": null,
+          "reasoning_content": null,
+          "reasoning_details": null,
+          "codex_reasoning_items": null,
+          "codex_message_items": null,
+          "platform_message_id": null,
+          "observed": 0,
+          "active": 1,
+          "compacted": 0,
+          "api_content": null,
+          "display_kind": null,
+          "display_metadata": null
+        }
+      ],
+      "evidence": [
+        {
+          "session_id": "single_user",
+          "role": "user",
+          "content": "Preserve this original user statement.",
+          "tool_call_id": null,
+          "tool_calls": null,
+          "tool_name": null,
+          "effect_disposition": null,
+          "timestamp": 1789927496.3896346,
+          "token_count": null,
+          "finish_reason": null,
+          "reasoning": null,
+          "reasoning_content": null,
+          "reasoning_details": null,
+          "codex_reasoning_items": null,
+          "codex_message_items": null,
+          "platform_message_id": null,
+          "observed": 0,
+          "active": 1,
+          "compacted": 0,
+          "api_content": null,
+          "display_kind": null,
+          "display_metadata": null,
+          "_row_id": 1,
+          "_memory_origin": {
+            "version": 1,
+            "session_id": "single_user",
+            "row_id": 1,
+            "cwd": "/tmp/mnemos-hermes-root-component-audit-v2"
+          },
+          "_compressed_summary": false,
+          "_compressed_summary_has_user_turn": false,
+          "_memory_evidence_kind": "retained_original"
+        }
+      ],
+      "status": "completed"
+    },
+    {
+      "case": "batch_tool",
+      "messages": [
+        {
+          "role": "tool",
+          "content": "tool response",
+          "tool_call_id": "tool-1",
+          "_row_id": 1
+        }
+      ],
+      "status": "error",
+      "error_type": "ValueError",
+      "error": "memory evidence component has invalid role or content"
+    },
+    {
+      "case": "batch_assistant_tool_call",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "tool-1",
+              "type": "function",
+              "function": {
+                "name": "test",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "_row_id": 1
+        }
+      ],
+      "write_result": 1,
+      "stored_rows": [
+        {
+          "id": 1,
+          "session_id": "batch_assistant_tool_call",
+          "role": "assistant",
+          "content": null,
+          "tool_call_id": null,
+          "tool_calls": [
+            {
+              "id": "tool-1",
+              "type": "function",
+              "function": {
+                "name": "test",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "tool_name": null,
+          "effect_disposition": null,
+          "timestamp": 1789927496.4481857,
+          "token_count": null,
+          "finish_reason": null,
+          "reasoning": null,
+          "reasoning_content": null,
+          "reasoning_details": null,
+          "codex_reasoning_items": null,
+          "codex_message_items": null,
+          "platform_message_id": null,
+          "observed": 0,
+          "active": 1,
+          "compacted": 0,
+          "api_content": null,
+          "display_kind": null,
+          "display_metadata": null
+        }
+      ],
+      "evidence": [],
+      "status": "completed"
+    },
+    {
+      "case": "batch_multimodal_user",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "A real user message."
+            }
+          ],
+          "_row_id": 1
+        }
+      ],
+      "write_result": 1,
+      "stored_rows": [
+        {
+          "id": 1,
+          "session_id": "batch_multimodal_user",
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "A real user message."
+            }
+          ],
+          "tool_call_id": null,
+          "tool_calls": null,
+          "tool_name": null,
+          "effect_disposition": null,
+          "timestamp": 1789927496.4579709,
+          "token_count": null,
+          "finish_reason": null,
+          "reasoning": null,
+          "reasoning_content": null,
+          "reasoning_details": null,
+          "codex_reasoning_items": null,
+          "codex_message_items": null,
+          "platform_message_id": null,
+          "observed": 0,
+          "active": 1,
+          "compacted": 0,
+          "api_content": null,
+          "display_kind": null,
+          "display_metadata": null
+        }
+      ],
+      "evidence": [],
+      "status": "completed"
+    }
+  ]
+}

@@ -1,0 +1,183 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen2.5:14b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 120.0,
+    "temperature": 0.0,
+    "max_tokens": 512
+  },
+  "trace_key": {
+    "run_key": "historical-approval",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 3,
+  "predict_calls": [
+    {
+      "latency_ms": 5556.62669998128,
+      "prompt_chars": 2125,
+      "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The June 2024 ferry project brief reported that Leena approved the Atlas autumn timetable, which is a historical fact and not the current approval policy.\",\"evidence_ids\":[\"0ed14a96162484c22baea33a7550ad50a8c943a1200f409a64fc6ca9d49d30b3\"],\"operation\":\"add\"}]}",
+      "token_usage": {
+        "prompt_eval_count": 644,
+        "eval_count": 110
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "076764c7dc475837844f93513b4764afd29d09cc0788cc78753ac81ea6cc3cb5"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 4660.243799997261,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 41.433800011873245,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 121.41320001683198,
+      "role": "query",
+      "text_chars": 143,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 30
+      }
+    },
+    {
+      "latency_ms": 35.96619999734685,
+      "role": "document",
+      "text_chars": 154,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 31
+      }
+    },
+    {
+      "latency_ms": 29.013199993642047,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 10
+      }
+    },
+    {
+      "latency_ms": 39.48339997441508,
+      "role": "document",
+      "text_chars": 210,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 43
+      }
+    },
+    {
+      "latency_ms": 197.56200001575053,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 10
+      }
+    },
+    {
+      "latency_ms": 188.7991000257898,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 10
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 4444328000,
+      "load_duration": 4295814400,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 39820800,
+      "load_duration": 6674200,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 118923400,
+      "load_duration": 4334900,
+      "prompt_eval_count": 30
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen2.5:14b",
+      "created_at": "2026-09-20T18:11:53.9172527Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 5337887600,
+      "load_duration": 3299614500,
+      "prompt_eval_count": 644,
+      "prompt_eval_duration": 243149000,
+      "eval_count": 110,
+      "eval_duration": 1788818000
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11299200,
+      "load_duration": 4771200,
+      "prompt_eval_count": 31
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 27969900,
+      "load_duration": 4380100,
+      "prompt_eval_count": 10
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 39223600,
+      "load_duration": 4694300,
+      "prompt_eval_count": 43
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10079100,
+      "load_duration": 5306800,
+      "prompt_eval_count": 10
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10063400,
+      "load_duration": 4766900,
+      "prompt_eval_count": 10
+    }
+  ]
+}

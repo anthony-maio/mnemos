@@ -1,0 +1,117 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import sqlite3
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+out = repo / 'docs/validation/2026-09-20/historical-claim-service-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+summary = {}
+for version in ('v1', 'v2'):
+    source = temp / ('mnemos-historical-claim-service-' + version)
+    prep = json.loads((source / 'preparation.json').read_bytes())
+    state = json.loads((source / 'status.json').read_bytes())
+    assert state['status'] == 'completed'
+    assert state['preparation_sha256'] == sha(source / 'preparation.json')
+    for name, expected in prep['files'].items():
+        assert sha(source / name) == expected, name
+    destination = out / version
+    destination.mkdir()
+    for path in sorted(source.rglob('*')):
+        if not path.is_file() or path.suffix not in {'.json', '.jsonl', '.py', '.txt', '.sqlite'}:
+            continue
+        if path.suffix == '.sqlite':
+            with sqlite3.connect(path.as_uri() + '?mode=ro', uri=True) as connection:
+                assert connection.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+        target = destination / path.relative_to(source)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+    summary[version] = {'status': state, 'cases': []}
+    for case in json.loads((source / 'inputs.json').read_bytes())['cases']:
+        record = json.loads((source / case['id'] / 'result.json').read_bytes())
+        summary[version]['cases'].append({'id': case['id'], 'status': record['status'],
+            'criterion': case['criterion'], 'checks': record['checks'],
+            'committed_texts': [row['fact']['content'] for row in record.get('extracted', [])],
+            'initial_retrieval_contains_target': record.get('initial_retrieval_contains_target'),
+            'restart_retrieval_contains_target': record.get('restart_retrieval_contains_target'),
+            'error': record.get('error')})
+v1_inputs = json.loads((out / 'v1/inputs.json').read_bytes())
+v2_inputs = json.loads((out / 'v2/inputs.json').read_bytes())
+assert v1_inputs == v2_inputs
+assert all(not json.loads((out / 'v1' / case['id'] / 'result.json').read_bytes())['operations'] for case in v1_inputs['cases'])
+assert [c['status'] for c in summary['v2']['cases']] == ['completed_lifecycle'] * 3 + ['failed', 'completed_negative_control', 'failed', 'failed']
+(out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(Path(__file__), out / 'collector.py.txt')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(out / 'README.md').write_text('''# Historical claim extraction through the real service
+
+Seven new authored development cases run through verified Mnemos source
+`244613a`, actual SQLite, Qwen2.5:14b, and Nomic embeddings. The exact history
+clarification from the preceding proposal comparison is applied through a
+recorded provider wrapper. Sleep extraction is enabled; the other four
+modules and background scheduling are disabled. Model digests, unprefixed
+embeddings, requests, responses, source hashes, runtime configuration, and
+dispatches are preserved. No production prompt or live setting changed.
+
+## Observed outcomes
+
+All three positive cases completed capture, real extraction, evidence
+inspection, explicit same-ID correction, version/revision checks, reopening
+the same database, retrieval, reviewed forget, both source replays, and a
+final restart. Target IDs appeared in each initial and corrected retrieval.
+The original and correction source replays were suppressed. Both unrelated
+control facts survived; no foreign-project fact entered scoped retrieval.
+
+| Case | Committed extraction | Bounded outcome |
+| --- | --- | --- |
+| Historical approval | June 2024 brief, Leena, Atlas timetable, historical rather than current policy | Lifecycle checks passed |
+| Unverified relay | Omar, September 18 handoff, port 4729, unverified status | Lifecycle checks passed |
+| Obsolete archive | 2024 LZ4 archive retired in February 2025 | Lifecycle checks passed |
+| Fiction | Fictional Sora example, qualified as not team policy | Failed zero-fact control |
+| Question | No fact | Zero-fact control passed |
+| Hypothetical | Conditional consideration of LZ4 | Failed zero-fact control |
+| Assistant suggestion | Assistant-reported possible Jira preference | Failed zero-fact control |
+
+The positive texts qualitatively preserve the central historical and
+uncertainty qualifications. The obsolete-archive proposal omits the explicit
+statement that no replacement was specified, although it invents none. The
+historical-approval text calls the attributed report a historical fact;
+that wording should remain visible during semantic review. No independent
+annotation or general accuracy score is claimed.
+
+The negative outputs remain qualified; they are not evidence that Mnemos
+silently asserted a fictional policy or adopted the assistant's suggestion
+as the user's preference. They nevertheless violate the frozen requirement
+to produce no durable fact for these controls. Do not relabel the failures
+as successes. The earlier proposal-only comparison abstained on its four
+different controls; these service results show that result did not generalize.
+Different cases and existing control facts both changed the prompt context,
+so this comparison does not establish which caused the change.
+
+## Attempt history and limits
+
+V1 failed before service dispatch or model inference because the diagnostic
+tried assigning the engine's read-only `llm` property. V2 inserts the same
+candidate wrapper beneath the existing tracing provider. All inputs, model
+selection, criteria, and source remain identical. V1 failures and V2 results
+are retained separately; no selective case retries occurred.
+
+V2 processed all seven cases and records `all_lifecycle_checks_passed=false`.
+The runner's terminal exit zero means recording completed, not that all
+checks passed. One repetition, authored inputs, explicit corrections, and a
+small database do not establish general extraction quality, five-module
+utility, native host behavior, performance, or operational readiness. The
+original 4,200-observation matrix and its failed gates remain unchanged.
+
+Final synthetic SQLite fixtures are included and pass `integrity_check`.
+The evidence index binds every copied artifact and helper; this README is
+outside the index. Semantic observations are manual analysis of preserved
+texts, not an automatic substring score.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'v2_cases': len(summary['v2']['cases'])}))

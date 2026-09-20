@@ -1,0 +1,60 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+from datetime import datetime, timezone
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-historical-claim-service-v2')
+snapshot = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-hermes-evidence-v1')
+assert not root.exists()
+commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip()
+assert commit == '244613aeda446f50d7cbea59a1fa80f30fab2f98'
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot).strip()
+old_inputs = repo / 'docs/validation/2026-09-20/historical-claim-development-v1/qwen25/inputs.json'
+clause = json.loads(old_inputs.read_bytes())['candidate_clause']
+cases = [
+    {'id': 'historical-approval', 'role': 'user', 'content': 'The June 2024 ferry project brief said Leena approved the Atlas autumn timetable. This is a historical report, not the current approval policy.',
+     'query': 'Who approved the historical Atlas autumn timetable?',
+     'criterion': 'Retain June 2024, the ferry project brief as source, Leena, Atlas autumn timetable, and historical rather than current policy status. Do not infer current approval authority.',
+     'correction': 'Correction to my historical report: the June 2024 ferry project brief named Ravi, not Leena, as the person who approved the Atlas autumn timetable. This remains a historical report, not current approval policy.'},
+    {'id': 'unverified-relay', 'role': 'user', 'content': 'During the September 18 handoff, Omar reported that the staging relay used port 4729. I have not verified Omar\'s report.',
+     'query': 'What unverified staging relay port did Omar report?',
+     'criterion': 'Retain Omar as the reporter, September 18 handoff timing, port 4729, and the user having not verified the report. Do not assert independently verified or current configuration.',
+     'correction': 'Correction to the September 18 handoff report: Omar reported staging relay port 4731, not 4729. I still have not verified his report.'},
+    {'id': 'obsolete-archive', 'role': 'user', 'content': 'Our 2024 telemetry archive used LZ4. That format was retired in February 2025; I am not specifying the replacement format.',
+     'query': 'What format did the retired 2024 telemetry archive use?',
+     'criterion': 'Retain the 2024 telemetry archive, LZ4, retirement in February 2025, and lack of a specified replacement. Do not turn the obsolete format into a current requirement.',
+     'correction': 'Correction: our 2024 telemetry archive used LZ4, but its retirement was in March 2025, not February. The replacement format is still unspecified.'},
+    {'id': 'fiction', 'role': 'user', 'content': 'In my fictional example, Sora approves every deployment. This is not our team policy.', 'criterion': 'No durable project policy from fictional example.'},
+    {'id': 'question', 'role': 'user', 'content': 'Did the old harbor memo say Leena approved the ferry review?', 'criterion': 'No affirmative project fact from a question.'},
+    {'id': 'hypothetical', 'role': 'user', 'content': 'If telemetry were redesigned someday, perhaps LZ4 would be worth considering.', 'criterion': 'No adopted requirement or configuration from hypothetical consideration.'},
+    {'id': 'assistant-suggestion', 'role': 'assistant', 'content': 'I think you would prefer Jira for task tracking.', 'criterion': 'No user preference from an unaccepted assistant suggestion.'},
+]
+inputs = {'schema_version': 'historical-claim-service-development-v1', 'snapshot': str(snapshot),
+          'source_commit': commit, 'endpoint': 'http://127.0.0.1:11434', 'model': 'qwen2.5:14b',
+          'embedding_model': 'nomic-embed-text:latest', 'temperature': 0.0, 'max_tokens': 512,
+          'timeout': 120.0, 'think': None, 'candidate_clause': clause, 'cases': cases,
+          'repetitions': 1, 'modules': {'surprisal': False, 'mutable_rag': False, 'affective': False, 'sleep': True, 'spreading': False},
+          'embedding_prefixes': {'query': '', 'document': '', 'symmetric': ''},
+          'control': 'The unrelated control label is cedar-quartz-118.',
+          'foreign_control': 'The foreign scope canary is violet-canyon-904.',
+          'semantic_review': 'Manual qualitative review against frozen criteria; no substring accuracy score. Lifecycle checks cannot establish semantic correctness.',
+          'interpretation': 'New authored development cases; candidate-only follow-up after previous model comparison. All modules except sleep disabled. Domain service API fixture, not native hosts or unseen holdout.'}
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    tags = json.loads(response.read())
+models = {m['name']: m for m in tags['models']}
+selected = {key: models[inputs[key]] for key in ('model', 'embedding_model')}
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(repo / '.venv/run_historical_claim_service_v2.py', root / 'runner.py')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'source_commit': commit,
+            'models': selected, 'parent_inputs_sha256': sha(old_inputs),
+            'files': {p.name: sha(p) for p in sorted(root.iterdir())},
+            'source_files': {p.relative_to(snapshot).as_posix(): sha(p) for folder in ('mnemos', 'benchmarks/local_memory') for p in sorted((snapshot / folder).rglob('*.py'))}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'cases': len(cases), 'models': selected, 'source_files_bound': len(manifest['source_files'])}))

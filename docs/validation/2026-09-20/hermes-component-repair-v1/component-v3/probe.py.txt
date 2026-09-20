@@ -1,0 +1,40 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+
+host = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+root = Path('/tmp/mnemos-hermes-root-component-audit-v3')
+root.mkdir(exist_ok=False)
+sys.path.insert(0, str(host))
+sys.path.append('/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages')
+from hermes_state import SessionDB
+
+diff = subprocess.check_output(['git', 'diff', '--binary'], cwd=host)
+(root / 'candidate.patch').write_bytes(diff)
+results = {'host_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=host, text=True).strip(),
+           'patch_sha256': hashlib.sha256(diff).hexdigest(), 'cases': []}
+cases = [
+    ('single_user', 'single', [{'role': 'user', 'content': 'Preserve this original user statement.'}]),
+    ('batch_tool', 'batch', [{'role': 'tool', 'content': 'tool response', 'tool_call_id': 'tool-1'}]),
+    ('batch_assistant_tool_call', 'batch', [{'role': 'assistant', 'content': None,
+      'tool_calls': [{'id': 'tool-1', 'type': 'function', 'function': {'name': 'test', 'arguments': '{}'}}]}]),
+    ('batch_multimodal_user', 'batch', [{'role': 'user', 'content': [{'type': 'text', 'text': 'A real user message.'}]}]),
+]
+for name, mode, messages in cases:
+    db = SessionDB(root / (name + '.sqlite'))
+    db.create_session(name, 'cli', cwd=str(root), model='fixture')
+    row = {'case': name, 'messages': messages}
+    try:
+        row['write_result'] = db.append_message(name, **messages[0]) if mode == 'single' else db.append_messages_batch(name, messages)
+        row['stored_rows'] = db.get_messages(name)
+        row['evidence'] = db.get_memory_evidence(name)
+        row['status'] = 'completed'
+    except Exception as exc:
+        row.update(status='error', error_type=type(exc).__name__, error=str(exc))
+    finally:
+        db.close()
+    results['cases'].append(row)
+(root / 'result.json').write_text(json.dumps(results, indent=2, default=str) + '\n')
+print(json.dumps(results, default=str))

@@ -1,0 +1,17 @@
+{
+  "case": {
+    "id": "unverified-relay",
+    "role": "user",
+    "content": "During the September 18 handoff, Omar reported that the staging relay used port 4729. I have not verified Omar's report.",
+    "query": "What unverified staging relay port did Omar report?",
+    "criterion": "Retain Omar as the reporter, September 18 handoff timing, port 4729, and the user having not verified the report. Do not assert independently verified or current configuration.",
+    "correction": "Correction to the September 18 handoff report: Omar reported staging relay port 4731, not 4729. I still have not verified his report."
+  },
+  "operations": [],
+  "checks": {},
+  "semantic_review": "NOT SCORED; inspect committed text against frozen criterion",
+  "status": "failed",
+  "error_type": "AttributeError",
+  "error": "property 'llm' of 'MnemosEngine' object has no setter",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 127, in one\n    service = open_service()\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 97, in open_service\n    memory.engine.llm = CandidateProvider(memory.engine.llm, folder / 'llm.jsonl')\n    ^^^^^^^^^^^^^^^^^\nAttributeError: property 'llm' of 'MnemosEngine' object has no setter\n"
+}

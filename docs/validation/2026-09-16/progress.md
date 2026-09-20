@@ -1,14 +1,31 @@
 # Functional local memory implementation record
 
+The [real-service historical-claim probe](../2026-09-20/historical-claim-service-v1/README.md)
+completes all three positive lifecycles using local Qwen2.5:14b and Nomic:
+capture, extracted fact, explicit same-ID correction, restart, retrieval,
+reviewed forget, and suppression of both original and correction replays.
+Sleep extraction alone is enabled. Three of four zero-fact controls fail:
+fiction, hypothetical consideration, and an assistant suggestion become
+qualified durable memories. The question abstains. These seven authored
+development cases do not establish general quality, and the candidate prompt
+is not adopted. V1's pre-inference runner error and all V2 results remain
+preserved; no production prompt or live model setting changed.
+
+The [independent Hermes repair checks](../2026-09-20/hermes-component-repair-v1/README.md)
+now pass all six reproduced write/projection, unchanged hybrid-copy, and
+component-tamper checks. The original failures and intermediate partial
+repair are preserved below. This is an isolated host candidate; broader
+host-suite and installed lifecycle verification remain open.
+
 The [isolated Hermes component-write audit](../2026-09-20/hermes-component-write-audit-v1/README.md)
-reproduces four regressions in the unfinished host candidate: a persisted
+originally reproduced four regressions in the unfinished host candidate: a persisted
 single user message disappears from its evidence projection, and batch tool,
 null-content assistant tool-call, and multimodal user writes raise errors.
 The exact candidate patch and raw outcomes are preserved. Repairs and host
 integration verification remain open; this candidate is not installed live.
 
 The [hybrid-copy audit](../2026-09-20/hermes-hybrid-copy-audit-v1/README.md)
-also finds that copying an unchanged summary/user carrier through the actual
+also found that copying an unchanged summary/user carrier through the actual
 model-facing restore path changes the derived summary's identity. The
 original user identity survives. A copied-component role/content tamper is
 rejected. The invalid first probe invocation and corrected v2 outcomes are
@@ -37,8 +54,8 @@ uncertainty qualifications; the candidate clarification preserved those
 qualifications in the observed examples. Both models abstained on the four
 negative controls. This is authored development evidence, not independent
 semantic scoring or a held-out result. No production prompt or live model
-selection changed; service commit, correction, retrieval, and forgetting
-still need qualification-preservation validation.
+selection changed. The successor service probe above supplies bounded
+lifecycle evidence and preserves three failed zero-fact controls.
 
 The [contract-v4 real-model matrix](../2026-09-20/contract-v4-terminal-v1/README.md)
 is terminal and incomplete: 4,150 complete observations and 50 partial out

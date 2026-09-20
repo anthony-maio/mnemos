@@ -1,0 +1,15 @@
+{
+  "case": {
+    "id": "question",
+    "role": "user",
+    "content": "Did the old harbor memo say Leena approved the ferry review?",
+    "criterion": "No affirmative project fact from a question."
+  },
+  "operations": [],
+  "checks": {},
+  "semantic_review": "NOT SCORED; inspect committed text against frozen criterion",
+  "status": "failed",
+  "error_type": "AttributeError",
+  "error": "property 'llm' of 'MnemosEngine' object has no setter",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 127, in one\n    service = open_service()\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 97, in open_service\n    memory.engine.llm = CandidateProvider(memory.engine.llm, folder / 'llm.jsonl')\n    ^^^^^^^^^^^^^^^^^\nAttributeError: property 'llm' of 'MnemosEngine' object has no setter\n"
+}

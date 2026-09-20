@@ -1,0 +1,115 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen2.5:14b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 120.0,
+    "temperature": 0.0,
+    "max_tokens": 512
+  },
+  "trace_key": {
+    "run_key": "assistant-suggestion",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 1,
+  "predict_calls": [
+    {
+      "latency_ms": 1703.4325000131503,
+      "prompt_chars": 2035,
+      "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The user might prefer Jira for task tracking as suggested by the assistant.\",\"evidence_ids\":[\"97bdacf5ed9957a43bc221f793e6eb8cff59b2a7032063b3ef7787153c7bcb0f\"],\"operation\":\"add\"}]}",
+      "token_usage": {
+        "prompt_eval_count": 623,
+        "eval_count": 89
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "d67c7d5a5aadceb34add73d12dcc0b420e82ff66a672b9322323628c4dc8fd54"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 186.83099999907427,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 10.486100014531985,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 10.212999972281978,
+      "role": "query",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 11.274299991782755,
+      "role": "document",
+      "text_chars": 95,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 20
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9331100,
+      "load_duration": 4668500,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9131300,
+      "load_duration": 4722100,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9072600,
+      "load_duration": 4870800,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen2.5:14b",
+      "created_at": "2026-09-20T18:12:07.7494345Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 1517513500,
+      "load_duration": 5261400,
+      "prompt_eval_count": 623,
+      "prompt_eval_duration": 80185000,
+      "eval_count": 89,
+      "eval_duration": 1425410000
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9965300,
+      "load_duration": 5250300,
+      "prompt_eval_count": 20
+    }
+  ]
+}

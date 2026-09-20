@@ -1,0 +1,15 @@
+{
+  "case": {
+    "id": "assistant-suggestion",
+    "role": "assistant",
+    "content": "I think you would prefer Jira for task tracking.",
+    "criterion": "No user preference from an unaccepted assistant suggestion."
+  },
+  "operations": [],
+  "checks": {},
+  "semantic_review": "NOT SCORED; inspect committed text against frozen criterion",
+  "status": "failed",
+  "error_type": "AttributeError",
+  "error": "property 'llm' of 'MnemosEngine' object has no setter",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 127, in one\n    service = open_service()\n  File \"C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v1\\runner.py\", line 97, in open_service\n    memory.engine.llm = CandidateProvider(memory.engine.llm, folder / 'llm.jsonl')\n    ^^^^^^^^^^^^^^^^^\nAttributeError: property 'llm' of 'MnemosEngine' object has no setter\n"
+}
