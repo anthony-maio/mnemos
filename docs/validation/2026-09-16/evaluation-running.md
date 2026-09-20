@@ -2,7 +2,7 @@
 
 ## Current frozen matrix snapshot -- 2026-09-20
 
-At `2026-09-20T16:14:06Z`, the contract-v4 matrix was still running from
+At `2026-09-20T16:34:01Z`, the contract-v4 matrix was still running from
 source `3d0965805622efad21d1bb5200a982bd1a956aa8`, with its protocol and
 dataset bindings frozen. These use local Qwen3.5:9b and Nomic embeddings on
 the RTX 4080. The repaired inputs are previously observed synthetic scenarios,
@@ -16,11 +16,14 @@ final quality, a ranking change, or a lift.
 | Full | 600 | 589 | 11 | Partial report; matrix running |
 | Surprisal ablation | 600 | 592 | 8 | Partial report; matrix running |
 | Mutable RAG ablation | 600 | 588 | 12 | Partial report; matrix running |
-| Affective routing ablation | 466 checkpointed | 456 checkpointed | 10 checkpointed | Live checkpoint; no final report |
+| Affective routing ablation | 600 | 590 | 10 | Partial report; matrix running |
+| Sleep consolidation ablation | 303 checkpointed | 303 checkpointed | 0 checkpointed | Live checkpoint; no final report |
+| Spreading activation ablation | 0 | 0 | 0 | Not started |
 
-The first four rows agree with the reports' complete-observation diagnostics.
-The affective routing row has no final report yet; its live checkpoint
-contains 456 complete and 10 partial observations. Checkpointed observations
+The first five rows agree with the reports' complete-observation diagnostics.
+The sleep consolidation row has no final report yet; its live checkpoint
+contains 303 complete observations. The execution handle remains live.
+Checkpointed observations
 do not establish a completed matrix run. All twelve incomplete
 mutable RAG observations record `missing_accepted_target` during correction;
 they remain incomplete, with no selective retry or changed labels.
