@@ -1,0 +1,1068 @@
+{
+  "status": "failed",
+  "model": "qwen3.5:9b",
+  "started_at": "2026-09-20T03:34:50.909366+00:00",
+  "cases": [
+    {
+      "name": "backup-window",
+      "status": "failed",
+      "gates": null,
+      "error": "",
+      "cleanup": {
+        "ok": true,
+        "errors": []
+      },
+      "elapsed_seconds": 60.7340916999965
+    },
+    {
+      "name": "deployment-lane",
+      "status": "passed",
+      "gates": {
+        "trace_correlated": true,
+        "forget_phase_verified": true,
+        "reviewed_persisted": true,
+        "scoped_markers_absent": true,
+        "tools_allowed": true,
+        "retrieved_target_before_apply": true,
+        "all_copies_selected": true,
+        "required_sources_selected": true,
+        "known_facts_absent": true,
+        "known_sources_absent": true,
+        "known_facts_suppressed": true,
+        "known_sources_suppressed": true,
+        "controls_retained": true,
+        "foreign_control_retained": true
+      },
+      "error": null,
+      "cleanup": {
+        "ok": true,
+        "errors": []
+      },
+      "elapsed_seconds": 64.32835530000739
+    },
+    {
+      "name": "archive-bucket",
+      "status": "passed",
+      "gates": {
+        "trace_correlated": true,
+        "forget_phase_verified": true,
+        "reviewed_persisted": true,
+        "scoped_markers_absent": true,
+        "tools_allowed": true,
+        "retrieved_target_before_apply": true,
+        "all_copies_selected": true,
+        "required_sources_selected": true,
+        "known_facts_absent": true,
+        "known_sources_absent": true,
+        "known_facts_suppressed": true,
+        "known_sources_suppressed": true,
+        "controls_retained": true,
+        "foreign_control_retained": true
+      },
+      "error": null,
+      "cleanup": {
+        "ok": true,
+        "errors": []
+      },
+      "elapsed_seconds": 33.5344859000179
+    }
+  ],
+  "preflight": {
+    "version": {
+      "version": "0.34.1"
+    },
+    "tags": {
+      "models": [
+        {
+          "name": "gpt-oss:20b",
+          "model": "gpt-oss:20b",
+          "modified_at": "2026-09-19T23:14:26.426297-04:00",
+          "size": 13793441244,
+          "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4",
+            "context_length": 131072,
+            "embedding_length": 2880
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+          "size": 13780173724,
+          "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+          "details": {
+            "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4"
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-v1",
+          "model": "mnemos-native-qwen35-9b:greedy-v1",
+          "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+          "size": 6594474421,
+          "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+          "details": {
+            "parent_model": "qwen3.5:9b",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "qwen2.5:7b",
+          "model": "qwen2.5:7b",
+          "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+          "size": 4683087332,
+          "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "7.6B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 3584
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "anthony-maio/remnantinstruct-8b:latest",
+          "model": "anthony-maio/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-27T23:46:24.269713-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "anthonym21/remnantinstruct-8b:latest",
+          "model": "anthonym21/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen3:30b",
+          "model": "qwen3:30b",
+          "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+          "size": 18556699301,
+          "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3moe",
+            "families": [
+              "qwen3moe"
+            ],
+            "parameter_size": "30.5B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 2048
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "deepseek-r1:8b",
+          "model": "deepseek-r1:8b",
+          "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+          "size": 5225376047,
+          "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen2.5:14b",
+          "model": "qwen2.5:14b",
+          "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+          "size": 8988124069,
+          "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "14.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 5120
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "gemma3:27b",
+          "model": "gemma3:27b",
+          "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+          "size": 17396936941,
+          "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "27.4B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 5376
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:12B",
+          "model": "gemma3:12B",
+          "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+          "size": 8149190253,
+          "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "12.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 3840
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:4b",
+          "model": "gemma3:4b",
+          "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+          "size": 3338801804,
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "4.3B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 2560
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:1b",
+          "model": "gemma3:1b",
+          "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+          "size": 815319791,
+          "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "999.89M",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 1152
+          },
+          "capabilities": [
+            "completion"
+          ]
+        }
+      ]
+    },
+    "show": {
+      "license": "                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.",
+      "modelfile": "# Modelfile generated by \"ollama show\"\n# To build a new Modelfile based on this, replace FROM with:\n# FROM qwen3.5:9b\n\nFROM D:\\OllamaModels\\blobs\\sha256-dec52a44569a2a25341c4e4d3fee25846eed4f6f0b936278e3a3c900bb99d37c\nTEMPLATE {{ .Prompt }}\nRENDERER qwen3.5\nPARSER qwen3.5\nPARAMETER presence_penalty 1.5\nPARAMETER temperature 1\nPARAMETER top_k 20\nPARAMETER top_p 0.95\nLICENSE \"\"\"                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\"\"\"\n",
+      "parameters": "presence_penalty               1.5\ntemperature                    1\ntop_k                          20\ntop_p                          0.95",
+      "template": "{{ .Prompt }}",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M"
+      },
+      "model_info": {
+        "general.architecture": "qwen35",
+        "general.file_type": 15,
+        "general.parameter_count": 9653104368,
+        "general.quantization_version": 2,
+        "qwen35.attention.head_count": 16,
+        "qwen35.attention.head_count_kv": [
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4
+        ],
+        "qwen35.attention.key_length": 256,
+        "qwen35.attention.layer_norm_rms_epsilon": 1e-06,
+        "qwen35.attention.value_length": 256,
+        "qwen35.block_count": 32,
+        "qwen35.context_length": 262144,
+        "qwen35.embedding_length": 4096,
+        "qwen35.feed_forward_length": 12288,
+        "qwen35.full_attention_interval": 4,
+        "qwen35.image_token_id": 248056,
+        "qwen35.mrope_sections": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.rope.dimension_count": 64,
+        "qwen35.rope.dimension_sections": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.rope.freq_base": 10000000,
+        "qwen35.rope.mrope_interleaved": true,
+        "qwen35.rope.mrope_section": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.ssm.conv_kernel": 4,
+        "qwen35.ssm.group_count": 16,
+        "qwen35.ssm.inner_size": 4096,
+        "qwen35.ssm.state_size": 128,
+        "qwen35.ssm.time_step_rank": 32,
+        "qwen35.ssm.v_head_reordered": true,
+        "qwen35.vision.attention.head_count": 16,
+        "qwen35.vision.block_count": 27,
+        "qwen35.vision.deepstack_visual_indexes": [],
+        "qwen35.vision.embedding_length": 1152,
+        "qwen35.vision.image_mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "qwen35.vision.image_std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "qwen35.vision.longest_edge": 16777216,
+        "qwen35.vision.num_channels": 3,
+        "qwen35.vision.patch_size": 16,
+        "qwen35.vision.shortest_edge": 65536,
+        "qwen35.vision.spatial_merge_size": 2,
+        "qwen35.vision.temporal_patch_size": 2,
+        "qwen35.vision_end_token_id": 248054,
+        "qwen35.vision_start_token_id": 248053,
+        "tokenizer.ggml.add_eos_token": false,
+        "tokenizer.ggml.add_padding_token": false,
+        "tokenizer.ggml.eos_token_id": 248046,
+        "tokenizer.ggml.merges": [],
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.padding_token_id": 248044,
+        "tokenizer.ggml.pre": "qwen35",
+        "tokenizer.ggml.scores": [],
+        "tokenizer.ggml.token_type": [],
+        "tokenizer.ggml.tokens": []
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "requires": "0.17.1"
+    },
+    "ps": {
+      "models": []
+    }
+  },
+  "module": {
+    "origin": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "version": "0.7.0",
+    "sys_prefix": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1",
+    "executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Scripts\\python.exe",
+    "isolated": true,
+    "installed_files_sha256": {
+      "mnemos/__init__.py": "bed934cb4c54915b8f75e7a9353fba5860ba39da96b75b12df74d0aa188d2b0e",
+      "mnemos/__main__.py": "51ba40694573941e2ea5002e0ff4244c44be67ac5abc132cfd7e8e70ca448794",
+      "mnemos/antigravity.py": "a483628491d8f311cacc262d85cceeb0f2c90b9b417f7946e790eb9612d00358",
+      "mnemos/backup.py": "7d3f5dd628e1fa289429268f73bff94d7c622658287558220755593020237ace",
+      "mnemos/benchmark.py": "646a669b8bb6f3b25b8e4460e784cbccea32549bdf8ae95047dc59a002fb8144",
+      "mnemos/bridge.py": "8e478e0ce0595ddfe8177d6019c3cf8cb2dc35850f0fa20e02823afc914f5c52",
+      "mnemos/claude_identity.py": "76985f933d1b67e4b17b26b43ab6e49963721fb49ccba60a70ca4c3127d2d723",
+      "mnemos/cli.py": "a9f570c7a883297cb37dc313c79f789d215c3de2f787c7f8602f1483dc37057f",
+      "mnemos/client.py": "2e1282c705a3a3bb84b1177153cf9bd847f9068e8861ca32b1c8ae9b77afc206",
+      "mnemos/config.py": "fa04e199ec75b4e871a8b47f484c873b425b75f5ec5bb9d4ebaf7ca2e11b1ac2",
+      "mnemos/contracts.py": "89f29f3fc462c0fc440a603cd00ed3e6005394fb09a163aedaa1ce4ba8f8dc8a",
+      "mnemos/control_plane.py": "ad1ea5adabf982b81ecd5f93afea373ad61a9a54febba9bcfc4f24a5da12fade",
+      "mnemos/curation.py": "4038d5014fe09ed5a08aeec4045c54b8825bdd57281db698589f6d4a4383bdbf",
+      "mnemos/engine.py": "203201d7eba7b655ab93f91f9f18ad31948a777e21cefc88668451aff1a5618d",
+      "mnemos/errors.py": "7cfc03bed23604352d566eaf5bc7c1e5c96b1f5c1727b7d21a15c12542ef35af",
+      "mnemos/health.py": "1c8c8de71134672925f426a8b749539900b8df1eda5ef388a457526b3f65ee78",
+      "mnemos/hermes_identity.py": "ab3cb9db2d7f530a420b600ed758e3ebbfab0504db2d256c3eb7a33a092067fd",
+      "mnemos/hook_autostore.py": "2bef6c44735c30cc44dd8f82a44a90028d428c5cb699033446c84ba83fdf69ba",
+      "mnemos/hosts.py": "c35860e381a7ab270708bcee78c0df7e06ae6cd0ce3c9cf3fef7751453f6cfa5",
+      "mnemos/inspectability.py": "37ac7427e9f673383bfac5a2b37645dd7aea9b3f42ddba12f9c6a20c4503ee0e",
+      "mnemos/jobs.py": "a6cc2b31e9da19d6abdef1d3592ec13c63d9efc6fd1d9edbc27fa9f5655fecff",
+      "mnemos/maintenance.py": "8507c7b63943221259c710f5c97ddbfaf32160d5a2d873adaf8d1100f952a380",
+      "mnemos/managed_cli.py": "57a5572943d9526785c23d135b7447f7e4d3ae30ec06dbad13fc2debeea43647",
+      "mnemos/mcp_server.py": "0aa2b934659036a59767195e76756872c9d4b29cdb227c4a79c317f86aa1658f",
+      "mnemos/memory_safety.py": "9b60d4aaa37f1c3b17478f1693c51a7a8a84c84bba6a9e66005e4558b369a8f8",
+      "mnemos/memory_service.py": "2960f22c19dfebc1c990a06e1d8ec720e5dee319129f807131d906b2e76d0814",
+      "mnemos/observability.py": "f7d803d2d3c1c05bc80c6713cc4bcac24e2c64830528ac9a31b27ecd5adfe61a",
+      "mnemos/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "mnemos/reindex.py": "d810a6e95d27d34f505dc08e34456f1582bcc53cbac4e4f31cdb8641466a7499",
+      "mnemos/retrieval.py": "7f8f098b6dbd8c4f2f2154adbd475ad1b0696e4b1b5727a554a982e2e61dc337",
+      "mnemos/routing_review.py": "b10bf44904783a43831ed5df6b6bfc6e3901d6465e56b4f760a561650fd14227",
+      "mnemos/runtime.py": "1d2431105b974189c4e6d52f8165fd34073b45a903bf0fde959c1cb2585191e3",
+      "mnemos/scopes.py": "f436802836f911f6dcc8c8362a7627773b0d10a28efda624d1fd55fdb995c6ab",
+      "mnemos/service.py": "f616e6f3361a80c9caed1e53c0c374a32b8f82dbab397157eb321bb04b82f604",
+      "mnemos/settings.py": "e7d59bbb77ff8a981cedb49bfb58e9955c28835f3c710e657279763cd44795d0",
+      "mnemos/types.py": "d3c781f1ac2a0190b3195ff70edfe9ca075163a6ffb5a26113a60f31334c9e1d",
+      "mnemos/ui_server.py": "3e8aa4fdf5f1281062b67aa9220304e5d31091de3e8be59fa69546151f3a0f55",
+      "mnemos/adapters/claude_code.py": "db9c7db75d6741891849adec63c125112ed391a12d1feba5c0fe17d8c36a73d1",
+      "mnemos/adapters/codex.py": "575afab0a725f900dd9fe43f6b24b372095b2aa4c5a5bef81a8eef9f96708299",
+      "mnemos/adapters/context.py": "12430515c00f65d83f3fa5bb92237fc11bdda92745116212b71f979ae6a66bd8",
+      "mnemos/adapters/diagnostics.py": "cf29abc0c7d12481fd1b8944536cd5370e34b607200626e550921205e3a546e2",
+      "mnemos/adapters/hermes.py": "a5cdd724bc9ae50b99d97fc9d3a4892cfd464a8e85a032914f45509f261a59c8",
+      "mnemos/adapters/hermes_occurrences.py": "5dec9c419110385b132a0ec34aadf902a1fed0fe9a500a0104e2fa894253990d",
+      "mnemos/adapters/hermes_tools.py": "1133efb2e3d03666c2e7d6a380ce2ee37c14a140f4c30c72235a09619ccfae19",
+      "mnemos/adapters/hook_input.py": "b7ebae71507391c92d71b99a5fd98214323b0563a882b220b9afcc9829fda7bd",
+      "mnemos/modules/__init__.py": "9577f0749062e56949ddc757683e32dfc2ea58e7c416dcec1b78fd48a21b4f01",
+      "mnemos/modules/affective.py": "683f788a67cdb5ab94d4ed58616fc43b514bbfc5075daae09657027b22dc07c2",
+      "mnemos/modules/mutable_rag.py": "25c3b7df4080193a5690e0f49c7440fa7e81f9c1010151584ea7f23a66c67363",
+      "mnemos/modules/sleep.py": "d61398b612e5eaba89382a94ee5448953ea4edb1b9e9bc4d1238daec9b2d3af3",
+      "mnemos/modules/spreading.py": "16136aece4d3d5833583c942c16492338de2a55399eafa5c43ccb892cbf7c282",
+      "mnemos/modules/surprisal.py": "96cf498124989e880018a3862352ffc5c3b09fc31205917e6f7aadbf7e9b6ccb",
+      "mnemos/ui/app.js": "43080220fda5c150efde197f17d01e87ce485314c68f6b2f913557f711c23480",
+      "mnemos/ui/index.html": "8e17e8b2550cad7b451a905aa0ae65800d868d3a2cd00290e532d6b6323de538",
+      "mnemos/ui/styles.css": "febc58e51b11fe03bc6598c31d77dca227e5e8f0b05a79a2e4089b81135c763c",
+      "mnemos/utils/__init__.py": "15fbe1b9510e7400c47216585fb0176f93c77a6947a246b9f130599d9092bdaf",
+      "mnemos/utils/embeddings.py": "59c1981ac7d9d5db502da2d8acf059718496e115e5087bcd30602165a8a725d5",
+      "mnemos/utils/llm.py": "2edfd8121fbe07ad269c4850a6ab1d0f8713ed9b15e292d7bff099f3f1f4ebbc",
+      "mnemos/utils/reliability.py": "5e74212c28dc522acb65dd9c161beee8cb4e95c066eb9cae3bfcd518fa0d707a",
+      "mnemos/utils/storage.py": "d026a4fb85bbba4e2b1b018845aed355fd6ab963a3e272c7d3512539bef2f6d0",
+      "mnemos/resources/agents/memory-orchestrator.md": "b6a8c980a99f05ed2f95afae59f7b9d1e0d4b4c83737963e3bf6fcb61b27e2b1",
+      "mnemos/resources/agents/mnemos-curator.md": "71721de98145cf443430cfc08d990d77e6eee667529b384a8c336b94b725b7fd",
+      "mnemos/resources/agents/mnemos-recall.md": "10bb740e1758e7dca3f2cefeeeb05371ad243dbf963c53ee6c061387317a5fed"
+    },
+    "loaded_module_origins": {
+      "mnemos": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+      "mnemos.scopes": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\scopes.py",
+      "mnemos.adapters.hermes_tools": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\adapters\\hermes_tools.py",
+      "mnemos.types": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\types.py",
+      "mnemos.retrieval": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\retrieval.py",
+      "mnemos.config": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\config.py",
+      "mnemos.memory_safety": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\memory_safety.py",
+      "mnemos.errors": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\errors.py",
+      "mnemos.jobs": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\jobs.py",
+      "mnemos.observability": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\observability.py",
+      "mnemos.service": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\service.py",
+      "mnemos.client": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\client.py",
+      "mnemos.curation": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\curation.py",
+      "mnemos.utils.reliability": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\utils\\reliability.py",
+      "mnemos.utils.embeddings": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\utils\\embeddings.py",
+      "mnemos.utils.llm": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\utils\\llm.py",
+      "mnemos.utils.storage": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\utils\\storage.py",
+      "mnemos.utils": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\utils\\__init__.py",
+      "mnemos.modules.affective": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\affective.py",
+      "mnemos.contracts": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\contracts.py",
+      "mnemos.modules.mutable_rag": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\mutable_rag.py",
+      "mnemos.modules.sleep": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\sleep.py",
+      "mnemos.modules.spreading": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\spreading.py",
+      "mnemos.modules.surprisal": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\surprisal.py",
+      "mnemos.modules": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\modules\\__init__.py",
+      "mnemos.engine": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\engine.py",
+      "mnemos.claude_identity": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\claude_identity.py",
+      "mnemos.hermes_identity": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\hermes_identity.py",
+      "mnemos.maintenance": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\maintenance.py",
+      "mnemos.memory_service": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-related-forget-error-v1\\Lib\\site-packages\\mnemos\\memory_service.py"
+    }
+  },
+  "expected_digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+  "think": false,
+  "num_ctx": 32768,
+  "repetitions": 1,
+  "options": {
+    "temperature": 0,
+    "seed": 42,
+    "presence_penalty": 0,
+    "num_ctx": 32768,
+    "num_predict": 2048,
+    "top_k": 20,
+    "top_p": 0.95
+  },
+  "verified_runtime_commit": "e454a85f7b4f79ce2b483f738d68d88a15bd72d6",
+  "verified_wheel_sha256": "94011300cda669ddcabefe9e9077af0f2aa01b6ed5f23bc13c8e6b7f2a5fbf35",
+  "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-related-forget-error-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "source_commit": "db376f8994cd4314c5b4b9d797e4e66bfda9e9b9",
+  "input_hashes": {
+    "benchmarks/native_hosts/model_forget_development_v1.py": "3ad262b88d6badef98b779b1fbaf3bcad7dbdb2cc40a7302e049bdd31688cfad",
+    "docs/plans/2026-09-19-local-model-forget-development-v1.md": "a8ba9ecba5337a95d4b5427274a81355d33b104a1b7f0a1f3d69064e0adc2894",
+    "docs/plans/2026-09-19-local-model-forget-profiles-v1.json": "c7308577db4e34f9e54be3297ccbe749b1179ee4930f013b789ae025afdf7f58",
+    "benchmarks/native_hosts/hermes_trace_v2.py": "9beffe22889c6f7e03d66da6b8c32769b8ca6bd0b48be68cc4e4219401ff1d38"
+  },
+  "model_ps_after": {
+    "models": [
+      {
+        "name": "qwen3.5:9b",
+        "model": "qwen3.5:9b",
+        "size": 6584805620,
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M"
+        },
+        "expires_at": "2026-09-19T23:42:29.9225788-04:00",
+        "size_vram": 6584805620,
+        "context_length": 32768
+      }
+    ]
+  },
+  "tags_after": {
+    "models": [
+      {
+        "name": "gpt-oss:20b",
+        "model": "gpt-oss:20b",
+        "modified_at": "2026-09-19T23:14:26.426297-04:00",
+        "size": 13793441244,
+        "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gptoss",
+          "families": [
+            "gptoss"
+          ],
+          "parameter_size": "20.9B",
+          "quantization_level": "MXFP4",
+          "context_length": 131072,
+          "embedding_length": 2880
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+        "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+        "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+        "size": 13780173724,
+        "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+        "details": {
+          "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+          "format": "gguf",
+          "family": "gptoss",
+          "families": [
+            "gptoss"
+          ],
+          "parameter_size": "20.9B",
+          "quantization_level": "MXFP4"
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "mnemos-native-qwen35-9b:greedy-v1",
+        "model": "mnemos-native-qwen35-9b:greedy-v1",
+        "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+        "size": 6594474421,
+        "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+        "details": {
+          "parent_model": "qwen3.5:9b",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 262144,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "completion",
+          "vision",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "model": "nomic-embed-text:latest",
+        "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+        "size": 274302450,
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "nomic-bert",
+          "families": [
+            "nomic-bert"
+          ],
+          "parameter_size": "137M",
+          "quantization_level": "F16",
+          "context_length": 2048,
+          "embedding_length": 768
+        },
+        "capabilities": [
+          "embedding"
+        ]
+      },
+      {
+        "name": "qwen3.5:9b",
+        "model": "qwen3.5:9b",
+        "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+        "size": 6594474711,
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 262144,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "completion",
+          "vision",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "qwen2.5:7b",
+        "model": "qwen2.5:7b",
+        "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+        "size": 4683087332,
+        "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "7.6B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 32768,
+          "embedding_length": 3584
+        },
+        "capabilities": [
+          "completion",
+          "tools"
+        ]
+      },
+      {
+        "name": "anthony-maio/remnantinstruct-8b:latest",
+        "model": "anthony-maio/remnantinstruct-8b:latest",
+        "modified_at": "2026-01-27T23:46:24.269713-05:00",
+        "size": 5027784917,
+        "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+        "details": {
+          "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 40960,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "tools",
+          "thinking",
+          "completion"
+        ]
+      },
+      {
+        "name": "anthonym21/remnantinstruct-8b:latest",
+        "model": "anthonym21/remnantinstruct-8b:latest",
+        "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+        "size": 5027784917,
+        "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+        "details": {
+          "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 40960,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "tools",
+          "thinking",
+          "completion"
+        ]
+      },
+      {
+        "name": "qwen3:30b",
+        "model": "qwen3:30b",
+        "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+        "size": 18556699301,
+        "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3moe",
+          "families": [
+            "qwen3moe"
+          ],
+          "parameter_size": "30.5B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 262144,
+          "embedding_length": 2048
+        },
+        "capabilities": [
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "deepseek-r1:8b",
+        "model": "deepseek-r1:8b",
+        "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+        "size": 5225376047,
+        "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen3",
+          "families": [
+            "qwen3"
+          ],
+          "parameter_size": "8.2B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "tools",
+          "thinking",
+          "completion"
+        ]
+      },
+      {
+        "name": "qwen2.5:14b",
+        "model": "qwen2.5:14b",
+        "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+        "size": 8988124069,
+        "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen2",
+          "families": [
+            "qwen2"
+          ],
+          "parameter_size": "14.8B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 32768,
+          "embedding_length": 5120
+        },
+        "capabilities": [
+          "completion",
+          "tools"
+        ]
+      },
+      {
+        "name": "gemma3:27b",
+        "model": "gemma3:27b",
+        "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+        "size": 17396936941,
+        "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "27.4B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 5376
+        },
+        "capabilities": [
+          "completion",
+          "vision"
+        ]
+      },
+      {
+        "name": "gemma3:12B",
+        "model": "gemma3:12B",
+        "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+        "size": 8149190253,
+        "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "12.2B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 3840
+        },
+        "capabilities": [
+          "completion",
+          "vision"
+        ]
+      },
+      {
+        "name": "gemma3:4b",
+        "model": "gemma3:4b",
+        "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+        "size": 3338801804,
+        "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "4.3B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 131072,
+          "embedding_length": 2560
+        },
+        "capabilities": [
+          "completion",
+          "vision"
+        ]
+      },
+      {
+        "name": "gemma3:1b",
+        "model": "gemma3:1b",
+        "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+        "size": 815319791,
+        "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "gemma3",
+          "families": [
+            "gemma3"
+          ],
+          "parameter_size": "999.89M",
+          "quantization_level": "Q4_K_M",
+          "context_length": 32768,
+          "embedding_length": 1152
+        },
+        "capabilities": [
+          "completion"
+        ]
+      }
+    ]
+  },
+  "finished_at": "2026-09-20T03:37:30.140501+00:00"
+}

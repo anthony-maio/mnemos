@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="7.482" timestamp="2026-09-19T23:25:16.436694-04:00" hostname="Aurora"><testcase classname="tests.test_model_forget_runner" name="test_failed_model_request_remains_recorded_with_cleanup" time="2.105"><failure message="assert False is True">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3989/test_failed_model_request_rema0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001EC7EC71E00&gt;
+
+    def test_failed_model_request_remains_recorded_with_cleanup(tmp_path, monkeypatch):
+        async def fail(*args):
+            raise TimeoutError("synthetic transport timeout")
+    
+        monkeypatch.setattr(runner, "_bounded_api", fail)
+        result = asyncio.run(runner._run_case(tmp_path, "unused", "qwen3.5:9b", False, runner.CASES[0], 0))
+        assert result["status"] == "failed"
+        assert len(result["requests"]) == 1
+        assert result["requests"][0]["error_type"] == "TimeoutError"
+        assert result["responses"] == []
+&gt;       assert result["cleanup"]["ok"] is True
+E       assert False is True
+
+tests\test_model_forget_runner.py:21: AssertionError</failure></testcase><testcase classname="tests.test_model_forget_runner" name="test_raw_requests_do_not_gain_later_messages_or_synthetic_ids" time="2.239"><failure message="assert False is True">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3989/test_raw_requests_do_not_gain_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001EC7EC71BA0&gt;
+
+    def test_raw_requests_do_not_gain_later_messages_or_synthetic_ids(tmp_path, monkeypatch):
+        responses = [
+            {"done": True, "done_reason": "stop", "message": {"role": "assistant", "content": "", "tool_calls": [
+                {"function": {"name": "mnemos_retrieve", "arguments": {"query": "backup window"}}}
+            ]}},
+            {"done": True, "done_reason": "stop", "message": {"role": "assistant", "content": "I did not delete it."}},
+        ]
+        original = deepcopy(responses)
+    
+        async def respond(*args):
+            return responses.pop(0)
+    
+        monkeypatch.setattr(runner, "_bounded_api", respond)
+        result = asyncio.run(runner._run_case(tmp_path, "unused", "qwen3.5:9b", False, runner.CASES[0], 0))
+        assert result["status"] == "failed"
+        assert result["responses"] == original
+        assert len(result["requests"][0]["payload"]["messages"]) == 2
+        assert len(result["requests"][1]["payload"]["messages"]) == 4
+        assert result["trace"][0]["tool_calls"][0]["id"] == "response-0-call-0"
+        assert result["trace"][1]["call_id"] == "response-0-call-0"
+        assert result["requests"][1]["payload"]["messages"][-1]["tool_name"] == "mnemos_retrieve"
+&gt;       assert result["cleanup"]["ok"] is True
+E       assert False is True
+
+tests\test_model_forget_runner.py:49: AssertionError</failure></testcase><testcase classname="tests.test_model_forget_runner" name="test_rejected_dispatch_fails_without_retry" time="2.621"><failure message="assert False is True">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3989/test_rejected_dispatch_fails_w0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001EC7FCC03B0&gt;
+
+    def test_rejected_dispatch_fails_without_retry(tmp_path, monkeypatch):
+        requests = []
+    
+        async def respond(*args):
+            requests.append(args)
+            return {"done": True, "message": {"role": "assistant", "content": "", "tool_calls": [
+                {"function": {"name": "mnemos_inspect", "arguments": {"fact_id": "missing"}}}
+            ]}}
+    
+        monkeypatch.setattr(runner, "_bounded_api", respond)
+        result = asyncio.run(runner._run_case(tmp_path, "unused", "qwen3.5:9b", False, runner.CASES[0], 0))
+        assert result["status"] == "failed"
+        assert len(requests) == 1
+        assert len(result["tool_results"]) == 1
+&gt;       assert result["cleanup"]["ok"] is True
+E       assert False is True
+
+tests\test_model_forget_runner.py:66: AssertionError</failure></testcase><testcase classname="tests.test_model_forget_runner" name="test_invalid_wheel_archives_preflight_failure" time="0.010" /></testsuite></testsuites>

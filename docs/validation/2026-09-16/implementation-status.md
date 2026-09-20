@@ -1,5 +1,23 @@
 # Functional local memory implementation status
 
+The [local model tool diagnostic](../2026-09-19/model-forget-development-v1/README.md) on installed
+`e454a85` finished with Qwen3.5:9b passing 2 of three cases and
+GPT-OSS:20b passing 0 of three. Each scheduled case ran once;
+failures and startup timeouts remain in the archive. Passing cases require
+observed inspection and preview, selected copies and their required sources,
+persisted erasure and suppression, and unchanged own-project and foreign
+controls. The runner also rechecks state through a read-only connection
+after service shutdown. Its 68 focused offline tests, formatting, and
+103-file type check pass. These counts are separate from the earlier full
+package checkpoint.
+
+This is a small development comparison with synthetic seeded facts,
+SimpleEmbeddingProvider, and all five cognition modules disabled. It does
+not automatically capture the conversation and is not a native Hermes,
+restart, replay, extraction-quality, or three-host result. The native v6
+failures and T18 negatives remain unchanged. The next native experiment
+needs a separately frozen host/model profile and the existing erasure gates.
+
 Current package checkpoint: [source-selection rejection repair](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
 on `e454a85` passes 1,427 source tests (4 skips), all six source/package
 checks, 604 installed cases (4 matching skips), and seven replay assertions.

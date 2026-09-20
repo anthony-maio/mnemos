@@ -1,0 +1,832 @@
+{
+  "case": "backup-window",
+  "status": "failed",
+  "automatic_conversation_capture": false,
+  "scope": "synthetic installed-service tool diagnostic; not native-host acceptance",
+  "transport_id_normalization": "Every call receives response-N-call-M; original IDs remain in untouched raw response. These IDs are not native Hermes correlation.",
+  "started_at": "2026-09-20T03:34:51.388262+00:00",
+  "requests": [
+    {
+      "round": 0,
+      "payload": {
+        "model": "qwen3.5:9b",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Use only the supplied mnemos_* tools. Do not add memory. Review and erase this topic and its retained conversational copies. Retrieve and inspect the asserted target, preview related forget, inspect every selected additional fact, then apply the unchanged digest and limit with exact selected IDs and required source IDs. Preserve unrelated facts."
+          },
+          {
+            "role": "user",
+            "content": "Forget the setting about backup-window, including retained conversational copies, and confirm what remains."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_retrieve",
+              "description": "Retrieve current Mnemos facts in the provider-owned project scope.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "top_k": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "max_context_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32000
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_inspect",
+              "description": "Inspect one exact Mnemos fact in the provider-owned scope.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                },
+                "required": [
+                  "fact_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_remember",
+              "description": "Remember one explicitly supplied user fact in the provider-owned scope. A committed response acknowledges storage of the request, not completed processing. When it returns a job_id, call mnemos_job_status once with that exact returned ID before your final answer. Report the observed status; pending is not completed.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "source_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry."
+                  }
+                },
+                "required": [
+                  "content",
+                  "request_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_correct",
+              "description": "Correct one exact fact using its current optimistic-concurrency version. A committed response acknowledges storage of the request, not completed processing. When it returns a job_id, call mnemos_job_status once with that exact returned ID before your final answer. Report the observed status; pending is not completed.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "source_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry."
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "content",
+                  "expected_version",
+                  "request_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget",
+              "description": "Forget one exact fact using its current optimistic-concurrency version.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget_preview",
+              "description": "Preview the exact and advisory related facts and source events for a reviewed forget operation. The preview is read-only, bounded by limit, and reports whether it is complete. Similarity candidates are advisory only and are never deleted automatically. Reuse the returned preview_digest when applying reviewed selections. A complete bounded preview does not prove that every semantic copy was found; inspect similarity_search truncation and exhaustive fields before claiming broad erasure.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "default": 100
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget_related",
+              "description": "Apply a reviewed related-forget preview using the unchanged preview_digest and matching preview_limit. The target fact is always forgotten; additional facts and source events require exact IDs from the matching preview. An empty selection is target-only. Do not infer or add IDs outside the preview.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "preview_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{64}$"
+                  },
+                  "preview_limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "default": 100
+                  },
+                  "selected_fact_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "default": []
+                  },
+                  "selected_source_event_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "default": []
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version",
+                  "preview_digest"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_job_status",
+              "description": "Read durable status for one Mnemos job. Use the exact job_id returned by mnemos_remember or mnemos_correct. A pending or leased job is not completed; do not infer completion from the earlier write acknowledgement.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "job_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                },
+                "required": [
+                  "job_id"
+                ]
+              }
+            }
+          }
+        ],
+        "stream": false,
+        "think": false,
+        "options": {
+          "temperature": 0,
+          "seed": 42,
+          "presence_penalty": 0,
+          "num_ctx": 32768,
+          "num_predict": 2048,
+          "top_k": 20,
+          "top_p": 0.95
+        }
+      },
+      "seconds": 60.004529900004854,
+      "error_type": "TimeoutError",
+      "error": ""
+    }
+  ],
+  "responses": [],
+  "tool_calls": [],
+  "tool_results": [],
+  "trace": [],
+  "seed": {
+    "target_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+    "known_copy_ids": [
+      "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+      "38ccdb0f-6927-4023-8578-1bad56559e27",
+      "849cb882-7909-4a35-897b-44e1be5f4b47"
+    ],
+    "known_source_event_ids": [
+      "0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+      "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+      "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+      "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+      "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0"
+    ],
+    "control_id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+    "foreign_control_id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+    "control_row": {
+      "id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+      "content": "The backup checksum is granite-safe-184.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    "foreign_control_row": {
+      "id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+      "content": "The foreign backup window is hidden-cove-773.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    "control_snapshot": {
+      "fact": {
+        "id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "content": "The backup checksum is granite-safe-184.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      "evidence": [
+        {
+          "fact_id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+          "source_event_id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+          "excerpt": "The backup checksum is granite-safe-184."
+        }
+      ],
+      "events": [
+        {
+          "id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+          "content": "The backup checksum is granite-safe-184.",
+          "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-control-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+        }
+      ],
+      "revisions": []
+    },
+    "foreign_control_snapshot": {
+      "fact": {
+        "id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+        "content": "The foreign backup window is hidden-cove-773.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      "evidence": [
+        {
+          "fact_id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+          "source_event_id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+          "excerpt": "The foreign backup window is hidden-cove-773."
+        }
+      ],
+      "events": [
+        {
+          "id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+          "content": "The foreign backup window is hidden-cove-773.",
+          "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source_event_id\": \"seed-foreign-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+        }
+      ],
+      "revisions": []
+    },
+    "old": "The backup window is olive-harbor-316.",
+    "new": "The backup window is silver-marsh-529.",
+    "old_label": "olive-harbor-316",
+    "new_label": "silver-marsh-529",
+    "context": {
+      "user_profile_id": "model-forget-development-v1",
+      "project_id": "4dd16b37-0840-49d9-8aa2-da49ff13f892",
+      "workspace_id": null,
+      "session_id": "model-forget-project",
+      "host": "hermes"
+    },
+    "labels": [
+      "olive-harbor-316",
+      "silver-marsh-529"
+    ],
+    "known_fact_ids": [
+      "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+      "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+      "38ccdb0f-6927-4023-8578-1bad56559e27",
+      "849cb882-7909-4a35-897b-44e1be5f4b47"
+    ],
+    "authoritative_facts": [
+      {
+        "id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "content": "The backup window is silver-marsh-529.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The backup window is olive-harbor-316.\"}"
+      },
+      {
+        "id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "content": "Assistant reported: Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "content": "Assistant reported: Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "content": "The backup checksum is granite-safe-184.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      }
+    ],
+    "known_copy_rows": [
+      {
+        "id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "version": 1,
+        "required_source_event_ids": [
+          "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6"
+        ]
+      },
+      {
+        "id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "content": "Assistant reported: Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "version": 1,
+        "required_source_event_ids": [
+          "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162"
+        ]
+      },
+      {
+        "id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "content": "Assistant reported: Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "version": 1,
+        "required_source_event_ids": [
+          "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0"
+        ]
+      }
+    ],
+    "control": "The backup checksum is granite-safe-184.",
+    "foreign": "The foreign backup window is hidden-cove-773.",
+    "seed_result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+      "processing_status": "pending",
+      "job_id": "event:c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+      "identity_status": "normal",
+      "fact_eligible": true
+    }
+  },
+  "state_before": {
+    "facts": [
+      {
+        "id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "content": "The backup window is silver-marsh-529.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The backup window is olive-harbor-316.\"}"
+      },
+      {
+        "id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "content": "Assistant reported: Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+        "content": "The foreign backup window is hidden-cove-773.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "content": "Assistant reported: Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "content": "The backup checksum is granite-safe-184.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      }
+    ],
+    "events": [
+      {
+        "id": "0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "content": "The backup window is silver-marsh-529.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-correction-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_correction\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "content": "The backup checksum is granite-safe-184.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-control-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-1\", \"source_ref\": \"seed-copy-backup-window-1\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "content": "Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-2\", \"source_ref\": \"seed-copy-backup-window-2\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "content": "The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-target-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "content": "The foreign backup window is hidden-cove-773.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source_event_id\": \"seed-foreign-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "content": "Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-0\", \"source_ref\": \"seed-copy-backup-window-0\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      }
+    ],
+    "evidence": [
+      {
+        "fact_id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "source_event_id": "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "excerpt": "A captured instruction recorded the prior setting The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "source_event_id": "0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "excerpt": "The backup window is silver-marsh-529."
+      },
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "source_event_id": "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "excerpt": "The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "source_event_id": "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "excerpt": "Assistant confirmed the current setting: The backup window is silver-marsh-529."
+      },
+      {
+        "fact_id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+        "source_event_id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "excerpt": "The foreign backup window is hidden-cove-773."
+      },
+      {
+        "fact_id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "source_event_id": "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "excerpt": "Assistant repeated the prior setting: The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "source_event_id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "excerpt": "The backup checksum is granite-safe-184."
+      }
+    ],
+    "revisions": [
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "version": 1,
+        "content": "The backup window is olive-harbor-316."
+      }
+    ],
+    "jobs": [
+      {
+        "id": "event:0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "payload": "{\"event_id\": \"0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"ad87214ed813752daa326dbab130ceed8a9306ac8a6df641d93ecbfbab132781\", \"target_fact_id\": \"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\", \"expected_version\": 1}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "payload": "{\"event_id\": \"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"33987d5468ed2c62b88e2db6a3e7fad8bcdaac365ff0674eb95eb559087644a2\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"e367bafd-7d50-4160-a18f-e91dc3186308\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "payload": "{\"event_id\": \"b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"6c15a88584cc33b7f2e2d4b489e6207c75afcee3eb6fdbab20b9c87fc7676d19\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"24367853-2f7a-41dc-82a2-38ebd0ed9aae\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "payload": "{\"event_id\": \"bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"e1a77c137138abe435ad3a93983ccd1e31bd77e58d0b9ba3c53bce3176975e00\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"38ccdb0f-6927-4023-8578-1bad56559e27\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "payload": "{\"event_id\": \"c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"e6daa829fd97904da73120b2cf6178bec2e737b6d07390801687893e10a9c122\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "payload": "{\"event_id\": \"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"d087f59b39401840ab57576caa40f3fc2bec3e3d0d274d6d81b5a9951a16280f\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"540a92d1-e3ba-4ec8-9193-4c8c5735db3e\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "payload": "{\"event_id\": \"fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"71c6f050ebe3d28199763813e5012e542948d1d31abd86c27b2a84f0f8619db9\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"849cb882-7909-4a35-897b-44e1be5f4b47\"]}",
+        "status": "completed"
+      }
+    ],
+    "suppressions": []
+  },
+  "error_type": "TimeoutError",
+  "error": "",
+  "state_after_cleanup": {
+    "facts": [
+      {
+        "id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "content": "The backup window is silver-marsh-529.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The backup window is olive-harbor-316.\"}"
+      },
+      {
+        "id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "content": "Assistant reported: Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+        "content": "The foreign backup window is hidden-cove-773.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "content": "Assistant reported: Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "content": "The backup checksum is granite-safe-184.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      }
+    ],
+    "events": [
+      {
+        "id": "0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "content": "The backup window is silver-marsh-529.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-correction-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_correction\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "content": "The backup checksum is granite-safe-184.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-control-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "content": "A captured instruction recorded the prior setting The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-1\", \"source_ref\": \"seed-copy-backup-window-1\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "content": "Assistant confirmed the current setting: The backup window is silver-marsh-529.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-2\", \"source_ref\": \"seed-copy-backup-window-2\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "content": "The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-target-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "content": "The foreign backup window is hidden-cove-773.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"source_event_id\": \"seed-foreign-backup-window\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "content": "Assistant repeated the prior setting: The backup window is olive-harbor-316.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"source_event_id\": \"seed-copy-backup-window-0\", \"source_ref\": \"seed-copy-backup-window-0\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      }
+    ],
+    "evidence": [
+      {
+        "fact_id": "24367853-2f7a-41dc-82a2-38ebd0ed9aae",
+        "source_event_id": "b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "excerpt": "A captured instruction recorded the prior setting The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "source_event_id": "0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "excerpt": "The backup window is silver-marsh-529."
+      },
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "source_event_id": "c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "excerpt": "The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "38ccdb0f-6927-4023-8578-1bad56559e27",
+        "source_event_id": "bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "excerpt": "Assistant confirmed the current setting: The backup window is silver-marsh-529."
+      },
+      {
+        "fact_id": "540a92d1-e3ba-4ec8-9193-4c8c5735db3e",
+        "source_event_id": "ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "excerpt": "The foreign backup window is hidden-cove-773."
+      },
+      {
+        "fact_id": "849cb882-7909-4a35-897b-44e1be5f4b47",
+        "source_event_id": "fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "excerpt": "Assistant repeated the prior setting: The backup window is olive-harbor-316."
+      },
+      {
+        "fact_id": "e367bafd-7d50-4160-a18f-e91dc3186308",
+        "source_event_id": "a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "excerpt": "The backup checksum is granite-safe-184."
+      }
+    ],
+    "revisions": [
+      {
+        "fact_id": "37baa4e7-0829-4c0c-92ed-64d9e1eed67f",
+        "version": 1,
+        "content": "The backup window is olive-harbor-316."
+      }
+    ],
+    "jobs": [
+      {
+        "id": "event:0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005",
+        "payload": "{\"event_id\": \"0f08958b7f0990080c86a800d0d2732e7177d5ea8ff804b98dd7bdb402da2005\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"ad87214ed813752daa326dbab130ceed8a9306ac8a6df641d93ecbfbab132781\", \"target_fact_id\": \"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\", \"expected_version\": 1}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f",
+        "payload": "{\"event_id\": \"a71b98de2b25a97e01cf641307518094f6dd65af73a4f1d7484c654c2470935f\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"33987d5468ed2c62b88e2db6a3e7fad8bcdaac365ff0674eb95eb559087644a2\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"e367bafd-7d50-4160-a18f-e91dc3186308\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6",
+        "payload": "{\"event_id\": \"b7f77decaa7536cf297b1f33b20f6bb474b32b5da3eec4561b4954a3760ac7f6\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"6c15a88584cc33b7f2e2d4b489e6207c75afcee3eb6fdbab20b9c87fc7676d19\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"24367853-2f7a-41dc-82a2-38ebd0ed9aae\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162",
+        "payload": "{\"event_id\": \"bd704ce9a43901d3a3e5de0f47cc2e105271dd127311544937b57abb26e8c162\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"e1a77c137138abe435ad3a93983ccd1e31bd77e58d0b9ba3c53bce3176975e00\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"38ccdb0f-6927-4023-8578-1bad56559e27\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549",
+        "payload": "{\"event_id\": \"c2bc70cfb7d43aad37dd2bf519109d8e744c73cb25d08fb417d99e8c5b4de549\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"e6daa829fd97904da73120b2cf6178bec2e737b6d07390801687893e10a9c122\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"37baa4e7-0829-4c0c-92ed-64d9e1eed67f\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314",
+        "payload": "{\"event_id\": \"ea9c2795232bd801405b91c5f9d0295ccbe62bda2da7a74c653fd9bdcce2e314\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"12599ab7-eb9f-461a-9f59-234a80a28fe8\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"d087f59b39401840ab57576caa40f3fc2bec3e3d0d274d6d81b5a9951a16280f\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"540a92d1-e3ba-4ec8-9193-4c8c5735db3e\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0",
+        "payload": "{\"event_id\": \"fe4553b4697dcba8548411de0865f7934ed536f41e4039b975aea934352f09c0\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"4dd16b37-0840-49d9-8aa2-da49ff13f892\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"71c6f050ebe3d28199763813e5012e542948d1d31abd86c27b2a84f0f8619db9\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"849cb882-7909-4a35-897b-44e1be5f4b47\"]}",
+        "status": "completed"
+      }
+    ],
+    "suppressions": []
+  },
+  "gates_after_cleanup": {
+    "trace_correlated": false,
+    "forget_phase_verified": false,
+    "reviewed_persisted": false,
+    "scoped_markers_absent": false,
+    "tools_allowed": false,
+    "retrieved_target_before_apply": false,
+    "all_copies_selected": false,
+    "required_sources_selected": false,
+    "known_facts_absent": false,
+    "known_sources_absent": false,
+    "known_facts_suppressed": false,
+    "known_sources_suppressed": false,
+    "controls_retained": true,
+    "foreign_control_retained": true
+  },
+  "cleanup": {
+    "ok": true,
+    "errors": []
+  },
+  "elapsed_seconds": 60.7340916999965,
+  "finished_at": "2026-09-20T03:35:52.123711+00:00"
+}

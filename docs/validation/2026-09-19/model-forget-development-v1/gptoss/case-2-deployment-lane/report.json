@@ -1,0 +1,832 @@
+{
+  "case": "deployment-lane",
+  "status": "failed",
+  "automatic_conversation_capture": false,
+  "scope": "synthetic installed-service tool diagnostic; not native-host acceptance",
+  "transport_id_normalization": "Every call receives response-N-call-M; original IDs remain in untouched raw response. These IDs are not native Hermes correlation.",
+  "started_at": "2026-09-20T03:38:45.974813+00:00",
+  "requests": [
+    {
+      "round": 0,
+      "payload": {
+        "model": "gpt-oss:20b",
+        "messages": [
+          {
+            "role": "system",
+            "content": "Use only the supplied mnemos_* tools. Do not add memory. Review and erase this topic and its retained conversational copies. Retrieve and inspect the asserted target, preview related forget, inspect every selected additional fact, then apply the unchanged digest and limit with exact selected IDs and required source IDs. Preserve unrelated facts."
+          },
+          {
+            "role": "user",
+            "content": "Forget the setting about deployment-lane, including retained conversational copies, and confirm what remains."
+          }
+        ],
+        "tools": [
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_retrieve",
+              "description": "Retrieve current Mnemos facts in the provider-owned project scope.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "top_k": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "max_context_tokens": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 32000
+                  }
+                },
+                "required": [
+                  "query"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_inspect",
+              "description": "Inspect one exact Mnemos fact in the provider-owned scope.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                },
+                "required": [
+                  "fact_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_remember",
+              "description": "Remember one explicitly supplied user fact in the provider-owned scope. A committed response acknowledges storage of the request, not completed processing. When it returns a job_id, call mnemos_job_status once with that exact returned ID before your final answer. Report the observed status; pending is not completed.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "source_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry."
+                  }
+                },
+                "required": [
+                  "content",
+                  "request_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_correct",
+              "description": "Correct one exact fact using its current optimistic-concurrency version. A committed response acknowledges storage of the request, not completed processing. When it returns a job_id, call mnemos_job_status once with that exact returned ID before your final answer. Report the observed status; pending is not completed.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 10000
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "source_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  },
+                  "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry."
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "content",
+                  "expected_version",
+                  "request_id"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget",
+              "description": "Forget one exact fact using its current optimistic-concurrency version.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget_preview",
+              "description": "Preview the exact and advisory related facts and source events for a reviewed forget operation. The preview is read-only, bounded by limit, and reports whether it is complete. Similarity candidates are advisory only and are never deleted automatically. Reuse the returned preview_digest when applying reviewed selections. A complete bounded preview does not prove that every semantic copy was found; inspect similarity_search truncation and exhaustive fields before claiming broad erasure.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "default": 100
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_forget_related",
+              "description": "Apply a reviewed related-forget preview using the unchanged preview_digest and matching preview_limit. The target fact is always forgotten; additional facts and source events require exact IDs from the matching preview. An empty selection is target-only. Do not infer or add IDs outside the preview.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "fact_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  },
+                  "expected_version": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "preview_digest": {
+                    "type": "string",
+                    "pattern": "^[0-9a-fA-F]{64}$"
+                  },
+                  "preview_limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "default": 100
+                  },
+                  "selected_fact_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "default": []
+                  },
+                  "selected_source_event_ids": {
+                    "type": "array",
+                    "maxItems": 500,
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 512
+                    },
+                    "default": []
+                  }
+                },
+                "required": [
+                  "fact_id",
+                  "expected_version",
+                  "preview_digest"
+                ]
+              }
+            }
+          },
+          {
+            "type": "function",
+            "function": {
+              "name": "mnemos_job_status",
+              "description": "Read durable status for one Mnemos job. Use the exact job_id returned by mnemos_remember or mnemos_correct. A pending or leased job is not completed; do not infer completion from the earlier write acknowledgement.",
+              "parameters": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "job_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 512
+                  }
+                },
+                "required": [
+                  "job_id"
+                ]
+              }
+            }
+          }
+        ],
+        "stream": false,
+        "think": "low",
+        "options": {
+          "temperature": 0,
+          "seed": 42,
+          "presence_penalty": 0,
+          "num_ctx": 32768,
+          "num_predict": 2048,
+          "top_k": 20,
+          "top_p": 0.95
+        }
+      },
+      "seconds": 60.00266769999871,
+      "error_type": "TimeoutError",
+      "error": ""
+    }
+  ],
+  "responses": [],
+  "tool_calls": [],
+  "tool_results": [],
+  "trace": [],
+  "seed": {
+    "target_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+    "known_copy_ids": [
+      "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+      "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+      "566119ac-6c22-465f-abf0-2b5eeeb0f779"
+    ],
+    "known_source_event_ids": [
+      "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+      "321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+      "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+      "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+      "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb"
+    ],
+    "control_id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+    "foreign_control_id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+    "control_row": {
+      "id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+      "content": "The deployment checksum is granite-safe-296.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    "foreign_control_row": {
+      "id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+      "content": "The foreign deployment lane is hidden-cove-884.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    "control_snapshot": {
+      "fact": {
+        "id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "content": "The deployment checksum is granite-safe-296.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      "evidence": [
+        {
+          "fact_id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+          "source_event_id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+          "excerpt": "The deployment checksum is granite-safe-296."
+        }
+      ],
+      "events": [
+        {
+          "id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+          "content": "The deployment checksum is granite-safe-296.",
+          "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-control-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+        }
+      ],
+      "revisions": []
+    },
+    "foreign_control_snapshot": {
+      "fact": {
+        "id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+        "content": "The foreign deployment lane is hidden-cove-884.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      "evidence": [
+        {
+          "fact_id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+          "source_event_id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+          "excerpt": "The foreign deployment lane is hidden-cove-884."
+        }
+      ],
+      "events": [
+        {
+          "id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+          "content": "The foreign deployment lane is hidden-cove-884.",
+          "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source_event_id\": \"seed-foreign-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+        }
+      ],
+      "revisions": []
+    },
+    "old": "The deployment lane is copper-meadow-617.",
+    "new": "The deployment lane is violet-canal-283.",
+    "old_label": "copper-meadow-617",
+    "new_label": "violet-canal-283",
+    "context": {
+      "user_profile_id": "model-forget-development-v1",
+      "project_id": "a56a043f-67e4-4267-9060-241b723d9964",
+      "workspace_id": null,
+      "session_id": "model-forget-project",
+      "host": "hermes"
+    },
+    "labels": [
+      "copper-meadow-617",
+      "violet-canal-283"
+    ],
+    "known_fact_ids": [
+      "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+      "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+      "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+      "f6d17ef6-e424-47f1-8a04-00ba8614d804"
+    ],
+    "authoritative_facts": [
+      {
+        "id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "content": "Assistant reported: Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "content": "The deployment checksum is granite-safe-296.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "content": "Assistant reported: Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "content": "The deployment lane is violet-canal-283.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The deployment lane is copper-meadow-617.\"}"
+      }
+    ],
+    "known_copy_rows": [
+      {
+        "id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "content": "Assistant reported: Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "version": 1,
+        "required_source_event_ids": [
+          "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb"
+        ]
+      },
+      {
+        "id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "content": "Assistant reported: Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "required_source_event_ids": [
+          "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5"
+        ]
+      },
+      {
+        "id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "required_source_event_ids": [
+          "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43"
+        ]
+      }
+    ],
+    "control": "The deployment checksum is granite-safe-296.",
+    "foreign": "The foreign deployment lane is hidden-cove-884.",
+    "seed_result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+      "processing_status": "pending",
+      "job_id": "event:226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+      "identity_status": "normal",
+      "fact_eligible": true
+    }
+  },
+  "state_before": {
+    "facts": [
+      {
+        "id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "content": "Assistant reported: Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "content": "The deployment checksum is granite-safe-296.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "content": "Assistant reported: Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+        "content": "The foreign deployment lane is hidden-cove-884.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "content": "The deployment lane is violet-canal-283.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The deployment lane is copper-meadow-617.\"}"
+      }
+    ],
+    "events": [
+      {
+        "id": "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "content": "The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-target-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "content": "The deployment lane is violet-canal-283.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-correction-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_correction\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "content": "The deployment checksum is granite-safe-296.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-control-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "content": "Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-0\", \"source_ref\": \"seed-copy-deployment-lane-0\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-1\", \"source_ref\": \"seed-copy-deployment-lane-1\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "content": "The foreign deployment lane is hidden-cove-884.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source_event_id\": \"seed-foreign-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "content": "Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-2\", \"source_ref\": \"seed-copy-deployment-lane-2\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      }
+    ],
+    "evidence": [
+      {
+        "fact_id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "source_event_id": "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "excerpt": "Assistant confirmed the current setting: The deployment lane is violet-canal-283."
+      },
+      {
+        "fact_id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "source_event_id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "excerpt": "The deployment checksum is granite-safe-296."
+      },
+      {
+        "fact_id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "source_event_id": "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "excerpt": "Assistant repeated the prior setting: The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "source_event_id": "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "excerpt": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+        "source_event_id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "excerpt": "The foreign deployment lane is hidden-cove-884."
+      },
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "source_event_id": "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "excerpt": "The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "source_event_id": "321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "excerpt": "The deployment lane is violet-canal-283."
+      }
+    ],
+    "revisions": [
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "version": 1,
+        "content": "The deployment lane is copper-meadow-617."
+      }
+    ],
+    "jobs": [
+      {
+        "id": "event:226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "payload": "{\"event_id\": \"226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f1d9819dec78d71e4df3044b91dfa04bb0a00aa287e93757f73f111a92d7cb3d\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"f6d17ef6-e424-47f1-8a04-00ba8614d804\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "payload": "{\"event_id\": \"321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"2f759a3a06e4cd118929b9fe45807f11ae58bfa21a9ba07a51e60f78bf89bfe2\", \"target_fact_id\": \"f6d17ef6-e424-47f1-8a04-00ba8614d804\", \"expected_version\": 1}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"f6d17ef6-e424-47f1-8a04-00ba8614d804\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "payload": "{\"event_id\": \"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f959df060b30af56b8fffd950f5fd7494a43056145d419849e72cd2d11df4ccd\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"2fea4478-79bb-4b27-8a87-cde33b82b823\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "payload": "{\"event_id\": \"4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"aa8f3da3bd116ed65b7791d6ce2fd9595fa4b0465f9214e2a682602f5136a114\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"342db97f-62c6-473a-9f3c-a9b916b0ec15\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "payload": "{\"event_id\": \"59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"4f816bab4bcc00b5f0a5605b31f348d58e06d349c7920f7f8fb95e24201afdfb\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"566119ac-6c22-465f-abf0-2b5eeeb0f779\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "payload": "{\"event_id\": \"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f94063135a8699e476cdc20a94863d6331c514d93ae0a8c4553e728dc8ef4eec\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"76bbf41e-1fab-4f5b-ba07-5ae143d6f290\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "payload": "{\"event_id\": \"94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"57ad8990e63447b90b875141a63e3b8ab19fbb2161b078e5fd9661090b2ad68f\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7\"]}",
+        "status": "completed"
+      }
+    ],
+    "suppressions": []
+  },
+  "error_type": "TimeoutError",
+  "error": "",
+  "state_after_cleanup": {
+    "facts": [
+      {
+        "id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "content": "Assistant reported: Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "content": "The deployment checksum is granite-safe-296.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "content": "Assistant reported: Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+        "content": "The foreign deployment lane is hidden-cove-884.",
+        "version": 1,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+      },
+      {
+        "id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "content": "The deployment lane is violet-canal-283.",
+        "version": 2,
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The deployment lane is copper-meadow-617.\"}"
+      }
+    ],
+    "events": [
+      {
+        "id": "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "content": "The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-target-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "content": "The deployment lane is violet-canal-283.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-correction-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_correction\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "content": "The deployment checksum is granite-safe-296.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-control-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "content": "Assistant repeated the prior setting: The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-0\", \"source_ref\": \"seed-copy-deployment-lane-0\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "content": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-1\", \"source_ref\": \"seed-copy-deployment-lane-1\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "content": "The foreign deployment lane is hidden-cove-884.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"source_event_id\": \"seed-foreign-deployment-lane\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+      },
+      {
+        "id": "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "content": "Assistant confirmed the current setting: The deployment lane is violet-canal-283.",
+        "metadata": "{\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"source_event_id\": \"seed-copy-deployment-lane-2\", \"source_ref\": \"seed-copy-deployment-lane-2\", \"source_kind\": \"synthetic_model_forget_fixture\", \"explicit_remember\": false, \"identity_status\": \"normal\"}"
+      }
+    ],
+    "evidence": [
+      {
+        "fact_id": "0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7",
+        "source_event_id": "94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "excerpt": "Assistant confirmed the current setting: The deployment lane is violet-canal-283."
+      },
+      {
+        "fact_id": "2fea4478-79bb-4b27-8a87-cde33b82b823",
+        "source_event_id": "342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "excerpt": "The deployment checksum is granite-safe-296."
+      },
+      {
+        "fact_id": "342db97f-62c6-473a-9f3c-a9b916b0ec15",
+        "source_event_id": "4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "excerpt": "Assistant repeated the prior setting: The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "566119ac-6c22-465f-abf0-2b5eeeb0f779",
+        "source_event_id": "59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "excerpt": "A captured instruction recorded the prior setting The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "76bbf41e-1fab-4f5b-ba07-5ae143d6f290",
+        "source_event_id": "662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "excerpt": "The foreign deployment lane is hidden-cove-884."
+      },
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "source_event_id": "226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "excerpt": "The deployment lane is copper-meadow-617."
+      },
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "source_event_id": "321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "excerpt": "The deployment lane is violet-canal-283."
+      }
+    ],
+    "revisions": [
+      {
+        "fact_id": "f6d17ef6-e424-47f1-8a04-00ba8614d804",
+        "version": 1,
+        "content": "The deployment lane is copper-meadow-617."
+      }
+    ],
+    "jobs": [
+      {
+        "id": "event:226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c",
+        "payload": "{\"event_id\": \"226ac2b8fb9eda37cdb393dc3ea101fe84eb859fa53bdd17fae033f237c6a03c\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f1d9819dec78d71e4df3044b91dfa04bb0a00aa287e93757f73f111a92d7cb3d\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"f6d17ef6-e424-47f1-8a04-00ba8614d804\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1",
+        "payload": "{\"event_id\": \"321d1b51cc39a7d07fd36e6bcbcf7d0dcafe21041886bca0001192a5f07e04b1\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"2f759a3a06e4cd118929b9fe45807f11ae58bfa21a9ba07a51e60f78bf89bfe2\", \"target_fact_id\": \"f6d17ef6-e424-47f1-8a04-00ba8614d804\", \"expected_version\": 1}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"f6d17ef6-e424-47f1-8a04-00ba8614d804\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca",
+        "payload": "{\"event_id\": \"342b696a24935cf102034ea67944f011399b1d1b1c25c0538c57f407572d28ca\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f959df060b30af56b8fffd950f5fd7494a43056145d419849e72cd2d11df4ccd\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"2fea4478-79bb-4b27-8a87-cde33b82b823\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5",
+        "payload": "{\"event_id\": \"4c6ccc85f5c58eea74a1c72762aae0f332e3a280062a445e4ac426f17fffcdd5\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"aa8f3da3bd116ed65b7791d6ce2fd9595fa4b0465f9214e2a682602f5136a114\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"342db97f-62c6-473a-9f3c-a9b916b0ec15\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43",
+        "payload": "{\"event_id\": \"59e7ea37dc44e9a239bb605ab3a0b1a2162d11d80096ad7d6bf2f9b47c3a8f43\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"4f816bab4bcc00b5f0a5605b31f348d58e06d349c7920f7f8fb95e24201afdfb\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"566119ac-6c22-465f-abf0-2b5eeeb0f779\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9",
+        "payload": "{\"event_id\": \"662c37d7200c4f8abf2f38d1b2c57f28b03362153d0bf58540f5a710966f66b9\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"402a972b-f28c-4e13-adfb-6d931af751f9\", \"workspace_id\": null, \"session_id\": \"model-forget-foreign\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"f94063135a8699e476cdc20a94863d6331c514d93ae0a8c4553e728dc8ef4eec\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"76bbf41e-1fab-4f5b-ba07-5ae143d6f290\"]}",
+        "status": "completed"
+      },
+      {
+        "id": "event:94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb",
+        "payload": "{\"event_id\": \"94b3268a9c4dd1d72663bedaa29181289dc0dc759c671a6e9a0795dbbd5774eb\", \"context\": {\"user_profile_id\": \"model-forget-development-v1\", \"project_id\": \"a56a043f-67e4-4267-9060-241b723d9964\", \"workspace_id\": null, \"session_id\": \"model-forget-project\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"57ad8990e63447b90b875141a63e3b8ab19fbb2161b078e5fd9661090b2ad68f\"}",
+        "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"0b05204b-5fcc-4388-ad1c-8ec79d8dcfb7\"]}",
+        "status": "completed"
+      }
+    ],
+    "suppressions": []
+  },
+  "gates_after_cleanup": {
+    "trace_correlated": false,
+    "forget_phase_verified": false,
+    "reviewed_persisted": false,
+    "scoped_markers_absent": false,
+    "tools_allowed": false,
+    "retrieved_target_before_apply": false,
+    "all_copies_selected": false,
+    "required_sources_selected": false,
+    "known_facts_absent": false,
+    "known_sources_absent": false,
+    "known_facts_suppressed": false,
+    "known_sources_suppressed": false,
+    "controls_retained": true,
+    "foreign_control_retained": true
+  },
+  "cleanup": {
+    "ok": true,
+    "errors": []
+  },
+  "elapsed_seconds": 60.814464799972484,
+  "finished_at": "2026-09-20T03:39:46.790982+00:00"
+}
