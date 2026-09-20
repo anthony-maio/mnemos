@@ -1,0 +1,20 @@
+from pathlib import Path
+from datetime import datetime,timezone
+import subprocess,json,hashlib,sys
+repo=Path.cwd();root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-evidence-check-v1');root.mkdir(exist_ok=False)
+source=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
+paths=['benchmarks/local_memory/ollama_adapter.py','benchmarks/local_memory/README.md','tests/test_extraction_evidence_resolution.py']
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+commands=[('pytest',[sys.executable,'-m','pytest','-q','tests/test_extraction_evidence_resolution.py','tests/test_lifecycle_extraction_outcomes.py','tests/test_retrieval_miss_audit.py','tests/test_local_memory_benchmark.py','tests/test_contract_v4.py','tests/test_lifecycle_v3_contract.py','tests/test_benchmark_thinking_option.py','tests/test_retrieval_comparison_run.py','--junitxml='+str(root/'junit.xml')]),('black',[sys.executable,'-m','black','--check',paths[0],paths[2]]),('mypy',[str(repo/'.venv/compat-py310/Scripts/python.exe'),'-m','mypy',paths[0]])]
+record={'source_commit':source,'started_at':datetime.now(timezone.utc).isoformat(),'status':'running','files':{p:sha(repo/p) for p in paths},'checks':[]}
+for name,cmd in commands:
+ with (root/(name+'.stdout.log')).open('w') as out,(root/(name+'.stderr.log')).open('w') as err:
+  result=subprocess.run(cmd,stdout=out,stderr=err)
+ record['checks'].append({'name':name,'command':cmd,'exit_code':result.returncode})
+ (root/'verification.json').write_text(json.dumps(record,indent=2)+'\n')
+assert record['files']=={p:sha(repo/p) for p in paths}
+record['status']='passed' if all(c['exit_code']==0 for c in record['checks']) else 'failed'
+record['finished_at']=datetime.now(timezone.utc).isoformat()
+(root/'verification.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record))
+

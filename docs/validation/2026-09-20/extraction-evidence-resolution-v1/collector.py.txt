@@ -1,0 +1,45 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-evidence-check-v1')
+record = json.loads((root / 'verification.json').read_bytes())
+assert record['status'] == 'passed'
+assert all(c['exit_code'] == 0 for c in record['checks'])
+digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert all(digest(repo / name) == value for name, value in record['files'].items())
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip() == record['source_commit']
+out = repo / 'docs/validation/2026-09-20/extraction-evidence-resolution-v1'
+out.mkdir(exist_ok=False)
+for path in root.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/verify_extraction_evidence_v1.py', out / 'runner.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Extraction evidence resolution repair
+
+Source e082790 passes 113 focused and adjacent evaluation tests, Black, and
+Python 3.10 compatibility mypy. The initial four-case reproduction had three
+failures and one passing control: a valid source masked a missing event, an
+unmapped dataset source, or an event without original-source metadata.
+
+The evaluator now requires every declared source to resolve before accepting
+the exact-text support proxy. Raw judgments expose source_resolution_complete.
+This changes future scoring of malformed evidence; it does not establish
+semantic accuracy or alter original criteria. Historical runs retain their
+original scores and code bindings. No production engine, model prompt or
+provider configuration changed.
+
+These are focused checks, not a new full-suite or installed-wheel claim. The
+latest full-suite evidence remains bound to 6ec8259. The ongoing durability
+comparison uses its separately frozen source and is unaffected.
+''')
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'sha256': digest(p), 'bytes': p.stat().st_size}
+    for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(out)
