@@ -1,0 +1,88 @@
+from pathlib import Path
+import hashlib, json, shutil, sys
+
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo))
+from mnemos.scopes import ScopeContext, scope_allows
+
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+audit_path = repo / '.venv/alternative-graph-seed-audit-v1.json'
+audit = json.loads(audit_path.read_bytes())
+prior = json.loads((repo / 'docs/validation/2026-09-20/source-association-seed-audit-v1/source-association-seed-audit-v1.json').read_bytes())
+source = Path(prior['source_report'])
+assert sha(source) == audit['source_report_sha256']
+report = json.loads(source.read_bytes())
+manifest_path = repo / 'benchmarks/local_memory/datasets/source-association-development-v1.json'
+assert sha(manifest_path) == audit['manifest_sha256']
+cases = {x['id']: x for x in json.loads(manifest_path.read_bytes())['graph_cases']}
+original = {(r['embedding_contract'], r['case_id'], r['arm']): r for r in report['rows'] if r['repetition'] == 0}
+assert len(audit['rows']) == len(original) == 30
+for row in audit['rows']:
+    raw = original[(row['embedding_contract'], row['case_id'], row['arm'])]
+    case = cases[row['case_id']]
+    context = ScopeContext.model_validate(case['context'])
+    allowed = set()
+    for fact in [*case['facts'], *case.get('scope_controls', [])]:
+        permitted = scope_allows(fact['scope'], context, ('project', 'workspace', 'global'))
+        assert permitted == fact['query_eligible']
+        if permitted:
+            allowed.add(fact['id'])
+    seeds = raw['candidate_pool']['vector_ids']
+    assert seeds[0] == row['actual_seed']
+    target = raw['target']['id']
+    edges = raw['edges']
+    def reaches(node, remaining, seen):
+        if node == target:
+            return True
+        if remaining == 0:
+            return False
+        return any(reaches(n, remaining - 1, seen | {n}) for n in edges.get(node, {}) if n in allowed and n not in seen)
+    expected = [s for s in seeds if s != target and reaches(s, report['options']['max_hops'], {s})]
+    assert [x['seed'] for x in row['alternatives']] == expected
+    for alternative in row['alternatives']:
+        path = alternative['path']
+        assert path[0] == alternative['seed'] and path[-1] == target
+        assert len(path) - 1 <= report['options']['max_hops'] and set(path) <= allowed
+        assert alternative['vector_rank'] == seeds.index(path[0]) + 1
+        energy = 1.0
+        for a, b in zip(path, path[1:]):
+            energy *= edges[a][b] * (1 - report['options']['decay'])
+        assert abs(energy - alternative['path_energy']) < 1e-12
+out = repo / 'docs/validation/2026-09-20/alternative-graph-seed-audit-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+shutil.copyfile(audit_path, out / 'audit.json')
+for name in ['audit_alternative_graph_seeds_v1.py', 'archive_alternative_graph_seeds_v1.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+(out / 'verification.json').write_text(json.dumps({'status': 'passed', 'rows': 30,
+    'independent_checks': ['depth-first reachability', 'production scope policy', 'path edges and energy', 'vector rank', 'source hashes']}, indent=2) + '\n')
+(out / 'README.md').write_text('''# Alternative graph seed structural audit
+
+The frozen role-aware development measurement contains five cases, two embedding
+contracts and three graph arms. This read-only audit examines repetition zero:
+30 combinations, not 30 independent cases. Original failures remain unchanged.
+
+Among the original vector candidates, the counts with a non-target seed that
+has a structural path to the target within the existing three-hop limit are:
+top one: 3; top three: 3; top five: 3; top ten: 6; all thirty: 18.
+The target itself is excluded as a seed. Query-eligible fixture labels match
+the production scope policy. An independent depth-first walk verifies the
+breadth-first audit's reachability results.
+
+The prefixed shared-capture case first gains such a seed at vector rank 6;
+other newly reachable combinations require ranks 23-28. The semantic-only-chain
+case remains disconnected from every non-target candidate in both embedding
+contracts. This rules out merely adding the top three or five seeds as a
+sufficient structural repair for these recorded cases.
+
+These are optimistic structural bounds. The audit does not execute multi-seed
+retrieval or allocate its visit/energy budget, apply intermediate activation
+thresholds, reconstruct ranking, or measure recall. It does not justify enabling
+more seeds or changing scoring weights. Candidate scoring, association formation
+and embedding quality still need development evidence. No provider calls,
+production settings, dataset labels, thresholds or acceptance criteria changed.
+The prior zero-top-five result and 18 lifecycle control failures remain open.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files)}))

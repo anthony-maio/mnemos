@@ -425,6 +425,13 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
+The [alternative seed structural audit](../validation/2026-09-20/alternative-graph-seed-audit-v1/README.md)
+checks the saved five-case graph development traces. Top-three and top-five seed
+sets add no structural target coverage over the chosen single seed. Top-ten
+adds coverage in one prefixed case; this is an optimistic path bound, not an
+executed multi-seed retrieval or recall improvement. Scope policy, path ranks
+and independent reachability checks pass. Original graph quality failures remain.
+
 T17 follow-up: the [revision lifecycle v34](../validation/2026-09-20/hermes-revision-lifecycle-v34/README.md)
 passes raw delivery and restart replay, then fails explicit correction when
 the destination text already exists as captured evidence. The durable job

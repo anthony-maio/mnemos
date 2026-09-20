@@ -1,0 +1,66 @@
+"""Read-only structural upper bound using the frozen development graphs."""
+from pathlib import Path
+from collections import deque, Counter
+import hashlib, json
+
+repo = Path(__file__).resolve().parents[1]
+prior = json.loads((repo / 'docs/validation/2026-09-20/source-association-seed-audit-v1/source-association-seed-audit-v1.json').read_bytes())
+source = Path(prior['source_report'])
+raw = source.read_bytes()
+assert hashlib.sha256(raw).hexdigest() == prior['source_report_sha256']
+report = json.loads(raw)
+manifest_path = repo / 'benchmarks/local_memory/datasets/source-association-development-v1.json'
+manifest = json.loads(manifest_path.read_bytes())
+cases = {case['id']: case for case in manifest['graph_cases']}
+assert manifest['options'] == report['options']
+rows = []
+for row in report['rows']:
+    if row['repetition'] != 0:
+        continue
+    case = cases[row['case_id']]
+    allowed = {f['id'] for f in [*case['facts'], *case.get('scope_controls', [])] if f['query_eligible']}
+    target = row['target']['id']
+    assert target in allowed
+    seeds = row['candidate_pool']['vector_ids']
+    assert set(seeds) <= allowed
+    edges = row['edges']
+    def path(seed):
+        queue = deque([(seed, [seed])])
+        seen = {seed}
+        while queue:
+            node, route = queue.popleft()
+            if len(route) - 1 >= report['options']['max_hops']:
+                continue
+            for neighbor in sorted(edges.get(node, {})):
+                if neighbor not in allowed or neighbor in seen:
+                    continue
+                new = route + [neighbor]
+                if neighbor == target:
+                    return new
+                seen.add(neighbor)
+                queue.append((neighbor, new))
+        return None
+    alternatives = []
+    for rank, seed in enumerate(seeds, 1):
+        if seed == target:
+            continue
+        route = path(seed)
+        if route:
+            energy = 1.0
+            for a, b in zip(route, route[1:]):
+                energy *= edges[a][b] * (1 - report['options']['decay'])
+            alternatives.append({'seed': seed, 'vector_rank': rank, 'path': route, 'path_energy': energy})
+    rows.append({'embedding_contract': row['embedding_contract'], 'case_id': row['case_id'],
+        'arm': row['arm'], 'actual_seed': row['candidate_pool']['actual_selected_seed_id'],
+        'actual_target_rank': row['target']['rank'], 'target_in_direct_pool': row['target']['direct_candidate'],
+        'first_alternative_seed_rank': alternatives[0]['vector_rank'] if alternatives else None,
+        'alternatives': alternatives})
+assert len(rows) == 30
+counts = {str(limit): sum(r['first_alternative_seed_rank'] is not None and r['first_alternative_seed_rank'] <= limit for r in rows) for limit in [1, 3, 5, 10, 30]}
+out = repo / '.venv/alternative-graph-seed-audit-v1.json'
+assert not out.exists()
+out.write_text(json.dumps({'source_report_sha256': prior['source_report_sha256'],
+    'manifest_sha256': hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+    'bounds': 'Structural path within original hop limit and authored query-eligible nodes. Target itself excluded as a seed. No multi-seed retrieval, budget allocation, energy threshold pruning, context budget or ranking simulation. Not measured recall.',
+    'rows': rows, 'reachable_row_counts_by_seed_rank_limit': counts}, indent=2) + '\n')
+print(json.dumps({'output': str(out), 'counts': counts, 'rows': len(rows)}))
