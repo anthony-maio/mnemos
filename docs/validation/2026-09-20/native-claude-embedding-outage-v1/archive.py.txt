@@ -1,0 +1,92 @@
+"""Preserve both native attempts without credentials or hidden reasoning."""
+import hashlib
+import importlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo))
+version = int(sys.argv[1])
+assert version in (1, 2)
+runtime = Path(f'C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-embedding-outage-v{version}')
+out = repo / f'docs/validation/2026-09-20/native-claude-embedding-outage-v{version}'
+report = json.loads((runtime / 'report.json').read_bytes())
+expected = 'failed' if version == 1 else 'native_embedding_outage_lexical_retrieval_observed'
+assert report['status'] == expected
+assert report['cleanup_established'] is True and report['embedding_responses_observed'] == 0
+assert not (runtime / 'runtime.json').exists() and not list(runtime.rglob('.credentials.json'))
+module = importlib.import_module(f'benchmarks.native_hosts.claude_embedding_outage_v{version}')
+transcript = next((runtime / 'claude-embedding-outage/claude-home/projects').rglob('*.jsonl'))
+lines = transcript.read_bytes().splitlines()
+native = [json.loads(line) for line in lines]
+kwargs = dict(submitted_prompt=module.PROMPT, target_content=module.TARGET_CONTENT,
+              expected_model='claude-sonnet-4-6', expected_session_id=report['native_process']['session_id'])
+original = module.require_native_retrieval(native, **kwargs)
+projection = []
+for row in native:
+    selected = {'type': 'omitted'}
+    if row.get('type') in ('user', 'assistant'):
+        msg = row['message']
+        content = msg.get('content')
+        if isinstance(content, list):
+            content = [{k: b[k] for k in ('type', 'text', 'id', 'name', 'input', 'tool_use_id', 'content', 'is_error') if k in b}
+                       for b in content if isinstance(b, dict) and b.get('type') in ('text', 'tool_use', 'tool_result')]
+        selected = {'type': row['type'], 'sessionId': row['sessionId'], 'message': {'content': content}}
+        if 'model' in msg:
+            selected['message']['model'] = msg['model']
+    projection.append(selected)
+assert module.require_native_retrieval(projection, **kwargs) == original
+dispatches = json.loads((runtime / 'dispatch-records.json').read_bytes())
+target = [d for d in dispatches if d['operation'] == 'retrieve' and d['payload'].get('query') == 'deployment marker']
+assert len(target) == 1
+module.require_retrieval_response(target[0]['result'], target_id=report['target_id'],
+    target_content=module.TARGET_CONTENT, project_id=target[0]['payload']['context']['project_id'],
+    foreign_id=report['foreign_id'], foreign_content='Foreign deployment marker is not project memory.')
+if version == 1:
+    assert original['response'] != target[0]['result']
+    assert report['error'] == 'native result differs from recorded service response'
+else:
+    module.require_mcp_response_match(original['response'], target[0]['result'])
+    assert report['final_seed_snapshot'] == report['seed_snapshot']
+    assert report['final_fact_count'] == 2 and report['final_integrity'] == 'ok'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(source, relative):
+    dest = out / relative
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, dest)
+
+for relative in ('report.json', 'dispatch-records.json', 'health-responses.json', 'service.log', 'claude-embedding-outage/process.json'):
+    copy(runtime / relative, relative)
+(out / 'native-projection.jsonl').write_bytes(b''.join((json.dumps(row, ensure_ascii=True) + '\n').encode() for row in projection))
+(out / 'native-source-bindings.json').write_text(json.dumps({
+    'source_sha256': hashlib.sha256(transcript.read_bytes()).hexdigest(),
+    'source_bytes': transcript.stat().st_size,
+    'source_line_sha256': [hashlib.sha256(line).hexdigest() for line in lines],
+    'projection_preserves_line_positions': True,
+    'full_source_native_gate_passed': True,
+    'original_verdict_unchanged': report['status'],
+}, indent=2) + '\n', encoding='ascii')
+for relative, sha in report['input_hashes'].items():
+    source = repo / relative
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == sha
+    copy(source, 'sources/native_hosts/' + source.name if source.suffix == '.py' else 'protocol.md')
+extra = repo / 'benchmarks/native_hosts/capture_coverage.py'
+committed = subprocess.check_output(['git', 'show', report['runner_commit'] + ':benchmarks/native_hosts/capture_coverage.py'], cwd=repo)
+assert extra.read_bytes().replace(b'\r\n', b'\n') == committed.replace(b'\r\n', b'\n')
+copy(extra, 'sources/native_hosts/capture_coverage.py')
+(out / 'sources/native_hosts/__init__.py').write_bytes(b'')
+for name in ('native-claude-embedding-verifier-red.xml', 'native-claude-embedding-verifier-focused-v2.xml', 'native-claude-embedding-v2-gates.xml'):
+    if version == 1 and name.endswith('v2-gates.xml'):
+        continue
+    copy(repo / '.venv' / name, name)
+copy(Path(__file__), 'archive.py.txt')
+copy(repo / '.venv/verify_claude_embedding_archive.py', 'verify.py')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'version': version, 'files': files}, indent=2) + '\n', encoding='ascii')
+print(json.dumps({'archive': str(out), 'files': len(files), 'status': report['status']}))

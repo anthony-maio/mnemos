@@ -10,7 +10,12 @@ status even when empty, avoid fabricated semantic scores, preserve scope and
 evidence views, and read corrections or deletions made during the failed
 embedding wait. Claude and Hermes propagate degraded status. See the
 [development record](../2026-09-20/retrieval-provider-outage-development-v1/README.md).
-Native provider-outage recall on this package remains a separate, unrun gate.
+The [native Claude v2 attempt](../2026-09-20/native-claude-embedding-outage-v2/README.md)
+then passed one scoped lexical retrieval during embedding unavailability,
+with explicit degraded status, unchanged seed facts, and cleanup. Synthetic
+vectors and disabled cognition constrain the claim to this path. V1 remains
+failed on an MCP schema-marker comparison; its separately frozen successor
+preserves the substantive gates. All 51 focused verifier checks pass.
 
 The preceding [package checkpoint](../2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
 is product `9722d92`, with 1,857 source tests, 703 installed cases, four skips

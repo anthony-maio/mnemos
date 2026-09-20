@@ -6,9 +6,11 @@ each, all six source/package checks, and seven replay assertions. Existing
 SQLite facts remain available through scoped lexical search after transient
 embedding failures. Context and responses identify degraded retrieval, even
 with no returned facts, and do not invent semantic scores. These are package
-and fixture observations. Native provider-outage recall has not run on this
-product; paraphrase recall, outage latency, and extraction success are not
-established by this fallback.
+and fixture observations. The [native Claude v2 check](../2026-09-20/native-claude-embedding-outage-v2/README.md)
+additionally observes one scoped lexical recall through the real tool during
+provider unavailability, with unchanged synthetic seed facts and cleanup.
+V1's verifier failure remains recorded. Paraphrase recall, outage latency,
+extraction success, and general reliability are not established by this fallback.
 
 The [Codex outage run](../2026-09-20/native-codex-outage-v1/README.md) now observes
 one stopped-service raw-capture recovery on verified product `9722d92`.

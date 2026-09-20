@@ -2,7 +2,7 @@
 
 ## Current frozen matrix snapshot -- 2026-09-20
 
-At `2026-09-20T15:55:32Z`, the contract-v4 matrix was still running from
+At `2026-09-20T16:14:06Z`, the contract-v4 matrix was still running from
 source `3d0965805622efad21d1bb5200a982bd1a956aa8`, with its protocol and
 dataset bindings frozen. These use local Qwen3.5:9b and Nomic embeddings on
 the RTX 4080. The repaired inputs are previously observed synthetic scenarios,
@@ -16,12 +16,12 @@ final quality, a ranking change, or a lift.
 | Full | 600 | 589 | 11 | Partial report; matrix running |
 | Surprisal ablation | 600 | 592 | 8 | Partial report; matrix running |
 | Mutable RAG ablation | 600 | 588 | 12 | Partial report; matrix running |
-| Affective routing ablation | 117 checkpointed | 117 checkpointed | 0 checkpointed | Live checkpoint; no final report |
+| Affective routing ablation | 466 checkpointed | 456 checkpointed | 10 checkpointed | Live checkpoint; no final report |
 
 The first four rows agree with the reports' complete-observation diagnostics.
 The affective routing row has no final report yet; its live checkpoint
-contains 117 observations, each with `execution_status=complete`. Checkpointed
-observations do not establish a completed matrix run. All twelve incomplete
+contains 456 complete and 10 partial observations. Checkpointed observations
+do not establish a completed matrix run. All twelve incomplete
 mutable RAG observations record `missing_accepted_target` during correction;
 they remain incomplete, with no selective retry or changed labels.
 
@@ -29,6 +29,13 @@ The matrix shares this machine with CPU-based source and package validation.
 No competing local-model experiment was started for the embedding-outage
 repair. End-to-end session timings include supplementary diagnostic calls
 and are not isolated ordinary-lookup latency measurements.
+
+The new [Claude embedding-outage check](../2026-09-20/native-claude-embedding-outage-v2/README.md)
+observes one scoped lexical recall on package `4bbab4f`, with degraded status,
+unchanged synthetic seed facts, and cleanup. Its embedding endpoint was a
+separate non-listening socket; no local model was called. The preserved v1
+failure concerns the verifier's missing MCP schema projection. Neither run
+changes the frozen model-matrix source or establishes general reliability.
 
 The current native and host evidence remains bounded. The [three-host v7
 checkpoint](../2026-09-20/three-host-native-v7/README.md) records 11 completed

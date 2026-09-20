@@ -4,8 +4,11 @@ Latest [verified product](../2026-09-20/retrieval-provider-outage-checkpoint-v1/
 `4bbab4f`, with 1,894 source tests and 722 installed cases passing, four skips
 each, all six source/package checks, and seven replay assertions. Scoped
 lexical fallback keeps existing SQLite facts searchable after a transient
-embedding failure and reports the degraded mode honestly. Native acceptance
-of this provider-outage behavior remains unrun. Earlier stopped-service
+embedding failure and reports the degraded mode honestly. A
+[native Claude v2 attempt](../2026-09-20/native-claude-embedding-outage-v2/README.md)
+observes one scoped lexical recall with the provider unavailable, unchanged
+synthetic seed facts, and cleanup. Its v1 verifier failure remains recorded.
+Earlier stopped-service
 raw-capture observations for Codex and Claude remain bound to their own
 packages; full-module quality, Desktop, wider recovery, and the pilot remain open.
 

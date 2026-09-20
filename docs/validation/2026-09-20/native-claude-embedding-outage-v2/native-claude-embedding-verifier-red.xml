@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="8" skipped="0" tests="19" time="1.361" timestamp="2026-09-20T12:01:53.311831-04:00" hostname="Aurora"><testcase classname="tests.test_native_claude_embedding_outage" name="test_synthetic_vector_is_explicit_nonzero_schema_fixture" time="0.006" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_owned_socket_is_bound_but_not_listening" time="0.208" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_accepts_degraded_lexical_target" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_requires_correlated_retrieval_and_canary_answer" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_rejects_unproven_or_cross_scope_response[change0]" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_rejects_unproven_or_cross_scope_response[change1]" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_rejects_unproven_or_cross_scope_response[change2]" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_rejects_unproven_or_cross_scope_response[change3]" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_retrieval_gate_rejects_unproven_or_cross_scope_response[change4]" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_seed_identity_gate_requires_content_version_and_scope" time="0.002" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_gate_accepts_actual_local_service_lexical_fallback" time="0.876" /><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[wrong_tool]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'wrong_tool'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[other_tool]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'other_tool'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[missing_model]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'missing_model'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[foreign_session]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'foreign_session'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[tool_error]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'tool_error'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[early_answer_only]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'early_answer_only'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[extra_prompt]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">defect = 'extra_prompt'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase><testcase classname="tests.test_native_claude_embedding_outage" name="test_native_gate_rejects_unproven_tool_conversation[duplicate_result]" time="0.003"><failure message="Failed: DID NOT RAISE ValueError">defect = 'duplicate_result'
+
+    @pytest.mark.parametrize("defect", ["wrong_tool", "other_tool", "missing_model", "foreign_session", "tool_error", "early_answer_only", "extra_prompt", "duplicate_result"])
+    def test_native_gate_rejects_unproven_tool_conversation(defect):
+        records = native_records()
+        if defect == "wrong_tool":
+            records[1]["message"]["content"][0]["name"] += "_fake"
+        elif defect == "other_tool":
+            records[1]["message"]["content"].append({"type": "tool_use", "name": "Bash", "id": "extra", "input": {}})
+        elif defect == "missing_model":
+            records[1]["message"].pop("model")
+            records[3]["message"].pop("model")
+        elif defect == "foreign_session":
+            records[2]["sessionId"] = "another-session"
+        elif defect == "tool_error":
+            records[2]["message"]["content"][0]["is_error"] = True
+        elif defect == "early_answer_only":
+            records[1]["message"]["content"].insert(0, {"type": "text", "text": "maple-heron-719"})
+            records[3]["message"]["content"] = "I could not retrieve a fact."
+        elif defect == "extra_prompt":
+            extra = deepcopy(records[0]); extra["message"]["content"] = "Try again."
+            records.insert(1, extra)
+        elif defect == "duplicate_result":
+            records.insert(3, deepcopy(records[2]))
+&gt;       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_claude_embedding_outage.py:267: Failed</failure></testcase></testsuite></testsuites>

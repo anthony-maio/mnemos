@@ -51,8 +51,15 @@ returns matching stored text with an explicit degraded status and no invented
 semantic score, including when no matches fit the budget. It preserves
 correction, forgetting, scope, and captured-evidence boundaries. The
 [development record](../validation/2026-09-20/retrieval-provider-outage-development-v1/README.md)
-contains the failing and passing checks. Native provider-outage recall has
-not yet run on this package; that remains a separate gate.
+contains the failing and passing checks. The
+[native Claude successor](../validation/2026-09-20/native-claude-embedding-outage-v2/README.md)
+now observes one real tool retrieval during embedding unavailability: the
+correct scoped fact, explicit degraded status, unchanged seed records, and
+successful cleanup. Its vectors were synthetic fixtures used only for schema
+validity; this does not measure semantic quality or extraction. The
+[first attempt](../validation/2026-09-20/native-claude-embedding-outage-v1/README.md)
+remains failed because its verifier omitted an existing MCP schema marker.
+The successor's corrected comparison was checked against the actual MCP tool.
 Lexical matches require shared words and can miss paraphrases. Fallback also
 waits for the configured provider timeout and retries; this is no latency
 guarantee and does not demonstrate extraction during an outage.

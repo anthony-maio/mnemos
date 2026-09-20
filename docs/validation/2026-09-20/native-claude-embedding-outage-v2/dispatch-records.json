@@ -1,0 +1,368 @@
+[
+  {
+    "operation": "health",
+    "payload": {},
+    "result": {
+      "schema_version": 1,
+      "status": "running",
+      "store": {
+        "backend": "SQLiteStore",
+        "name": "sqlite",
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-embedding-outage-v2\\memory.sqlite",
+        "migration_backup": null,
+        "total_chunks": 2,
+        "chunks_with_embeddings": 2,
+        "average_salience": 0.5,
+        "average_access_count": 0.0,
+        "related_edges": 0,
+        "semantic_similar_edges": 0,
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "fts_enabled": true,
+        "schema_version": 8,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "sqlite_vec_dim": 768
+      },
+      "runtime": {
+        "store_type": "SQLiteStore",
+        "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-embedding-outage-v2\\memory.sqlite",
+        "cognition_provider": "UnavailableLLMProvider",
+        "embedding_provider": "OllamaEmbeddingProvider"
+      },
+      "capabilities": {
+        "capture": true,
+        "retrieve": true,
+        "background_maintenance": false
+      },
+      "maintenance": {
+        "pending": 0,
+        "leased": 0,
+        "exhausted": 0,
+        "completed": 0,
+        "retry_count": 0,
+        "oldest_unfinished_seconds": 0,
+        "oldest_pending_seconds": 0,
+        "running": false,
+        "scheduler_running": false,
+        "last_success": null,
+        "last_error": null,
+        "processed_count": 0,
+        "failed_count": 0
+      },
+      "graph": {
+        "enabled": false,
+        "managed_preferences": true,
+        "ready": false,
+        "pending_count": 2,
+        "cursor": "",
+        "marked_sources": 0,
+        "total_sources": 2,
+        "legacy_graph": false
+      },
+      "cognition_provider": "UnavailableLLMProvider",
+      "provider_state": {
+        "cognition": {
+          "status": "not_observed"
+        }
+      }
+    }
+  },
+  {
+    "operation": "retrieve",
+    "payload": {
+      "query": "project context recent work",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "status": "degraded",
+      "degraded": true,
+      "retrieval": {
+        "mode": "lexical_only",
+        "reason": "embedding_unavailable",
+        "error_type": "MnemosTransientError",
+        "semantic_status": "not_measured"
+      },
+      "view": "memory",
+      "facts": [],
+      "context": "",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 0
+    }
+  },
+  {
+    "operation": "capture",
+    "payload": {
+      "event_id": "claude:v2:895006610e922a622556f62cd78fc7e7465603576730532a98d22ac69a362d82",
+      "identity_version": 2,
+      "identity_status": "provisional_unassociated",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "occurred_at": "2026-09-20T16:10:26.543106+00:00",
+      "role": "user",
+      "content": "What is the deployment marker for this project? Call mnemos_retrieve exactly once with query 'deployment marker', then answer with the stored deployment marker.",
+      "source_kind": "claude_code_transcript",
+      "source_ref": "prompt:5aaf00d1018017bcc5d5ebe1367d0f0d3a2e222cf3c4e1c5c290aaa8fef906cf"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "e1c7cef0305959cbaa22abcb24b1dec4b94a6cc33778529a333547df59c953fd",
+      "processing_status": "deferred",
+      "job_id": "event:e1c7cef0305959cbaa22abcb24b1dec4b94a6cc33778529a333547df59c953fd",
+      "identity_status": "provisional_unassociated",
+      "fact_eligible": false
+    }
+  },
+  {
+    "operation": "retrieve",
+    "payload": {
+      "query": "What is the deployment marker for this project? Call mnemos_retrieve exactly once with query 'deployment marker', then answer with the stored deployment marker.",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "status": "degraded",
+      "degraded": true,
+      "retrieval": {
+        "mode": "lexical_only",
+        "reason": "embedding_unavailable",
+        "error_type": "MnemosTransientError",
+        "semantic_status": "not_measured"
+      },
+      "view": "memory",
+      "facts": [
+        {
+          "id": "target-maple-heron-719",
+          "version": 1,
+          "content": "The deployment marker is maple-heron-719.",
+          "scope": "project",
+          "scope_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+          "assertion_status": "asserted",
+          "sources": [],
+          "support_available": false,
+          "original_source_status": "no_source_evidence",
+          "scores": {
+            "semantic": null,
+            "state_match": null,
+            "graph_energy": 0,
+            "graph_contribution": 0,
+            "total": null,
+            "state_status": "not_measured",
+            "lexical_rank": 1,
+            "retrieval_mode": "lexical_only",
+            "profile": "baseline",
+            "scope_match": true,
+            "context_token_upper_bound": 129,
+            "token_count_method": "utf8_bytes_upper_bound",
+            "graph_status": "not_used",
+            "candidate_backend": "lexical_only",
+            "lexical_candidate": true,
+            "lexical_status": "fallback"
+          }
+        }
+      ],
+      "context": "[target-maple-heron-719 version 1; lexical match only; semantic retrieval unavailable] The deployment marker is maple-heron-719.\n",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 129
+    }
+  },
+  {
+    "operation": "retrieve",
+    "payload": {
+      "query": "deployment marker",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "native-three-host-claude-embedding-outage",
+        "host": "claude-code"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline",
+      "view": "memory"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "status": "degraded",
+      "degraded": true,
+      "retrieval": {
+        "mode": "lexical_only",
+        "reason": "embedding_unavailable",
+        "error_type": "MnemosTransientError",
+        "semantic_status": "not_measured"
+      },
+      "view": "memory",
+      "facts": [
+        {
+          "id": "target-maple-heron-719",
+          "version": 1,
+          "content": "The deployment marker is maple-heron-719.",
+          "scope": "project",
+          "scope_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+          "assertion_status": "asserted",
+          "sources": [],
+          "support_available": false,
+          "original_source_status": "no_source_evidence",
+          "scores": {
+            "semantic": null,
+            "state_match": null,
+            "graph_energy": 0,
+            "graph_contribution": 0,
+            "total": null,
+            "state_status": "not_measured",
+            "lexical_rank": 1,
+            "retrieval_mode": "lexical_only",
+            "profile": "baseline",
+            "scope_match": true,
+            "context_token_upper_bound": 129,
+            "token_count_method": "utf8_bytes_upper_bound",
+            "graph_status": "not_used",
+            "candidate_backend": "lexical_only",
+            "lexical_candidate": true,
+            "lexical_status": "fallback"
+          }
+        }
+      ],
+      "context": "[target-maple-heron-719 version 1; lexical match only; semantic retrieval unavailable] The deployment marker is maple-heron-719.\n",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 129
+    }
+  },
+  {
+    "operation": "capture",
+    "payload": {
+      "event_id": "claude:v2:c50d8551b75d6ff2499d2bb337e2f714fb63ad4d749f834588eb722d60c1f838",
+      "identity_version": 2,
+      "identity_status": "normal",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "occurred_at": "2026-09-20T16:10:25.783000+00:00",
+      "role": "user",
+      "content": "What is the deployment marker for this project? Call mnemos_retrieve exactly once with query 'deployment marker', then answer with the stored deployment marker.",
+      "source_kind": "claude_code_transcript",
+      "source_ref": "a99ae5d7-8d3c-4a96-87ae-23ae70d88958"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "70206ddb42963fe64ccd37f4706c9c122f0165414621a4877811bb55869fd59a",
+      "processing_status": "pending",
+      "job_id": "event:70206ddb42963fe64ccd37f4706c9c122f0165414621a4877811bb55869fd59a",
+      "identity_status": "normal",
+      "fact_eligible": true
+    }
+  },
+  {
+    "operation": "capture",
+    "payload": {
+      "event_id": "claude:v2:30fdbfda9200e3078961459f0e493f40d2903c19786d62ffafc882fe3bcd636c",
+      "identity_version": 2,
+      "identity_status": "normal",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "occurred_at": "2026-09-20T16:10:31.808000+00:00",
+      "role": "assistant",
+      "content": "Sure! Let me retrieve that now.",
+      "source_kind": "claude_code_transcript",
+      "source_ref": "388f1dd7-55f9-435f-9064-c9cd05afd50e"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "de1e0c8d0d14c3f9dc993dbb9f78d4be9790331292a7aa2e40a5f1d753348673",
+      "processing_status": "pending",
+      "job_id": "event:de1e0c8d0d14c3f9dc993dbb9f78d4be9790331292a7aa2e40a5f1d753348673",
+      "identity_status": "normal",
+      "fact_eligible": true
+    }
+  },
+  {
+    "operation": "capture",
+    "payload": {
+      "event_id": "claude:v2:c935e9bdb8e346af7eb4227db2581e7b4a572c526dd5607b189bf9d49f9875ba",
+      "identity_version": 2,
+      "identity_status": "normal",
+      "context": {
+        "user_profile_id": "native-claude-embedding-outage-v2",
+        "project_id": "c23fa8f8-e4ed-4fbd-805f-912c4491127e",
+        "workspace_id": null,
+        "session_id": "2cc5819a-ff3d-4b2f-b596-a3635c773fb3",
+        "host": "claude-code"
+      },
+      "occurred_at": "2026-09-20T16:10:36.163000+00:00",
+      "role": "assistant",
+      "content": "The stored deployment marker for this project is **maple-heron-719**.",
+      "source_kind": "claude_code_transcript",
+      "source_ref": "f099753a-2e38-4e99-a465-7a8b93fea63e"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "261db9c146640f1140f29cb3355f596e8e61abb88b1528c9fff9ac03edc93c56",
+      "processing_status": "pending",
+      "job_id": "event:261db9c146640f1140f29cb3355f596e8e61abb88b1528c9fff9ac03edc93c56",
+      "identity_status": "normal",
+      "fact_eligible": true
+    }
+  }
+]

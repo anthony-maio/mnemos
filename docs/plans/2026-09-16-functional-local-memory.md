@@ -335,6 +335,14 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [native Claude embedding-outage v2 check](../validation/2026-09-20/native-claude-embedding-outage-v2/README.md)
+observes one real tool retrieval during provider unavailability on verified
+product `4bbab4f`. The scoped fact and explicit degraded status reach Claude;
+the foreign control stays absent, seed state stays unchanged, and cleanup
+passes. Vectors are synthetic fixtures and all cognition modules are disabled.
+V1 remains failed on a verifier/MCP schema mismatch. Semantic quality,
+extraction recovery, broader native resilience, Desktop, and pilot gates stay open.
+
 The [Codex outage run](../validation/2026-09-20/native-codex-outage-v1/README.md)
 adds one stopped-service raw-capture recovery on verified product `9722d92`.
 Two native messages persist as two pending jobs after restart; raw identities,

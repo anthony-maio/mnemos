@@ -19,8 +19,11 @@ retrieval mode. Scope, evidence views, correction, forgetting, and budgets
 remain enforced. Provider timeouts and retries still precede fallback;
 paraphrases without matching words may return no facts.
 
-These checks establish package behavior. Native provider-outage recall is a
-separate experiment and has not run on this product. Previous native Codex
+These checks establish package behavior. A subsequent
+[native Claude experiment](../native-claude-embedding-outage-v2/README.md)
+observed one scoped lexical recall during embedding unavailability on this
+product; its synthetic vectors and disabled cognition limit that claim.
+Previous native Codex
 and Claude stopped-service tests remain bound to their original packages and
 establish raw-capture recovery only. Full-module quality, Desktop, broader
 outage recovery, and the operational pilot remain open. No live host

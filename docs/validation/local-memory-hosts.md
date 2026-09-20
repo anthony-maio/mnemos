@@ -14,8 +14,11 @@ and shared-word matching can miss paraphrases. The
 and [verified package](2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
 are separate from the native observations below. Product `4bbab4f` passes
 1,894 source tests and 722 installed cases, with four skips each, all six
-source/package checks, and seven replay assertions. Native provider-outage
-recall has not run on this product.
+source/package checks, and seven replay assertions. The
+[native Claude v2 check](2026-09-20/native-claude-embedding-outage-v2/README.md)
+observes one successful scoped lexical recall during provider unavailability,
+with unchanged synthetic seed facts and cleanup. V1's verifier mismatch is
+preserved. Neither attempt measures semantic quality or extraction recovery.
 
 The [Codex outage run](2026-09-20/native-codex-outage-v1/README.md)
 passes one stopped-service raw-capture recovery on verified product `9722d92`.
