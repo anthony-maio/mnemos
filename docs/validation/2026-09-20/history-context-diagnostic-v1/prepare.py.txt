@@ -1,0 +1,42 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+from datetime import datetime, timezone
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-context-diagnostic-v1')
+assert not root.exists()
+parent = repo / 'docs/validation/2026-09-20/historical-claim-service-v1/v2'
+old = json.loads((parent / 'inputs.json').read_bytes())
+cases = []
+bindings = {}
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+for case in old['cases']:
+    result_path = parent / case['id'] / 'result.json'
+    requests_path = parent / case['id'] / 'llm.jsonl'
+    result = json.loads(result_path.read_bytes())
+    request = next(json.loads(line) for line in requests_path.read_text().splitlines() if json.loads(line)['stage'] == 'request')
+    control = next(f for f in result['final_facts'] if f['content'] == old['control'])
+    cases.append({'id': case['id'], 'criterion': case['criterion'], 'source': result['source'],
+                  'existing_fact': control, 'reference_request': request})
+    for path in (result_path, requests_path):
+        bindings[path.relative_to(repo).as_posix()] = sha(path)
+inputs = {k: old[k] for k in ('snapshot', 'source_commit', 'endpoint', 'model', 'embedding_model', 'temperature', 'max_tokens', 'timeout', 'think', 'candidate_clause')}
+inputs.update(schema_version='history-context-diagnostic-v1', cases=cases, repetitions=3,
+    arms=['existing_fact_present', 'existing_fact_absent'],
+    interpretation='Controlled development diagnostic. Identical source events and settings; existing-fact availability changes both actual extraction prompt and target schema. Not a prompt-only causal attribution. Proposal-only, no service writes or semantic auto-score.')
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == '7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6'
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(repo / '.venv/run_history_context_diagnostic_v1.py', root / 'runner.py')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+parent_preparation = json.loads((parent / 'preparation.json').read_bytes())
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'model': model,
+            'source_commit': old['source_commit'], 'source_files': parent_preparation['source_files'],
+            'parent_files': bindings, 'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'calls': 42, 'model_digest': model['digest']}))

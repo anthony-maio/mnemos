@@ -1,5 +1,17 @@
 # Functional local memory implementation record
 
+Two subsequent extraction diagnostics preserve additional negative evidence.
+The [42-observation context comparison](../2026-09-20/history-context-diagnostic-v1/README.md)
+repeats the seven service inputs with and without an existing fact. Fiction
+and hypothetical proposals persist in both conditions; assistant-suggestion
+proposals appear only with the existing-fact prompt/schema contract. The
+[72-observation eligibility comparison](../2026-09-20/history-eligibility-development-v1/README.md)
+tests an added exclusion rule against the history-only prompt on 12 authored
+cases. It removes the fiction and assistant-suggestion proposals but loses a
+real Markdown manuscript requirement and still retains the hypothetical.
+Both runs are proposal-only development evidence. Neither candidate prompt
+is adopted, and no quality gate is promoted.
+
 The [real-service historical-claim probe](../2026-09-20/historical-claim-service-v1/README.md)
 completes all three positive lifecycles using local Qwen2.5:14b and Nomic:
 capture, extracted fact, explicit same-ID correction, restart, retrieval,

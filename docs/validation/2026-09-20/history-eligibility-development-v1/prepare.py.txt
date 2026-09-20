@@ -1,0 +1,66 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import copy
+import hashlib
+import json
+import shutil
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+parent = repo / 'docs/validation/2026-09-20/history-context-diagnostic-v1'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-eligibility-development-v1')
+assert not root.exists()
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+inputs['schema_version'] = 'history-eligibility-development-v1'
+inputs['arms'] = ['history_only', 'history_and_eligibility']
+inputs['eligibility_clause'] = (
+    'Only retain assertions about actual user preferences, adopted requirements or decisions, '
+    'real project state, or explicitly reported historical events. A fictional event, a hypothetical '
+    'possibility, a question, or an assistant recommendation that the user has not adopted is not '
+    'itself a durable memory. When these are the only content, return no_durable_facts; do not '
+    'store a qualified summary merely saying that such content was mentioned or suggested. '
+    'A reported real event may be uncertain: retain the report with its attribution, time, and '
+    'uncertainty rather than claiming it was verified. If an event mixes eligible assertions '
+    'with questions, fiction, or hypotheses, retain only the eligible assertions. Apply this '
+    'eligibility rule before choosing add, support, correct, or conflict, including when existing '
+    'facts are supplied. '
+)
+mixed = [
+    ('fiction-project', 'I am writing a novel about a fictional ferry captain. Keep the manuscript in Markdown.',
+     'Retain the actual novel project and its Markdown manuscript requirement. Do not turn fictional story events into project reality.'),
+    ('preference-question', 'I prefer Helix for editing. Can you explain its keyboard shortcuts?',
+     'Retain the explicit Helix editing preference, despite the appended question. Do not infer a standing preference for a particular explanation style.'),
+    ('current-with-hypothesis', 'If we migrate later we might evaluate port 6153. For now, staging runs on port 6152.',
+     'Retain current staging port 6152; do not adopt hypothetical port 6153.'),
+    ('future-requirement', 'Keep this requirement: future exports must be signed. That feature has not been built yet.',
+     'Retain an adopted future signed-export requirement and incomplete implementation status; do not claim signing already works.'),
+    ('adopted-suggestion', 'I accepted the suggestion to use Fossil for version control on this project. That is our decision now.',
+     'Retain the user-adopted Fossil version-control decision. Do not reject it merely because it began as a suggestion.'),
+]
+for case_id, content, criterion in mixed:
+    control = copy.deepcopy(inputs['cases'][0]['existing_fact'])
+    control.update(id='control-' + case_id)
+    control['metadata'].update(user_profile_id='profile-' + case_id, scope='project', scope_id='project-' + case_id,
+                               project_id='project-' + case_id, session_id=case_id)
+    source = {'id': 'source-' + case_id, 'event_fingerprint': 'fingerprint-' + case_id, 'role': 'user',
+              'content': content, 'normalized_content': content.lower(), 'scope': 'project', 'scope_id': 'project-' + case_id,
+              'metadata': {'user_profile_id': 'profile-' + case_id}, 'occurred_at': '2026-09-20T12:15:00+00:00'}
+    inputs['cases'].append({'id': case_id, 'criterion': criterion, 'source': source, 'existing_fact': control})
+inputs['interpretation'] = ('Candidate-only development clarification comparison, not deployed. Both prompt arms include the same existing control fact. '
+    'Seven previously observed cases plus five newly authored mixed positive cases; all criteria fixed before this run. '
+    'Three repetitions, alternating arm order. No service writes and no automatic semantic score.')
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+parent_prep = json.loads((parent / 'preparation.json').read_bytes())
+assert model['digest'] == parent_prep['model']['digest']
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(repo / '.venv/run_history_eligibility_development_v1.py', root / 'runner.py')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'model': model,
+            'source_commit': inputs['source_commit'], 'source_files': parent_prep['source_files'],
+            'parent_inputs_sha256': sha(parent / 'inputs.json'),
+            'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'cases': len(inputs['cases']), 'calls': len(inputs['cases']) * 6}))
