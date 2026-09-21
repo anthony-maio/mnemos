@@ -677,7 +677,7 @@ think=false. All offline paired prompts and schemas match. The launcher rejects
 missing/wrong digests and an unfinished parent before generation. It also binds
 the parent's terminal observations. This changes the provider route as well as
 thinking configuration, so no isolated reasoning claim is planned. The follow-up
-is now running after verified parent completion and archival. It does not change the original results, rubrics or production defaults.
+completed all 46 cases: 40 runtime-valid inventories and six validation rejections, with no empty-final failures. The [paired review](../validation/2026-09-20/assertion-inventory-comparison-v3-v4/README.md) preserves all results. Retention-intent errors, unsupported paraphrases and qualification loss remain; neither configuration is adopted. Original results, rubrics and production defaults are unchanged.
 
 ### T19 - Reconcile release, documentation, and research claims
 

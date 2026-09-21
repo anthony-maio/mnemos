@@ -1,0 +1,80 @@
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+
+base = Path.cwd() / 'docs/validation/2026-09-20'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+records = {}
+for version in ('v3', 'v4'):
+    root = base / ('assertion-inventory-terminal-' + version)
+    state = json.loads((root / 'status.json').read_bytes())
+    assert state['status'] == 'completed' and state['processed'] == 46
+    assert state['observations_sha256'] == sha(root / 'observations.jsonl')
+    rows = [json.loads(s) for s in (root / 'observations.jsonl').read_text().splitlines()]
+    inputs = json.loads((root / 'inputs.json').read_bytes())
+    assert [r['case_id'] for r in rows] == [c['id'] for c in inputs['cases']]
+    records[version] = (root, state, rows, inputs)
+a, b = records['v3'], records['v4']
+assert a[3]['cases'] == b[3]['cases']
+for key in ('model', 'temperature', 'max_tokens', 'timeout', 'snapshot', 'endpoint'):
+    assert a[3][key] == b[3][key], key
+assert a[3]['think'] is True and b[3]['think'] is False
+pairs = [{'case_id': x['case_id'], 'v3_status': x['status'], 'v4_status': y['status'],
+          'v3_error': x.get('error'), 'v4_error': y.get('error')}
+         for x, y in zip(a[2], b[2])]
+summary = {
+    'status': 'complete_runtime_comparison_semantics_separate',
+    'adopted': False,
+    'pairs': pairs,
+    'transitions': dict(Counter(x['v3_status'] + ' -> ' + x['v4_status'] for x in pairs)),
+    'inputs': {v: {'preparation_sha256': r[1]['preparation_sha256'],
+                   'observations_sha256': r[1]['observations_sha256'],
+                   'started_at': r[1]['started_at'], 'finished_at': r[1]['finished_at'],
+                   'runtime_counts': dict(Counter(x['status'] for x in r[2])),
+                   'error_counts': dict(Counter(x['error'] for x in r[2] if x['status'] == 'error'))}
+               for v, r in records.items()},
+    'limits': 'Same 46 reused development cases, one stochastic repetition. Thinking configuration also changes provider route. Runtime validity is not semantic accuracy. No reconciliation or durable writes.'
+}
+out = base / 'assertion-inventory-comparison-v3-v4'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'comparison.json').write_text(json.dumps(summary, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Qualified inventory configuration comparison
+
+All 46 original cases ran once in each configuration. V3 produced 31 valid
+inventories, 13 empty-final budget failures and two source-role rejections.
+V4 produced 40 valid inventories and six validation rejections: three source
+quotation failures and three source-role failures. No v4 empty-final failures
+were observed. These counts describe execution, not semantic accuracy.
+
+The thinking-disabled configuration also selects generate instead of chat.
+The comparison cannot isolate thinking or establish a general speed advantage.
+Both use the same frozen model digest, inputs, candidate, output budget and
+original rubrics. All raw outputs and descriptive reviews remain available in
+the adjacent terminal and semantic-review directories. Neither is adopted.
+
+The paired review identifies three distinct repair needs. Retention intent is
+not established by finding an exact quotation: N02 still mistakes thinking out
+loud for a request to remember. Source validity does not constrain paraphrased
+meaning: P06 changes possible future acceptability into permission, while P01
+includes classification commentary in memory content. Finally, a condition can
+be omitted or stored separately, leaving the retrieved assertion incomplete.
+
+Next candidate work must address those three boundaries explicitly, retaining
+mixed-message facts, corrections, qualified history and requested uncertainty.
+A blanket refusal to remember ambiguous messages would fail the original goal.
+Keep evidence selection and memory wording separately inspectable, and ensure
+conditions needed to interpret a memory travel with that memory. Validate the
+complete original development set before any held-out run or production change.
+Do not relax exact quotation checks, accept rejected outputs, or infer semantic
+success from runtime recovery. Reconciliation and full-module acceptance remain
+separate open gates after source-only extraction.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'transitions': summary['transitions']}))
