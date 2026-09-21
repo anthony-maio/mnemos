@@ -336,6 +336,22 @@ async def _service_request(
     return dict(result)
 
 
+# Channels that hosts and the service stamp on their own evidence. Content a
+# tool caller supplies under one of these would pass for a host transcript or
+# an explicit user request.
+_RESERVED_SOURCE_KINDS = frozenset(
+    {
+        "claude_code_transcript",
+        "codex_hook",
+        "hermes_memory_provider",
+        "mcp_remember",
+        "explicit_remember",
+        "explicit_correction",
+        "explicit_review_resolution",
+    }
+)
+
+
 def _service_json(value: Any) -> str:
     return json.dumps(value, indent=2, default=str)
 
@@ -484,6 +500,8 @@ def _register_service_tools(mcp: Any) -> None:
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
         """Accept scoped evidence for later service-owned processing."""
+        if source_kind.strip().casefold() in _RESERVED_SOURCE_KINDS:
+            raise ValueError("source_kind names a host or service channel a tool cannot claim")
         service_context = _service_context_from_ctx(ctx, "mnemos_capture")
         checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
         result = await _service_request(
