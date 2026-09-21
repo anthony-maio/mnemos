@@ -156,3 +156,47 @@ def test_factory_selects_extractor_without_changing_ablation_switches(tmp_path, 
             )
     finally:
         service.engine.store.close()
+
+
+def test_host_details_are_recorded_but_do_not_orphan_a_checkpoint(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        runner,
+        "_live_model_metadata",
+        lambda *args: {"model": {"digest": "a" * 64}, "embedding": {"digest": "b" * 64}},
+    )
+    monkeypatch.setattr(runner, "_code_provenance", lambda root: ("c" * 64, {}))
+    monkeypatch.setattr(runner, "make_ollama_service_factory", lambda *args, **kwargs: None)
+
+    class Harness:
+        def __init__(self, dataset, config):
+            pass
+
+        def run(self, *args, **kwargs):
+            return {"status": "complete", "raw_outputs": []}
+
+    monkeypatch.setattr(runner, "ExperimentHarness", Harness)
+    runs = []
+    # A cloud VM can come back on a different kernel release.
+    for kernel in ("6.1.85+", "6.6.56+"):
+        monkeypatch.setattr(
+            runner,
+            "environment_metadata",
+            lambda kernel=kernel: {
+                "python": "3.12.11",
+                "platform": f"Linux-{kernel}-x86_64-with-glibc2.35",
+                "machine": "x86_64",
+                "processor": "x86_64",
+                "sqlite": "3.37.2",
+            },
+        )
+        root = tmp_path / kernel
+        invoke(root, adapter_type=lambda *args, **kwargs: None)
+        runs.append(json.loads((root / "work/baseline.manifest.json").read_text()))
+
+    assert runs[0]["options_sha256"] == runs[1]["options_sha256"]
+    assert "platform" not in runs[0]["provider"]["options"]["runtime"]
+    assert runs[0]["provider"]["options"]["runtime"]["python"] == "3.12.11"
+    assert [run["host"]["platform"] for run in runs] == [
+        "Linux-6.1.85+-x86_64-with-glibc2.35",
+        "Linux-6.6.56+-x86_64-with-glibc2.35",
+    ]

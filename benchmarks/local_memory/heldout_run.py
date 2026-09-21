@@ -40,6 +40,12 @@ from .ollama_adapter import (
 )
 from .module_challenge import load_module_challenge_dataset
 
+# Recorded in each manifest but kept out of the checkpoint identity. A cloud VM
+# can come back on a new kernel release, and that must not orphan a checkpoint
+# that is otherwise the same experiment. Anything that can change outputs,
+# such as the GPU model, belongs in experiment_binding instead.
+_HOST_DETAILS = ("platform", "processor")
+
 
 def _live_model_metadata(endpoint: str, names: tuple[str, ...]) -> dict[str, dict[str, Any]]:
     """Read exact model records from the reachable Ollama server."""
@@ -162,6 +168,7 @@ def run_heldout(
     model_records = _live_model_metadata(endpoint, (model, embedding_model))
     model_metadata = model_records[model]
     embedding_metadata = model_records[embedding_model]
+    runtime = environment_metadata()
     options: dict[str, Any] = {
         "extraction_mode": selected_extraction,
         "temperature": generation.temperature,
@@ -169,7 +176,7 @@ def run_heldout(
         "timeout_seconds": generation.timeout,
         "top_k": 5,
         "max_context_tokens": 1200,
-        "runtime": environment_metadata(),
+        "runtime": {key: value for key, value in runtime.items() if key not in _HOST_DETAILS},
     }
     add_ollama_think(options, think)
     task_contract = embedding_task_contract(
@@ -230,6 +237,7 @@ def run_heldout(
             "code_sha256": code_sha256,
             "code_files": code_files,
             "checkpoint": str(checkpoint),
+            "host": {key: runtime[key] for key in _HOST_DETAILS if key in runtime},
             "attempt_id": attempt_id,
             "attempt_db_root": str(attempt_root),
             "module_challenge": (
