@@ -700,6 +700,15 @@ memory wording but still omits continuing policies, corrections, a mixed-message
 marker and a manuscript requirement, while retaining some temporary/inspection
 material. It remains unadopted; runtime validity is not retention accuracy.
 
+The [unchanged-selector Qwen2.5:14b comparison](../validation/2026-09-20/source-selection-semantic-v7/README.md)
+completes all 46 cases: 44 runtime-valid, two non-user authority rejections and
+35 exact source excerpts with verified provenance. It recovers several omitted
+policies, corrections, the one-turn marker and manuscript requirement, but retains
+an options question, fictional/hypothetical material and inspection fixtures.
+It also loses the independent marker in the continuing-policy case. Both model
+configurations remain unadopted; no criteria or previous outcomes changed.
+A full isolated source/package check on 6e8456b is running and has no final result yet.
+
 Future integration must preserve the current `SleepDaemon.propose_facts` ->
 `LocalMemoryService.process_job` -> transactional `commit_fact_and_job` path.
 Source-only excerpts cannot directly become support/correction operations.

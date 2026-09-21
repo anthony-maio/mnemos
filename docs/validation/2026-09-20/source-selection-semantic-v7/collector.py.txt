@@ -1,0 +1,83 @@
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+source = repo / 'docs/validation/2026-09-20/source-selection-terminal-v7'
+notes_path = repo / '.venv/inventory_v7_review_notes_draft.json'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((source / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+cases = json.loads((source / 'inputs.json').read_bytes())['cases']
+rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+notes = json.loads(notes_path.read_bytes())['notes']
+assert len(cases) == len(rows) == len(notes) == 46
+assert [case['id'] for case in cases] == [row['case_id'] for row in rows]
+assert set(notes) == {case['id'] for case in cases}
+review = []
+errors = []
+for case, row in zip(cases, rows):
+    assert isinstance(notes[case['id']], str) and notes[case['id']].strip()
+    item = {'case_id': case['id'], 'source': case['source'], 'rubric': case['rubric'],
+            'runtime_status': row['status'], 'inventory': row.get('inventory'),
+            'retained': row.get('retained'), 'error_type': row.get('error_type'),
+            'error': row.get('error'), 'review': notes[case['id']]}
+    if row['status'] == 'error':
+        final = row['trace'].get('response')
+        if final is not None:
+            item['rejected_final_response'] = final
+        counters = [{k: meta.get(k) for k in ('done_reason', 'eval_count', 'prompt_eval_count')}
+                    for meta in row['trace'].get('response_metadata', [])]
+        item['response_counters'] = counters
+        errors.append({k: item[k] for k in ('case_id', 'error_type', 'error', 'response_counters')})
+    review.append(item)
+counts = dict(Counter(row['status'] for row in rows))
+assert len(errors) == state['errors']
+record = {'status': 'complete_descriptive_review', 'blinded': False, 'adopted': False,
+          'aggregate_semantic_accuracy': None, 'preparation_sha256': state['preparation_sha256'],
+          'observations_sha256': state['observations_sha256'], 'runtime_counts': counts,
+          'cases': review,
+          'limits': 'One stochastic repetition on reused development cases. Literal source validity is not semantic entailment. No reconciliation, durable writes or fresh held-out corpus. Runtime errors are failures of the experiment, not successful abstention.'}
+out = repo / 'docs/validation/2026-09-20/source-selection-semantic-v7'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'review.json').write_text(json.dumps(record, indent=2) + '\n')
+(out / 'runtime-errors.json').write_text(json.dumps(errors, indent=2) + '\n')
+for name in ('durability-rubric-review.json', 'history-rubric-review.json'):
+    shutil.copyfile(source / name, out / name)
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text(f'''# Extractive source-selection v7 semantic review
+
+All 46 original development cases have descriptive review entries. Runtime
+outcomes: {counts}. This candidate is not adopted. Provider failures and
+validation rejections remain separate from successful abstention; inspect
+runtime-errors.json for the final-response counters, without treating a rejected
+inventory as a retained memory. Original rubric ambiguities remain attached.
+
+The unchanged extractive contract uses Qwen2.5:14b instead of Qwen3.5:9b.
+It recovers the release-format rule, benchmark policy, explicit PDF correction,
+one-time report, one-turn mixed-message marker and manuscript requirement omitted in v6.
+It also drops the independent marker in mixed-marker-13-policy, a regression.
+Selected passages retain the original wording and qualifications.
+
+The additional recall comes with unwanted retention: inspection-only deployment
+and date fixtures, an options-only question, fictional material and a hypothetical
+test report. Their original negations and attribution remain, so unwanted
+retention must not be mislabeled adoption of the embedded claims. Two non-user
+selections fail authority validation; neither is successful abstention.
+
+This is a single reused-development repetition with all46 original rubrics and
+ambiguity notes unchanged. Runtime counts and exact source slices do not prove
+semantic accuracy. Neither model configuration is adopted. Reconciliation,
+canonical-fact deduplication, durable writes, fresh holdout and full-module/native
+acceptance remain unmeasured. Model version, tokenizer and weights change together;
+no isolated parameter-count or general superiority claim is established.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'runtime': counts, 'reviewed': len(review)}))
