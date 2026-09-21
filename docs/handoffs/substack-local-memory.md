@@ -14,6 +14,12 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [latest-wheel recovery follow-up](../validation/2026-09-21/all-module-provider-recovery-terminal-v2/README.md)
+separates operational recovery from useful memory: with thinking disabled, both
+pending jobs completed, but the model omitted the required project marker.
+The unchanged assertion failed, so later lifecycle phases did not run. The
+earlier empty-response failure is diagnosed; dependable extraction remains open.
+
 The [complete source-accounting follow-up](../validation/2026-09-20/source-coverage-semantic-v10/README.md)
 completed with 42 valid outputs and four rejections. Requiring coverage exposed
 the missing marker but did not recover it, and introduced classification and

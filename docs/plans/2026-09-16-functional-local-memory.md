@@ -760,7 +760,11 @@ identifies two empty structured final responses at the 8192-token limit. The
 reconstructs both saved-event requests from the original d937892 wheel and
 freezes them before running with think=False. No store is opened. This also
 changes chat to generate; it is not an isolated reasoning experiment. The
-control is running and does not establish extraction quality or lifecycle recovery.
+control [completed with two valid empty proposals](../validation/2026-09-21/recovery-extraction-no-thinking-terminal-v1/README.md).
+The user marker was omitted. The [latest-wheel lifecycle follow-up](../validation/2026-09-21/all-module-provider-recovery-terminal-v2/README.md)
+completed both pending jobs on attempt four but produced zero facts, failing the
+unchanged one-marker assertion. Later scope/correction/restart/forget phases did
+not run. Service cleanup passed. Neither result closes full-module recovery.
 
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
 reduces the observed source archive from 399.8 MB to 40.7 MB by excluding bulky

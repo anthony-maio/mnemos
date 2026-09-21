@@ -2,6 +2,12 @@
 
 ## Current evidence, September 20, 2026
 
+September 21 follow-up: [provider recovery v2](../2026-09-21/all-module-provider-recovery-terminal-v2/README.md)
+completed both pending jobs on the verified installed wheel with think=False,
+but emitted no facts and failed the unchanged marker assertion. Later lifecycle
+phases did not run. This is operational job recovery with failed extraction,
+not full-module acceptance or a new native-host demonstration.
+
 The [v10 source-accounting comparison](../2026-09-20/source-coverage-semantic-v10/README.md)
 completed with 42 valid outputs, four failures and 32 source-verified excerpts.
 It exposes rather than repairs the mixed-policy omission, and introduces other
