@@ -875,6 +875,19 @@ work, including a mixed one-turn instruction. Misleading assistant reasoning and
 imprecise source kinds remain documented. Production storage writes, fresh
 semantic acceptance and durable review integration remain open.
 
+The relationship-vocabulary [v7 comparison](../validation/2026-09-21/source-reconciliation-terminal-v7/README.md)
+repairs independent-fact omissions but exposes an ambiguous correction-to-conflict
+fallback. The repaired [v8 comparison](../validation/2026-09-21/source-reconciliation-terminal-v8/README.md)
+forbids that fallback and targeted conflict against duplicate identities; all ten
+original operation expectations match, including deliberately unresolved gaps.
+The [raw-source pipeline v2](../validation/2026-09-21/source-pipeline-terminal-v2/README.md)
+keeps every v1 classification inventory unchanged and now matches fifteen of
+sixteen original pipeline expectations. It returns eight exact-source proposals
+and five explicit review outcomes. The complete prospective negative rule with
+a referential rejection prefix still remains unresolved; imprecise source kinds
+also remain documented. All 119 focused tests pass. This is development evidence,
+not storage integration, held-out accuracy or final acceptance.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
