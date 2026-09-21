@@ -1013,3 +1013,16 @@ Initial acceptance targets, to be frozen before held-out evaluation:
 All targets above are proposed engineering gates, not claims of current performance. A failing gate produces a documented limitation and repair task, never an automatic threshold adjustment.
 
 First execution instruction: implement T01 only in an isolated implementation checkout, prove its focused tests, and review the patch before starting T02. Preserve live configuration and databases until backup/migration tasks are independently validated.
+
+
+## Source-bound recovery checkpoint, September 21
+
+The [frozen-source real-provider lifecycle](../validation/2026-09-21/source-bound-recovery-terminal-v1/README.md)
+passes the original outage fixture on 11a97e3 using local Qwen3.5 9B and Nomic.
+It retains exactly one source-bound marker, excludes one-turn instructions,
+passes project/foreign recall, explicit correction, restart, forgetting and
+original-source replay without resurrection. Both pending jobs completed on
+attempt four. All five module flags were enabled; this small fixture does not
+prove useful execution or superiority of every module. Earlier zero-fact runs
+remain preserved. Fresh held-out ablations, native-host acceptance, the pilot,
+review resolution and current full-package verification remain open.

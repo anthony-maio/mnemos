@@ -1,0 +1,217 @@
+{
+  "source_commit": "11a97e34214a038e208c116d0778d0dc5681fcff",
+  "endpoint": "http://127.0.0.1:11434",
+  "model": "qwen3.5:9b",
+  "embedding_model": "nomic-embed-text:latest",
+  "models": {
+    "qwen3.5:9b": {
+      "name": "qwen3.5:9b",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "size": 6594474711,
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ]
+    },
+    "nomic-embed-text:latest": {
+      "name": "nomic-embed-text:latest",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+      "size": 274302450,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "nomic-bert",
+        "families": [
+          "nomic-bert"
+        ],
+        "parameter_size": "137M",
+        "quantization_level": "F16",
+        "context_length": 2048,
+        "embedding_length": 768
+      },
+      "capabilities": [
+        "embedding"
+      ]
+    }
+  },
+  "config": {
+    "modules": {
+      "surprisal": true,
+      "mutable_rag": true,
+      "affective": true,
+      "sleep": true,
+      "spreading": true
+    },
+    "retrieval": {
+      "profile": "baseline",
+      "affective_enabled": true,
+      "spreading_enabled": true,
+      "relevance_floor": 0.2,
+      "graph_weight": 0.1,
+      "max_candidates": 100
+    },
+    "surprisal": {
+      "threshold": 0.3,
+      "prediction_model": "llama3",
+      "embedding_dim": 384,
+      "history_window": 10,
+      "min_content_length": 10
+    },
+    "mutable_rag": {
+      "enabled": true,
+      "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+      "max_labile_chunks": 20,
+      "reconsolidation_cooldown_seconds": 60
+    },
+    "affective": {
+      "weight_similarity": 0.7,
+      "weight_state": 0.3,
+      "classifier_model": null,
+      "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+    },
+    "sleep": {
+      "extraction_mode": "source_bound",
+      "consolidation_interval_seconds": 3600,
+      "min_episodes_before_consolidation": 10,
+      "enable_proceduralization": false,
+      "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+      "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+      "max_episodes_per_consolidation": 100,
+      "recall_gated_plasticity_enabled": false,
+      "recall_min_supporting_episodes": 2,
+      "recall_similarity_threshold": 0.82
+    },
+    "spreading": {
+      "initial_energy": 1.0,
+      "decay_rate": 0.2,
+      "activation_threshold": 0.3,
+      "max_hops": 3,
+      "max_visited": 1000,
+      "auto_connect_threshold": 0.6,
+      "max_neighbors_per_node": 4,
+      "natural_decay_rate": 0.05,
+      "hydrate_on_startup": true,
+      "startup_hydration_limit": 5000,
+      "startup_auto_connect": false
+    },
+    "safety": {
+      "enabled": true,
+      "secret_action": "block",
+      "pii_action": "redact"
+    },
+    "governance": {
+      "capture_mode": "all",
+      "retention_ttl_days": 0,
+      "max_chunks_per_scope": 0
+    },
+    "debug": false
+  },
+  "prior_result": "D:\\WindowsTemp\\mnemos-source-bound-recovery-v4\\offline-result.json",
+  "prior_result_sha256": "80dffaf977e95817795cc5086734be46f9187e1d048f54946702570e22e3302d",
+  "source_files": {
+    "mnemos/antigravity.py": "592ff15ed2174642beb107700dc84ec71595b098d2b862a50bc831b3d11abe49",
+    "mnemos/backup.py": "7d3f5dd628e1fa289429268f73bff94d7c622658287558220755593020237ace",
+    "mnemos/benchmark.py": "646a669b8bb6f3b25b8e4460e784cbccea32549bdf8ae95047dc59a002fb8144",
+    "mnemos/bridge.py": "3e080a7f6ec0ee7d1d771adaf3459535caef9b4536947910f293a205ead41d76",
+    "mnemos/claude_identity.py": "76985f933d1b67e4b17b26b43ab6e49963721fb49ccba60a70ca4c3127d2d723",
+    "mnemos/cli.py": "226c46e518437ae08a42fc4a630f3a99b8978937d103a5e068cc4f5927803fd1",
+    "mnemos/client.py": "6387484e06c2b5a8ec824b0e52dbb72a9a86fde57a90c3304cb2f090737bd359",
+    "mnemos/config.py": "ddb078f697ee67b751364209c52b5a74fd2434592874c7725ed5679ae7c5f157",
+    "mnemos/contracts.py": "4f87c06e9434486581fac278014df0428243d12db7e3ebec69a34ed8bbbde22f",
+    "mnemos/control_plane.py": "9832567875574d6acb04f05077f1f0033ec57bb8ab0632d9687dcb2af6231683",
+    "mnemos/curation.py": "4038d5014fe09ed5a08aeec4045c54b8825bdd57281db698589f6d4a4383bdbf",
+    "mnemos/engine.py": "17453c13bb4dfaec6706d512afbef4b30cd65f5739efaaa31bcd0b2955c84624",
+    "mnemos/errors.py": "2a55cb0f56cdade28d48b38d4e4b27cf665a18eda80ab7c628d182383104ecad",
+    "mnemos/health.py": "1c8c8de71134672925f426a8b749539900b8df1eda5ef388a457526b3f65ee78",
+    "mnemos/hermes_identity.py": "41ad86d5b53dcefd08cdc57f00d848a7fe466458114f626717a5225491eb323a",
+    "mnemos/hook_autostore.py": "2bef6c44735c30cc44dd8f82a44a90028d428c5cb699033446c84ba83fdf69ba",
+    "mnemos/hosts.py": "e52dcd4f20fcb8b91337899520c57c066c41fccc0239463142cdacc01a010192",
+    "mnemos/inspectability.py": "1b11cdca92deccc15e1a3ee7bb4bafe9a5d23234487ac3a34f529d69109ca296",
+    "mnemos/jobs.py": "a6cc2b31e9da19d6abdef1d3592ec13c63d9efc6fd1d9edbc27fa9f5655fecff",
+    "mnemos/maintenance.py": "4fa72224881ad7ee6ca005f5d0abb89e848df4318ad339edda141bdc2900d727",
+    "mnemos/managed_cli.py": "ee22dec551544b42ed66aa80124e310b44de5e17c6442336badbacaf20656356",
+    "mnemos/mcp_server.py": "a64a08d69e6260d164c88c0eac3900605cc799df5670ca7c879bf28392f86757",
+    "mnemos/memory_safety.py": "9b60d4aaa37f1c3b17478f1693c51a7a8a84c84bba6a9e66005e4558b369a8f8",
+    "mnemos/memory_service.py": "3e34bbde6635c7a0727f400e07823e58ade8ac69db3336fbf199b8fd11367247",
+    "mnemos/observability.py": "f7d803d2d3c1c05bc80c6713cc4bcac24e2c64830528ac9a31b27ecd5adfe61a",
+    "mnemos/py.typed": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mnemos/reindex.py": "d810a6e95d27d34f505dc08e34456f1582bcc53cbac4e4f31cdb8641466a7499",
+    "mnemos/retrieval.py": "3f8c54751f03a94ab3cfdb02eecdc5df2d834648f892289ccad679ee49e9ff18",
+    "mnemos/routing_review.py": "b10bf44904783a43831ed5df6b6bfc6e3901d6465e56b4f760a561650fd14227",
+    "mnemos/runtime.py": "6f534dda15bcb6f25a644f7376ab68a4c1a12431b0679a3b05a9b465d853dad4",
+    "mnemos/scopes.py": "953a0a86a831f4bfa0ed1ca466cd83dc69e07a817085c936bf300deac31ce4d1",
+    "mnemos/service.py": "11c207bdf4b98ef9323c8adcc46727746410b2a870af564ef9bb33a7334ba187",
+    "mnemos/settings.py": "ab2e4c43b285c63eadb8b7c076e2ba1c78ca0322b0477dd4cbec0c754936d146",
+    "mnemos/source_review.py": "8f5f5d4214e77b4a953b344112c5443a95760a50252103b49366dfbb109088ba",
+    "mnemos/types.py": "d3c781f1ac2a0190b3195ff70edfe9ca075163a6ffb5a26113a60f31334c9e1d",
+    "mnemos/ui_server.py": "3e8aa4fdf5f1281062b67aa9220304e5d31091de3e8be59fa69546151f3a0f55",
+    "mnemos/__init__.py": "bed934cb4c54915b8f75e7a9353fba5860ba39da96b75b12df74d0aa188d2b0e",
+    "mnemos/__main__.py": "51ba40694573941e2ea5002e0ff4244c44be67ac5abc132cfd7e8e70ca448794",
+    "mnemos/adapters/claude_code.py": "81eb1d48fcf37dcd0be6a0a0d32b4747253e32caaed851a1dd198f786bb70d18",
+    "mnemos/adapters/codex.py": "575afab0a725f900dd9fe43f6b24b372095b2aa4c5a5bef81a8eef9f96708299",
+    "mnemos/adapters/context.py": "12430515c00f65d83f3fa5bb92237fc11bdda92745116212b71f979ae6a66bd8",
+    "mnemos/adapters/diagnostics.py": "cf29abc0c7d12481fd1b8944536cd5370e34b607200626e550921205e3a546e2",
+    "mnemos/adapters/hermes.py": "a51fb0c8b8c2c6bd9280eec448046a436789e4b4cd24974741f0f50cefc18fb0",
+    "mnemos/adapters/hermes_occurrences.py": "5dec9c419110385b132a0ec34aadf902a1fed0fe9a500a0104e2fa894253990d",
+    "mnemos/adapters/hermes_tools.py": "d670cc8953fcb4fed3a2dc9205849ff0af416cc2832fe77b23eecb4c8b441ab5",
+    "mnemos/adapters/hook_input.py": "b7ebae71507391c92d71b99a5fd98214323b0563a882b220b9afcc9829fda7bd",
+    "mnemos/extraction/assertion_inventory.py": "4067cdec0f1090122a7c38b99e728bcddb2a69a301b59e9074847822cff41a0c",
+    "mnemos/extraction/service.py": "81f28a36660c022ac484671e9ab6d31583cef337ccdf1f347a9fce472ac427a2",
+    "mnemos/extraction/source_classification.py": "d4bd7cb1e6a00ec79a54928539d77c1e34109057621576ae36036e678328a9c1",
+    "mnemos/extraction/source_instruction_ablation.py": "80ca51adefdda116abcb03fff189a7440a9e57d5b4bce1d326af95e41d98842b",
+    "mnemos/extraction/source_instruction_examples.py": "fa9413b82925f0db2e8620a1b39d6568995405911ec5a22e605e73351b032651",
+    "mnemos/extraction/source_pipeline.py": "06c78e0383830e8e6a212cb03191f3f2df63bd15a94c1e0e3019bf30297571aa",
+    "mnemos/extraction/source_reconciliation.py": "841fe4da255e2d13d3b55e8261d5f6d0b2b2edee9ec5d8f97d1a67eae0a29b76",
+    "mnemos/extraction/source_relationship.py": "5740f08ae017c71fb8f45743e9f444553716ed8308c15550f1c73a958bf29169",
+    "mnemos/extraction/source_role_binding.py": "01f25fd0dca6c6376b691beac205c49c77ee89d7ec7ba8071a27b4b523b80bd5",
+    "mnemos/extraction/source_selection.py": "f2b50ebacfda522109fd0f4b73c0ee27fc0c9c2bbe32f744d340bb7645180cc8",
+    "mnemos/extraction/__init__.py": "4e72b9f19adb365f1726d56e61982859284d56fb59ebfa36a245d687a0342f7f",
+    "mnemos/modules/affective.py": "13fbcd0ba0652de4c1123c37b73e98e0b2d1860d1152b3d70f623c4def7064d8",
+    "mnemos/modules/mutable_rag.py": "774f25eef8c7c61a404cebbfec68a22df65cfce1f0c8866a8d54e57daeffb4b3",
+    "mnemos/modules/sleep.py": "82295cb147fe8f68498e8959b9b20e7a6227239ee97e55e7b63c33acb39bb681",
+    "mnemos/modules/spreading.py": "df4b73f21871d4a89713e53912d6e10e66cb89e54e56cc4e1fd20a819243ebcf",
+    "mnemos/modules/surprisal.py": "96cf498124989e880018a3862352ffc5c3b09fc31205917e6f7aadbf7e9b6ccb",
+    "mnemos/modules/__init__.py": "9577f0749062e56949ddc757683e32dfc2ea58e7c416dcec1b78fd48a21b4f01",
+    "mnemos/ui/app.js": "f1026dd07b5eda10c682b9d12bd55d85f6f2fd0dfcefd27b539366264fa66587",
+    "mnemos/ui/index.html": "8e17e8b2550cad7b451a905aa0ae65800d868d3a2cd00290e532d6b6323de538",
+    "mnemos/ui/styles.css": "febc58e51b11fe03bc6598c31d77dca227e5e8f0b05a79a2e4089b81135c763c",
+    "mnemos/utils/embeddings.py": "59c1981ac7d9d5db502da2d8acf059718496e115e5087bcd30602165a8a725d5",
+    "mnemos/utils/llm.py": "d36ef5c0ff28e9777182ae5e205f91c6902ffeb86d85d4eff87300003154b6dd",
+    "mnemos/utils/reliability.py": "5e74212c28dc522acb65dd9c161beee8cb4e95c066eb9cae3bfcd518fa0d707a",
+    "mnemos/utils/storage.py": "4ba9e9452e5b8f06f91f4d610dfef89d0d7196d5c2689f0c530f4edbb1e05dca",
+    "mnemos/utils/__init__.py": "15fbe1b9510e7400c47216585fb0176f93c77a6947a246b9f130599d9092bdaf"
+  },
+  "files": {
+    "memory.sqlite": "ba83e4e5922439db643d78439d9e71edf62b032ed2fe5163391dc8429a6fdd3e",
+    "source-outbox.json": "a66328fc45d547dcf27d0ef9995c6fcfd9535a5e11b4b963a1235effe5c60712",
+    "offline-result.json": "80dffaf977e95817795cc5086734be46f9187e1d048f54946702570e22e3302d",
+    "runner.py": "5a2b636ff8fb73a2e6aea66254d24a70214cedcddc0c0d89a5271c5e2a8a7fd1",
+    "source.zip": "292d2254ba0fce537a473b56667d443c1b38451e8c6522bfadfb31aa017f23ae"
+  },
+  "provider_options": {
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": false,
+    "timeout": 180
+  },
+  "limits": "Frozen source, not installed-wheel verification; original development outage fixture and unchanged lifecycle assertions; not held-out quality or fresh native capture.",
+  "previous_harness_failure": "D:\\WindowsTemp\\mnemos-source-bound-recovery-v3\\launch-failure.json"
+}

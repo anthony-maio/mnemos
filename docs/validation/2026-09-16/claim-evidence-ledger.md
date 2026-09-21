@@ -1150,3 +1150,16 @@ The focused control/storage/restore/service suite passes 36 tests, with Python
 Resolution of ambiguous reviews, current full-package verification, real-model
 quality and native-host acceptance remain open. This checkpoint does not close
 T17-T19 or establish a release-ready result.
+
+
+## Source-bound recovery checkpoint, September 21
+
+The [frozen-source real-provider lifecycle](../2026-09-21/source-bound-recovery-terminal-v1/README.md)
+passes the original outage fixture on 11a97e3 using local Qwen3.5 9B and Nomic.
+It retains exactly one source-bound marker, excludes one-turn instructions,
+passes project/foreign recall, explicit correction, restart, forgetting and
+original-source replay without resurrection. Both pending jobs completed on
+attempt four. All five module flags were enabled; this small fixture does not
+prove useful execution or superiority of every module. Earlier zero-fact runs
+remain preserved. Fresh held-out ablations, native-host acceptance, the pilot,
+review resolution and current full-package verification remain open.
