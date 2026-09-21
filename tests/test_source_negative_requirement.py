@@ -7,11 +7,12 @@ import pytest
 from benchmarks.local_memory.source_classification import (
     ClassifiedInventory,
     ClassifiedSelection,
+    DiscardKind,
     classify_source_memories,
     render_classifications,
 )
 from benchmarks.local_memory.source_role_binding import build_source_role_binding_schema
-from benchmarks.local_memory.source_selection import Kind
+from benchmarks.local_memory.source_selection import Kind, Selection
 from mnemos.types import EpisodicEvent
 from mnemos.utils.llm import LLMProvider
 
@@ -31,12 +32,15 @@ def event(content: str, *, role: str = "user") -> EpisodicEvent:
     )
 
 
-def selection(kind: Kind) -> ClassifiedSelection:
+def selection(
+    kind: Kind | DiscardKind, *, revises_existing_requirement: bool = False
+) -> ClassifiedSelection:
     return ClassifiedSelection(
         source_id="source",
         first_unit=0,
         last_unit=0,
         kind=kind,
+        revises_existing_requirement=revises_existing_requirement,
     )
 
 
@@ -65,11 +69,65 @@ def test_standalone_negative_requirement_keeps_exact_user_negation() -> None:
     assert kept[0].kind == "continuing_requirement"
 
 
+def test_prospective_replacement_requirement_preserves_revision_intent_and_exact_text() -> None:
+    source = event("Reject the earlier rule; retain only local redacted excerpts.")
+    kept = render_classifications(
+        ClassifiedInventory(
+            selections=[selection("continuing_requirement", revises_existing_requirement=True)]
+        ),
+        [source],
+    )
+    assert kept[0].content == source.content
+    assert kept[0].kind == "continuing_requirement"
+    assert kept[0].revises_existing_requirement is True
+
+
+@pytest.mark.parametrize(
+    "role,kind,expected",
+    [
+        ("assistant", "continuing_requirement", "direct user"),
+        ("user", "asserted_fact", "direct user"),
+        ("user", "question", "Discarded classification"),
+    ],
+)
+def test_revision_intent_is_restricted_to_user_continuing_requirements(
+    role: str, kind: Kind | DiscardKind, expected: str
+) -> None:
+    source = event("Reject the earlier rule; retain only local excerpts.", role=role)
+    with pytest.raises(ValueError, match=expected):
+        render_classifications(
+            ClassifiedInventory(selections=[selection(kind, revises_existing_requirement=True)]),
+            [source],
+        )
+
+
+def test_revision_intent_requires_strict_boolean() -> None:
+    with pytest.raises(ValueError):
+        ClassifiedSelection(
+            source_id="source",
+            first_unit=0,
+            last_unit=0,
+            kind="continuing_requirement",
+            revises_existing_requirement="true",  # type: ignore[arg-type]
+        )
+    with pytest.raises(ValueError):
+        Selection(
+            source_id="source",
+            first_unit=0,
+            last_unit=0,
+            kind="continuing_requirement",
+            revises_existing_requirement="true",  # type: ignore[arg-type]
+        )
+
+
 def test_nonuser_negative_report_cannot_gain_user_requirement_authority() -> None:
     source = event("We will not keep the side panel in this project.", role="assistant")
     schema = build_source_role_binding_schema([source])
     kind_enum = schema["properties"]["selections"]["items"]["oneOf"][0]["properties"]["kind"]
     assert "continuing_requirement" not in kind_enum["enum"]
+    assert schema["properties"]["selections"]["items"]["oneOf"][0]["properties"][
+        "revises_existing_requirement"
+    ] == {"type": "boolean", "const": False}
     with pytest.raises(ValueError, match="Non-user"):
         render_classifications(
             ClassifiedInventory(selections=[selection("continuing_requirement")]), [source]
@@ -92,3 +150,4 @@ async def test_prompt_distinguishes_referential_correction_from_standalone_negat
     )
     correction_inventory, _ = await classify_source_memories([correction], correction_provider)
     assert correction_inventory.selections[0].kind == "correction_or_rejection"
+    assert correction_inventory.selections[0].revises_existing_requirement is False

@@ -58,6 +58,14 @@ def build_source_role_binding_schema(events: list[EpisodicEvent]) -> dict[str, A
             "type": "string",
             "enum": sorted(allowed_kinds),
         }
+        # Ask the decoder for an explicit decision; the runtime default remains
+        # false for existing saved classifications and unstructured providers.
+        branch.setdefault("required", []).append("revises_existing_requirement")
+        if event.role != "user":
+            branch_properties["revises_existing_requirement"] = {
+                "type": "boolean",
+                "const": False,
+            }
         branches.append(branch)
     if not branches:
         raise ValueError("Classification schema cannot be bound without source events")

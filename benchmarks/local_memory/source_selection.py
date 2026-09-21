@@ -60,6 +60,7 @@ class Selection(BaseModel):
     last_unit: int = Field(ge=0, strict=True)
     kind: Kind
     retention_request_unit: int | None = Field(default=None, ge=0, strict=True)
+    revises_existing_requirement: bool = Field(default=False, strict=True)
 
 
 class SelectionInventory(BaseModel):
@@ -83,6 +84,7 @@ class ExtractiveMemory:
     content: str
     kind: Kind
     retention_request_quote: str | None
+    revises_existing_requirement: bool = False
 
 
 def render_selections(
@@ -108,6 +110,12 @@ def render_selections(
             raise ValueError("Selection range is outside its source or reversed")
         if event.role != "user" and selection.kind != "attributed_history":
             raise ValueError("Non-user selection cannot establish a direct user assertion")
+        if selection.revises_existing_requirement and (
+            event.role != "user" or selection.kind != "continuing_requirement"
+        ):
+            raise ValueError(
+                "Requirement revision intent requires a direct user continuing requirement"
+            )
         key = (event.id, selection.first_unit, selection.last_unit)
         if key in seen:
             raise ValueError("Selection repeats a source range")
@@ -144,6 +152,7 @@ def render_selections(
                 retention_request_quote=(
                     None if request_index is None else units[request_index].text
                 ),
+                revises_existing_requirement=selection.revises_existing_requirement,
             )
         )
     return memories
@@ -187,13 +196,18 @@ Kinds:
 
 Set retention_request_unit to null unless an actual request to remember is cited.
 Distinguish a standalone prospective negative requirement from a referential
-correction. A user rule such as "Never attach raw access logs to customer-facing
-reports" is a continuing_requirement and must retain its exact negation even
-when no earlier logging rule is available. It is not correction_or_rejection
+correction. A complete user rule that a feature or practice will not be kept
+is a continuing_requirement and must retain its exact negation even
+when no earlier rule is available. It is not correction_or_rejection
 and must not be dropped merely because reconciliation has no target. Reserve
 correction_or_rejection for language that changes, rejects, or supersedes an
 identified earlier assertion or project state. Do not invent the missing target
 or replacement wording.
+More generally, a complete prospective replacement requirement remains a
+continuing_requirement even when it is prefaced by rejection or supersession
+of an earlier rule. Set revises_existing_requirement to true for that explicit
+revision intent. A referential rejection without a complete new requirement
+stays correction_or_rejection; do not manufacture a replacement requirement.
 Keep genuine manuscript requirements with the fictional rule they refer to;
 fictional dialogue alone is not a real user preference. Keep historical test
 reports with their date, attribution and untested limitations. Keep possible

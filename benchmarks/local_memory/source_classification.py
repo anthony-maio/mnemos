@@ -50,6 +50,7 @@ class ClassifiedSelection(BaseModel):
     last_unit: int = Field(ge=0, strict=True)
     kind: Kind | DiscardKind
     retention_request_unit: int | None = Field(default=None, ge=0, strict=True)
+    revises_existing_requirement: bool = Field(default=False, strict=True)
 
 
 class ClassifiedInventory(BaseModel):
@@ -91,6 +92,8 @@ def render_classifications(
         if item.kind in DISCARD_KINDS:
             if item.retention_request_unit is not None:
                 raise ValueError("Discarded classification cannot cite a retention request")
+            if item.revises_existing_requirement:
+                raise ValueError("Discarded classification cannot revise a requirement")
         else:
             retained.append(Selection.model_validate(item.model_dump()))
     return render_selections(SelectionInventory(selections=retained), events)
@@ -123,6 +126,11 @@ rejection that refers to an existing assertion or prior project state and may
 need target reconciliation. Do not relabel a standalone negative requirement as
 correction_or_rejection merely because it contains words such as "not" or
 "won't", and do not invent a missing target or replacement.
+When a complete prospective replacement requirement is explicitly prefaced by
+rejecting or superseding an earlier rule, keep it as continuing_requirement and
+set revises_existing_requirement to true. A referential rejection without a
+complete new requirement stays correction_or_rejection. Set the flag to false
+for all other kinds and for discarded classifications.
 """
 
 

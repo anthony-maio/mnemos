@@ -32,6 +32,7 @@ class ReviewOutcome(BaseModel):
     target_fact_id: str | None = None
     expected_version: int | None = Field(default=None, ge=1, strict=True)
     reason: str = Field(min_length=1)
+    revises_existing_requirement: bool = Field(default=False, strict=True)
 
 
 class SourcePipelineResult(BaseModel):
@@ -85,6 +86,7 @@ def _to_outcome(staged: StagedReconciliation) -> ReviewOutcome:
         target_fact_id=staged.target_fact_id,
         expected_version=staged.expected_version,
         reason=staged.reason,
+        revises_existing_requirement=staged.revises_existing_requirement,
     )
 
 
