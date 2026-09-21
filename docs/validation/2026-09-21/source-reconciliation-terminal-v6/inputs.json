@@ -1,0 +1,436 @@
+{
+  "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-project-identity-v1",
+  "endpoint": "http://127.0.0.1:11434",
+  "temperature": 0.0,
+  "max_tokens": 8192,
+  "timeout": 180,
+  "model": "qwen3.5:9b",
+  "think": false,
+  "repetitions": 1,
+  "cases": [
+    {
+      "case_id": "independent-add-cedar-dashboard",
+      "source_events": [
+        {
+          "id": "dev-add-cedar-dashboard",
+          "role": "user",
+          "content": "The build dashboard lives in the cedar project.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-add-cedar-dashboard",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [],
+      "expected": {
+        "operation": "add",
+        "target_fact_id": null,
+        "expected_version": null,
+        "contract_status": "accepted"
+      },
+      "rationale": "A direct user assertion has no existing target and can stage an exact new candidate."
+    },
+    {
+      "case_id": "exact-support-juniper-branch",
+      "source_events": [
+        {
+          "id": "dev-support-juniper-branch",
+          "role": "user",
+          "content": "The release branch is called juniper.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-support-juniper-branch",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-juniper-branch",
+          "content": "The release branch is called juniper.",
+          "version": 2,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "operation": "support",
+        "target_fact_id": "dev-fact-juniper-branch",
+        "expected_version": 2,
+        "contract_status": "accepted"
+      },
+      "rationale": "Support is allowed only for exact normalized content and the observed current version."
+    },
+    {
+      "case_id": "explicit-correction-known-target",
+      "source_events": [
+        {
+          "id": "dev-correct-backup-window",
+          "role": "user",
+          "content": "Correction: the backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-correct-backup-window",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-backup-window",
+          "content": "The backup window is Thursday at 18:00.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "operation": "correct",
+        "target_fact_id": "dev-fact-backup-window",
+        "expected_version": 1,
+        "contract_status": "accepted"
+      },
+      "rationale": "A user correction may stage a target-bound correction using the observed version; write-time reconciliation remains separate."
+    },
+    {
+      "case_id": "correction-missing-target",
+      "source_events": [
+        {
+          "id": "dev-correct-archive-bucket",
+          "role": "user",
+          "content": "Correction: the archive bucket is maple, not birch.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-correct-archive-bucket",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [],
+      "expected": {
+        "operation": "unresolved",
+        "target_fact_id": null,
+        "expected_version": null,
+        "contract_status": "accepted",
+        "semantic_status": "needs-target-resolution"
+      },
+      "rationale": "The contract cannot stage a correction without an observed target and must not convert it into an add."
+    },
+    {
+      "case_id": "unrelated-target-not-guessed",
+      "source_events": [
+        {
+          "id": "dev-add-staging-host",
+          "role": "user",
+          "content": "The staging host is delta-7.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-add-staging-host",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-production-host",
+          "content": "The production host is omega-2.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "operation": "add",
+        "target_fact_id": null,
+        "expected_version": null,
+        "contract_status": "accepted"
+      },
+      "rationale": "An unrelated in-scope target is visible but cannot be selected as a guessed support or correction target."
+    },
+    {
+      "case_id": "assistant-attributed-report-cannot-correct-user",
+      "source_events": [
+        {
+          "id": "dev-assistant-reports-bucket",
+          "role": "assistant",
+          "content": "The user reported that the archive bucket is maple.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-assistant-reports-bucket",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "attributed_history",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-user-bucket",
+          "content": "The archive bucket is birch.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "allowed_operations": [
+          "add",
+          "conflict",
+          "unresolved"
+        ],
+        "forbidden_operations": [
+          "support",
+          "correct"
+        ],
+        "contract_status": "accepted",
+        "invalid_decision": {
+          "operation": "correct",
+          "target_fact_id": "dev-fact-user-bucket",
+          "expected_version": 1,
+          "rejection": "Only user correction candidates may be corrected"
+        },
+        "semantic_status_by_operation": {
+          "add": "retain-attributed-report-without-changing-user-fact",
+          "conflict": "preserve-attributed-disagreement-without-changing-user-fact",
+          "unresolved": "needs-resolution-not-completed-memory"
+        },
+        "required_source_role": "assistant",
+        "required_source_kind": "attributed_history"
+      },
+      "rationale": "A qualified assistant report can be staged as attributed history or disagreement without changing the direct user fact. An unresolved outcome remains incomplete; do not score it as completed useful memory. No specific safe staging route is uniquely required by this source."
+    },
+    {
+      "case_id": "duplicate-targets-do-not-choose-correction",
+      "source_events": [
+        {
+          "id": "dev-ambiguous-correction",
+          "role": "user",
+          "content": "Correction: the review room is atlas, not birch.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-ambiguous-correction",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-room-old-a",
+          "content": "The review room is birch.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        },
+        {
+          "id": "dev-fact-room-old-b",
+          "content": "The review room is birch.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "operation": "unresolved",
+        "target_fact_id": null,
+        "expected_version": null,
+        "contract_status": "accepted",
+        "semantic_status": "ambiguous-targets",
+        "mechanical_limit": "The exact normalized duplicate-target guard must reject choosing either identity for correction. It does not resolve broader semantic ambiguity or merge duplicate facts."
+      },
+      "rationale": "Duplicate content with separate IDs must not cause a model or fixture consumer to guess which fact should be corrected."
+    },
+    {
+      "case_id": "standalone-rejection-contract-gap",
+      "source_events": [
+        {
+          "id": "dev-reject-side-panel",
+          "role": "user",
+          "content": "Reject the old layout rule: we will not keep the side panel in this project.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-reject-side-panel",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [],
+      "expected": {
+        "operation": "unresolved",
+        "target_fact_id": null,
+        "expected_version": null,
+        "contract_status": "accepted",
+        "semantic_status": "desired-standalone-rejection-not-representable",
+        "desired_semantic_operation": "add",
+        "mechanical_limit": "The conservative contract forbids add for correction_or_rejection, so this case documents incompleteness rather than a successful semantic rejection."
+      },
+      "rationale": "A standalone rejection may deserve durable representation, but this experiment requires a target for correction_or_rejection and must not relabel the rejection as an ordinary fact."
+    },
+    {
+      "case_id": "multi-candidate-support-and-add",
+      "source_events": [
+        {
+          "id": "dev-multi-candidate-settings",
+          "role": "user",
+          "content": "The editor uses tabs. The review window is Tuesday.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-multi-candidate-settings",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null
+        },
+        {
+          "source_id": "dev-multi-candidate-settings",
+          "first_unit": 1,
+          "last_unit": 1,
+          "kind": "asserted_fact",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-editor-tabs",
+          "content": "The editor uses tabs.",
+          "version": 3,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-project-1"
+        }
+      ],
+      "expected": {
+        "decisions": [
+          {
+            "candidate_index": 0,
+            "operation": "support",
+            "target_fact_id": "dev-fact-editor-tabs",
+            "expected_version": 3
+          },
+          {
+            "candidate_index": 1,
+            "operation": "add",
+            "target_fact_id": null,
+            "expected_version": null
+          }
+        ],
+        "contract_status": "accepted"
+      },
+      "rationale": "Every candidate receives exactly one decision, while only the exact existing fact receives support."
+    },
+    {
+      "case_id": "foreign-target-rejected-before-provider",
+      "source_events": [
+        {
+          "id": "dev-correct-foreign-window",
+          "role": "user",
+          "content": "Correction: the backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "dev-project-1",
+          "profile_id": "dev-profile-1",
+          "source": "manual"
+        }
+      ],
+      "source_selections": [
+        {
+          "source_id": "dev-correct-foreign-window",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "dev-fact-backup-window",
+          "content": "The backup window is Thursday at 18:00.",
+          "version": 1,
+          "profile_id": "dev-profile-1",
+          "scope": "project",
+          "scope_id": "dev-foreign-project"
+        }
+      ],
+      "expected": {
+        "contract_status": "rejected_before_provider",
+        "error_type": "ValueError",
+        "error_contains": "foreign scope",
+        "model_calls": 0
+      },
+      "rationale": "A caller must provide scope-filtered targets. Reject a foreign target before sending any source or target data to the provider."
+    }
+  ]
+}
