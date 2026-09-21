@@ -1,4 +1,4 @@
-"""One record the write policy refuses must not stall Claude transcript capture."""
+"""Claude transcript capture keeps moving: refusals, backlogs, rewrites, new sessions."""
 
 from __future__ import annotations
 
@@ -28,16 +28,23 @@ class _Outbox:
 
 
 class _Client:
-    def __init__(self, refusal: str) -> None:
+    def __init__(self, refusal: str, *, fail_once: frozenset[str] = frozenset()) -> None:
         self.outbox = _Outbox(redact=refusal == "redacted")
         self.reject = refusal == "rejected"
+        self.fail_once = set(fail_once)
         self.accepted: list[str] = []
 
     async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
         if self.reject and _MARKER in payload["content"]:
             return {"schema_version": 1, "status": "rejected", "reason": "Write policy"}
+        if payload["source_ref"] in self.fail_once:
+            self.fail_once.discard(payload["source_ref"])
+            return {"status": "degraded", "committed": False}
         self.accepted.append(payload["source_ref"])
         return {"status": "committed", "committed": True}
+
+    async def retrieve(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return {"facts": []}
 
 
 def _adapter(root: Path, client: _Client) -> ClaudeCodeAdapter:
@@ -140,6 +147,96 @@ async def test_a_refused_final_reply_degrades_one_stop_without_holding_the_check
 
     assert (second.status, second.captured) == ("ok", 2)
     assert client.accepted == ["u-1", "u-2", "a-2"]
+
+
+@pytest.mark.asyncio
+async def test_a_backlog_past_the_time_budget_is_finished_by_later_hooks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # With no budget, each hook captures exactly one record and saves its place.
+    monkeypatch.setattr(claude_code, "TRANSCRIPT_CAPTURE_BUDGET_SECONDS", 0.0)
+    client = _Client("none")
+    adapter = _adapter(tmp_path, client)
+    transcript = tmp_path / "session.jsonl"
+    _append(transcript, "u-1", "user", "First question.", "p1")
+    _append(transcript, "a-1", "assistant", "First answer.", "p1")
+    _append(transcript, "u-2", "user", "Second question.", "p2")
+    payload = _stop(tmp_path, transcript, "p2", last_assistant_message="Second answer.")
+
+    results = [await adapter.handle("Stop", payload) for _ in range(3)]
+
+    assert [(result.status, result.error, result.captured) for result in results] == [
+        ("degraded", "backlog_deferred", 1),
+        ("degraded", "backlog_deferred", 1),
+        ("ok", None, 2),
+    ]
+    # Only the hook that reaches the end falls back to the host's copy of the
+    # reply, which the transcript does not hold yet.
+    assert client.accepted == ["u-1", "a-1", "u-2", "p2"]
+    assert _offset(tmp_path) == transcript.stat().st_size
+
+
+@pytest.mark.asyncio
+async def test_a_hook_that_fails_midway_keeps_the_progress_it_saved(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(claude_code, "CHECKPOINT_INTERVAL_SECONDS", 0.0)
+    client = _Client("none", fail_once=frozenset({"u-2"}))
+    adapter = _adapter(tmp_path, client)
+    transcript = tmp_path / "session.jsonl"
+    _append(transcript, "u-1", "user", "First question.", "p1")
+    _append(transcript, "a-1", "assistant", "First answer.", "p1")
+    _append(transcript, "u-2", "user", "Second question.", "p2")
+    _append(transcript, "a-2", "assistant", "Second answer.", "p2")
+
+    first = await adapter.handle("Stop", _stop(tmp_path, transcript, "p2"))
+    second = await adapter.handle("Stop", _stop(tmp_path, transcript, "p2"))
+
+    assert (first.status, first.error, first.captured) == (
+        "degraded",
+        "capture_not_acknowledged",
+        2,
+    )
+    assert (second.status, second.captured) == ("ok", 2)
+    # The retry starts at the failed record, not at the top of the batch.
+    assert client.accepted == ["u-1", "a-1", "u-2", "a-2"]
+
+
+@pytest.mark.asyncio
+async def test_a_transcript_rewritten_shorter_in_place_keeps_capturing(tmp_path: Path) -> None:
+    client = _Client("none")
+    adapter = _adapter(tmp_path, client)
+    transcript = tmp_path / "session.jsonl"
+    header = json.dumps({"type": "summary", "summary": "session header", "leafUuid": "x"}) + "\n"
+    transcript.write_text(header, encoding="utf-8")
+    _append(transcript, "u-1", "user", "First question " + "x" * 400, "p1")
+    _append(transcript, "a-1", "assistant", "First answer " + "y" * 400, "p1")
+    first = await adapter.handle("Stop", _stop(tmp_path, transcript, "p1"))
+    assert (first.status, first.captured) == ("ok", 2)
+
+    # Same file and first line, so the same transcript identity, but shorter.
+    with transcript.open("r+", encoding="utf-8") as handle:
+        handle.write(header)
+        handle.truncate()
+    _append(transcript, "u-2", "user", "Retry.", "p2")
+    second = await adapter.handle("Stop", _stop(tmp_path, transcript, "p2"))
+    _append(transcript, "u-3", "user", "Next question.", "p3")
+    prompt = await adapter.handle(
+        "UserPromptSubmit",
+        {
+            "session_id": "session-a",
+            "cwd": str(tmp_path),
+            "prompt": "Next question.",
+            "prompt_id": "p3",
+        },
+    )
+    third = await adapter.handle("Stop", _stop(tmp_path, transcript, "p3"))
+
+    assert (second.status, second.captured) == ("ok", 1)
+    assert (prompt.status, prompt.captured) == ("ok", 1)
+    assert third.status == "ok"
+    assert _offset(tmp_path) == transcript.stat().st_size
+    assert client.accepted == ["u-1", "a-1", "u-2", "p3"]
 
 
 @pytest.mark.asyncio

@@ -14,6 +14,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,12 +31,18 @@ from ..service import _protect_private_path, default_runtime_directory
 
 MAX_TRANSCRIPT_LINE = 200_000
 MAX_TRANSCRIPT_BYTES_PER_HOOK = 2_000_000
+# Claude Code cancels a command hook after 60 seconds by default, and one
+# durable capture costs an fsync. A long backlog is therefore captured over
+# several hooks, saving progress as it goes, instead of racing that limit.
+TRANSCRIPT_CAPTURE_BUDGET_SECONDS = 20.0
+CHECKPOINT_INTERVAL_SECONDS = 2.0
 MAX_CONTEXT_CHARS = 8_000
 TRANSCRIPT_UNAVAILABLE = "transcript_unavailable"
 AMBIGUOUS_TRANSCRIPT_REPLAY = "ambiguous_transcript_replay"
 AMBIGUOUS_TRANSCRIPT_ASSOCIATION = "ambiguous_transcript_association"
 CAPTURE_NOT_ACKNOWLEDGED = "capture_not_acknowledged"
 CAPTURE_REFUSED = "capture_refused"
+BACKLOG_DEFERRED = "backlog_deferred"
 IDENTITY_REDACTION_AMBIGUOUS = "identity_redaction_ambiguous"
 # Refusals that repeat for the same record forever; transcript capture skips
 # them instead of holding its checkpoint and stalling the rest of the session.
@@ -523,6 +530,26 @@ class ClaudeCodeAdapter:
             return False, CAPTURE_REFUSED
         return bool(accepted), None if accepted else CAPTURE_NOT_ACKNOWLEDGED
 
+    def _transcript_checkpoint(
+        self,
+        context: ScopeContext,
+        *,
+        path: str,
+        identity: str,
+        offset: int,
+        pending: list[dict[str, str | None]],
+        assistant_marker: dict[str, Any] | None,
+    ) -> dict[str, Any]:
+        return {
+            "identity_version": 2,
+            "scope": self._checkpoint_scope(context),
+            "path": path,
+            "identity": identity,
+            "offset": offset,
+            "pending_dedup": pending[-16:],
+            "last_assistant": assistant_marker,
+        }
+
     async def _capture_transcript(
         self, payload: Mapping[str, Any], context: ScopeContext
     ) -> tuple[int, set[str], str | None]:
@@ -533,6 +560,7 @@ class ClaudeCodeAdapter:
         target = Path(transcript).expanduser()
         try:
             current_identity = _current_transcript_identity(target)
+            current_size = target.stat().st_size
         except OSError:
             return 0, set(), TRANSCRIPT_UNAVAILABLE
         checkpoint_path = str(target.resolve())
@@ -543,6 +571,9 @@ class ClaudeCodeAdapter:
         if (
             checkpoint.get("path") != checkpoint_path
             or checkpoint.get("identity") != current_identity
+            # Rewritten in place and now shorter: the saved offset and
+            # assistant marker point at bytes that no longer exist.
+            or offset > current_size
         ):
             offset = 0
             bound_checkpoint = False
@@ -572,7 +603,28 @@ class ClaudeCodeAdapter:
         for delta in deltas:
             fingerprint = self._content_fingerprint(delta.role, delta.content)
             delta_fingerprint_counts[fingerprint] = delta_fingerprint_counts.get(fingerprint, 0) + 1
-        for delta in deltas:
+        started = last_saved = time.monotonic()
+        resume_offset: int | None = None
+        for position, delta in enumerate(deltas):
+            if position:
+                now = time.monotonic()
+                done = deltas[position - 1].next_offset
+                if now - started >= TRANSCRIPT_CAPTURE_BUDGET_SECONDS:
+                    resume_offset = done
+                    break
+                if now - last_saved >= CHECKPOINT_INTERVAL_SECONDS:
+                    self._write_checkpoint(
+                        context,
+                        self._transcript_checkpoint(
+                            context,
+                            path=checkpoint_path,
+                            identity=identity,
+                            offset=done,
+                            pending=pending_records,
+                            assistant_marker=assistant_marker,
+                        ),
+                    )
+                    last_saved = now
             fingerprint = self._content_fingerprint(delta.role, delta.content)
             pending_index = next(
                 (
@@ -628,16 +680,17 @@ class ClaudeCodeAdapter:
         if bound_checkpoint and not deltas and "last_assistant" not in checkpoint:
             return captured, contents, AMBIGUOUS_TRANSCRIPT_REPLAY
         if deltas or next_offset != offset or checkpoint.get("identity") != identity:
-            checkpoint_value: dict[str, Any] = {
-                "identity_version": 2,
-                "scope": self._checkpoint_scope(context),
-                "path": checkpoint_path,
-                "identity": identity,
-                "offset": next_offset,
-                "pending_dedup": pending_records[-16:],
-                "last_assistant": assistant_marker,
-            }
-            self._write_checkpoint(context, checkpoint_value)
+            self._write_checkpoint(
+                context,
+                self._transcript_checkpoint(
+                    context,
+                    path=checkpoint_path,
+                    identity=identity,
+                    offset=next_offset if resume_offset is None else resume_offset,
+                    pending=pending_records,
+                    assistant_marker=assistant_marker,
+                ),
+            )
         if refused:
             emit_hook_diagnostic(
                 host="claude-code",
@@ -645,6 +698,10 @@ class ClaudeCodeAdapter:
                 status="skipped",
                 reason="record_refused",
             )
+        if resume_offset is not None:
+            # The next hook resumes here. Its reply may still be in the unread
+            # part, so the Stop fallback must not capture it a second way.
+            return captured, contents, BACKLOG_DEFERRED
         return (
             captured,
             contents,
