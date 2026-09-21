@@ -1,0 +1,15 @@
+{
+  "calls": 92,
+  "cases": 46,
+  "repetitions": 1,
+  "arms": [
+    "production",
+    "durability_v2"
+  ],
+  "variable": "Model/configuration comparison: qwen2.5:14b with think omitted versus prior qwen3.5:9b with think true. Same production and durability-v3 prompts, cases, schema, temperature 1.0, token cap 8192 and timeout 180s.",
+  "causal_limit": "Two different model/configuration bundles, not an isolated thinking-mode or model-weights effect. One repetition cannot establish reliability.",
+  "scope": "Reused development only; no fresh heldout corpus inference or production change.",
+  "launch_gate": "The 9b v3 comparison must finish, be archived byte-identically and receive a complete semantic review before this runner starts. No parallel model evaluation.",
+  "review": "Preserve original required/forbidden meanings and original ambiguities. Missing targets, runtime errors and omitted assertions remain failures or limitations; no relabeling to favor a model.",
+  "adoption": "No default-model or prompt adoption from this preparation."
+}

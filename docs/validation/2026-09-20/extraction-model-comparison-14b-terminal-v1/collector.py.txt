@@ -1,0 +1,48 @@
+from pathlib import Path
+from collections import Counter
+import json,hashlib,shutil
+repo=Path(__file__).resolve().parents[1]
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-model-comparison-14b-v1')
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+state=json.loads((root/'status.json').read_bytes());prep=json.loads((root/'preparation.json').read_bytes());inputs=json.loads((root/'inputs.json').read_bytes())
+assert state['status']=='completed' and state['processed']==92
+assert state['preparation_sha256']==sha(root/'preparation.json')
+assert state['observations_sha256']==sha(root/'observations.jsonl')
+for name,digest in prep['files'].items():assert sha(root/name)==digest
+rows=[json.loads(x) for x in (root/'observations.jsonl').read_text().splitlines()]
+expected=[(c['id'],a,0) for i,c in enumerate(inputs['cases']) for a in (inputs['arms'] if i%2==0 else list(reversed(inputs['arms'])))]
+assert [(r['case_id'],r['arm'],r['repetition']) for r in rows]==expected
+counts={a:dict(Counter(r['status'] for r in rows if r['arm']==a)) for a in inputs['arms']}
+assert sum(r['status']=='error' for r in rows)==state['errors']
+for i in range(0,len(rows),2):
+ pair={r['arm']:r for r in rows[i:i+2]}
+ base=pair['production']['trace'];candidate=pair['durability_v2']['trace']
+ assert base['options']==candidate['options']
+ assert candidate['prompt']==base['prompt'].replace('Do not invent facts or IDs. ',inputs['candidate_clause']+'Do not invent facts or IDs. ',1)
+out=repo/'docs/validation/2026-09-20/extraction-model-comparison-14b-terminal-v1';out.mkdir(exist_ok=False)
+for p in root.iterdir():
+ if p.is_file():shutil.copyfile(p,out/p.name)
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'proposal-review.json').write_text(json.dumps([{k:v for k,v in r.items() if k!='trace'} for r in rows],indent=2)+'\n')
+(out/'runtime-summary.json').write_text(json.dumps({'counts':counts,'semantic_review':'pending; runtime validity is not accuracy','case_arm_order_verified':True,'only_prompt_clause_differs_between_arms':True},indent=2)+'\n')
+(out/'README.md').write_text(f'''# Qwen2.5 14B comparison: terminal record
+
+All 92 planned calls completed in the frozen case/arm order. Runtime outcomes:
+{json.dumps(counts)}. Every raw response and failure is retained. Exact prompts
+and schemas were checked: the added durability clause is the only prompt
+variation between arms. Both use identical frozen provider settings.
+
+The 26 durability cases and 20 historical/preference cases retain their
+original rubrics and pre-execution ambiguity reviews. The internal candidate
+arm label durability_v2 denotes the exact v3 clause bound in inputs.json. These are development cases; one stochastic repetition
+cannot establish held-out quality, reliability or an adoption decision. The
+known native-event failure is intentionally reused as one development case.
+
+Semantic review remains separate and must preserve stated ambiguities. No
+facts were committed and no production prompt or configuration changed. This
+proposal-only experiment is not an all-module ablation or native-host recovery.
+''')
+(out/'.gitattributes').write_text('* -text\n')
+(out/'evidence-index.json').write_text(json.dumps({'files':{p.name:{'sha256':sha(p),'bytes':p.stat().st_size} for p in out.iterdir() if p.is_file()}},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'runtime':counts}))
+

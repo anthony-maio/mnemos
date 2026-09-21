@@ -1,0 +1,59 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+from urllib.request import urlopen
+
+repo = Path.cwd()
+prior = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-durability-history-development-v3')
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-model-comparison-14b-v1')
+root.mkdir(exist_ok=False)
+inputs = json.loads((prior / 'inputs.json').read_bytes())
+old = json.loads((prior / 'preparation.json').read_bytes())
+inputs['model'] = 'qwen2.5:14b'
+inputs['think'] = None
+inputs['prior_terminal_status'] = str(prior / 'status.json')
+inputs['prior_terminal_archive'] = str(repo / 'docs/validation/2026-09-20/extraction-durability-history-terminal-v3/observations.jsonl')
+inputs['prior_semantic_review'] = str(repo / 'docs/validation/2026-09-20/extraction-durability-history-semantic-review-v3.md')
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+for name in ('durability-rubric.json', 'durability-rubric-review.json', 'history-rubric.json', 'history-rubric-review.json'):
+    shutil.copyfile(prior / name, root / name)
+runner = (prior / 'runner.py').read_text()
+runner = runner.replace('async def main():\n', '''async def main():
+    prior_state = json.loads(Path(inputs['prior_terminal_status']).read_bytes())
+    assert prior_state['status'] == 'completed' and prior_state['processed'] == 92
+    assert sha(Path(inputs['prior_terminal_archive'])) == prior_state['observations_sha256']
+    assert Path(inputs['prior_semantic_review']).is_file()
+''')
+(root / 'runner.py').write_text(runner)
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == '7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6'
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as response:
+    server_version = json.loads(response.read())
+hardware = subprocess.run(['nvidia-smi', '--query-gpu=name,memory.total,driver_version', '--format=csv,noheader'], capture_output=True, text=True, check=True)
+contract = {
+    'calls': 92, 'cases': 46, 'repetitions': 1, 'arms': inputs['arms'],
+    'variable': 'Model/configuration comparison: qwen2.5:14b with think omitted versus prior qwen3.5:9b with think true. Same production and durability-v3 prompts, cases, schema, temperature 1.0, token cap 8192 and timeout 180s.',
+    'causal_limit': 'Two different model/configuration bundles, not an isolated thinking-mode or model-weights effect. One repetition cannot establish reliability.',
+    'scope': 'Reused development only; no fresh heldout corpus inference or production change.',
+    'launch_gate': 'The 9b v3 comparison must finish, be archived byte-identically and receive a complete semantic review before this runner starts. No parallel model evaluation.',
+    'review': 'Preserve original required/forbidden meanings and original ambiguities. Missing targets, runtime errors and omitted assertions remain failures or limitations; no relabeling to favor a model.',
+    'adoption': 'No default-model or prompt adoption from this preparation.',
+}
+(root / 'diagnostic-contract.json').write_text(json.dumps(contract, indent=2) + '\n')
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+preparation = {
+    'prepared_at': datetime.now(timezone.utc).isoformat(),
+    'source_commit': old['source_commit'], 'source_files': old['source_files'],
+    'model': model, 'ollama_version': server_version,
+    'hardware_inventory': hardware.stdout.strip(), 'exclusive_gpu_claim': False,
+    'parent_preparation_sha256': sha(prior / 'preparation.json'),
+    'files': {p.name: sha(p) for p in root.iterdir() if p.is_file()},
+}
+(root / 'preparation.json').write_text(json.dumps(preparation, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'started': False, 'model': model['name'],
+                  'preparation_sha256': sha(root / 'preparation.json'), 'hardware': preparation['hardware_inventory']}))
