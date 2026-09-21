@@ -1,0 +1,20 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib,json,sqlite3,shutil
+out=Path('docs/validation/2026-09-20/hermes-compaction-growth-v4')
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+shutil.copyfile(out/'evidence-index.json',out/'pre-repair-evidence-index.json')
+db=out/'post-prune.sqlite'; before=sha(db)
+with closing(sqlite3.connect(db)) as conn:
+ assert conn.execute('PRAGMA integrity_check').fetchone()==('ok',)
+ assert conn.execute('PRAGMA foreign_key_check').fetchall()==[]
+ conn.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+ assert conn.execute('PRAGMA journal_mode=DELETE').fetchone()==('delete',)
+ for table in ('sessions','messages','message_origins','message_evidence_components'):
+  assert conn.execute('SELECT count(*) FROM '+table).fetchone()==(0,)
+ conn.commit()
+assert not list(out.glob('*-wal')) and not list(out.glob('*-shm'))
+(out/'archive-repair.json').write_text(json.dumps({'reason':'Collector indexed transient WAL/SHM files while its sqlite connection remained open. Those sidecars were not committed. Explicit close and DELETE journal mode make the artifact self-contained. No measurement rerun or result change.','sqlite_before_sha256':before,'sqlite_after_sha256':sha(db),'integrity':'ok','foreign_key_check':[],'all_owned_tables_empty':True},indent=2)+'\n')
+shutil.copyfile(__file__,out/'repair-collector.py.txt')
+(out/'evidence-index.json').write_text(json.dumps({'files':{p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in out.iterdir() if p.is_file() and p.name!='evidence-index.json'}},indent=2)+'\n')
+print('Archive repaired without changing measurement records')
