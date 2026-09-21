@@ -470,6 +470,12 @@ acceptance remain open.
 
 ### T18 - Prove the contribution of all five modules
 
+The [precision proxy labels](../validation/2026-09-20/precision-proxy-labels-v1/README.md)
+make the exact-text measurement explicit in both precision aliases and both
+summary populations. Semantic factual precision stays NOT MEASURED. Forty-nine
+focused and adjacent tests pass; no scores, thresholds or historical results
+change, and no new semantic quality or full-suite result is claimed.
+
 The [alternative seed structural audit](../validation/2026-09-20/alternative-graph-seed-audit-v1/README.md)
 checks the saved five-case graph development traces. Top-three and top-five seed
 sets add no structural target coverage over the chosen single seed. Top-ten

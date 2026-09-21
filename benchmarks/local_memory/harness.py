@@ -493,6 +493,7 @@ def build_completed_artifact(
             ),
             "controlled_state_ablation": "NOT MEASURED",
             "length_filter_decision": "NOT MEASURED",
+            "semantic_factual_precision": "NOT MEASURED",
             "human_acceptance": "NOT RUN",
         },
         "dataset": {
@@ -748,6 +749,14 @@ def _build_observation_metrics(
     metrics["row_or_byte_growth"] = _byte_summary(observations)
     metrics["token_cost"] = _numeric_summary(
         [item.token_cost for item in observations if item.token_cost is not None]
+    )
+    metrics["supported_precision"].update(
+        measurement="exact_frozen_text_scope_and_evidence_proxy",
+        semantic_factual_precision_measured=False,
+        interpretation=(
+            "Exact frozen text, scope and source-evidence matching. Valid paraphrases can "
+            "score false. This proxy does not establish semantic factual precision."
+        ),
     )
     metrics["extraction_precision"] = metrics["supported_precision"]
     metrics["retrieval_accuracy"] = metrics["answerable_recall_at_k"]

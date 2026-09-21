@@ -219,6 +219,15 @@ def test_harness_runs_adapter_and_reports_measured_counts(tmp_path: Path) -> Non
     assert artifact["measurements"]["answerable_recall_at_k"]["sample_count"] == 300
     assert artifact["measurements"]["supported_precision"]["total_count"] == 360
     assert artifact["measurements"]["supported_precision"]["missing_count"] == 0
+    assert artifact["gates"]["semantic_factual_precision"] == "NOT MEASURED"
+    for metrics in (
+        artifact["measurements"],
+        artifact["complete_observation_diagnostics"]["measurements"],
+    ):
+        for name in ("supported_precision", "extraction_precision"):
+            assert metrics[name]["measurement"] == "exact_frozen_text_scope_and_evidence_proxy"
+            assert metrics[name]["semantic_factual_precision_measured"] is False
+            assert metrics[name]["estimate"] == 1.0
     assert artifact["measurements"]["latency_ms"]["p95"] == 4.0
     assert artifact["measurements"]["row_or_byte_growth"]["total_growth_bytes"] == 15_000
     checkpoint_payload = json.loads(checkpoint.read_text(encoding="utf-8"))

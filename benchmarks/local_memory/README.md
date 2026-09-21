@@ -47,6 +47,13 @@ provider callbacks. Ollama extraction requests pass the typed response JSON
 schema through its `format` field. Providers without advertised schema support
 keep the prompt-only path and remain subject to the same strict parser.
 
+New summary artifacts label both `supported_precision` and its
+`extraction_precision` alias as `exact_frozen_text_scope_and_evidence_proxy`.
+Their `semantic_factual_precision_measured` flag is false, and the separate
+`semantic_factual_precision` gate stays `NOT MEASURED`. These labels apply to
+both all-observation and complete-observation summaries. They do not change
+scores, confidence intervals, acceptance thresholds or historical artifacts.
+
 Dataset version `local-memory-heldout-v2` adds explicit target profile,
 project, and workspace fields to source events, queries, and state pairs. The
 cross-profile and scope-canary rows exercise those targets; invalid or
