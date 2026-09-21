@@ -2,6 +2,12 @@
 
 ## Current evidence, September 20, 2026
 
+The [v15 uncertainty-example ablation](../2026-09-21/source-instruction-ablation-semantic-v15/README.md)
+has 46 valid outputs and 31 source-verified excerpts. It repairs v14's standing
+policy label and duplicate policy meaning, with 38 outcomes unchanged. A false
+uncertainty/request reference and imprecise discard labels remain. This is reused
+development evidence, not fresh acceptance, reconciliation or durable writes.
+
 The September 21 [instructional-example comparison](../2026-09-21/source-instruction-examples-semantic-v14/README.md)
 has 46 runtime-valid outputs, 31 exact source excerpts and 13 changed outcomes
 relative to v13. It recovers a marker and removes some unsupported request

@@ -1,0 +1,75 @@
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+source = repo / 'docs/validation/2026-09-21/source-instruction-ablation-terminal-v15'
+notes_path = repo / '.venv/instruction_ablation_v15_review_notes_draft.json'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((source / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+cases = json.loads((source / 'inputs.json').read_bytes())['cases']
+rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+notes = json.loads(notes_path.read_bytes())['notes']
+assert len(cases) == len(rows) == len(notes) == 46
+assert [case['id'] for case in cases] == [row['case_id'] for row in rows]
+assert set(notes) == {case['id'] for case in cases}
+review = []
+errors = []
+for case, row in zip(cases, rows):
+    assert isinstance(notes[case['id']], str) and notes[case['id']].strip()
+    item = {'case_id': case['id'], 'source': case['source'], 'rubric': case['rubric'],
+            'runtime_status': row['status'], 'inventory': row.get('inventory'),
+            'retained': row.get('retained'), 'error_type': row.get('error_type'),
+            'error': row.get('error'), 'review': notes[case['id']]}
+    if row['status'] == 'error':
+        final = row['trace'].get('response')
+        if final is not None:
+            item['rejected_final_response'] = final
+        counters = [{k: meta.get(k) for k in ('done_reason', 'eval_count', 'prompt_eval_count')}
+                    for meta in row['trace'].get('response_metadata', [])]
+        item['response_counters'] = counters
+        errors.append({k: item[k] for k in ('case_id', 'error_type', 'error', 'response_counters')})
+    review.append(item)
+counts = dict(Counter(row['status'] for row in rows))
+assert len(errors) == state['errors']
+record = {'status': 'complete_descriptive_review', 'blinded': False, 'adopted': False,
+          'aggregate_semantic_accuracy': None, 'preparation_sha256': state['preparation_sha256'],
+          'observations_sha256': state['observations_sha256'], 'runtime_counts': counts,
+          'cases': review,
+          'limits': 'One stochastic repetition on reused development cases. Literal source validity is not semantic entailment. No reconciliation, durable writes or fresh held-out corpus. Runtime errors are failures of the experiment, not successful abstention.'}
+out = repo / 'docs/validation/2026-09-21/source-instruction-ablation-semantic-v15'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'review.json').write_text(json.dumps(record, indent=2) + '\n')
+(out / 'runtime-errors.json').write_text(json.dumps(errors, indent=2) + '\n')
+for name in ('durability-rubric-review.json', 'history-rubric-review.json'):
+    shutil.copyfile(source / name, out / name)
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text(f'''# Uncertainty example ablation v15 semantic review
+
+All 46 cases are runtime-valid. Thirty-eight outcomes match v14 exactly; eight
+changed outcomes were reviewed against original sources and rubrics. Removing
+the uncertainty example repairs the standing policy's false uncertainty/request
+label and separates the project marker and scoped policy without overlapping
+meaning. A genuine historical-record request reference is restored.
+
+The earlier one-turn hypothetical still has false uncertainty/request metadata,
+and several discard labels are imprecise. The source content preserves the
+hypothetical's explicit non-approval; original ambiguity about retaining that
+context remains. No fresh quality acceptance or production adoption is claimed.
+
+Only the uncertainty worked example and example count change from v14. Cases,
+schema, model, generation settings and rubrics remain fixed. This is one reused
+development repetition. Source slices are not semantic accuracy, canonical-fact
+deduplication or full-module lifecycle evidence.
+''')
+shutil.copyfile(repo / '.venv/instruction_ablation_v15_comparison.json', out / 'comparison-v14.json')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'runtime': counts, 'reviewed': len(review)}))

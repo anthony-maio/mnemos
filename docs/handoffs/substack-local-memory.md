@@ -14,6 +14,12 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [uncertainty-example ablation](../validation/2026-09-21/source-instruction-ablation-semantic-v15/README.md)
+removes one example from v14. All 46 outputs remain valid, and it repairs the
+standing-policy label and duplicate policy meaning while retaining the recovered
+marker. Some false metadata and imprecise labels remain. This is a useful
+development improvement, not fresh acceptance or a completed memory pipeline.
+
 The [worked-example comparison](../validation/2026-09-21/source-instruction-examples-semantic-v14/README.md)
 produces 46 valid outputs and 31 source-verified excerpts. It recovers a missing
 marker and removes several false request references, but repeats policy meaning

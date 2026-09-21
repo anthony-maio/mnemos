@@ -140,6 +140,75 @@ async def test_allowed_correction_is_staged_with_exact_source_content() -> None:
 
 
 @pytest.mark.asyncio
+async def test_correction_rejects_ambiguous_exact_targets_but_keeps_unique_and_add() -> None:
+    correction_source = event("ambiguous-correction", "Correction: the marker is quartz.")
+    correction = candidate(correction_source, "correction_or_rejection")
+    duplicate_a = target("fact-old-a", "The marker is cedar.")
+    duplicate_b = target("fact-old-b", "  The marker is CEDAR. ")
+    unique = target("fact-unrelated", "The unrelated fact is amber.")
+    targets = [duplicate_a, duplicate_b, unique]
+
+    schema = build_reconciliation_schema([correction], targets)
+    correct_branches = [
+        branch
+        for branch in schema["properties"]["decisions"]["items"]["oneOf"]
+        if branch["properties"]["operation"]["enum"] == ["correct"]
+    ]
+    assert [branch["properties"]["target_fact_id"]["enum"][0] for branch in correct_branches] == [
+        "fact-unrelated"
+    ]
+    validator = Draft202012Validator(schema)
+    assert not validator.is_valid(
+        {
+            "decisions": [
+                decision(
+                    0,
+                    "correct",
+                    target_fact_id="fact-old-a",
+                    expected_version=1,
+                )
+            ]
+        }
+    )
+    assert validator.is_valid(
+        {
+            "decisions": [
+                decision(
+                    0,
+                    "correct",
+                    target_fact_id="fact-unrelated",
+                    expected_version=1,
+                )
+            ]
+        }
+    )
+
+    ignored_schema = Provider(
+        {
+            "decisions": [
+                decision(
+                    0,
+                    "correct",
+                    target_fact_id="fact-old-a",
+                    expected_version=1,
+                )
+            ]
+        }
+    )
+    with pytest.raises(ValueError, match="ambiguous exact normalized content"):
+        await reconcile_source_candidates(
+            [correction], [correction_source], targets, ignored_schema
+        )
+
+    add_source = event("independent-add", "The new fact is violet.")
+    add_provider = Provider({"decisions": [decision(0, "add")]})
+    staged = await reconcile_source_candidates(
+        [candidate(add_source)], [add_source], targets, add_provider
+    )
+    assert staged[0].operation == "add"
+
+
+@pytest.mark.asyncio
 async def test_add_and_support_preserve_candidate_content_without_generation() -> None:
     first = event("new-source", "The marker is cedar.")
     second = event("support-source", "The marker is cedar.")

@@ -815,6 +815,23 @@ meaning and false uncertainty/request metadata remain. A standing policy also
 gains an incorrect uncertainty label. Candidate not adopted. These examples
 target known development failure classes; this is not fresh acceptance.
 
+The [v15 uncertainty-example ablation](../validation/2026-09-21/source-instruction-ablation-semantic-v15/README.md)
+removes only that example and updates the example count. All 46 outputs are
+runtime-valid, with 31 source-verified excerpts. Thirty-eight outcomes match v14;
+the standing-policy label and overlapping marker/policy meaning are repaired.
+The earlier one-turn hypothetical still has false uncertainty/request metadata,
+and some discard labels remain imprecise. No fresh acceptance or adoption follows.
+
+Reconciliation now excludes exact normalized duplicate targets from correction
+choices and rejects them again at runtime. This protects ambiguous identity,
+not broader semantic equivalence. The combined experimental suite passes 93
+tests, formatting and Python 3.10 reconciliation-module type checking. The
+authored `source_reconciliation_development_v1.json` contains ten development
+cases with eleven supplied selections; offline renderer/expected-decision checks
+pass without model calls. It distinguishes safe attributed-history routes,
+unresolved correction and the standalone-rejection gap. Real-model reconciliation
+and end-to-end writes remain unexecuted.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt

@@ -219,6 +219,17 @@ def build_reconciliation_schema(
     decision_schema = schema["$defs"]["ReconciliationDecision"]
     branches: list[dict[str, Any]] = []
     target_ids = sorted(target.id for target in targets)
+    normalized_target_ids: dict[str, list[str]] = {}
+    for existing_target in targets:
+        normalized_target_ids.setdefault(normalize_memory_text(existing_target.content), []).append(
+            existing_target.id
+        )
+    ambiguous_target_ids = {
+        target_id
+        for target_ids in normalized_target_ids.values()
+        if len(target_ids) > 1
+        for target_id in target_ids
+    }
     for index, candidate in enumerate(candidates):
         allowed_operations = ["add", "conflict", "unresolved"]
         if candidate.source_role == "user":
@@ -237,6 +248,12 @@ def build_reconciliation_schema(
             if operation == "conflict":
                 paired_targets = [None, *targets]
             for observed_target in paired_targets:
+                if (
+                    operation == "correct"
+                    and observed_target is not None
+                    and observed_target.id in ambiguous_target_ids
+                ):
+                    continue
                 branch = deepcopy(decision_schema)
                 properties = branch["properties"]
                 properties["candidate_index"] = {"type": "integer", "enum": [index]}
@@ -300,6 +317,17 @@ def _validate_decisions(
     if len(decisions) != len(candidates):
         raise ValueError("Every source candidate must receive exactly one decision")
     by_id = {target.id: target for target in targets}
+    normalized_target_ids: dict[str, list[str]] = {}
+    for observed_target in targets:
+        normalized_target_ids.setdefault(normalize_memory_text(observed_target.content), []).append(
+            observed_target.id
+        )
+    ambiguous_target_ids = {
+        target_id
+        for target_ids in normalized_target_ids.values()
+        if len(target_ids) > 1
+        for target_id in target_ids
+    }
     seen: set[int] = set()
     staged: list[StagedReconciliation] = []
     for decision in decisions:
@@ -308,7 +336,9 @@ def _validate_decisions(
             raise ValueError("Reconciliation contains a duplicate or unknown candidate")
         seen.add(index)
         candidate = candidates[index]
-        target = by_id.get(decision.target_fact_id) if decision.target_fact_id else None
+        target: MemoryChunk | None = None
+        if decision.target_fact_id:
+            target = by_id.get(decision.target_fact_id)
         if decision.target_fact_id is not None and target is None:
             raise ValueError("Reconciliation cites an unavailable target")
         if target is not None and decision.expected_version != target.version:
@@ -316,6 +346,8 @@ def _validate_decisions(
         if decision.operation == "correct":
             if candidate.source_role != "user" or candidate.kind != "correction_or_rejection":
                 raise ValueError("Only user correction candidates may be corrected")
+            if decision.target_fact_id in ambiguous_target_ids:
+                raise ValueError("Correction target has ambiguous exact normalized content")
         if decision.operation == "support":
             if candidate.source_role != "user" or candidate.kind == "correction_or_rejection":
                 raise ValueError("Only direct user candidates may support a target")
