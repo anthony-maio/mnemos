@@ -1,0 +1,49 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+from urllib.request import urlopen
+
+repo = Path.cwd()
+prior = repo / 'docs/validation/2026-09-20/assertion-inventory-terminal-v2'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v3')
+assert json.loads((prior / 'status.json').read_bytes())['status'] == 'completed'
+subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--', 'benchmarks/local_memory/assertion_inventory.py'], check=True)
+old = json.loads((prior / 'preparation.json').read_bytes())
+base = json.loads((prior / 'inputs.json').read_bytes())
+inputs = {k: base[k] for k in ('snapshot', 'endpoint', 'temperature', 'max_tokens', 'timeout')}
+inputs.update(model='qwen3.5:9b', think=True, repetitions=1,
+              cases=[{k: c[k] for k in ('id', 'source', 'rubric')} for c in base['cases']])
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == '6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7'
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as response:
+    version = json.loads(response.read())
+hardware = subprocess.check_output(['nvidia-smi', '--query-gpu=name,memory.total,driver_version', '--format=csv,noheader'], text=True).strip()
+root.mkdir(exist_ok=False)
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+for name in ('durability-rubric.json', 'durability-rubric-review.json', 'history-rubric.json', 'history-rubric-review.json'):
+    shutil.copyfile(prior / name, root / name)
+shutil.copyfile(repo / 'benchmarks/local_memory/assertion_inventory.py', root / 'assertion_inventory.py')
+shutil.copyfile(repo / '.venv/assertion_inventory_runner_v3.py', root / 'runner.py')
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'scope': 'Source-only qualified inventory v3 over unchanged reused development cases. No existing facts, target reconciliation, or durable writes.',
+    'comparison': 'Compare retained and omitted meanings against v2 and its v3 offline replay. Model, thinking mode and optional-request prompt differ; no weights-only or single-component causal claim. Offline replay separately isolates validator behavior.',
+    'criteria': 'Original required/forbidden meanings and ambiguity reviews remain unchanged. Preserve all failures and distinguish validator rejection, provider failure and semantic abstention. No aggregate accuracy or adoption based on runtime-valid counts.',
+    'invariants': 'Exact same-source quotes and IDs, scope isolation, non-user attribution, unchanged retained kinds and firewall. Uncertainty requires a request quote; other kinds may carry optional request evidence. Literal quote validity does not establish semantic support or actual retention intent.',
+    'limits': 'One stochastic repetition on reused unblinded development cases. No fresh corpus exposure. No reconciliation, service, host continuity, module benefit or production acceptance claim.',
+    'launch': 'Requires externally supplied archived preparation digest. Do not change frozen files or retry individual negative cases.'
+}, indent=2) + '\n')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+prep = {'prepared_at': datetime.now(timezone.utc).isoformat(),
+        'source_commit': old['source_commit'], 'source_files': old['source_files'],
+        'candidate_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+        'model': model, 'ollama_version': version, 'hardware_inventory': hardware,
+        'parent_observations_sha256': sha(prior / 'observations.jsonl'),
+        'files': {p.name: sha(p) for p in root.iterdir() if p.is_file()}}
+(root / 'preparation.json').write_text(json.dumps(prep, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'model': model['name'], 'started': False}))

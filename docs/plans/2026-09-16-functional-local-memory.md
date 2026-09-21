@@ -667,7 +667,7 @@ qualification attachment and target reconciliation remain open.
 The [Qwen3.5:9b v3 preparation](../validation/2026-09-20/assertion-inventory-preparation-v3/README.md)
 freezes the same 46 development cases, exact model digest and source hashes,
 thinking enabled, temperature 1.0 and 8192 output tokens. All offline checks
-pass and the run is now active. Its model, thinking mode and prompt differ from
+pass. The [terminal review](../validation/2026-09-20/assertion-inventory-semantic-review-v3/README.md) covers all 46 cases: 31 runtime-valid outputs, 13 empty-final budget failures and two source-role rejections. Unnecessary fixture retention and qualification omissions remain; the candidate is unadopted. Its model, thinking mode and prompt differ from
 the 14B experiment; no single-component causal claim or fresh held-out exposure
 is implied. No production default changed.
 
@@ -677,7 +677,7 @@ think=false. All offline paired prompts and schemas match. The launcher rejects
 missing/wrong digests and an unfinished parent before generation. It also binds
 the parent's terminal observations. This changes the provider route as well as
 thinking configuration, so no isolated reasoning claim is planned. The follow-up
-is NOT STARTED and does not change the current run, rubrics or production defaults.
+is now running after verified parent completion and archival. It does not change the original results, rubrics or production defaults.
 
 ### T19 - Reconcile release, documentation, and research claims
 
