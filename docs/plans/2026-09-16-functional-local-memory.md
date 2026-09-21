@@ -803,6 +803,14 @@ production integration has run for reconciliation. Its conservative handling of
 there is no target. That distinction must be resolved before production adoption;
 an unresolved correction cannot silently become a new fact or a no-facts success.
 
+The [v14 instructional-example comparison](../validation/2026-09-21/source-instruction-examples-preparation-v14/README.md)
+changes only the v13 prompt by adding three worked examples. All 46 paired
+offline calls preserve the complete role-bound schema and exact real source
+payload. The combined experimental suite passes 89 tests; formatting and Python
+3.10 module type checking pass. The prepared source is 179b189, with model
+execution now running against the unchanged original cases and rubrics. These
+examples target known development failure classes; this is not fresh acceptance.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
