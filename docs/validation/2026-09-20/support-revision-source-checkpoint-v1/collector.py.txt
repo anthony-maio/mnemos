@@ -1,0 +1,53 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path.cwd()
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-support-revision-v1')
+record = json.loads((source / 'verification.json').read_bytes())
+assert record['status'] == 'passed'
+assert record['source_commit'] == '2996d54db348c1600932ce28fb8ebd916d1b365a'
+assert len(record['checks']) == 6 and all(c['exit_code'] == 0 for c in record['checks'])
+cases = list(ET.parse(source / 'pytest.xml').getroot().iter('testcase'))
+for name, count in [('test_sleep_support_version', 4), ('test_support_revision_fence', 5)]:
+    selected = [c for c in cases if name in c.attrib.get('classname', '').split('.')]
+    assert len(selected) == count and all(len(c) == 0 for c in selected)
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == record['runner_sha256']
+for item in record['artifacts']:
+    path = Path(item['file'])
+    assert sha(path) == item['sha256'] and path.stat().st_size == item['bytes']
+out = repo / 'docs/validation/2026-09-20/support-revision-source-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/final_checkpoint_checks_v3.py', out / 'runner.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+counts = record['checks'][0]['counts']
+(out / 'README.md').write_text(f'''# Support revision source/package checkpoint
+
+Frozen source 2996d54 passes {counts['tests'] - counts['skipped']:,} tests with
+{counts['skipped']} skips and all six source/package checks. The four extraction
+snapshot/version tests and five SQLite support tests are present and pass.
+Formatting, Python 3.10 type checking, JavaScript syntax, build and package
+metadata checks pass.
+
+Support evidence is now bound to the observed target revision, checked before
+use and fenced again at atomic commit. Conflicting support/correction operations
+against one target in the same extraction are rejected. The baseline failures
+and already-passing controls are distinguished in the sibling
+[repair record](../support-revision-fence-v1.md).
+
+This wheel changes production code and requires fresh installed verification.
+Earlier installed results do not prove this artifact. Semantic extraction,
+full-module benefit, wider host recovery and daily-use acceptance remain open.
+No live installation, migration or publication occurred.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'counts': counts}))

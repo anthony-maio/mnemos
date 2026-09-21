@@ -265,8 +265,20 @@ for meanings that should be discarded. Return JSON only.
 """
 
 
-def validate_qualified_inventory(
-    inventory: QualifiedInventory, events: list[EpisodicEvent]
+QUALIFIED_PROMPT_V3 = QUALIFIED_PROMPT.replace(
+    "For every other\nkind set retention_request_quote to null.",
+    "For every other kind, retention_request_quote may be a real, nonblank "
+    "contiguous quote from the same source when the source explicitly requests "
+    "retention; otherwise set it to null. An exact quote alone is not proof of "
+    "retention intent.",
+)
+
+
+def _validate_qualified_inventory(
+    inventory: QualifiedInventory,
+    events: list[EpisodicEvent],
+    *,
+    allow_optional_request_quote: bool,
 ) -> QualifiedInventory:
     sources = _sources(events)
     base = Inventory(
@@ -286,7 +298,10 @@ def validate_qualified_inventory(
             if request is None or not request.strip() or request not in event.content:
                 raise ValueError("Retained uncertainty requires a source-bound request quote")
         elif request is not None:
-            raise ValueError("Request quote applies only to explicitly retained uncertainty")
+            if not allow_optional_request_quote:
+                raise ValueError("Request quote applies only to explicitly retained uncertainty")
+            if not request.strip() or request not in event.content:
+                raise ValueError("Retention request quote must be a nonblank source quote")
         seen = set()
         for qualification in assertion.qualifications:
             if qualification.quote not in event.content:
@@ -301,10 +316,29 @@ def validate_qualified_inventory(
     return inventory
 
 
-def retained_qualified_assertions(
+def validate_qualified_inventory(
     inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> QualifiedInventory:
+    result = _validate_qualified_inventory(inventory, events, allow_optional_request_quote=False)
+    return result
+
+
+def validate_qualified_inventory_v3(
+    inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> QualifiedInventory:
+    result = _validate_qualified_inventory(inventory, events, allow_optional_request_quote=True)
+    return result
+
+
+def _render_retained_qualified_assertions(
+    inventory: QualifiedInventory,
+    events: list[EpisodicEvent],
+    *,
+    allow_optional_request_quote: bool,
 ) -> list[QualifiedAssertion]:
-    validate_qualified_inventory(inventory, events)
+    _validate_qualified_inventory(
+        inventory, events, allow_optional_request_quote=allow_optional_request_quote
+    )
     sources = {e.id: e for e in events}
     retained = []
     for assertion in inventory.assertions:
@@ -322,8 +356,30 @@ def retained_qualified_assertions(
     return retained
 
 
-async def inventory_qualified_assertions(
-    events: list[EpisodicEvent], provider: LLMProvider
+def retained_qualified_assertions(
+    inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> list[QualifiedAssertion]:
+    result = _render_retained_qualified_assertions(
+        inventory, events, allow_optional_request_quote=False
+    )
+    return result
+
+
+def retained_qualified_assertions_v3(
+    inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> list[QualifiedAssertion]:
+    result = _render_retained_qualified_assertions(
+        inventory, events, allow_optional_request_quote=True
+    )
+    return result
+
+
+async def _inventory_qualified_assertions(
+    events: list[EpisodicEvent],
+    provider: LLMProvider,
+    *,
+    prompt: str,
+    allow_optional_request_quote: bool,
 ) -> QualifiedInventory:
     sources = _sources(events)
     schema = QualifiedInventory.model_json_schema()
@@ -331,8 +387,8 @@ async def inventory_qualified_assertions(
         "type": "string",
         "enum": sorted(sources),
     }
-    prompt = (
-        QUALIFIED_PROMPT
+    request = (
+        prompt
         + "\nSOURCE EVENTS:\n"
         + json.dumps(
             [
@@ -350,5 +406,31 @@ async def inventory_qualified_assertions(
     kwargs: dict[str, Any] = {}
     if getattr(provider, "supports_structured_output", False):
         kwargs["format"] = schema
-    response = await provider.predict(prompt, **kwargs)
-    return validate_qualified_inventory(QualifiedInventory.model_validate_json(response), events)
+    inventory = QualifiedInventory.model_validate_json(await provider.predict(request, **kwargs))
+    return _validate_qualified_inventory(
+        inventory, events, allow_optional_request_quote=allow_optional_request_quote
+    )
+
+
+async def inventory_qualified_assertions(
+    events: list[EpisodicEvent], provider: LLMProvider
+) -> QualifiedInventory:
+    result = await _inventory_qualified_assertions(
+        events,
+        provider,
+        prompt=QUALIFIED_PROMPT,
+        allow_optional_request_quote=False,
+    )
+    return result
+
+
+async def inventory_qualified_assertions_v3(
+    events: list[EpisodicEvent], provider: LLMProvider
+) -> QualifiedInventory:
+    result = await _inventory_qualified_assertions(
+        events,
+        provider,
+        prompt=QUALIFIED_PROMPT_V3,
+        allow_optional_request_quote=True,
+    )
+    return result
