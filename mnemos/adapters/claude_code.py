@@ -110,6 +110,30 @@ def _text_content(value: Any) -> str:
     return "".join(pieces)
 
 
+_INJECTED_RECORD_FLAGS = ("isCompactSummary", "isMeta", "isSidechain", "isApiErrorMessage")
+
+
+def _conversation_turn(record: Mapping[str, Any]) -> bool:
+    """Whether a record is a turn of this conversation rather than injected text.
+
+    Claude Code also writes compaction summaries, skill and command
+    expansions, subagent turns, task notifications, and synthetic error
+    replies as user or assistant records. None of that was said by the user,
+    so none of it may become user evidence. Older transcripts carry no
+    origin fields, so only a positive injection signal excludes a record.
+    """
+
+    if any(record.get(flag) is True for flag in _INJECTED_RECORD_FLAGS):
+        return False
+    origin = record.get("origin")
+    if isinstance(origin, Mapping) and origin.get("kind") != "human":
+        return False
+    if record.get("promptSource") == "system":
+        return False
+    message = record.get("message")
+    return not (isinstance(message, Mapping) and message.get("model") == "<synthetic>")
+
+
 def _parse_timestamp(value: Any) -> datetime:
     if isinstance(value, str):
         try:
@@ -169,7 +193,7 @@ def read_transcript_deltas(
                 record = json.loads(line.decode("utf-8"))
             except (UnicodeDecodeError, json.JSONDecodeError):
                 continue
-            if not isinstance(record, dict):
+            if not isinstance(record, dict) or not _conversation_turn(record):
                 continue
             message = record.get("message")
             role = record.get("role")
