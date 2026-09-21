@@ -2,6 +2,17 @@
 
 ## Current evidence, September 20, 2026
 
+September 21: the [Gemma 27B comparison](../2026-09-21/source-classification-semantic-v12/README.md)
+finishes 46 cases with 43 structurally valid outputs, three failures and 34
+source-verified excerpts. It recovers a marker while introducing unwanted
+retention and duplicate meaning. The initial provider retry failure remains in
+the result. No adoption or fresh held-out acceptance follows.
+
+The [source-mutation repair](../2026-09-21/source-evidence-snapshot-focused-v1/README.md)
+at 56687e0 passes 62 focused cases, formatting and Python 3.10 type checking.
+Full source/package and installed verification are pending. It changes production
+extraction, so prior wheel parity does not cover this newer source.
+
 The [Gemma 12B fixed-contract comparison](../2026-09-21/source-classification-semantic-v11/README.md)
 has 43 valid outputs, three validation failures and 31 source-verified excerpts.
 Its mixture of corrected metadata and retention/range regressions does not

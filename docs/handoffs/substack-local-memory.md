@@ -14,6 +14,19 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [Gemma 27B comparison](../validation/2026-09-21/source-classification-semantic-v12/README.md)
+completed all 46 cases with 43 structurally valid outputs and three failures,
+including the initial provider retry exhaustion. Its 34 excerpts preserve source
+text and provenance, but it retains temporary instructions and duplicates policy
+meaning. It recovers one previously omitted marker; that improvement does not
+justify adoption. The schema-only source-authority comparison is now running.
+
+A separate [production source-mutation repair](../validation/2026-09-21/source-evidence-snapshot-focused-v1/README.md)
+prevents caller-owned source evidence from changing correction authority while
+the model is awaited. It passes 62 focused tests. Full-suite/package and installed
+verification of source 56687e0 are pending, so earlier wheel verification must
+not be presented as covering this repair.
+
 The [fixed-contract Gemma 12B comparison](../validation/2026-09-21/source-classification-semantic-v11/README.md)
 completed with 43 valid outputs, three failures and 31 exact source excerpts.
 Some request-reference mistakes disappeared, but temporary instructions and a

@@ -767,9 +767,13 @@ previous installed checkpoint; no model quality or native acceptance follows.
 The [Gemma 27B comparison v12](../validation/2026-09-21/source-classification-preparation-v12/README.md)
 uses the same v9 classifier, prompt, schema, settings and 46 original cases.
 Only the requested model changes to the installed digest bound in preparation.
-All offline paired checks pass; execution is running. The loading log reports
+All offline paired checks pass. The [completed comparison](../validation/2026-09-21/source-classification-semantic-v12/README.md)
+has 43 valid outputs, three failures and 34 source-verified excerpts. It recovers
+the mixed-policy marker but duplicates policy meaning and retains temporary
+formatting and test instructions. The first case exhausted provider retries;
+that failure remains in the result. The candidate is not adopted. The loading log reports
 45 of 63 layers offloaded to the GPU, so this is not an all-GPU configuration
-or an isolated latency benchmark. No quality result or adoption is claimed.
+or an isolated latency benchmark. No fresh quality acceptance is claimed.
 
 The experimental `source_role_binding.py` wrapper binds each source ID to its
 allowed memory kinds in the structured decoding schema. Non-user sources can
@@ -781,8 +785,8 @@ mechanical constraint, not evidence of correct durability judgments. The
 [v13 preparation](../validation/2026-09-21/source-role-binding-preparation-v13/README.md)
 freezes the same 46 v9 cases, model settings and rubrics. Offline paired calls
 confirm unchanged prompts and source-specific schema branches; two launch
-guards reject missing or incorrect preparation digests. Real-model comparison
-and production integration remain unexecuted for this candidate.
+guards reject missing or incorrect preparation digests. The real-model comparison
+started after v12 completed; production integration remains unexecuted.
 
 ### T19 - Reconcile release, documentation, and research claims
 
