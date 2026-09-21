@@ -25,8 +25,11 @@ See the [baseline transcript](support-revision-baseline-v1.log).
 
 All nine new extraction and service cases pass with the repair. The successful
 support control checks unchanged content/version, attached source evidence and
-job completion. Full source and installed-package verification of this repair
-remain open. The earlier 2,135-test checkpoint predates this change.
+job completion. The [full source checkpoint](support-revision-source-checkpoint-v1/README.md)
+passes 2,144 tests with four skips and all six source/package checks. The fresh
+[installed check](support-revision-installed-checkpoint-v1/README.md) passes
+868 selected cases with four matching skips, origin checks and the replay probe.
+The earlier 2,135-test checkpoint predates this change.
 
 This is a concurrency repair, not evidence that model-selected support is
 semantically correct. No live memory migration or host configuration changed.

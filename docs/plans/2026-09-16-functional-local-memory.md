@@ -636,14 +636,21 @@ errors pass the revised contract and one still fails exact quotation checking.
 Original v2 results and semantic criteria remain unchanged. Extraction quality,
 qualification attachment and target reconciliation remain open.
 
+The [Qwen3.5:9b v3 preparation](../validation/2026-09-20/assertion-inventory-preparation-v3/README.md)
+freezes the same 46 development cases, exact model digest and source hashes,
+thinking enabled, temperature 1.0 and 8192 output tokens. All offline checks
+pass and the run is now active. Its model, thinking mode and prompt differ from
+the 14B experiment; no single-component causal claim or fresh held-out exposure
+is implied. No production default changed.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Latest fully verified source [2996d54](../validation/2026-09-20/support-revision-source-checkpoint-v1/README.md)
 passes 2,144 tests with four skips and all six source/package checks. It includes
-the support-version race repair. Its changed wheel is undergoing fresh isolated
-installed verification; the earlier installed result below does not verify it.
-The [installed check](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md)
-passes 859 cases with four matching skips and the replay probe. It includes
+the support-version race repair. Its changed wheel passes fresh isolated
+installed verification.
+The [installed check](../validation/2026-09-20/support-revision-installed-checkpoint-v1/README.md)
+passes 868 cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git
 environment isolation. The previous installed failure is preserved alongside
 its repair. Earlier verified d937892 and Hermes v35 evidence remain bound to

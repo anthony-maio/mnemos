@@ -1,0 +1,54 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = temp / 'mnemos-installed-checks-support-revision-v1'
+record = json.loads((source / 'installation.json').read_bytes())
+contract = json.loads((source / 'contract.json').read_bytes())
+assert record['status'] == contract['status'] == 'passed'
+assert record['bindings_after']['commit'] == '2996d54db348c1600932ce28fb8ebd916d1b365a'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert record['runner_sha256'] == sha(repo / '.venv/run_combined_installed_check_v53.py')
+assert record['bindings_before']['checks_sha256'] == sha(temp / 'mnemos-package-checks-support-revision-v1/verification.json')
+for command in record['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(source / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+expected = json.loads((source / 'expected-contract-cases.json').read_bytes())
+support_cases = [item for item in expected if item['module'] in
+                 {'test_sleep_support_version', 'test_support_revision_fence'}]
+assert len(support_cases) == 9 and all(item['outcome'] == 'passed' for item in support_cases)
+for name in ('test_support_binds_the_observed_target_version',
+             'test_support_cannot_attach_evidence_after_model_snapshot_correction',
+             'test_support_and_correction_same_target_are_rejected_in_one_extraction',
+             'test_support_success_attaches_evidence_without_revision_race'):
+    assert any(name in str(item) for item in expected), name
+out = repo / 'docs/validation/2026-09-20/support-revision-installed-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+for name in ('run_combined_installed_check_v53.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(__file__, out / 'collector.py.txt')
+summary = record['contract']['junit_summary']
+(out / 'README.md').write_text(f'''# Support revision installed-package checkpoint
+
+The wheel from frozen source 2996d54 passes {summary['tests'] - summary['skipped']}
+installed cases with {summary['skipped']} skips. Every selected result matches
+the frozen source JUnit, including skip reasons. This selection includes all
+nine new extraction snapshot/version and SQLite support cases. Installed module
+origins, wheel bytes, source/test hashes and replay checks pass.
+
+This is a fresh isolated installation of the changed wheel. It does not alter
+the live host environment or establish semantic support quality, all-module
+benefit, wider native-host recovery or daily-use acceptance. The earlier
+baseline failures remain preserved beside the repair record.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'junit': summary}))
