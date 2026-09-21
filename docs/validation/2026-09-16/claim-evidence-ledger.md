@@ -2,8 +2,10 @@
 
 ## Current evidence, September 20, 2026
 
-The latest full [source checkpoint](../2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
-is a128ef7: 2,158 tests pass with four skips and all six source/package checks.
+The [v8 temperature control](../2026-09-20/source-selection-semantic-v8/README.md) preserves 44 unchanged outcomes out of 46, removes one unwanted fixture and improves one retention-request reference. It has 44 runtime-valid cases, two authority failures and 34 exact source excerpts. Remaining selection defects prevent adoption; this is not fresh held-out acceptance.
+
+The latest full [source checkpoint](../2026-09-20/extractive-source-checkpoint-v1/README.md)
+is 6e8456b: 2,209 tests pass with four skips and all six source/package checks.
 Its wheel is byte-identical to the 995d9c2 wheel covered by the
 [893-case installed suite](../2026-09-20/spreading-budget-installed-checkpoint-v1/README.md),
 with four matching skips, installed-origin checks and restart replay. These are

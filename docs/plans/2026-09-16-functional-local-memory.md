@@ -707,7 +707,16 @@ policies, corrections, the one-turn marker and manuscript requirement, but retai
 an options question, fictional/hypothetical material and inspection fixtures.
 It also loses the independent marker in the continuing-policy case. Both model
 configurations remain unadopted; no criteria or previous outcomes changed.
-A full isolated source/package check on 6e8456b is running and has no final result yet.
+The [full isolated source/package check on 6e8456b](../validation/2026-09-20/extractive-source-checkpoint-v1/README.md)
+passes 2,209 tests with four skips and all six checks. Wheel bytes match the
+previous installed checkpoint; experimental selectors remain source-only.
+
+The [temperature-zero control v8](../validation/2026-09-20/source-selection-semantic-v8/README.md)
+finishes 46 cases with 44 valid outputs, two authority rejections and 34 verified
+source excerpts. Forty-four outcomes match v7 exactly. One inspection fixture
+is omitted and one historical report gains a correct retention-request reference.
+The remaining unwanted retention and marker omission persist. No candidate is
+adopted; this is reused-development evidence, not fresh acceptance.
 
 Future integration must preserve the current `SleepDaemon.propose_facts` ->
 `LocalMemoryService.process_job` -> transactional `commit_fact_and_job` path.

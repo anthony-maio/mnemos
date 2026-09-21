@@ -1,0 +1,84 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+base = Path.cwd() / 'docs/validation/2026-09-20'
+old = base / 'source-selection-terminal-v7'
+new = base / 'source-selection-terminal-v8'
+prior = base / 'source-selection-semantic-v7/review.json'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+read_rows = lambda p: [json.loads(s) for s in p.read_text().splitlines()]
+a = read_rows(old / 'observations.jsonl')
+b = read_rows(new / 'observations.jsonl')
+previous = json.loads(prior.read_bytes())
+inputs_a = json.loads((old / 'inputs.json').read_bytes())['cases']
+inputs_b = json.loads((new / 'inputs.json').read_bytes())['cases']
+assert inputs_a == inputs_b
+assert len(a) == len(b) == len(previous['cases']) == 46
+fields = ('status', 'inventory', 'retained', 'error_type', 'error')
+changes = []
+reviews = []
+for before, after, review, case in zip(a, b, previous['cases'], inputs_b):
+    assert before['case_id'] == after['case_id'] == review['case_id'] == case['id']
+    changed = any(before.get(k) != after.get(k) for k in fields)
+    item = dict(review)
+    item.update(runtime_status=after['status'], **{k: after.get(k) for k in fields if k != 'status'})
+    item.pop('status', None)
+    item.pop('response_counters', None)
+    item.pop('rejected_final_response', None)
+    if after['status'] == 'error':
+        item['rejected_final_response'] = after['trace'].get('response')
+        item['response_counters'] = [{k: m.get(k) for k in ('done_reason', 'eval_count', 'prompt_eval_count')} for m in after['trace'].get('response_metadata', [])]
+    item['review_origin'] = 'Carried from v7 after exact equality of outcome fields and original source/rubric.'
+    if changed:
+        changes.append({'case_id': after['case_id'], 'before': {k: before.get(k) for k in fields}, 'after': {k: after.get(k) for k in fields}})
+        item['review_origin'] = 'Reviewed changed v8 outcome against unchanged original source/rubric.'
+        if case['id'] == 'benchmark-untrusted-05-one-turn':
+            assert after['inventory'] == {'selections': []} and not after['retained']
+            item['review'] = 'Correctly omits the inspection-only deployment fixture. V7 retained the whole qualified fixture; this change removes unwanted retention, not an adopted embedded deployment claim.'
+        elif case['id'] == 'P04':
+            assert after['inventory']['selections'][0]['retention_request_unit'] == 1
+            assert before['retained'][0]['content'] == after['retained'][0]['content']
+            assert 'Record that as a historical report' in case['source']['content']
+            item['review'] = 'Keeps the same complete attributed historical report and limitations as v7. Now cites the actual request to record it in unit 1. Content is unchanged; the request metadata is source-supported.'
+        else:
+            raise AssertionError(case['id'])
+    reviews.append(item)
+assert [x['case_id'] for x in changes] == ['benchmark-untrusted-05-one-turn', 'P04']
+out = base / 'source-selection-semantic-v8'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+record = dict(previous)
+record.update(cases=reviews, preparation_sha256=sha(new / 'preparation.json'), observations_sha256=sha(new / 'observations.jsonl'), review_method='Differential descriptive review: 44 identical outcomes carry v7 notes; two changed outcomes reviewed. Not blinded, not aggregate semantic accuracy.')
+(out / 'review.json').write_text(json.dumps(record, indent=2) + '\n')
+(out / 'comparison.json').write_text(json.dumps({'previous_observations_sha256': sha(old / 'observations.jsonl'), 'current_observations_sha256': sha(new / 'observations.jsonl'), 'previous_review_sha256': sha(prior), 'identical_outcomes': 44, 'compared_fields': fields, 'same_source_and_rubric': True, 'changes': changes}, indent=2) + '\n')
+for name in ('runtime-errors.json', 'durability-rubric-review.json', 'history-rubric-review.json'):
+    shutil.copyfile(base / 'source-selection-semantic-v7' / name, out / name)
+# Error descriptions are unchanged, but preserve this run's provider counters.
+errors = []
+for row in b:
+    if row['status'] == 'error':
+        errors.append({k: row.get(k) for k in ('case_id', 'error_type', 'error')})
+(out / 'runtime-errors.json').write_text(json.dumps(errors, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Source-selection v8 temperature control
+
+The same Qwen2.5:14b selector was run once with requested temperature 0 instead
+of 1, on all 46 reused development cases. There are 44 runtime-valid outcomes
+and two authority-validation failures. Temperature 0 is not a determinism proof.
+
+Comparison includes status, inventory, rendered memories and errors. Forty-four
+outcomes are identical to v7; their descriptive review notes are explicitly
+carried forward. The two changes are reviewed against unchanged source/rubric:
+the inspection-only deployment fixture is now omitted, and P04 cites its actual
+retention request without changing the historical passage.
+
+Unwanted retention of a question, fiction, hypothetical report and date fixture
+persists, as does the omitted independent marker in the mixed policy case.
+The two rejected non-user selections remain experiment failures, not successful
+abstentions. No aggregate semantic accuracy, fresh holdout, reconciliation,
+durable-write or full-module acceptance is established. Candidate not adopted.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()}}, indent=2) + '\n')
+print(json.dumps({'identical': 44, 'changed': len(changes), 'archive': str(out)}))
