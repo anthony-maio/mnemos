@@ -725,6 +725,15 @@ Reconciliation still needs the scoped target snapshot, explicit user correction
 evidence and expected-version checks, including changes while embedding awaits.
 No experimental selector has been connected to production writes.
 
+The [explicit-discard classification v9 preparation](../validation/2026-09-20/source-classification-preparation-v9/README.md)
+freezes all 46 original cases and rubrics before execution. The experimental
+classifier adds question, temporary-instruction, quoted-material, unrequested-
+speculation and unaccepted-suggestion labels; these remain auditable but emit
+no memory. Source, scope, authority and mutation guards still apply. The focused
+selector/classifier suite passes 52 tests, with formatting and Python 3.10 type
+checking passing. The local Qwen2.5:14b temperature-zero comparison is running;
+no semantic result or adoption is claimed. Prompt and schema change together.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
