@@ -621,7 +621,6 @@ class ClaudeCodeAdapter:
                 "allowed_scopes": ["project", "workspace", "global"],
                 "top_k": self.top_k,
                 "max_context_tokens": 1200,
-                "profile": "baseline",
             }
         )
         context_text = format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)

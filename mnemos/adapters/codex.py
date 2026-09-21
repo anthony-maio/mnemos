@@ -222,7 +222,6 @@ class CodexAdapter:
                 "allowed_scopes": ["project", "workspace", "global"],
                 "top_k": self.top_k,
                 "max_context_tokens": self.max_context_tokens,
-                "profile": "baseline",
             }
         )
         if not isinstance(result, Mapping):

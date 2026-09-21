@@ -537,7 +537,6 @@ def _register_service_tools(mcp: Any) -> None:
                 "allowed_scopes": list(_parse_allowed_scopes(allowed_scopes)),
                 "top_k": max(0, min(int(top_k), 100)),
                 "max_context_tokens": 1200,
-                "profile": "baseline",
                 "view": view,
             },
         )

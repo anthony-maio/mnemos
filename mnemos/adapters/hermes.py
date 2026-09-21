@@ -588,7 +588,6 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                         "allowed_scopes": ["project", "workspace", "global"],
                         "top_k": 5,
                         "max_context_tokens": self.max_context_tokens,
-                        "profile": "baseline",
                     }
                 )
             )

@@ -889,7 +889,7 @@ class LocalMemoryService:
         reviewing_capture = request.view == "captured_evidence"
         return {
             "schema_version": 1,
-            "profile": request.profile,
+            "profile": request.profile or self.engine.config.retrieval.profile,
             **(
                 {"status": "degraded", "degraded": True, "retrieval": chunks.diagnostics}
                 if isinstance(chunks, RetrievedChunks)

@@ -312,7 +312,6 @@ async def dispatch_tool(
                 "allowed_scopes": ["project"],
                 "top_k": args.get("top_k", 5),
                 "max_context_tokens": args.get("max_context_tokens", 1200),
-                "profile": "baseline",
                 "view": args.get("view", "memory"),
             }
         )
