@@ -107,6 +107,29 @@ def _sources(events: list[EpisodicEvent]) -> dict[str, EpisodicEvent]:
     sources = {e.id: e for e in events}
     if len(sources) != len(events):
         raise ValueError("Inventory source IDs must be unique")
+    for event in events:
+        profile = event.metadata.get("user_profile_id")
+        if not isinstance(profile, str) or not profile.strip():
+            raise ValueError("Inventory requires a nonblank profile identity")
+        if event.scope not in {"project", "workspace", "global"}:
+            raise ValueError("Inventory has an invalid scope identity")
+        if event.scope == "global":
+            if event.scope_id is not None:
+                raise ValueError("Global inventory scope identity must have no scope ID")
+        elif not isinstance(event.scope_id, str) or not event.scope_id.strip():
+            raise ValueError("Inventory requires a nonblank scope identity")
+        for key, canonical in (("scope", event.scope), ("scope_id", event.scope_id)):
+            if key in event.metadata and event.metadata[key] != canonical:
+                raise ValueError("Inventory scope metadata contradicts canonical identity")
+        for key in ("project_id", "workspace_id"):
+            value = event.metadata.get(key)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError("Inventory context metadata has an invalid identity")
+        scoped_key = {"project": "project_id", "workspace": "workspace_id"}.get(event.scope)
+        if scoped_key is not None:
+            scoped_value = event.metadata.get(scoped_key)
+            if scoped_value is not None and scoped_value != event.scope_id:
+                raise ValueError("Inventory context metadata contradicts canonical identity")
     if len({(e.metadata.get("user_profile_id"), e.scope, e.scope_id) for e in events}) != 1:
         raise ValueError("Inventory cannot combine scope partitions")
     firewall = MemoryWriteFirewall()

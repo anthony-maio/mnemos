@@ -146,3 +146,68 @@ def test_source_inventory_cannot_choose_existing_targets(extra):
 def test_blank_quote_rejected():
     with pytest.raises(ValueError):
         assertion(source(), quote="  ")
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    [
+        {},
+        {"user_profile_id": " "},
+        {"user_profile_id": 42},
+        {"user_profile_id": "profile-one", "scope": "workspace"},
+        {"user_profile_id": "profile-one", "scope_id": "other"},
+        {"user_profile_id": "profile-one", "project_id": "other"},
+        {"user_profile_id": "profile-one", "workspace_id": " "},
+    ],
+)
+async def test_invalid_scope_metadata_rejected_before_provider(metadata):
+    event = source().model_copy(update={"metadata": metadata})
+
+    class Provider:
+        async def predict(self, *args, **kwargs):
+            pytest.fail("invalid source reached provider")
+
+    with pytest.raises(ValueError, match="identity|metadata"):
+        await inventory_assertions([event], Provider())
+
+
+@pytest.mark.parametrize(
+    "scope,scope_id,metadata",
+    [
+        ("workspace", "workspace-one", {"user_profile_id": "profile-one", "workspace_id": "other"}),
+        ("project", " ", {"user_profile_id": "profile-one"}),
+        ("global", "project-one", {"user_profile_id": "profile-one"}),
+    ],
+)
+def test_invalid_canonical_scope_identity(scope, scope_id, metadata):
+    event = source().model_copy(update={"scope": scope, "scope_id": scope_id, "metadata": metadata})
+    with pytest.raises(ValueError, match="identity|metadata"):
+        validate_inventory(Inventory(assertions=[]), [event])
+
+
+@pytest.mark.parametrize(
+    "scope,scope_id,metadata",
+    [
+        ("project", "project-one", {"project_id": "project-one", "workspace_id": "workspace-one"}),
+        (
+            "workspace",
+            "workspace-one",
+            {"project_id": "project-one", "workspace_id": "workspace-one"},
+        ),
+        ("global", None, {"project_id": "project-one", "workspace_id": "workspace-one"}),
+    ],
+)
+def test_valid_context_is_not_confused_with_canonical_scope(scope, scope_id, metadata):
+    event = source().model_copy(
+        update={
+            "scope": scope,
+            "scope_id": scope_id,
+            "metadata": {
+                "user_profile_id": "profile-one",
+                "scope": scope,
+                "scope_id": scope_id,
+                **metadata,
+            },
+        }
+    )
+    assert validate_inventory(Inventory(assertions=[]), [event]).assertions == []
