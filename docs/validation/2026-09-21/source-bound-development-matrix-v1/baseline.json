@@ -1,0 +1,452 @@
+{
+  "session_split": "development",
+  "session_id": "fresh-v2-development-201",
+  "profile": {
+    "name": "baseline",
+    "enabled_modules": [],
+    "disabled_module": null
+  },
+  "observation": {
+    "session_id": "fresh-v2-development-201",
+    "repetition": 1,
+    "critical_retention": [],
+    "critical_retrieval": [],
+    "supported_precision": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "answerable_hits": [
+      false
+    ],
+    "no_answer_correct": [
+      true
+    ],
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "surprisal_filter_kept": [
+      true
+    ],
+    "length_filter_kept": [
+      true
+    ],
+    "stale_fact_count": 0,
+    "retrieved_fact_count": 0,
+    "latency_ms": 2768.6362999957055,
+    "cold_latency_ms": 119.52030000975356,
+    "token_cost": null,
+    "bytes_before": 251136,
+    "bytes_after": 3933240,
+    "provider": "ollama",
+    "model_revision": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "adapter_kind": "real_embedding_observed",
+    "verified_embedding_provenance": true,
+    "verified_model_provenance": false,
+    "raw_output": {
+      "adapter": "ollama",
+      "provider": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen3.5:9b",
+      "embedding_model": "nomic-embed-text:latest",
+      "profile": {
+        "name": "baseline",
+        "enabled_modules": [],
+        "disabled_module": null
+      },
+      "module_switches": {
+        "enabled": [],
+        "disabled": null,
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "operation": "response",
+          "event_id": "fresh-v2-e201-system",
+          "status": "committed",
+          "job_id": "event:bce9bb974f4960cde6bc7f3f64b255f98bddd8dcb7a2d34208b2e4335343a462",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "capture",
+          "event_id": "fresh-v2-e201-capture",
+          "status": "committed",
+          "job_id": "event:0e46aceed1cb2f50937cdd33a24ffb16e2b4d88d16926f4f7388b963fbddc176",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-assistant",
+          "status": "committed",
+          "job_id": "event:fd01094e41e6f4cb1b311d5c6f24ad67f90d7ef029b705d8cbfc251607a4e946",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-hypothesis",
+          "status": "committed",
+          "job_id": "event:978526701e87588ef7f7d56180b75863fe4d28d650483002db4cf9c3a84d514b",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "maintenance",
+          "status": "completed",
+          "pending_or_failed_statuses": [],
+          "jobs": [
+            {
+              "id": "event:bce9bb974f4960cde6bc7f3f64b255f98bddd8dcb7a2d34208b2e4335343a462",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:0e46aceed1cb2f50937cdd33a24ffb16e2b4d88d16926f4f7388b963fbddc176",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:fd01094e41e6f4cb1b311d5c6f24ad67f90d7ef029b705d8cbfc251607a4e946",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:978526701e87588ef7f7d56180b75863fe4d28d650483002db4cf9c3a84d514b",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-answer",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-unknown",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        }
+      ],
+      "lifecycle_summary": {
+        "correct": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        },
+        "forget": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        }
+      },
+      "errors": [],
+      "unsupported_operations": [],
+      "unsupported_modules": [],
+      "extraction_judgements": [
+        {
+          "runtime_fact_id": "e603110b-944c-458a-9946-3e819259f947",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-system"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "06865dfb-f694-4815-a534-50af18d4a582",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-capture"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "efc7d1a2-ec28-48f8-8293-8ffb21553303",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-assistant"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "5d15db2d-41c0-4b07-83f6-e2a7f6a0f196",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-hypothesis"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        }
+      ],
+      "critical_retention_judgements": [],
+      "surprisal_filter_decisions": [
+        {
+          "event_id": "fresh-v2-e201-capture",
+          "job_id": "event:0e46aceed1cb2f50937cdd33a24ffb16e2b4d88d16926f4f7388b963fbddc176",
+          "job_status": "completed",
+          "decision": "facts",
+          "kept": true,
+          "source": "durable_job_result"
+        }
+      ],
+      "length_filter_policy": {
+        "minimum_chars": 50,
+        "boilerplate_exact_casefold": [
+          "got it",
+          "ok",
+          "okay",
+          "thanks",
+          "thanks!"
+        ],
+        "applied": "counterfactual_shadow_only",
+        "service_decision": "not_exposed",
+        "events": [
+          "fresh-v2-e201-capture"
+        ]
+      },
+      "controlled_state_pairs": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision is an exact frozen text, scope, and source-evidence proxy; unmatched text, including paraphrases, counts as false. It does not measure semantic factual precision.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provenance": {
+        "model_sha256": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "options_sha256": "823611438473df22fdcf665923b543f86d4292f98c6cd0a88ef71bfc5fb8c911",
+        "code_sha256": "03c60d2239738f196d794bdbbf6168ad2f6dab6d36f1f79b13a623e8a76422f9",
+        "model_metadata": {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        "embedding_metadata": {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        "embedding_verified": true,
+        "cognition_observed": false,
+        "verified": false
+      },
+      "provider_trace": {
+        "config": {
+          "extraction_mode": "source_bound",
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "qwen3.5:9b",
+          "embedding_model": "nomic-embed-text:latest",
+          "timeout_seconds": 180.0,
+          "temperature": 0.0,
+          "max_tokens": 8192,
+          "think": false
+        },
+        "trace_key": {
+          "run_key": "fresh-v2-development-201-baseline-r1",
+          "profile": "baseline"
+        },
+        "service_instances": 2,
+        "predict_calls": [],
+        "classify_calls": [],
+        "embed_calls": [
+          {
+            "latency_ms": 1382.2814000304788,
+            "role": "document",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 120.11139997048303,
+            "role": "document",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 21.963800012599677,
+            "role": "document",
+            "text_chars": 89,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 24
+            }
+          },
+          {
+            "latency_ms": 12.854999979026616,
+            "role": "document",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 13.237699982710183,
+            "role": "query",
+            "text_chars": 56,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 18
+            }
+          },
+          {
+            "latency_ms": 29.146499990019947,
+            "role": "query",
+            "text_chars": 67,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 12
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 1141635900,
+            "load_duration": 1104438900,
+            "prompt_eval_count": 14
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 118011400,
+            "load_duration": 4225100,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 20837500,
+            "load_duration": 4189400,
+            "prompt_eval_count": 24
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11720500,
+            "load_duration": 5321300,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11582000,
+            "load_duration": 6333800,
+            "prompt_eval_count": 18
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 28071400,
+            "load_duration": 4742800,
+            "prompt_eval_count": 12
+          }
+        ]
+      }
+    }
+  },
+  "preparation_sha256": "edbc0bc41c3107d9c54cf19a7504186c01a07fc632874d915588c376e4736eb9"
+}

@@ -1,0 +1,736 @@
+{
+  "session_split": "development",
+  "session_id": "fresh-v2-development-201",
+  "profile": {
+    "name": "ablate-sleep_consolidation",
+    "enabled_modules": [
+      "surprisal_gating",
+      "mutable_rag",
+      "affective_routing",
+      "spreading_activation"
+    ],
+    "disabled_module": "sleep_consolidation"
+  },
+  "observation": {
+    "session_id": "fresh-v2-development-201",
+    "repetition": 1,
+    "critical_retention": [],
+    "critical_retrieval": [],
+    "supported_precision": [
+      false,
+      false,
+      false
+    ],
+    "answerable_hits": [
+      false
+    ],
+    "no_answer_correct": [
+      true
+    ],
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "surprisal_filter_kept": [
+      true
+    ],
+    "length_filter_kept": [
+      true
+    ],
+    "stale_fact_count": 0,
+    "retrieved_fact_count": 0,
+    "latency_ms": 3789.751799951773,
+    "cold_latency_ms": 108.71559998486191,
+    "token_cost": null,
+    "bytes_before": 251136,
+    "bytes_after": 3887920,
+    "provider": "ollama",
+    "model_revision": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "adapter_kind": "real_model",
+    "verified_embedding_provenance": true,
+    "verified_model_provenance": true,
+    "raw_output": {
+      "adapter": "ollama",
+      "provider": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen3.5:9b",
+      "embedding_model": "nomic-embed-text:latest",
+      "profile": {
+        "name": "ablate-sleep_consolidation",
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "spreading_activation"
+        ],
+        "disabled_module": "sleep_consolidation"
+      },
+      "module_switches": {
+        "enabled": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "spreading_activation"
+        ],
+        "disabled": "sleep_consolidation",
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "operation": "response",
+          "event_id": "fresh-v2-e201-system",
+          "status": "committed",
+          "job_id": "event:c2e5d5e8945adb84e79e6c7c11a0a093782118714c0af0fd7cfa30ee4ee48712",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "capture",
+          "event_id": "fresh-v2-e201-capture",
+          "status": "committed",
+          "job_id": "event:66787b573c3e0bf80cd8d5776e8c1b8f3b7677db422c5718820f7659862b4a2a",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-assistant",
+          "status": "committed",
+          "job_id": "event:7d0a2524f1686e33b479a59ac8cb98570780273daf42b448e481c412bd0ec426",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-hypothesis",
+          "status": "committed",
+          "job_id": "event:10f2d2286b3071e6b3442dc4ffaf626f3baa32d4372301060699b156ca3a2fa0",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "maintenance",
+          "status": "completed",
+          "pending_or_failed_statuses": [],
+          "jobs": [
+            {
+              "id": "event:c2e5d5e8945adb84e79e6c7c11a0a093782118714c0af0fd7cfa30ee4ee48712",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:66787b573c3e0bf80cd8d5776e8c1b8f3b7677db422c5718820f7659862b4a2a",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:7d0a2524f1686e33b479a59ac8cb98570780273daf42b448e481c412bd0ec426",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:10f2d2286b3071e6b3442dc4ffaf626f3baa32d4372301060699b156ca3a2fa0",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-answer",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-unknown",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        }
+      ],
+      "lifecycle_summary": {
+        "correct": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        },
+        "forget": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        }
+      },
+      "errors": [],
+      "unsupported_operations": [],
+      "unsupported_modules": [],
+      "extraction_judgements": [
+        {
+          "runtime_fact_id": "38d3866a-638d-4c3e-9a39-d49c670bd7d0",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-system"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "42b6abbc-418f-48e8-8135-44c86f734a10",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-capture"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "e120f68f-4054-4750-a0e3-eb5a6a6c86df",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-hypothesis"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        }
+      ],
+      "critical_retention_judgements": [],
+      "surprisal_filter_decisions": [
+        {
+          "event_id": "fresh-v2-e201-capture",
+          "job_id": "event:66787b573c3e0bf80cd8d5776e8c1b8f3b7677db422c5718820f7659862b4a2a",
+          "job_status": "completed",
+          "decision": "facts",
+          "kept": true,
+          "source": "durable_job_result"
+        }
+      ],
+      "length_filter_policy": {
+        "minimum_chars": 50,
+        "boilerplate_exact_casefold": [
+          "got it",
+          "ok",
+          "okay",
+          "thanks",
+          "thanks!"
+        ],
+        "applied": "counterfactual_shadow_only",
+        "service_decision": "not_exposed",
+        "events": [
+          "fresh-v2-e201-capture"
+        ]
+      },
+      "controlled_state_pairs": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision is an exact frozen text, scope, and source-evidence proxy; unmatched text, including paraphrases, counts as false. It does not measure semantic factual precision.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provenance": {
+        "model_sha256": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "options_sha256": "823611438473df22fdcf665923b543f86d4292f98c6cd0a88ef71bfc5fb8c911",
+        "code_sha256": "03c60d2239738f196d794bdbbf6168ad2f6dab6d36f1f79b13a623e8a76422f9",
+        "model_metadata": {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        "embedding_metadata": {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        "embedding_verified": true,
+        "cognition_observed": true,
+        "verified": true
+      },
+      "provider_trace": {
+        "config": {
+          "extraction_mode": "source_bound",
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "qwen3.5:9b",
+          "embedding_model": "nomic-embed-text:latest",
+          "timeout_seconds": 180.0,
+          "temperature": 0.0,
+          "max_tokens": 8192,
+          "think": false
+        },
+        "trace_key": {
+          "run_key": "fresh-v2-development-201-ablate-sleep_consolidation-r1",
+          "profile": "ablate-sleep_consolidation"
+        },
+        "service_instances": 2,
+        "predict_calls": [
+          {
+            "latency_ms": 442.3524999874644,
+            "prompt_chars": 255,
+            "response": "What can I help you with today?",
+            "token_usage": {
+              "prompt_eval_count": 65,
+              "eval_count": 9
+            }
+          },
+          {
+            "latency_ms": 252.84450000617653,
+            "prompt_chars": 362,
+            "response": "0.6, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 116,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 280.36739997332916,
+            "prompt_chars": 297,
+            "response": "How do I set up a reactive state for the dashboard using Signals?",
+            "token_usage": {
+              "prompt_eval_count": 70,
+              "eval_count": 15
+            }
+          },
+          {
+            "latency_ms": 276.44680003868416,
+            "prompt_chars": 441,
+            "response": "0.6, 0.4, 0.3",
+            "token_usage": {
+              "prompt_eval_count": 137,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 335.0703999749385,
+            "prompt_chars": 435,
+            "response": "Can you generate the rollback script for the tidepool-v2-ui-201 release?",
+            "token_usage": {
+              "prompt_eval_count": 102,
+              "eval_count": 20
+            }
+          },
+          {
+            "latency_ms": 348.2955999788828,
+            "prompt_chars": 516,
+            "response": "What are the specific steps required to execute the rollback rehearsal for tidepool-v2-ui-201?",
+            "token_usage": {
+              "prompt_eval_count": 124,
+              "eval_count": 23
+            }
+          },
+          {
+            "latency_ms": 279.65639997273684,
+            "prompt_chars": 403,
+            "response": "0.6, 0.4, 0.8",
+            "token_usage": {
+              "prompt_eval_count": 129,
+              "eval_count": 14
+            }
+          }
+        ],
+        "classify_calls": [],
+        "embed_calls": [
+          {
+            "latency_ms": 187.48389999382198,
+            "role": "symmetric",
+            "text_chars": 31,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 10
+            }
+          },
+          {
+            "latency_ms": 10.108399961609393,
+            "role": "symmetric",
+            "text_chars": 52,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 11
+            }
+          },
+          {
+            "latency_ms": 11.714500025846064,
+            "role": "document",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 11.690900020767003,
+            "role": "symmetric",
+            "text_chars": 65,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 16
+            }
+          },
+          {
+            "latency_ms": 10.357399994973093,
+            "role": "symmetric",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 10.245800018310547,
+            "role": "document",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 10.39800001308322,
+            "role": "symmetric",
+            "text_chars": 72,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 22
+            }
+          },
+          {
+            "latency_ms": 10.281800001394004,
+            "role": "symmetric",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 15.763000003062189,
+            "role": "symmetric",
+            "text_chars": 94,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 25
+            }
+          },
+          {
+            "latency_ms": 17.051899980288,
+            "role": "symmetric",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 10.878700006287545,
+            "role": "document",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 13.014800031669438,
+            "role": "query",
+            "text_chars": 56,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 18
+            }
+          },
+          {
+            "latency_ms": 10.774900030810386,
+            "role": "query",
+            "text_chars": 67,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 12
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:41.2234101Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 258467600,
+            "load_duration": 4160800,
+            "prompt_eval_count": 65,
+            "prompt_eval_duration": 47215000,
+            "eval_count": 9,
+            "eval_duration": 107837000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 10088900,
+            "load_duration": 4836200,
+            "prompt_eval_count": 10
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9377900,
+            "load_duration": 4657400,
+            "prompt_eval_count": 11
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:41.6749694Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 245400100,
+            "load_duration": 4668400,
+            "prompt_eval_count": 116,
+            "prompt_eval_duration": 51471000,
+            "eval_count": 14,
+            "eval_duration": 155650000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 10543500,
+            "load_duration": 4755600,
+            "prompt_eval_count": 14
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:42.160665Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 272902400,
+            "load_duration": 7135900,
+            "prompt_eval_count": 70,
+            "prompt_eval_duration": 50126000,
+            "eval_count": 15,
+            "eval_duration": 179607000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 10675500,
+            "load_duration": 4770300,
+            "prompt_eval_count": 16
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9377000,
+            "load_duration": 4645200,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:42.4599639Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 269170600,
+            "load_duration": 3607600,
+            "prompt_eval_count": 137,
+            "prompt_eval_duration": 64879999,
+            "eval_count": 14,
+            "eval_duration": 162857000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9437000,
+            "load_duration": 4396700,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:42.9690697Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 326861900,
+            "load_duration": 4729800,
+            "prompt_eval_count": 102,
+            "prompt_eval_duration": 55314000,
+            "eval_count": 20,
+            "eval_duration": 232990000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9741400,
+            "load_duration": 4789100,
+            "prompt_eval_count": 22
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9320800,
+            "load_duration": 4277500,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:43.4238281Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 341377200,
+            "load_duration": 4735200,
+            "prompt_eval_count": 124,
+            "prompt_eval_duration": 52950000,
+            "eval_count": 23,
+            "eval_duration": 281190000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 14616500,
+            "load_duration": 8120200,
+            "prompt_eval_count": 25
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 16377000,
+            "load_duration": 11338200,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:43.7363797Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 271233100,
+            "load_duration": 4739900,
+            "prompt_eval_count": 129,
+            "prompt_eval_duration": 57824000,
+            "eval_count": 14,
+            "eval_duration": 171898000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9651800,
+            "load_duration": 5286200,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11606900,
+            "load_duration": 4804400,
+            "prompt_eval_count": 18
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9894600,
+            "load_duration": 4745100,
+            "prompt_eval_count": 12
+          }
+        ]
+      }
+    }
+  },
+  "preparation_sha256": "edbc0bc41c3107d9c54cf19a7504186c01a07fc632874d915588c376e4736eb9"
+}

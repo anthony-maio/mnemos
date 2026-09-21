@@ -1037,3 +1037,14 @@ formatting and Python 3.10 checks pass. Evidence:
 [source-bound evaluator settings](../validation/2026-09-21/source-bound-evaluator-settings-v1/README.md).
 The fresh v7 corpus remains unchanged and unexecuted; these tests are not T18
 quality acceptance.
+
+
+## Fresh matrix launch, September 21
+
+The source-bound [seven-profile development check](../validation/2026-09-21/source-bound-development-matrix-v1/README.md)
+completed without runtime errors, preserving exact-text misses and unwanted
+system-context retention. The [fresh held-out matrix](../validation/2026-09-21/source-bound-heldout-preparation-v1/README.md)
+is now running on frozen a6b0bf3 with three repetitions across all seven profiles.
+There are 4,200 planned observations; no terminal result or acceptance is yet
+claimed. Corpus bytes, original criteria and thresholds remain unchanged.
+Semantic scoring and separate module-utility evidence remain open.

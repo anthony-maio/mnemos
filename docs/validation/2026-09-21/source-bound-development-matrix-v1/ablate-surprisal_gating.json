@@ -1,0 +1,1004 @@
+{
+  "session_split": "development",
+  "session_id": "fresh-v2-development-201",
+  "profile": {
+    "name": "ablate-surprisal_gating",
+    "enabled_modules": [
+      "mutable_rag",
+      "affective_routing",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "disabled_module": "surprisal_gating"
+  },
+  "observation": {
+    "session_id": "fresh-v2-development-201",
+    "repetition": 1,
+    "critical_retention": [],
+    "critical_retrieval": [],
+    "supported_precision": [
+      false,
+      false,
+      false
+    ],
+    "answerable_hits": [
+      false
+    ],
+    "no_answer_correct": [
+      true
+    ],
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "surprisal_filter_kept": [
+      true
+    ],
+    "length_filter_kept": [
+      true
+    ],
+    "stale_fact_count": 0,
+    "retrieved_fact_count": 3,
+    "latency_ms": 13156.300300033763,
+    "cold_latency_ms": 107.57280001416802,
+    "token_cost": null,
+    "bytes_before": 251136,
+    "bytes_after": 3925000,
+    "provider": "ollama",
+    "model_revision": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "adapter_kind": "real_model",
+    "verified_embedding_provenance": true,
+    "verified_model_provenance": true,
+    "raw_output": {
+      "adapter": "ollama",
+      "provider": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen3.5:9b",
+      "embedding_model": "nomic-embed-text:latest",
+      "profile": {
+        "name": "ablate-surprisal_gating",
+        "enabled_modules": [
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "disabled_module": "surprisal_gating"
+      },
+      "module_switches": {
+        "enabled": [
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "disabled": "surprisal_gating",
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "operation": "response",
+          "event_id": "fresh-v2-e201-system",
+          "status": "committed",
+          "job_id": "event:bd5bf754b4e5bcb18208e4dba6b5918c9864dceea54da306dc710c97f5bdeebe",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "capture",
+          "event_id": "fresh-v2-e201-capture",
+          "status": "committed",
+          "job_id": "event:c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-assistant",
+          "status": "committed",
+          "job_id": "event:6233454b556201a5ae40d3208c0513e627c3c401d92590edda2af853a54f6e59",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-hypothesis",
+          "status": "committed",
+          "job_id": "event:2a715ca97e782e9779aab98af9f9f6d3bf8a80db207ef7b1c53ab178077c749c",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "maintenance",
+          "status": "completed",
+          "pending_or_failed_statuses": [],
+          "jobs": [
+            {
+              "id": "event:bd5bf754b4e5bcb18208e4dba6b5918c9864dceea54da306dc710c97f5bdeebe",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:6233454b556201a5ae40d3208c0513e627c3c401d92590edda2af853a54f6e59",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:2a715ca97e782e9779aab98af9f9f6d3bf8a80db207ef7b1c53ab178077c749c",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-answer",
+          "status": "verified",
+          "scope_validation": {
+            "status": "verified",
+            "returned_count": 3,
+            "accepted_count": 3,
+            "verified_count": 3,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [
+            {
+              "id": "5efc9dc1-316e-47a2-9e85-a904875a63b1",
+              "version": 1,
+              "content": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "5ee5c1d1-39b2-4432-b0e1-5abe86166a8b",
+                  "fact_id": "5efc9dc1-316e-47a2-9e85-a904875a63b1",
+                  "source_event_id": "c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead",
+                  "excerpt": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:15.988425Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.8492914438247681,
+                "state_match": 0.751672259570811,
+                "graph_energy": 1.0,
+                "graph_contribution": 0.1,
+                "total": 0.9200056885485809,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 181,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "74c5bab4-0f1c-4fbf-8014-0b48a3995576",
+              "version": 1,
+              "content": "Assistant reported: I will keep the tidepool-v2-ui-201 detail available for this project.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "47376938-a5dc-4527-ae96-d9b06ee0eb29",
+                  "fact_id": "74c5bab4-0f1c-4fbf-8014-0b48a3995576",
+                  "source_event_id": "6233454b556201a5ae40d3208c0513e627c3c401d92590edda2af853a54f6e59",
+                  "excerpt": "I will keep the tidepool-v2-ui-201 detail available for this project.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:20.167820Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.7678970694541931,
+                "state_match": 0.6734013676289096,
+                "graph_energy": 0.5840825557708741,
+                "graph_contribution": 0.05840825557708741,
+                "total": 0.7979566144836955,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 139,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "5b0108e3-81ff-4d9f-be72-72d2a95f17b8",
+              "version": 1,
+              "content": "System reported: Session context: maintaining a TypeScript dashboard.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "785e7863-6773-435a-a8f5-d4d3876c3db3",
+                  "fact_id": "5b0108e3-81ff-4d9f-be72-72d2a95f17b8",
+                  "source_event_id": "bd5bf754b4e5bcb18208e4dba6b5918c9864dceea54da306dc710c97f5bdeebe",
+                  "excerpt": "Session context: maintaining a TypeScript dashboard.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:12.458498Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.48685580492019653,
+                "state_match": 0.7550510257216821,
+                "graph_energy": 0.0,
+                "graph_contribution": 0.0,
+                "total": 0.5673143711606422,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 119,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": false,
+                "lexical_status": "candidate_union"
+              }
+            }
+          ],
+          "facts": [
+            {
+              "id": "5efc9dc1-316e-47a2-9e85-a904875a63b1",
+              "version": 1,
+              "content": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "5ee5c1d1-39b2-4432-b0e1-5abe86166a8b",
+                  "fact_id": "5efc9dc1-316e-47a2-9e85-a904875a63b1",
+                  "source_event_id": "c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead",
+                  "excerpt": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:15.988425Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.8492914438247681,
+                "state_match": 0.751672259570811,
+                "graph_energy": 1.0,
+                "graph_contribution": 0.1,
+                "total": 0.9200056885485809,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 181,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "74c5bab4-0f1c-4fbf-8014-0b48a3995576",
+              "version": 1,
+              "content": "Assistant reported: I will keep the tidepool-v2-ui-201 detail available for this project.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "47376938-a5dc-4527-ae96-d9b06ee0eb29",
+                  "fact_id": "74c5bab4-0f1c-4fbf-8014-0b48a3995576",
+                  "source_event_id": "6233454b556201a5ae40d3208c0513e627c3c401d92590edda2af853a54f6e59",
+                  "excerpt": "I will keep the tidepool-v2-ui-201 detail available for this project.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:20.167820Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.7678970694541931,
+                "state_match": 0.6734013676289096,
+                "graph_energy": 0.5840825557708741,
+                "graph_contribution": 0.05840825557708741,
+                "total": 0.7979566144836955,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 139,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "5b0108e3-81ff-4d9f-be72-72d2a95f17b8",
+              "version": 1,
+              "content": "System reported: Session context: maintaining a TypeScript dashboard.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "785e7863-6773-435a-a8f5-d4d3876c3db3",
+                  "fact_id": "5b0108e3-81ff-4d9f-be72-72d2a95f17b8",
+                  "source_event_id": "bd5bf754b4e5bcb18208e4dba6b5918c9864dceea54da306dc710c97f5bdeebe",
+                  "excerpt": "Session context: maintaining a TypeScript dashboard.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:12.458498Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.48685580492019653,
+                "state_match": 0.7550510257216821,
+                "graph_energy": 0.0,
+                "graph_contribution": 0.0,
+                "total": 0.5673143711606422,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 119,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": false,
+                "lexical_status": "candidate_union"
+              }
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-unknown",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        }
+      ],
+      "lifecycle_summary": {
+        "correct": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        },
+        "forget": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        }
+      },
+      "errors": [],
+      "unsupported_operations": [],
+      "unsupported_modules": [],
+      "extraction_judgements": [
+        {
+          "runtime_fact_id": "5b0108e3-81ff-4d9f-be72-72d2a95f17b8",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-system"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "5efc9dc1-316e-47a2-9e85-a904875a63b1",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-capture"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "74c5bab4-0f1c-4fbf-8014-0b48a3995576",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-assistant"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        }
+      ],
+      "critical_retention_judgements": [],
+      "surprisal_filter_decisions": [
+        {
+          "event_id": "fresh-v2-e201-capture",
+          "job_id": "event:c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead",
+          "job_status": "completed",
+          "decision": "facts",
+          "kept": true,
+          "source": "durable_job_result"
+        }
+      ],
+      "length_filter_policy": {
+        "minimum_chars": 50,
+        "boilerplate_exact_casefold": [
+          "got it",
+          "ok",
+          "okay",
+          "thanks",
+          "thanks!"
+        ],
+        "applied": "counterfactual_shadow_only",
+        "service_decision": "not_exposed",
+        "events": [
+          "fresh-v2-e201-capture"
+        ]
+      },
+      "controlled_state_pairs": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision is an exact frozen text, scope, and source-evidence proxy; unmatched text, including paraphrases, counts as false. It does not measure semantic factual precision.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provenance": {
+        "model_sha256": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "options_sha256": "823611438473df22fdcf665923b543f86d4292f98c6cd0a88ef71bfc5fb8c911",
+        "code_sha256": "03c60d2239738f196d794bdbbf6168ad2f6dab6d36f1f79b13a623e8a76422f9",
+        "model_metadata": {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        "embedding_metadata": {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        "embedding_verified": true,
+        "cognition_observed": true,
+        "verified": true
+      },
+      "provider_trace": {
+        "config": {
+          "extraction_mode": "source_bound",
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "qwen3.5:9b",
+          "embedding_model": "nomic-embed-text:latest",
+          "timeout_seconds": 180.0,
+          "temperature": 0.0,
+          "max_tokens": 8192,
+          "think": false
+        },
+        "trace_key": {
+          "run_key": "fresh-v2-development-201-ablate-surprisal_gating-r1",
+          "profile": "ablate-surprisal_gating"
+        },
+        "service_instances": 2,
+        "predict_calls": [
+          {
+            "latency_ms": 2150.269100035075,
+            "prompt_chars": 7261,
+            "response": "{\n  \"selections\": [\n    {\n      \"source_id\": \"bd5bf754b4e5bcb18208e4dba6b5918c9864dceea54da306dc710c97f5bdeebe\",\n      \"first_unit\": 0,\n      \"last_unit\": 0,\n      \"kind\": \"attributed_history\",\n      \"revises_existing_requirement\": false,\n      \"retention_request_unit\": null\n    }\n  ]\n}",
+            "token_usage": {
+              "prompt_eval_count": 1555,
+              "eval_count": 129
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "7d6893112338aa1c536314851c1dbdd74a5120b1f26b57a84aff33fa6428c2a1"
+          },
+          {
+            "latency_ms": 954.2217000271194,
+            "prompt_chars": 3060,
+            "response": "{\"decisions\":[{\"candidate_index\":0,\"relationship\":\"independent_information\",\"target_fact_id\":null,\"expected_version\":null,\"reason\":\"The candidate provides a new independent fact about the session context (maintaining a TypeScript dashboard) with no existing targets to match or revise.\"}]}",
+            "token_usage": {
+              "prompt_eval_count": 638,
+              "eval_count": 58
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "89b096cb27c25195ad1d7a0632ded5fd7a27943584d5f39c64d243a21f5f625f"
+          },
+          {
+            "latency_ms": 275.9364999947138,
+            "prompt_chars": 362,
+            "response": "0.6, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 116,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 1612.5279000261799,
+            "prompt_chars": 7338,
+            "response": "{\"selections\":[{\"source_id\":\"c386945011cd00f4999f03c24d2af8a63a00c492d4288edbe24eef3356501ead\",\"first_unit\":0,\"last_unit\":0,\"kind\":\"continuing_requirement\",\"revises_existing_requirement\":false,\"retention_request_unit\":null}]}",
+            "token_usage": {
+              "prompt_eval_count": 1581,
+              "eval_count": 100
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "afc714b649e658b8de1b4d1a1634c85c4bd1f2e4b20a479d6f021ffcc5ffd2d9"
+          },
+          {
+            "latency_ms": 1447.8762000217102,
+            "prompt_chars": 3384,
+            "response": "{\"decisions\":[{\"candidate_index\":0,\"relationship\":\"independent_information\",\"target_fact_id\":null,\"expected_version\":null,\"reason\":\"The candidate introduces a new requirement regarding a 'rollback rehearsal' for the release review, which is distinct from the existing target fact describing 'maintaining a TypeScript dashboard'. Since the candidate represents a complete prospective requirement that does not match or contradict the existing independent information about session context, it must be staged as new independent information.\"}]}",
+            "token_usage": {
+              "prompt_eval_count": 759,
+              "eval_count": 95
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "9159abe865eca97e1f640cd7a2f93c71b885458d43f5b5e921ae8e9e8095a659"
+          },
+          {
+            "latency_ms": 284.4063999946229,
+            "prompt_chars": 441,
+            "response": "0.6, 0.4, 0.3",
+            "token_usage": {
+              "prompt_eval_count": 137,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 2143.325700017158,
+            "prompt_chars": 7281,
+            "response": "{\n  \"selections\": [\n    {\n      \"source_id\": \"6233454b556201a5ae40d3208c0513e627c3c401d92590edda2af853a54f6e59\",\n      \"first_unit\": 0,\n      \"last_unit\": 0,\n      \"kind\": \"attributed_history\",\n      \"revises_existing_requirement\": false,\n      \"retention_request_unit\": null\n    }\n  ]\n}",
+            "token_usage": {
+              "prompt_eval_count": 1574,
+              "eval_count": 137
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "92bdeca01f01c04ce3a0c747ab33fa04af78604a2d321f95cfc87caeed5afdad"
+          },
+          {
+            "latency_ms": 1601.1052000103518,
+            "prompt_chars": 3628,
+            "response": "{\"decisions\":[{\"candidate_index\":0,\"relationship\":\"independent_information\",\"target_fact_id\":null,\"expected_version\":null,\"reason\":\"The candidate content ('I will keep the tidepool-v2-ui-201 detail available for this project.') expresses a distinct commitment to maintaining availability, which is semantically different from the existing targets (one regarding rollback rehearsal requirements and another regarding session context maintenance). As it introduces new, complete information not covered by existing facts, it is staged as independent_information.\"}]}",
+            "token_usage": {
+              "prompt_eval_count": 862,
+              "eval_count": 104
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "14f66dc589333059d453a9fd06135d7e362ed85e7acf09a1d2fdf42fedeeb5da"
+          },
+          {
+            "latency_ms": 279.1826999746263,
+            "prompt_chars": 379,
+            "response": "0.8, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 127,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 449.6728999656625,
+            "prompt_chars": 7300,
+            "response": "{\"selections\": []}",
+            "token_usage": {
+              "prompt_eval_count": 1572,
+              "eval_count": 7
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "71d64881fdf3453f876d12392606f2197c5a70dc8f54f349874b9e9fca29c758"
+          },
+          {
+            "latency_ms": 335.73520003119484,
+            "prompt_chars": 366,
+            "response": "0.0, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 124,
+              "eval_count": 14
+            }
+          }
+        ],
+        "classify_calls": [],
+        "embed_calls": [
+          {
+            "latency_ms": 203.8330999785103,
+            "role": "query",
+            "text_chars": 52,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 11
+            }
+          },
+          {
+            "latency_ms": 10.63929998781532,
+            "role": "document",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 16.78189996164292,
+            "role": "query",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 10.518299997784197,
+            "role": "document",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 11.772400001063943,
+            "role": "query",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 14.484399987850338,
+            "role": "document",
+            "text_chars": 89,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 24
+            }
+          },
+          {
+            "latency_ms": 12.373499979730695,
+            "role": "query",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 18.619899987243116,
+            "role": "query",
+            "text_chars": 56,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 18
+            }
+          },
+          {
+            "latency_ms": 15.001600026153028,
+            "role": "query",
+            "text_chars": 67,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 12
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 8838800,
+            "load_duration": 4100600,
+            "prompt_eval_count": 11
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:11.2081254Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1963743300,
+            "load_duration": 5291100,
+            "prompt_eval_count": 1555,
+            "prompt_eval_duration": 266800000,
+            "eval_count": 129,
+            "eval_duration": 1642884000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:12.1662578Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 945385800,
+            "load_duration": 5957600,
+            "prompt_eval_count": 638,
+            "prompt_eval_duration": 148090000,
+            "eval_count": 58,
+            "eval_duration": 714152000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:12.4438357Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 269409700,
+            "load_duration": 4924700,
+            "prompt_eval_count": 116,
+            "prompt_eval_duration": 54241000,
+            "eval_count": 14,
+            "eval_duration": 170008000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9734100,
+            "load_duration": 4861000,
+            "prompt_eval_count": 14
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 16560500,
+            "load_duration": 7991800,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:14.2363095Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1602779200,
+            "load_duration": 4446200,
+            "prompt_eval_count": 1581,
+            "prompt_eval_duration": 277965000,
+            "eval_count": 100,
+            "eval_duration": 1272511000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:15.6870715Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1437830300,
+            "load_duration": 5411200,
+            "prompt_eval_count": 759,
+            "prompt_eval_duration": 168488000,
+            "eval_count": 95,
+            "eval_duration": 1178709000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:15.9737387Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 277285600,
+            "load_duration": 4925300,
+            "prompt_eval_count": 137,
+            "prompt_eval_duration": 63554000,
+            "eval_count": 14,
+            "eval_duration": 166524000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9487500,
+            "load_duration": 4744400,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 10040600,
+            "load_duration": 4471400,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:18.2623958Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 2132252900,
+            "load_duration": 5442000,
+            "prompt_eval_count": 1574,
+            "prompt_eval_duration": 276067000,
+            "eval_count": 137,
+            "eval_duration": 1803035000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:19.8681753Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1591968500,
+            "load_duration": 4972900,
+            "prompt_eval_count": 862,
+            "prompt_eval_duration": 192395000,
+            "eval_count": 104,
+            "eval_duration": 1304094000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:20.148837Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 272407400,
+            "load_duration": 5101400,
+            "prompt_eval_count": 127,
+            "prompt_eval_duration": 57108000,
+            "eval_count": 14,
+            "eval_duration": 169060000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 12843700,
+            "load_duration": 6293300,
+            "prompt_eval_count": 24
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11270600,
+            "load_duration": 5422900,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:20.7879601Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 438404300,
+            "load_duration": 24343800,
+            "prompt_eval_count": 1572,
+            "prompt_eval_duration": 255779000,
+            "eval_count": 7,
+            "eval_duration": 111565000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 16979700,
+            "load_duration": 10504100,
+            "prompt_eval_count": 18
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:21.1870885Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 326437300,
+            "load_duration": 5951400,
+            "prompt_eval_count": 124,
+            "prompt_eval_duration": 57643000,
+            "eval_count": 14,
+            "eval_duration": 167074000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 13753200,
+            "load_duration": 5017800,
+            "prompt_eval_count": 12
+          }
+        ]
+      }
+    }
+  },
+  "preparation_sha256": "edbc0bc41c3107d9c54cf19a7504186c01a07fc632874d915588c376e4736eb9"
+}

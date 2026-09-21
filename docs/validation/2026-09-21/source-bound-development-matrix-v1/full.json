@@ -1,0 +1,1040 @@
+{
+  "session_split": "development",
+  "session_id": "fresh-v2-development-201",
+  "profile": {
+    "name": "full",
+    "enabled_modules": [
+      "surprisal_gating",
+      "mutable_rag",
+      "affective_routing",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "disabled_module": null
+  },
+  "observation": {
+    "session_id": "fresh-v2-development-201",
+    "repetition": 1,
+    "critical_retention": [],
+    "critical_retrieval": [],
+    "supported_precision": [
+      false,
+      false
+    ],
+    "answerable_hits": [
+      false
+    ],
+    "no_answer_correct": [
+      true
+    ],
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "surprisal_filter_kept": [
+      true
+    ],
+    "length_filter_kept": [
+      true
+    ],
+    "stale_fact_count": 0,
+    "retrieved_fact_count": 2,
+    "latency_ms": 14453.786100028083,
+    "cold_latency_ms": 86.27030003117397,
+    "token_cost": null,
+    "bytes_before": 251136,
+    "bytes_after": 3776680,
+    "provider": "ollama",
+    "model_revision": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "adapter_kind": "real_model",
+    "verified_embedding_provenance": true,
+    "verified_model_provenance": true,
+    "raw_output": {
+      "adapter": "ollama",
+      "provider": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "model": "qwen3.5:9b",
+      "embedding_model": "nomic-embed-text:latest",
+      "profile": {
+        "name": "full",
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "disabled_module": null
+      },
+      "module_switches": {
+        "enabled": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "disabled": null,
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "operation": "response",
+          "event_id": "fresh-v2-e201-system",
+          "status": "committed",
+          "job_id": "event:933fb9ba1b3573097a06900159e9ff536ab8c8541707bde16d1a2cf754acac68",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "capture",
+          "event_id": "fresh-v2-e201-capture",
+          "status": "committed",
+          "job_id": "event:bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-assistant",
+          "status": "committed",
+          "job_id": "event:8cb060b9ae85f66d6b7faa106305f7a8661d030737e1fae0aacfd30d72c07b84",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "noise",
+          "event_id": "fresh-v2-e201-hypothesis",
+          "status": "committed",
+          "job_id": "event:8dc057131f953702432105b0078d3f3ea1b4418c193ca1460f122e5665f76b50",
+          "processing_status": "pending"
+        },
+        {
+          "operation": "maintenance",
+          "status": "completed",
+          "pending_or_failed_statuses": [],
+          "jobs": [
+            {
+              "id": "event:933fb9ba1b3573097a06900159e9ff536ab8c8541707bde16d1a2cf754acac68",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:8cb060b9ae85f66d6b7faa106305f7a8661d030737e1fae0aacfd30d72c07b84",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            },
+            {
+              "id": "event:8dc057131f953702432105b0078d3f3ea1b4418c193ca1460f122e5665f76b50",
+              "kind": "extract",
+              "status": "completed",
+              "attempt_count": 1,
+              "last_error": null
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-answer",
+          "status": "verified",
+          "scope_validation": {
+            "status": "verified",
+            "returned_count": 2,
+            "accepted_count": 2,
+            "verified_count": 2,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [
+            {
+              "id": "4b775b9e-4357-48e2-b0f8-ff1586d83110",
+              "version": 1,
+              "content": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "68729f46-95ec-4661-9ed5-7471489f8b06",
+                  "fact_id": "4b775b9e-4357-48e2-b0f8-ff1586d83110",
+                  "source_event_id": "bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac",
+                  "excerpt": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:06.289120Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.8492914438247681,
+                "state_match": 0.751672259570811,
+                "graph_energy": 1.0,
+                "graph_contribution": 0.1,
+                "total": 0.9200056885485809,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 181,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "d8197dbd-b782-4978-81e8-bf7b9ded6c93",
+              "version": 1,
+              "content": "System reported: Session context: maintaining a TypeScript dashboard.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "9704ac3b-580d-4407-bfc6-ac778dc9c01d",
+                  "fact_id": "d8197dbd-b782-4978-81e8-bf7b9ded6c93",
+                  "source_event_id": "933fb9ba1b3573097a06900159e9ff536ab8c8541707bde16d1a2cf754acac68",
+                  "excerpt": "Session context: maintaining a TypeScript dashboard.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:01.739424Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.48685580492019653,
+                "state_match": 0.7550510257216821,
+                "graph_energy": 0.0,
+                "graph_contribution": 0.0,
+                "total": 0.5673143711606422,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 119,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": false,
+                "lexical_status": "candidate_union"
+              }
+            }
+          ],
+          "facts": [
+            {
+              "id": "4b775b9e-4357-48e2-b0f8-ff1586d83110",
+              "version": 1,
+              "content": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "68729f46-95ec-4661-9ed5-7471489f8b06",
+                  "fact_id": "4b775b9e-4357-48e2-b0f8-ff1586d83110",
+                  "source_event_id": "bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac",
+                  "excerpt": "For this diagnostic and release-planning work: The tidepool-v2-ui-201 release review requires a rollback rehearsal before sign-off.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:06.289120Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.8492914438247681,
+                "state_match": 0.751672259570811,
+                "graph_energy": 1.0,
+                "graph_contribution": 0.1,
+                "total": 0.9200056885485809,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 181,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": true,
+                "lexical_status": "candidate_union"
+              }
+            },
+            {
+              "id": "d8197dbd-b782-4978-81e8-bf7b9ded6c93",
+              "version": 1,
+              "content": "System reported: Session context: maintaining a TypeScript dashboard.",
+              "scope": "project",
+              "scope_id": "tidepool-v2-ui-201",
+              "assertion_status": "asserted",
+              "sources": [
+                {
+                  "evidence_id": "9704ac3b-580d-4407-bfc6-ac778dc9c01d",
+                  "fact_id": "d8197dbd-b782-4978-81e8-bf7b9ded6c93",
+                  "source_event_id": "933fb9ba1b3573097a06900159e9ff536ab8c8541707bde16d1a2cf754acac68",
+                  "excerpt": "Session context: maintaining a TypeScript dashboard.",
+                  "source_ref": null,
+                  "created_at": "2026-09-21T07:04:01.739424Z",
+                  "original_source_status": "retained_locally"
+                }
+              ],
+              "support_available": true,
+              "original_source_status": "retained_locally",
+              "scores": {
+                "semantic": 0.48685580492019653,
+                "state_match": 0.7550510257216821,
+                "graph_energy": 0.0,
+                "graph_contribution": 0.0,
+                "total": 0.5673143711606422,
+                "state_status": "measured",
+                "retrieval_mode": "semantic_and_lexical",
+                "profile": "biomimetic",
+                "scope_match": true,
+                "context_token_upper_bound": 119,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled",
+                "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                "lexical_candidate": false,
+                "lexical_status": "candidate_union"
+              }
+            }
+          ]
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "fresh-v2-q201-unknown",
+          "status": "no_returned_facts",
+          "scope_validation": {
+            "status": "no_returned_facts",
+            "returned_count": 0,
+            "accepted_count": 0,
+            "verified_count": 0,
+            "missing_metadata_count": 0,
+            "foreign_count": 0,
+            "malformed_count": 0
+          },
+          "observed_facts": [],
+          "facts": []
+        }
+      ],
+      "lifecycle_summary": {
+        "correct": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        },
+        "forget": {
+          "attempted": 0,
+          "committed": 0,
+          "rejected": 0,
+          "mapping_invalid": 0,
+          "missing_target": 0
+        }
+      },
+      "errors": [],
+      "unsupported_operations": [],
+      "unsupported_modules": [],
+      "extraction_judgements": [
+        {
+          "runtime_fact_id": "d8197dbd-b782-4978-81e8-bf7b9ded6c93",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-system"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        },
+        {
+          "runtime_fact_id": "4b775b9e-4357-48e2-b0f8-ff1586d83110",
+          "content_nonempty": true,
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "fresh-v2-e201-capture"
+          ],
+          "source_resolution_complete": true,
+          "accepted": false,
+          "judgement": "exact_frozen_text_and_evidence_proxy"
+        }
+      ],
+      "critical_retention_judgements": [],
+      "surprisal_filter_decisions": [
+        {
+          "event_id": "fresh-v2-e201-capture",
+          "job_id": "event:bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac",
+          "job_status": "completed",
+          "decision": "facts",
+          "kept": true,
+          "source": "durable_job_result"
+        }
+      ],
+      "length_filter_policy": {
+        "minimum_chars": 50,
+        "boilerplate_exact_casefold": [
+          "got it",
+          "ok",
+          "okay",
+          "thanks",
+          "thanks!"
+        ],
+        "applied": "counterfactual_shadow_only",
+        "service_decision": "not_exposed",
+        "events": [
+          "fresh-v2-e201-capture"
+        ]
+      },
+      "controlled_state_pairs": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision is an exact frozen text, scope, and source-evidence proxy; unmatched text, including paraphrases, counts as false. It does not measure semantic factual precision.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provenance": {
+        "model_sha256": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "options_sha256": "823611438473df22fdcf665923b543f86d4292f98c6cd0a88ef71bfc5fb8c911",
+        "code_sha256": "03c60d2239738f196d794bdbbf6168ad2f6dab6d36f1f79b13a623e8a76422f9",
+        "model_metadata": {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        "embedding_metadata": {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        "embedding_verified": true,
+        "cognition_observed": true,
+        "verified": true
+      },
+      "provider_trace": {
+        "config": {
+          "extraction_mode": "source_bound",
+          "endpoint": "http://127.0.0.1:11434",
+          "model": "qwen3.5:9b",
+          "embedding_model": "nomic-embed-text:latest",
+          "timeout_seconds": 180.0,
+          "temperature": 0.0,
+          "max_tokens": 8192,
+          "think": false
+        },
+        "trace_key": {
+          "run_key": "fresh-v2-development-201-full-r1",
+          "profile": "full"
+        },
+        "service_instances": 2,
+        "predict_calls": [
+          {
+            "latency_ms": 3753.1971000134945,
+            "prompt_chars": 255,
+            "response": "What can I help you with today?",
+            "token_usage": {
+              "prompt_eval_count": 65,
+              "eval_count": 9
+            }
+          },
+          {
+            "latency_ms": 2111.720300046727,
+            "prompt_chars": 7261,
+            "response": "{\n  \"selections\": [\n    {\n      \"source_id\": \"933fb9ba1b3573097a06900159e9ff536ab8c8541707bde16d1a2cf754acac68\",\n      \"first_unit\": 0,\n      \"last_unit\": 0,\n      \"kind\": \"attributed_history\",\n      \"revises_existing_requirement\": false,\n      \"retention_request_unit\": null\n    }\n  ]\n}",
+            "token_usage": {
+              "prompt_eval_count": 1559,
+              "eval_count": 133
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "5dc7549a410da1854917c2b7434a36ae9b27e094b39882115b8a8bc3bc1ea8f6"
+          },
+          {
+            "latency_ms": 925.4113999777474,
+            "prompt_chars": 3060,
+            "response": "{\"decisions\":[{\"candidate_index\":0,\"relationship\":\"independent_information\",\"target_fact_id\":null,\"expected_version\":null,\"reason\":\"The candidate introduces a new independent fact about the session context (maintaining a TypeScript dashboard) with no existing targets to match or revise.\"}]}",
+            "token_usage": {
+              "prompt_eval_count": 642,
+              "eval_count": 58
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "89b096cb27c25195ad1d7a0632ded5fd7a27943584d5f39c64d243a21f5f625f"
+          },
+          {
+            "latency_ms": 267.2745999880135,
+            "prompt_chars": 362,
+            "response": "0.6, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 116,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 282.0298000006005,
+            "prompt_chars": 297,
+            "response": "How do I set up a reactive state for the dashboard using Signals?",
+            "token_usage": {
+              "prompt_eval_count": 70,
+              "eval_count": 15
+            }
+          },
+          {
+            "latency_ms": 1566.886299988255,
+            "prompt_chars": 7338,
+            "response": "{\"selections\":[{\"source_id\":\"bb61ef8dad4e05469bc6a730242967265dad9b5cb3a3c3f93935f8111bdc44ac\",\"first_unit\":0,\"last_unit\":0,\"kind\":\"continuing_requirement\",\"revises_existing_requirement\":false,\"retention_request_unit\":null}]}",
+            "token_usage": {
+              "prompt_eval_count": 1578,
+              "eval_count": 97
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "91b41893b11a933d98209bc7c25b4d21b543485b9ae8b7317f261d2f9716ecda"
+          },
+          {
+            "latency_ms": 1481.7642000271007,
+            "prompt_chars": 3384,
+            "response": "{\"decisions\":[{\"candidate_index\":0,\"relationship\":\"independent_information\",\"target_fact_id\":null,\"expected_version\":null,\"reason\":\"The candidate describes a specific requirement for a rollback rehearsal before sign-off for the 'tidepool-v2-ui-201' project. The existing target fact describes a different subject (maintaining a TypeScript dashboard). Since the candidate introduces new, unrelated information rather than matching or contradicting the existing fact, it is staged as independent_information.\"}]}",
+            "token_usage": {
+              "prompt_eval_count": 754,
+              "eval_count": 99
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "e1a2b8ca2add3c1efc5713170f7d341a7499caa783c766b313fc800143d60454"
+          },
+          {
+            "latency_ms": 282.20430004876107,
+            "prompt_chars": 441,
+            "response": "0.6, 0.4, 0.3",
+            "token_usage": {
+              "prompt_eval_count": 137,
+              "eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 338.3715999661945,
+            "prompt_chars": 435,
+            "response": "Can you generate the rollback script for the tidepool-v2-ui-201 release?",
+            "token_usage": {
+              "prompt_eval_count": 102,
+              "eval_count": 20
+            }
+          },
+          {
+            "latency_ms": 345.4891999717802,
+            "prompt_chars": 516,
+            "response": "What are the specific steps required to execute the rollback rehearsal for tidepool-v2-ui-201?",
+            "token_usage": {
+              "prompt_eval_count": 124,
+              "eval_count": 23
+            }
+          },
+          {
+            "latency_ms": 441.1818999797106,
+            "prompt_chars": 7300,
+            "response": "{\"selections\": []}",
+            "token_usage": {
+              "prompt_eval_count": 1577,
+              "eval_count": 7
+            },
+            "structured_output_requested": true,
+            "format_schema_sha256": "f058c68b2d491eb4ec2ffaa4c1fd5e492fa74da1cadcd8a6590f4c2f63c9fe89"
+          },
+          {
+            "latency_ms": 300.49610004061833,
+            "prompt_chars": 366,
+            "response": "0.0, 0.4, 0.2",
+            "token_usage": {
+              "prompt_eval_count": 124,
+              "eval_count": 14
+            }
+          }
+        ],
+        "classify_calls": [],
+        "embed_calls": [
+          {
+            "latency_ms": 200.4778000409715,
+            "role": "symmetric",
+            "text_chars": 31,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 10
+            }
+          },
+          {
+            "latency_ms": 19.44000000366941,
+            "role": "symmetric",
+            "text_chars": 52,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 11
+            }
+          },
+          {
+            "latency_ms": 10.80679998267442,
+            "role": "query",
+            "text_chars": 52,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 11
+            }
+          },
+          {
+            "latency_ms": 20.415799983311445,
+            "role": "document",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 14
+            }
+          },
+          {
+            "latency_ms": 31.07039997121319,
+            "role": "symmetric",
+            "text_chars": 65,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 16
+            }
+          },
+          {
+            "latency_ms": 12.921799963805825,
+            "role": "symmetric",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 13.35079997079447,
+            "role": "query",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 10.878100001718849,
+            "role": "document",
+            "text_chars": 131,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 33
+            }
+          },
+          {
+            "latency_ms": 10.742700018454343,
+            "role": "symmetric",
+            "text_chars": 72,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 22
+            }
+          },
+          {
+            "latency_ms": 10.281599999871105,
+            "role": "symmetric",
+            "text_chars": 69,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 10.938499995972961,
+            "role": "symmetric",
+            "text_chars": 94,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 25
+            }
+          },
+          {
+            "latency_ms": 10.39640000090003,
+            "role": "symmetric",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 11.126700032036752,
+            "role": "query",
+            "text_chars": 93,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 21
+            }
+          },
+          {
+            "latency_ms": 13.03659996483475,
+            "role": "query",
+            "text_chars": 56,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 18
+            }
+          },
+          {
+            "latency_ms": 9.931799955666065,
+            "role": "query",
+            "text_chars": 67,
+            "vector_dimensions": 768,
+            "token_usage": {
+              "prompt_eval_count": 12
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:03:58.1338039Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 3539791400,
+            "load_duration": 3324858900,
+            "prompt_eval_count": 65,
+            "prompt_eval_duration": 103648000,
+            "eval_count": 9,
+            "eval_duration": 108717000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 18197400,
+            "load_duration": 4677300,
+            "prompt_eval_count": 10
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 18666800,
+            "load_duration": 4776200,
+            "prompt_eval_count": 11
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9836100,
+            "load_duration": 4600100,
+            "prompt_eval_count": 11
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:00.5164463Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 2101062500,
+            "load_duration": 4875000,
+            "prompt_eval_count": 1559,
+            "prompt_eval_duration": 361120000,
+            "eval_count": 133,
+            "eval_duration": 1702192000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:01.4456941Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 916301800,
+            "load_duration": 5005500,
+            "prompt_eval_count": 642,
+            "prompt_eval_duration": 148487000,
+            "eval_count": 58,
+            "eval_duration": 711133000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:01.714465Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 260658700,
+            "load_duration": 4695700,
+            "prompt_eval_count": 116,
+            "prompt_eval_duration": 55589000,
+            "eval_count": 14,
+            "eval_duration": 166345000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 19176200,
+            "load_duration": 10134000,
+            "prompt_eval_count": 14
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:02.8793977Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 271199000,
+            "load_duration": 5448900,
+            "prompt_eval_count": 70,
+            "prompt_eval_duration": 49808000,
+            "eval_count": 15,
+            "eval_duration": 179820000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 30450200,
+            "load_duration": 6793600,
+            "prompt_eval_count": 16
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11762200,
+            "load_duration": 4916700,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 11745600,
+            "load_duration": 5044400,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:04.5037889Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1556511400,
+            "load_duration": 6016000,
+            "prompt_eval_count": 1578,
+            "prompt_eval_duration": 281723000,
+            "eval_count": 97,
+            "eval_duration": 1222749000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:05.9894233Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 1473024600,
+            "load_duration": 5749800,
+            "prompt_eval_count": 754,
+            "prompt_eval_duration": 170733000,
+            "eval_count": 99,
+            "eval_duration": 1226326000
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:06.2739Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 275049500,
+            "load_duration": 5844300,
+            "prompt_eval_count": 137,
+            "prompt_eval_duration": 60575000,
+            "eval_count": 14,
+            "eval_duration": 165271000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9172600,
+            "load_duration": 5476200,
+            "prompt_eval_count": 33
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:06.7834438Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 331369600,
+            "load_duration": 4859300,
+            "prompt_eval_count": 102,
+            "prompt_eval_duration": 54426000,
+            "eval_count": 20,
+            "eval_duration": 236143000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9810300,
+            "load_duration": 4385000,
+            "prompt_eval_count": 22
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 8651600,
+            "load_duration": 3814100,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:07.2530564Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 335355100,
+            "load_duration": 4960800,
+            "prompt_eval_count": 124,
+            "prompt_eval_duration": 57274000,
+            "eval_count": 23,
+            "eval_duration": 270400000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9875200,
+            "load_duration": 4306700,
+            "prompt_eval_count": 25
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 9177200,
+            "load_duration": 4230800,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 10446900,
+            "load_duration": 5419200,
+            "prompt_eval_count": 21
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:07.7278846Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 430103000,
+            "load_duration": 5446000,
+            "prompt_eval_count": 1577,
+            "prompt_eval_duration": 267264000,
+            "eval_count": 7,
+            "eval_duration": 105456000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 12295300,
+            "load_duration": 4357800,
+            "prompt_eval_count": 18
+          },
+          {
+            "provider": "ollama",
+            "kind": "generate",
+            "model": "qwen3.5:9b",
+            "created_at": "2026-09-21T07:04:08.0803334Z",
+            "done": true,
+            "done_reason": "stop",
+            "total_duration": 293358700,
+            "load_duration": 6369500,
+            "prompt_eval_count": 124,
+            "prompt_eval_duration": 55749000,
+            "eval_count": 14,
+            "eval_duration": 165674000
+          },
+          {
+            "provider": "ollama",
+            "kind": "embedding",
+            "model": "nomic-embed-text:latest",
+            "total_duration": 8758100,
+            "load_duration": 4416600,
+            "prompt_eval_count": 12
+          }
+        ]
+      }
+    }
+  },
+  "preparation_sha256": "edbc0bc41c3107d9c54cf19a7504186c01a07fc632874d915588c376e4736eb9"
+}
