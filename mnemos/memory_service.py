@@ -25,6 +25,7 @@ from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
+from .source_review import SourceReviewReference
 from .retrieval import RetrievedChunks, assertion_status, render_context_chunk
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
@@ -441,6 +442,7 @@ class LocalMemoryService:
         event = self.engine.store.get_episodic_event(job.payload["event_id"])
         if event is None:
             raise ValueError("Source event is unavailable")
+        expected_source_event = event.model_copy(deep=True)
         event_identity_status = event.metadata.get("identity_status", "normal")
         if event_identity_status == "provisional_unassociated" and job.kind != "capture_only":
             raise ValueError("Provisional source events cannot run extraction jobs")
@@ -481,6 +483,7 @@ class LocalMemoryService:
             metadata=event.metadata,
         )
         diagnostics: dict[str, Any] = {}
+        review_references: list[SourceReviewReference] = []
         decision = "facts"
         captured_passthrough = job.kind == "extract" and not self.engine.config.modules.sleep
         if job.kind in {"remember", "correct"}:
@@ -522,19 +525,34 @@ class LocalMemoryService:
                     if self.engine.config.modules.sleep
                     else []
                 )
-                proposals = (
-                    await self.engine.sleep_daemon.propose_facts(
+                if (
+                    self.engine.config.modules.sleep
+                    and self.engine.config.sleep.extraction_mode == "source_bound"
+                ):
+                    from .extraction.service import extract_source_bound
+
+                    extracted = await extract_source_bound(
+                        [event],
+                        existing,
+                        self.engine.llm,
+                        allow_corrections=self.engine.config.modules.mutable_rag,
+                    )
+                    proposals = extracted.proposals
+                    review_references = extracted.reviews
+                    diagnostics["extraction_mode"] = "source_bound"
+                    diagnostics["deferred_corrections"] = extracted.deferred_corrections
+                elif self.engine.config.modules.sleep:
+                    proposals = await self.engine.sleep_daemon.propose_facts(
                         [event], self.engine.llm, existing_facts=existing
                     )
-                    if self.engine.config.modules.sleep
-                    else [
+                else:
+                    proposals = [
                         FactProposal(
                             content=event.content, evidence_ids=[event.id], operation="add"
                         )
                     ]
-                )
                 if not proposals:
-                    decision = "no_durable_facts"
+                    decision = "review_pending" if review_references else "no_durable_facts"
         else:
             raise ValueError("Unsupported maintenance job kind")
         state = (
@@ -667,6 +685,8 @@ class LocalMemoryService:
                     source_ref=event.metadata.get("source_ref"),
                 )
             )
+        if review_references:
+            decision = "facts" if chunks else "review_pending"
         committed = self.engine.store.commit_fact_and_job(
             job.id,
             owner=job.lease_owner,
@@ -675,6 +695,8 @@ class LocalMemoryService:
             evidence=evidence,
             revisions=revisions,
             processed_event_ids=[event.id],
+            expected_source_event=expected_source_event,
+            review_references=review_references,
             expected_version=job.payload.get("expected_version"),
             expected_versions=expected_versions,
             result={"decision": decision, "encoding_diagnostics": diagnostics},
@@ -806,9 +828,17 @@ class LocalMemoryService:
                 metadata=context_metadata(context, "project"),
             )
             try:
-                proposals = await self.engine.sleep_daemon.propose_facts(
-                    [probe_event], self.engine.llm
-                )
+                if self.engine.config.sleep.extraction_mode == "source_bound":
+                    from .extraction.service import extract_source_bound
+
+                    extracted = await extract_source_bound(
+                        [probe_event], [], self.engine.llm, allow_corrections=False
+                    )
+                    proposals = extracted.proposals
+                else:
+                    proposals = await self.engine.sleep_daemon.propose_facts(
+                        [probe_event], self.engine.llm
+                    )
                 passed = any(
                     label in fact.content and probe_event.id in fact.evidence_ids
                     for fact in proposals
@@ -818,6 +848,7 @@ class LocalMemoryService:
                     "input_specific_extraction": passed,
                     "observed_at": datetime.now(timezone.utc).isoformat(),
                     "provider": type(self.engine.llm).__name__,
+                    "extraction_mode": self.engine.config.sleep.extraction_mode,
                 }
             except Exception as exc:
                 self._cognition_probe["error"] = type(exc).__name__

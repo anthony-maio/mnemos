@@ -431,6 +431,7 @@ class RuntimeSettings(BaseModel):
 class SleepSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    extraction_mode: Literal["generated", "source_bound"] = "generated"
     recall_gated_plasticity_enabled: bool = False
     recall_min_supporting_episodes: int = 2
     recall_similarity_threshold: float = 0.82

@@ -507,6 +507,7 @@ class MemoryStore(ABC):
         revision: FactRevision | None = None,
         revisions: list[FactRevision] | None = None,
         processed_event_ids: list[str] | None = None,
+        expected_source_event: EpisodicEvent | None = None,
         review_references: list[SourceReviewReference] | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
@@ -2792,6 +2793,7 @@ class SQLiteStore(MemoryStore):
         revision: FactRevision | None = None,
         revisions: list[FactRevision] | None = None,
         processed_event_ids: list[str] | None = None,
+        expected_source_event: EpisodicEvent | None = None,
         review_references: list[SourceReviewReference] | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
@@ -2799,6 +2801,11 @@ class SQLiteStore(MemoryStore):
         now: datetime | None = None,
     ) -> bool:
         committed_at = now or datetime.now(timezone.utc)
+        source_snapshot = (
+            EpisodicEvent.model_validate(expected_source_event.model_dump(mode="python"))
+            if expected_source_event is not None
+            else None
+        )
         fact_chunks = list(chunks or [])
         if chunk is not None:
             fact_chunks.insert(0, chunk)
@@ -2859,6 +2866,14 @@ class SQLiteStore(MemoryStore):
                     self._conn.rollback()
                     return False
                 leased_payload = json.loads(lease_row[1] or "{}")
+                if source_snapshot is not None:
+                    leased_event_id = leased_payload.get("event_id")
+                    if (
+                        source_snapshot.id != leased_event_id
+                        or source_snapshot.id not in (processed_event_ids or [])
+                        or self.get_episodic_event(source_snapshot.id) != source_snapshot
+                    ):
+                        raise ValueError("Expected source event changed before atomic commit")
                 for review in reviews:
                     if (
                         lease_row[0] != "extract"

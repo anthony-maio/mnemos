@@ -253,6 +253,7 @@ def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
         retrieval=settings.retrieval.model_copy(deep=True),
         surprisal=SurprisalConfig(threshold=settings.runtime.surprisal_threshold),
         sleep=SleepConfig(
+            extraction_mode=settings.sleep.extraction_mode,
             recall_gated_plasticity_enabled=settings.sleep.recall_gated_plasticity_enabled,
             recall_min_supporting_episodes=settings.sleep.recall_min_supporting_episodes,
             recall_similarity_threshold=settings.sleep.recall_similarity_threshold,
