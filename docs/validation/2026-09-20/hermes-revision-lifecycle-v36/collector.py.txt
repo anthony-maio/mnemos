@@ -1,0 +1,61 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib, json, shutil, sqlite3
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+record = json.loads((candidate / 'revision_delivery_v36.json').read_bytes())
+assert record['status'] == 'passed' and record['descriptor_removed']
+assert record['source_commit'] == '995d9c27ca71d30e2a55f548f2541d87614f0c08'
+assert record['verified_modules'] == 55 and len(record['phases']) == 6
+root = Path(record['root'])
+out = repo / 'docs/validation/2026-09-20/hermes-revision-lifecycle-v36'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+shutil.copyfile(root / 'result.json', out / 'result.json')
+for suffix in ['stdout.log', 'stderr.log']:
+    shutil.copyfile(candidate / ('revision_delivery_v36.' + suffix), out / suffix)
+for name in ['hermes_revision_delivery_v36.py', 'launch_revision_delivery_v36.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+with closing(sqlite3.connect(root / 'memory.sqlite')) as source:
+    with closing(sqlite3.connect(out / 'service.sqlite')) as backup:
+        source.backup(backup)
+        assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+        assert backup.execute('PRAGMA foreign_key_check').fetchall() == []
+        assert backup.execute('SELECT count(*) FROM memory_chunks').fetchone() == (0,)
+        backup.row_factory = sqlite3.Row
+        jobs = [dict(x) for x in backup.execute('SELECT * FROM memory_jobs')]
+        assert all(j['status'] == 'completed' for j in jobs)
+        (out / 'jobs.json').write_text(json.dumps(jobs, indent=2) + '\n')
+        backup.execute('PRAGMA journal_mode=DELETE')
+        backup.commit()
+shutil.copyfile(candidate / 'revision_delivery_v36.launch.json', out / 'launch.json')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Installed Hermes revision correction and forgetting lifecycle
+
+All six phases pass on the byte-verified 995d9c2 wheel: raw delivery, offline
+buffering, restart replay, correction with duplicate absorption, reviewed
+forgetting plus replay, and final restart without resurrection. All 55 installed
+Python modules match the wheel. The original v32 outbox remains unchanged.
+
+Two original-source jobs become captured evidence; the generated summary stays
+ineligible. Explicit correction from cedar to birch retains the cedar target ID,
+advances its version, and absorbs the already captured birch record. The result
+survives service restart. Reviewed forgetting removes it; both exact original
+outbox replay and explicit-correction source replay leave no facts after another
+maintenance cycle and restart. All durable jobs are completed. Descriptor cleanup,
+database integrity and foreign-key checks pass.
+
+The fixture uses the actual installed adapter's previously captured Hermes
+compression/edit records and the actual authenticated loopback service. All
+five modules are disabled, with simple embeddings and no language model. This
+is structural lifecycle evidence, not semantic extraction quality or a complete
+interactive CLI run. The earlier v34 failure is preserved. No live host or memory
+was changed. This target-wheel check uses existing private interpreter dependencies,
+not clean dependency resolution. The broader Windows installed contract suite
+is a separate validation. Historical v35 remains bound to its earlier wheel.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'root': str(root)}))

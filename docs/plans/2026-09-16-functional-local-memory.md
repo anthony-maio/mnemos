@@ -343,6 +343,20 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [v36 Hermes lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v36/README.md)
+passes six phases against the byte-verified 995d9c2 wheel: delivery, offline
+buffering, restart replay, correction/deduplication, reviewed forgetting/replay,
+and final restart without resurrection. All modules are disabled and embeddings
+are simple. This replays saved native records through a temporary loopback
+service; it does not prove a new interactive capture or full-module quality.
+
+The [compaction growth fixture](../validation/2026-09-20/hermes-compaction-growth-v4/README.md)
+passes 25 exact-origin checkpoints across repeated compaction, user editing and
+reopen. Whole-session pruning removes its complete fixture graph. Physical
+generations accumulate while the session stays open; no bounded storage policy
+or upstream growth comparison is claimed. Earlier fixture projection and carrier
+mistakes are preserved and explained separately from the corrected assertions.
+
 The [compression/edit delivery check](../validation/2026-09-20/hermes-revision-delivery-v33/README.md)
 preserves three identities across six capture phases and service restart:
 original source, edited source, and provisional summary. The service creates

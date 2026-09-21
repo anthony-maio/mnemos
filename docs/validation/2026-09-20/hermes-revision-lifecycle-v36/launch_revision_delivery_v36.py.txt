@@ -1,0 +1,16 @@
+from pathlib import Path
+import subprocess,os,json,hashlib,importlib.metadata as metadata
+repo=Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+candidate=Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+script=repo/'.venv/hermes_revision_delivery_v36.py'
+python='/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python'
+target='/tmp/mnemos-wheel-spreading-budget-v36'
+env=dict(os.environ);env['PYTHONPATH']=target
+logs=[candidate/f'revision_delivery_v36.{kind}.log' for kind in ('stdout','stderr')]
+assert not any(p.exists() for p in logs)
+with logs[0].open('wb') as stdout, logs[1].open('wb') as stderr:
+ result=subprocess.run([python,str(script)],cwd='/tmp',env=env,stdout=stdout,stderr=stderr)
+record={'exit_code':result.returncode,'command':[python,str(script)],'cwd':'/tmp','pythonpath':target,'runner_sha256':hashlib.sha256(script.read_bytes()).hexdigest(),'logs':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in logs},'target_distributions':{d.metadata['Name']:d.version for d in metadata.distributions(path=[target])},'limits':'Target wheel installation uses existing private interpreter dependencies; not a clean dependency resolution or live host install.'}
+(candidate/'revision_delivery_v36.launch.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record));print(logs[0].read_text());print(logs[1].read_text())
+raise SystemExit(result.returncode)

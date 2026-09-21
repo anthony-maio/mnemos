@@ -1,0 +1,183 @@
+from pathlib import Path
+from zipfile import ZipFile
+import asyncio
+import hashlib
+import inspect
+import json
+import os
+import shutil
+import tempfile
+
+for key in tuple(os.environ):
+    if key.startswith('MNEMOS_'):
+        os.environ.pop(key)
+from mnemos.client import MnemosClient
+from mnemos.config import MnemosConfig, ModuleConfig
+from mnemos.engine import MnemosEngine
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ScopeRegistry, ProjectIdentity, ScopeContext
+from mnemos.service import MnemosService
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import UnavailableLLMProvider
+from mnemos.utils.storage import SQLiteStore
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+boundary = json.loads((candidate / 'revision_capture_v32.json').read_bytes())
+source_outbox = Path(boundary['root']) / 'outbox.json'
+original = source_outbox.read_bytes()
+entries = json.loads(original)
+assert len(entries) == 3
+root = Path(tempfile.mkdtemp(prefix='mnemos-hermes-outbox-revision-delivery-v36-'))
+descriptor = root / 'runtime.json'
+outbox = root / 'outbox.json'
+outbox.write_bytes(original)
+wheel = Path('/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-spreading-budget-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl')
+boundary['wheel_sha256'] = 'ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30'
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == boundary['wheel_sha256']
+installed = Path(inspect.getfile(MnemosClient)).parents[1]
+verified = 0
+with ZipFile(wheel) as archive:
+    for name in archive.namelist():
+        if name.startswith('mnemos/') and name.endswith('.py'):
+            assert (installed / name).read_bytes() == archive.read(name)
+            verified += 1
+capture_context = ScopeContext.model_validate(entries[0]['payload']['context'])
+project = ProjectIdentity(id=capture_context.project_id,
+    root=str(Path(boundary['root'])), user_profile_id=capture_context.user_profile_id, enabled=True)
+registry = ScopeRegistry(profiles=[capture_context.user_profile_id], projects={project.id: project})
+assert registry.validate_context(capture_context) == capture_context
+config = MnemosConfig(modules=ModuleConfig(surprisal=False, mutable_rag=False,
+                                          affective=False, sleep=False, spreading=False))
+instances = []
+def factory():
+    memory = LocalMemoryService(MnemosEngine(config=config,
+        llm=UnavailableLLMProvider(), embedder=SimpleEmbeddingProvider(),
+        store=SQLiteStore(str(root / 'memory.sqlite'))), registry)
+    instances.append(memory)
+    return memory
+
+def runtime():
+    return MnemosService(dispatcher_factory=factory, descriptor_path=descriptor,
+                         startup_timeout=10, dispatch_timeout=10)
+
+def snapshot():
+    store = instances[-1].engine.store
+    return {'events': [x.model_dump(mode='json') for x in store.list_episodic_events()],
+            'jobs': [x.model_dump(mode='json') for x in store.list_jobs()],
+            'fact_count': len(store.get_all())}
+
+async def main():
+    result = {'root': str(root), 'source_outbox_sha256': hashlib.sha256(original).hexdigest(),
+              'wheel_sha256': boundary['wheel_sha256'], 'verified_modules': verified,
+              'modules': config.modules.model_dump(), 'phases': [],
+              'source_commit': '995d9c27ca71d30e2a55f548f2541d87614f0c08',
+              'limits': 'Actual loopback service and SQLite delivery of original, edited source, and derived summary; no extraction/model quality or full interactive CLI proof.'}
+    client = MnemosClient(descriptor_path=descriptor, outbox_path=outbox, auto_start=False)
+    service = runtime()
+    try:
+        service.start()
+        first = await client.replay_outbox()
+        assert (first['acknowledged'], first['failed'], first['pending']) == (3, 0, 0), first
+        state = snapshot()
+        assert len(state['events']) == 3 and state['fact_count'] == 0, state
+        expected = {(x['payload']['content'], x['payload']['context']['session_id'], x['payload']['source_ref']) for x in entries}
+        observed = {(x['content'], x['metadata']['session_id'], x['metadata']['source_ref']) for x in state['events']}
+        assert observed == expected, (observed, expected)
+        assert sorted(j['kind'] for j in state['jobs']) == ['capture_only', 'extract', 'extract']
+        summaries = [e for e in state['events'] if e['metadata'].get('identity_status') == 'provisional_unassociated']
+        assert len(summaries) == 1 and summaries[0]['status'] == 'deferred'
+        event_ids = sorted(x['id'] for x in state['events'])
+        result['phases'].append({'phase': 'delivery', 'replay': first, 'state': state})
+        await client.close()
+        service.stop()
+        assert not descriptor.exists()
+        # Reintroduce the exact saved entry to model an acknowledgement lost
+        # after durable capture. Never alter its event identity or payload.
+        outbox.write_bytes(original)
+        client = MnemosClient(descriptor_path=descriptor, outbox_path=outbox, auto_start=False)
+        offline = await client.replay_outbox()
+        assert (offline['acknowledged'], offline['failed'], offline['pending']) == (0, 3, 3), offline
+        result['phases'].append({'phase': 'service_offline', 'replay': offline})
+        await client.close()
+        service = runtime()
+        service.start()
+        reopened = snapshot()
+        assert sorted(x['id'] for x in reopened['events']) == event_ids
+        replay = await client.replay_outbox()
+        assert (replay['acknowledged'], replay['failed'], replay['pending']) == (3, 0, 0), replay
+        after = snapshot()
+        assert sorted(x['id'] for x in after['events']) == event_ids
+        assert [x['id'] for x in after['jobs']] == [x['id'] for x in state['jobs']]
+        assert after['fact_count'] == 0
+        result['phases'].append({'phase': 'restart_replay', 'replay': replay, 'state': after})
+
+        async def call(operation, payload):
+            response = await client.request(operation, payload, queue_on_failure=False)
+            result.setdefault('requests', []).append({'operation': operation, 'payload': payload, 'response': response})
+            return response
+
+        context = capture_context.model_dump(mode='json')
+        await call('maintenance', {})
+        store = instances[-1].engine.store
+        chunks = store.get_all()
+        assert len(chunks) == 2, [x.model_dump(mode='json') for x in chunks]
+        target = next(x for x in chunks if x.content == 'Use cedar export format.')
+        correction = await call('correct', {'event_id': 'revision-lifecycle-v36-correction',
+            'context': context, 'content': 'Use birch export format.',
+            'fact_id': target.id, 'expected_version': target.version})
+        assert correction['status'] == 'committed', correction
+        await call('maintenance', {})
+        assert all(j.status == 'completed' for j in store.list_jobs())
+        inspected = await call('inspect', {'context': context, 'fact_id': target.id})
+        assert inspected['fact']['content'] == 'Use birch export format.', inspected
+        assert inspected['fact']['version'] == target.version + 1, inspected
+        assert len(store.get_all()) == 1, [x.model_dump(mode='json') for x in store.get_all()]
+        result['phases'].append({'phase': 'correction_deduplication', 'inspection': inspected})
+        await client.close()
+        service.stop()
+        service = runtime()
+        service.start()
+        reopened = await call('inspect', {'context': context, 'fact_id': target.id})
+        assert reopened == inspected
+        preview = await call('forget_preview', {'context': context, 'fact_id': target.id,
+            'expected_version': target.version + 1, 'limit': 100})
+        assert preview['complete'] and preview['apply_preconditions'], preview
+        assert not preview['candidates'], preview
+        await call('forget_related', {'context': context, **preview['apply_preconditions'],
+            'selected_fact_ids': [target.id],
+            'selected_source_event_ids': [s['source_event_id'] for s in preview['source_events']]})
+        correction_replay = await call('capture', {
+            **entries[0]['payload'], 'event_id': 'revision-lifecycle-v36-correction',
+            'content': 'Use birch export format.', 'source_kind': 'explicit_correction'})
+        assert correction_replay['processing_status'] == 'suppressed', correction_replay
+        outbox.write_bytes(original)
+        replay_forgotten = await client.replay_outbox()
+        assert (replay_forgotten['acknowledged'], replay_forgotten['failed'], replay_forgotten['pending']) == (3, 0, 0)
+        await call('maintenance', {})
+        assert not instances[-1].engine.store.get_all()
+        result['phases'].append({'phase': 'reviewed_forget_replay', 'replay': replay_forgotten, 'state': snapshot()})
+        await client.close()
+        service.stop()
+        service = runtime()
+        service.start()
+        assert not instances[-1].engine.store.get_all()
+        result['phases'].append({'phase': 'final_restart_no_resurrection', 'state': snapshot()})
+        result['status'] = 'passed'
+    except Exception as exc:
+        import traceback
+        result.update(status='failed', error=str(exc), traceback=traceback.format_exc())
+        raise
+    finally:
+        await client.close()
+        service.stop()
+        result['descriptor_removed'] = not descriptor.exists()
+        (root / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
+    assert result['descriptor_removed']
+    assert source_outbox.read_bytes() == original
+    shutil.copyfile(__file__, root / 'runner.py.txt')
+    output = candidate / 'revision_delivery_v36.json'
+    assert not output.exists()
+    output.write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps({'status': result['status'], 'root': str(root), 'phases': len(result['phases'])}))
+
+asyncio.run(main())

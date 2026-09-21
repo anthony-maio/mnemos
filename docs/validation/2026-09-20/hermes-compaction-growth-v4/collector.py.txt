@@ -1,0 +1,58 @@
+from pathlib import Path
+import hashlib,json,shutil,sqlite3
+repo=Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root=Path('/tmp/mnemos-hermes-growth-measurement-v1'); candidate=Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+r=json.loads((root/'measure-v4.results.json').read_bytes())
+assert r['status']=='passed' and r['hashes_unchanged'] and r['prune_count']==1
+assert len(r['records'])==25 and not any(r['remaining'].values()) and not r['foreign_key_check']
+assert sha(repo/'.venv/hermes_growth_v4_transfer.py')==r['runner_sha256']
+for n,h in r['candidate_hashes_before'].items(): assert sha(candidate/n)==h==r['candidate_hashes_after'][n]
+out=repo/'docs/validation/2026-09-20/hermes-compaction-growth-v4';out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in ['measure.py','measure-v2.results.json','measure-v3.results.json','measure-v4.results.json']:
+ shutil.copyfile(root/name,out/name)
+for v in [2,3,4]: shutil.copyfile(repo/f'.venv/hermes_growth_v{v}_transfer.py',out/f'runner-v{v}.py.txt')
+for name in r['candidate_hashes_before']: shutil.copyfile(candidate/name,out/(name+'.txt'))
+shutil.copyfile(root/'measure-v4.sqlite',out/'post-prune.sqlite')
+with sqlite3.connect(out/'post-prune.sqlite') as c:
+ assert c.execute('PRAGMA integrity_check').fetchone()==('ok',)
+ assert not c.execute('PRAGMA foreign_key_check').fetchall()
+(out/'README.md').write_text('''# Hermes compaction growth and evidence preservation
+
+The corrected v4 fixture passes 25 checkpoints, including 20 compactions,
+reopen, a real user edit, another compaction, and another reopen. Each checkpoint
+compares the exact active retained-original origin IDs, roles, content and cwd
+against the expected sources, validates every physical evidence component with
+the candidate reader, and checks the canonical source rows directly.
+
+Two initial messages become 62 physical message rows after 20 compactions;
+there are 60 origin mappings, 62 evidence components, three active rows and
+40 rewind rows. SQLite logical allocation increases from 290,816 to 319,488
+bytes. After the user edit and further compaction there are 67 messages,
+65 origins and 67 components. These are small-fixture storage observations,
+not a workload forecast or a comparison against the unmodified upstream base.
+
+Ending the disposable session with end_reason='cli_close' and then using the
+normal prune API removes one session and all its messages, origin mappings and
+evidence components. The saved post-prune database passes integrity and foreign
+key checks. Six candidate files have identical hashes before and after.
+
+Earlier v1/v2 used summary-only compaction inputs and an active-only projection;
+those observations cannot establish loss of archived evidence. V3 also failed
+to prove exact active-user continuity: its first-user selection could select a
+summary on later iterations, and its membership checks accepted archived rows.
+V2/v3 pruning did not run successfully because the fixture did not end the
+session with the correct API keyword. Preserve these scripts/results as limited
+measurements, not passing continuity or pruning evidence. V4 makes the required
+assertions explicit and uses actual carried-row metadata with matching tail size.
+
+This tests an isolated Hermes candidate's SessionDB contract. It is not a fresh
+interactive host capture, model-extraction result, or a Mnemos-wheel integration
+check. Native row generations grow during a long-lived session; no generation
+retention policy was invented, and no live data or host configuration changed.
+No bounded storage claim follows from successful whole-session pruning.
+''')
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'evidence-index.json').write_text(json.dumps({'files':{p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in out.iterdir() if p.is_file()}},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(list(out.iterdir()))}))

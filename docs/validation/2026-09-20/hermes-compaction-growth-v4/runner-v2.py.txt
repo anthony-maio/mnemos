@@ -1,0 +1,112 @@
+import hashlib
+import json
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+fixture = Path('/tmp/mnemos-hermes-growth-measurement-v1')
+fixture.mkdir(parents=True, exist_ok=True)
+db_path = fixture / 'measure-v2.sqlite'
+result_path = fixture / 'measure-v2.results.json'
+if db_path.exists():
+    db_path.unlink()
+
+hash_files = ['hermes_state_messages.py', 'hermes_state.py', 'hermes_state_common.py', 'hermes_state_compression.py']
+before = {name: hashlib.sha256((candidate / name).read_bytes()).hexdigest() for name in hash_files}
+sys.path.insert(0, str(candidate))
+from hermes_state import SessionDB
+
+db = SessionDB(db_path)
+sid = 'growth-v2'
+db.create_session(sid, 'cli', cwd='/tmp/growth-v2')
+db.append_messages_batch(sid, [
+    {'role': 'user', 'content': 'fixed user turn'},
+    {'role': 'assistant', 'content': 'fixed assistant turn'},
+    {'role': 'tool', 'content': 'tool output', 'tool_name': 'x'},
+])
+
+def counts():
+    with sqlite3.connect(db_path) as conn:
+        out = {table: conn.execute('select count(*) from ' + table).fetchone()[0]
+               for table in ('messages', 'message_origins', 'message_evidence_components')}
+        out.update(active=conn.execute('select count(*) from messages where active=1').fetchone()[0],
+                   compacted=conn.execute('select count(*) from messages where compacted=1').fetchone()[0],
+                   rewind=conn.execute('select count(*) from messages where active=0 and compacted=0').fetchone()[0],
+                   page_count=conn.execute('pragma page_count').fetchone()[0],
+                   page_size=conn.execute('pragma page_size').fetchone()[0])
+        out['db_bytes'] = out['page_count'] * out['page_size']
+        return out
+
+def evidence_snapshot():
+    rows = db.get_memory_evidence(sid)
+    snapshot = []
+    for row in rows:
+        origin = row.get('_memory_origin')
+        assert isinstance(origin, dict) and origin.get('row_id', 0) > 0
+        assert origin.get('cwd') == '/tmp/growth-v2'
+        assert row.get('role') in {'user', 'assistant'}
+        snapshot.append({'role': row.get('role'), 'content': row.get('content'),
+                         'row_id': row.get('_row_id'), 'origin': origin,
+                         'kind': row.get('_memory_evidence_kind')})
+    return snapshot
+
+def checkpoint(label):
+    return {'label': label, 'evidence': evidence_snapshot(), 'counts': counts()}
+
+records = [checkpoint('initial')]
+for index in range(1, 21):
+    db.archive_and_compact(
+        sid,
+        [{'role': 'user', 'content': '[summary %d]' % index, '_compressed_summary': True}],
+        tail_count=1,
+    )
+    records.append(checkpoint('compact-%02d' % index))
+
+db.close()
+db = SessionDB(db_path)
+records.append(checkpoint('reopen'))
+db.append_messages_batch(sid, [{'role': 'user', 'content': 'new real user turn'}])
+new_user = [row for row in db.get_messages(sid) if row.get('content') == 'new real user turn'][-1]
+new_user_id = int(new_user['id'])
+assert db.set_user_message_content(sid, new_user_id, 'edited new real user turn') == 1
+edited = evidence_snapshot()
+assert any(row['origin']['row_id'] == new_user_id and row['content'] == 'edited new real user turn'
+           for row in edited), edited
+records.append(checkpoint('edited-user'))
+db.archive_and_compact(
+    sid,
+    [{'role': 'user', 'content': '[post edit summary]', '_compressed_summary': True}],
+    tail_count=1,
+)
+records.append(checkpoint('post-edit-compaction'))
+db.close()
+db = SessionDB(db_path)
+records.append(checkpoint('post-edit-reopen'))
+
+try:
+    prune_result = db.prune_sessions(older_than_days=None, source='cli')
+except Exception as exc:
+    prune_result = type(exc).__name__ + ': ' + str(exc)
+db.close()
+with sqlite3.connect(db_path) as conn:
+    remaining = {
+        'sessions': conn.execute('select count(*) from sessions where id=?', (sid,)).fetchone()[0],
+        'messages': conn.execute('select count(*) from messages where session_id=?', (sid,)).fetchone()[0],
+    }
+after = {name: hashlib.sha256((candidate / name).read_bytes()).hexdigest() for name in hash_files}
+result = {
+    'records': records,
+    'new_user_row_id': new_user_id,
+    'prune_result': prune_result,
+    'remaining_owned_rows': remaining,
+    'candidate_hashes_before': before,
+    'candidate_hashes_after': after,
+    'hashes_unchanged': before == after,
+    'limitation': 'tail_count=1 with summary-only input is a synthetic carrier exercise, not complete host compaction behavior',
+}
+result_path.write_text(json.dumps(result, indent=2), encoding='utf-8')
+print(json.dumps({'record_count': len(records), 'new_user_row_id': new_user_id,
+                  'prune_result': prune_result, 'remaining_owned_rows': remaining,
+                  'hashes_unchanged': before == after}))

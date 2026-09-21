@@ -1,0 +1,116 @@
+from pathlib import Path
+import hashlib
+import json
+import sqlite3
+import sys
+import traceback
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+fixture = Path('/tmp/mnemos-hermes-growth-measurement-v1')
+path = fixture / 'measure-v4.sqlite'
+output = fixture / 'measure-v4.results.json'
+assert not path.exists() and not output.exists()
+files = ['hermes_state_messages.py', 'hermes_state.py', 'hermes_state_common.py',
+         'hermes_state_compression.py', 'hermes_state_sessions.py', 'hermes_state_maintenance.py']
+digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+before = {name: digest(candidate / name) for name in files}
+sys.path.insert(0, str(candidate))
+from hermes_state import SessionDB
+
+sid = 'growth-v4'
+cwd = '/tmp/growth-v4'
+db = SessionDB(path)
+result = {'status': 'running', 'candidate_hashes_before': before,
+          'runner_sha256': digest(Path(__file__)), 'records': [],
+          'limits': 'Synthetic SessionDB carriers; no model or interactive host. No untouched-base comparison.'}
+expected = {}
+
+def checkpoint(label):
+    actual = db.get_memory_evidence(sid)
+    retained = [item for item in actual if item['_memory_evidence_kind'] == 'retained_original']
+    assert len(retained) == len(expected), (label, retained, expected)
+    observed = {}
+    for item in retained:
+        origin = item['_memory_origin']
+        assert origin['session_id'] == sid and origin['cwd'] == cwd, (label, item)
+        observed[origin['row_id']] = (item['role'], item['content'])
+    assert observed == expected, (label, observed, expected)
+    with sqlite3.connect(path) as conn:
+        conn.row_factory = sqlite3.Row
+        components = [dict(row) for row in conn.execute('SELECT * FROM message_evidence_components')]
+        for component in components:
+            db._validate_component_read(sid, component)
+        for origin_id, (role, content) in expected.items():
+            row = conn.execute('SELECT session_id, role, content FROM messages WHERE id=?', (origin_id,)).fetchone()
+            assert tuple(row) == (sid, role, content), (label, origin_id, dict(row))
+        counts = {table: conn.execute('SELECT count(*) FROM ' + table).fetchone()[0]
+                  for table in ('messages', 'message_origins', 'message_evidence_components')}
+        counts['active'] = conn.execute('SELECT count(*) FROM messages WHERE active=1').fetchone()[0]
+        counts['rewind'] = conn.execute('SELECT count(*) FROM messages WHERE active=0 AND compacted=0').fetchone()[0]
+        counts['logical_bytes'] = conn.execute('PRAGMA page_count').fetchone()[0] * conn.execute('PRAGMA page_size').fetchone()[0]
+        assert conn.execute('PRAGMA foreign_key_check').fetchall() == []
+    result['records'].append({'label': label, 'counts': counts, 'retained_origins': observed,
+                              'all_physical_components_validated': len(components)})
+
+def compact(label):
+    active = db.get_messages(sid)
+    evidence = db.get_memory_evidence(sid)
+    carriers = []
+    for origin_id, (role, content) in expected.items():
+        matches = [item for item in evidence if item['_memory_evidence_kind'] == 'retained_original'
+                   and item['_memory_origin']['row_id'] == origin_id]
+        assert len(matches) == 1
+        rows = [row for row in active if row['role'] == role and row['content'] == content]
+        assert len(rows) == 1
+        carrier = dict(rows[0])
+        carrier.update(_row_id=int(rows[0]['id']), _memory_origin=matches[0]['_memory_origin'],
+                       _memory_evidence_kind='retained_original')
+        carriers.append(carrier)
+    db.archive_and_compact(sid, [dict(role='user', content='[' + label + ']',
+                                     _compressed_summary=True), *carriers], tail_count=len(carriers))
+    checkpoint(label)
+
+try:
+    db.create_session(sid, 'cli', cwd=cwd)
+    db.append_messages_batch(sid, [dict(role='user', content='fixed user turn'),
+                                  dict(role='assistant', content='fixed assistant turn')])
+    expected = {item['_memory_origin']['row_id']: (item['role'], item['content'])
+                for item in db.get_memory_evidence(sid)}
+    checkpoint('initial')
+    for index in range(20):
+        compact('compact-' + str(index + 1))
+    db.close()
+    db = SessionDB(path)
+    checkpoint('reopen')
+    db.append_messages_batch(sid, [dict(role='user', content='real edit target')])
+    target = next(row for row in db.get_messages(sid) if row['content'] == 'real edit target')
+    target_id = int(target['id'])
+    assert db.set_user_message_content(sid, target_id, 'edited real user content') == 1
+    expected[target_id] = ('user', 'edited real user content')
+    checkpoint('edited-user')
+    compact('post-edit-compaction')
+    db.close()
+    db = SessionDB(path)
+    checkpoint('post-edit-reopen')
+    db.end_session(sid, end_reason='cli_close')
+    result['prune_count'] = db.prune_sessions(older_than_days=None, source='cli')
+    assert result['prune_count'] == 1
+    db.close()
+    with sqlite3.connect(path) as conn:
+        result['remaining'] = {table: conn.execute('SELECT count(*) FROM ' + table).fetchone()[0]
+                               for table in ('sessions', 'messages', 'message_origins', 'message_evidence_components')}
+        assert all(count == 0 for count in result['remaining'].values())
+        result['foreign_key_check'] = conn.execute('PRAGMA foreign_key_check').fetchall()
+        assert result['foreign_key_check'] == []
+    result['status'] = 'passed'
+except Exception:
+    result.update(status='failed', traceback=traceback.format_exc())
+finally:
+    db.close()
+    result['candidate_hashes_after'] = {name: digest(candidate / name) for name in files}
+    result['hashes_unchanged'] = result['candidate_hashes_after'] == before
+    if not result['hashes_unchanged']:
+        result['status'] = 'failed'
+    output.write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps(result))
+raise SystemExit(0 if result['status'] == 'passed' else 1)

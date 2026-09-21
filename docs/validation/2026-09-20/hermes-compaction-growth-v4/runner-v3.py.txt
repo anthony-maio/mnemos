@@ -1,0 +1,125 @@
+import hashlib
+import json
+import sqlite3
+import sys
+from pathlib import Path
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+fixture = Path('/tmp/mnemos-hermes-growth-measurement-v1')
+fixture.mkdir(parents=True, exist_ok=True)
+db_path = fixture / 'measure-v3.sqlite'
+result_path = fixture / 'measure-v3.results.json'
+if db_path.exists():
+    db_path.unlink()
+files = ['hermes_state_messages.py', 'hermes_state.py', 'hermes_state_common.py', 'hermes_state_compression.py']
+before = {name: hashlib.sha256((candidate / name).read_bytes()).hexdigest() for name in files}
+sys.path.insert(0, str(candidate))
+from hermes_state import SessionDB
+
+db = SessionDB(db_path)
+sid = 'growth-v3'
+db.create_session(sid, 'cli', cwd='/tmp/growth-v3')
+db.append_messages_batch(sid, [
+    {'role': 'user', 'content': 'fixed user turn'},
+    {'role': 'assistant', 'content': 'fixed assistant turn'},
+])
+
+def raw_counts():
+    with sqlite3.connect(db_path) as c:
+        out = {t: c.execute('select count(*) from ' + t).fetchone()[0]
+               for t in ('messages', 'message_origins', 'message_evidence_components')}
+        out.update(active=c.execute('select count(*) from messages where active=1').fetchone()[0],
+                   compacted=c.execute('select count(*) from messages where compacted=1').fetchone()[0],
+                   rewind=c.execute('select count(*) from messages where active=0 and compacted=0').fetchone()[0],
+                   pages=c.execute('pragma page_count').fetchone()[0],
+                   bytes=c.execute('pragma page_count').fetchone()[0] * c.execute('pragma page_size').fetchone()[0])
+        return out
+
+def evidence(include_compacted=False):
+    rows = db.get_messages(sid, include_compacted=include_compacted)
+    found = []
+    with sqlite3.connect(db_path) as c:
+        c.row_factory = sqlite3.Row
+        for row in rows:
+            mid = int(row['id'])
+            parts = c.execute('select * from message_evidence_components where message_id=? order by component_ordinal', (mid,)).fetchall()
+            for part in parts:
+                source = c.execute('select role,content,session_id from messages where id=?', (part['origin_row_id'],)).fetchone()
+                assert source is not None and source['session_id'] == part['origin_session_id']
+                assert source['role'] == part['role']
+                found.append({'message_id': mid, 'kind': part['component_kind'], 'role': part['role'],
+                              'content': part['content'], 'origin_session_id': part['origin_session_id'],
+                              'origin_row_id': part['origin_row_id'], 'origin_cwd': part['origin_cwd'],
+                              'source_content': source['content'], 'active': int(row['active']),
+                              'compacted': int(row['compacted'])})
+    return found
+
+initial = evidence(True)
+user_origin = next(x for x in initial if x['role'] == 'user')
+assistant_origin = next(x for x in initial if x['role'] == 'assistant')
+records = []
+for i in range(1, 21):
+    active = db.get_messages(sid)
+    user = next(x for x in active if x.get('role') == 'user')
+    active_ev = db.get_memory_evidence(sid)
+    user_origin_now = next(x['_memory_origin'] for x in active_ev if x.get('_row_id') == int(user['id']))
+    carrier = dict(user)
+    carrier['_row_id'] = int(user['id'])
+    carrier['_memory_origin'] = user_origin_now
+    carrier['_memory_evidence_kind'] = 'retained_original'
+    assistant = next(x for x in active if x.get('role') == 'assistant')
+    assistant_origin_now = {'version': 1, 'session_id': assistant_origin['origin_session_id'],
+                            'row_id': assistant_origin['origin_row_id'], 'cwd': assistant_origin['origin_cwd']}
+    assistant_carrier = dict(assistant)
+    assistant_carrier['_row_id'] = int(assistant['id'])
+    assistant_carrier['_memory_origin'] = assistant_origin_now
+    assistant_carrier['_memory_evidence_kind'] = 'retained_original'
+    db.archive_and_compact(sid, [
+        {'role': 'user', 'content': '[summary %d]' % i, '_compressed_summary': True}, carrier, assistant_carrier
+    ], tail_count=1)
+    all_evidence = evidence(True)
+    assert any(x['origin_row_id'] == user_origin['origin_row_id'] and x['source_content'] == 'fixed user turn' for x in all_evidence)
+    assert any(x['origin_row_id'] == assistant_origin['origin_row_id'] and x['source_content'] == 'fixed assistant turn' for x in all_evidence)
+    records.append({'iteration': i, 'counts': raw_counts(), 'evidence_count': len(all_evidence)})
+
+db.close()
+db = SessionDB(db_path)
+all_evidence = evidence(True)
+assert any(x['origin_row_id'] == user_origin['origin_row_id'] for x in all_evidence)
+assert any(x['origin_row_id'] == assistant_origin['origin_row_id'] for x in all_evidence)
+db.append_messages_batch(sid, [{'role': 'user', 'content': 'legitimate user edit target'}])
+target = [x for x in db.get_messages(sid) if x.get('content') == 'legitimate user edit target'][-1]
+target_id = int(target['id'])
+assert db.set_user_message_content(sid, target_id, 'legitimate user edited content') == 1
+db.archive_and_compact(sid, [
+    {'role': 'user', 'content': '[edited summary]', '_compressed_summary': True},
+    {'role': 'user', 'content': 'legitimate user edited content', '_row_id': target_id,
+     '_memory_origin': {'version': 1, 'session_id': sid, 'row_id': target_id, 'cwd': '/tmp/growth-v3'},
+     '_memory_evidence_kind': 'retained_original'},
+], tail_count=1)
+db.close()
+db = SessionDB(db_path)
+edited = evidence(True)
+assert any(x['origin_row_id'] == target_id and x['source_content'] == 'legitimate user edited content' for x in edited), edited
+db.close()
+
+db = SessionDB(db_path)
+try:
+    db.end_session(sid, reason='cli_close')
+except Exception:
+    pass
+try:
+    prune = db.prune_sessions(older_than_days=None, source='cli')
+except Exception as exc:
+    prune = type(exc).__name__ + ': ' + str(exc)
+db.close()
+with sqlite3.connect(db_path) as c:
+    remaining = {t: c.execute('select count(*) from ' + t).fetchone()[0] for t in ('sessions', 'messages', 'message_origins', 'message_evidence_components')}
+    fk = [list(row) for row in c.execute('pragma foreign_key_check').fetchall()]
+after = {name: hashlib.sha256((candidate / name).read_bytes()).hexdigest() for name in files}
+result = {'records': records, 'initial_origins': [user_origin, assistant_origin], 'edited_target_id': target_id,
+          'prune': prune, 'remaining': remaining, 'foreign_key_check': fk,
+          'candidate_hashes_before': before, 'candidate_hashes_after': after, 'hashes_unchanged': before == after,
+          'limitation': 'carrier metadata supplied explicitly; this measures the SessionDB contract, not a complete host integration'}
+result_path.write_text(json.dumps(result, indent=2), encoding='utf-8')
+print(json.dumps({'records': len(records), 'edited_target_id': target_id, 'prune': prune, 'remaining': remaining, 'foreign_key_check': fk, 'hashes_unchanged': before == after}))
