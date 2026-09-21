@@ -209,43 +209,96 @@ def _merge_json_host_config(
     return json.dumps(payload, indent=2) + "\n"
 
 
-def _merge_hermes_config(existing_text: str) -> str:
-    """Set only Hermes' provider selector while retaining its YAML settings."""
+_YAML_MEMORY_KEY = re.compile(r"memory[ \t]*:[ \t]*(#.*)?")
+_YAML_PROVIDER_KEY = re.compile(r"(?P<key>provider[ \t]*:)[^#\n]*?(?P<comment>[ \t]+#.*)?")
+
+
+def _edit_hermes_provider(existing_text: str) -> str:
+    """Point the top-level memory block at Mnemos, editing lines in place."""
     lines = existing_text.splitlines()
     memory_start = next(
-        (
-            index
-            for index, line in enumerate(lines)
-            if line.strip() == "memory:" and not line.startswith(" ")
-        ),
+        (index for index, line in enumerate(lines) if _YAML_MEMORY_KEY.fullmatch(line.rstrip())),
         None,
     )
     if memory_start is None:
+        if any(re.match(r"memory[ \t]*:", line) for line in lines):
+            # A flow or scalar memory value. Appending a second memory key
+            # would shadow it, so leave the text for verification to judge.
+            return existing_text
         base = existing_text.rstrip()
         return (base + "\n\n" if base else "") + "memory:\n  provider: mnemos\n"
-
     memory_end = len(lines)
     for index in range(memory_start + 1, len(lines)):
         line = lines[index]
         if line and not line.startswith((" ", "\t", "#")):
             memory_end = index
             break
+    children = [
+        index
+        for index in range(memory_start + 1, memory_end)
+        if lines[index].strip() and not lines[index].lstrip().startswith("#")
+    ]
+    # Only a direct child of memory counts; a nested provider belongs to
+    # some other setting, such as memory.embeddings.provider.
+    indentation = (
+        lines[children[0]][: len(lines[children[0]]) - len(lines[children[0]].lstrip())]
+        if children
+        else "  "
+    )
     provider_line = next(
         (
             index
-            for index in range(memory_start + 1, memory_end)
-            if lines[index].lstrip().startswith("provider:")
+            for index in children
+            if lines[index].startswith(indentation)
+            and _YAML_PROVIDER_KEY.fullmatch(lines[index][len(indentation) :].rstrip())
         ),
         None,
     )
     if provider_line is None:
-        lines.insert(memory_start + 1, "  provider: mnemos")
+        lines.insert(memory_start + 1, f"{indentation}provider: mnemos")
     else:
-        indentation = lines[provider_line][
-            : len(lines[provider_line]) - len(lines[provider_line].lstrip())
-        ]
-        lines[provider_line] = f"{indentation}provider: mnemos"
+        match = _YAML_PROVIDER_KEY.fullmatch(lines[provider_line][len(indentation) :].rstrip())
+        assert match is not None
+        comment = match.group("comment") or ""
+        lines[provider_line] = f"{indentation}provider: mnemos{comment}"
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _merge_hermes_config(existing_text: str) -> str:
+    """Set only Hermes' provider selector while retaining its YAML settings.
+
+    The file is edited as text so comments and layout survive, then both
+    versions are parsed. Unless memory.provider is the only difference,
+    nothing is written, since Hermes keeps the last of two duplicate keys
+    and a bad edit can silently drop the rest of its memory settings.
+    """
+    import yaml
+
+    unsafe = (
+        "Hermes config.yaml uses a layout setup cannot edit safely; nothing was written. "
+        "Set memory.provider to mnemos by hand."
+    )
+    try:
+        before = yaml.safe_load(existing_text)
+    except yaml.YAMLError as exc:
+        raise ValueError("Hermes config.yaml could not be parsed; nothing was written") from exc
+    merged = _edit_hermes_provider(existing_text)
+    try:
+        after = yaml.safe_load(merged)
+    except yaml.YAMLError as exc:
+        raise ValueError(unsafe) from exc
+    if before is None:
+        before = {}
+    if not isinstance(before, Mapping):
+        raise ValueError("Hermes config.yaml is not a mapping; nothing was written")
+    memory = before.get("memory")
+    expected = {
+        **before,
+        "memory": {**(memory if isinstance(memory, Mapping) else {}), "provider": "mnemos"},
+    }
+    if after != expected or not isinstance(memory, (Mapping, type(None))):
+        raise ValueError(unsafe)
+    return merged
 
 
 _CODEX_HOOK_MARKER = "mnemos.adapters.codex"
