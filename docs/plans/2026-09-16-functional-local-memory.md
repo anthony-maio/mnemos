@@ -616,19 +616,22 @@ fresh held-out inference is claimed. The separate launcher configuration change
 is validated by [75 focused checks](../validation/2026-09-20/heldout-generation-settings-v1.md).
 
 The [qualified inventory v2 preparation](../validation/2026-09-20/assertion-inventory-preparation-v2/README.md)
-freezes the next 46-case diagnostic at 1975f5e. It is now running on the same
+freezes the next 46-case diagnostic at 1975f5e. It completed on the same
 local model/settings, with qualifications attached to their assertions and
 source-bound retention-request quotations for unresolved ideas. Forty-one
 combined tests, formatting, compatibility mypy and all 46 offline source checks
 pass. Missing/wrong external preparation digests fail before execution. This
-remains an unadopted extraction experiment; literal quotations do not establish
+remains an unadopted extraction experiment. The [terminal record](../validation/2026-09-20/assertion-inventory-terminal-v2/README.md)
+preserves 41 runtime-valid outcomes and five errors; complete semantic review
+remains pending. Literal quotations do not establish
 semantic support or request intent. The [independent v1 review](../validation/2026-09-20/assertion-inventory-independent-review-v1.md)
 preserves additional inventory-completeness and qualification findings.
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Latest verified source [c1e2217](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md)
-passes 2,081 tests with four skips and all six source/package checks. Its wheel
+Latest fully verified source [b984411](../validation/2026-09-20/qualified-inventory-v2-source-checkpoint-v1/README.md)
+passes 2,135 tests with four skips and all six source/package checks. A subsequent
+support-version race repair is under validation and is outside this checkpoint. Its wheel
 is byte-identical to the cc940ac artifact already verified below; the new code
 changes evaluation contracts and registry preflight, not the packaged engine.
 The [installed check](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md)
