@@ -792,6 +792,17 @@ history instead of failing authority validation. The earlier semantic mistakes
 remain, including marker omission and false retention-request references.
 Production integration and fresh quality acceptance remain unexecuted.
 
+The experimental `source_reconciliation.py` separates candidate selection from
+target decisions without writing facts. It reconstructs source candidates through
+the existing renderer, binds targets to scoped snapshots and observed versions,
+accounts for every candidate and rejects input mutation after the provider call.
+The combined selector/classifier/role-binding/reconciliation suite passes 84
+tests, formatting and Python 3.10 module type checking. No model comparison or
+production integration has run for reconciliation. Its conservative handling of
+`correction_or_rejection` can leave a standalone new rejection unresolved when
+there is no target. That distinction must be resolved before production adoption;
+an unresolved correction cannot silently become a new fact or a no-facts success.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
