@@ -681,6 +681,14 @@ is NOT STARTED and does not change the current run, rubrics or production defaul
 
 ### T19 - Reconcile release, documentation, and research claims
 
+The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
+reduces the observed source archive from 399.8 MB to 40.7 MB by excluding bulky
+validation payloads while preserving them in the repository. All required
+archive-backed fixtures retain their bytes, and 50 affected tests pass from the
+extracted distribution. Its rebuilt wheel is byte-identical to the verified
+wheel below. This packaging check on 232d0da is separate from the full source
+suite on a128ef7; no new model result or release publication is implied.
+
 Latest fully verified source [a128ef7](../validation/2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
 passes 2,158 tests with four skips and all six source/package checks. It includes
 the support-version, standalone graph-budget and benchmark precision-label repairs.

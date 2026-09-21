@@ -1,0 +1,97 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import tarfile
+import xml.etree.ElementTree as ET
+
+repo = Path.cwd()
+snapshot = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-sdist-payload-v1')
+out = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-sdist-payload-checks-v1')
+out.mkdir(exist_ok=False)
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip()
+assert commit.startswith('232d0da')
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot, text=True).strip()
+env = {k: v for k, v in os.environ.items() if not k.startswith('MNEMOS_') and k != 'PYTHONPATH'}
+temp = out / 'process-temp'; temp.mkdir()
+env.update(TEMP=str(temp), TMP=str(temp), TMPDIR=str(temp), PYTHONUNBUFFERED='1')
+record = {'source_commit': commit, 'started_at': datetime.now(timezone.utc).isoformat(),
+          'status': 'running', 'commands': [], 'runner_sha256': sha(Path(__file__)),
+          'pyproject_sha256': sha(snapshot / 'pyproject.toml')}
+
+def save():
+    (out / 'verification.json').write_text(json.dumps(record, indent=2) + '\n')
+
+def run(name, args, cwd):
+    entry = {'name': name, 'command': [str(a) for a in args], 'cwd': str(cwd), 'status': 'running'}
+    record['commands'].append(entry); save()
+    with (out / (name + '.log')).open('wb') as log:
+        result = subprocess.run(entry['command'], cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT)
+    entry.update(status='passed' if result.returncode == 0 else 'failed', exit_code=result.returncode,
+                 log_sha256=sha(out / (name + '.log'))); save()
+    assert result.returncode == 0, name
+
+try:
+    run('build_sdist', [sys.executable, '-m', 'build', '--sdist', '--outdir', out / 'dist'], snapshot)
+    archive_path = next((out / 'dist').glob('*.tar.gz'))
+    extracted = out / 'extracted'; extracted.mkdir()
+    with tarfile.open(archive_path) as archive:
+        members = [m for m in archive.getmembers() if m.isfile()]
+        relative = {m.name.split('/', 1)[1]: m for m in members}
+        excluded = [name for name in relative if name.startswith('docs/validation/') and
+                    (name.endswith(('.zip', '.sqlite', '.raw-outputs.jsonl')) or '.sqlite-' in name)]
+        assert excluded == [], excluded
+        required = ['docs/validation/2026-09-20/retrieval-fixture-audit-v1/dataset-exact.jsonl']
+        cohort = snapshot / 'docs/validation/2026-09-19/hermes-native-cohort-v5'
+        phases = 0
+        for attempt in sorted(cohort.glob('attempt-*')):
+            if not attempt.is_dir(): continue
+            required.append((attempt / 'report.json').relative_to(snapshot).as_posix())
+            report = json.loads((attempt / 'report.json').read_bytes())
+            for phase in report['phases']:
+                if phase['phase'] in {'forget', 'source-replay'}: continue
+                required.append((attempt / phase['phase'] / 'trace.jsonl').relative_to(snapshot).as_posix())
+                phases += 1
+        assert phases == 14
+        bindings = {}
+        for name in required:
+            assert name in relative, name
+            payload = archive.extractfile(relative[name]).read()
+            assert payload == (snapshot / name).read_bytes(), name
+            bindings[name] = hashlib.sha256(payload).hexdigest()
+        assert bindings[required[0]] == '036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc'
+        record['source_archive'] = {'bytes': archive_path.stat().st_size, 'sha256': sha(archive_path),
+            'file_count': len(members), 'uncompressed_bytes': sum(m.size for m in members),
+            'excluded_payload_members': excluded, 'required_fixture_sha256': bindings,
+            'native_trace_phase_count': phases}
+        archive.extractall(extracted, filter='data')
+    source = next(extracted.iterdir())
+    run('fixture_tests', [sys.executable, '-m', 'pytest', '-q',
+        'tests/test_contract_v4.py', 'tests/test_hermes_reviewed_trace.py',
+        '--basetemp', temp / 'pytest', '--junitxml', out / 'fixtures.xml'], source)
+    suite = ET.parse(out / 'fixtures.xml').getroot().find('testsuite')
+    record['fixture_counts'] = {k: int(suite.attrib[k]) for k in ('tests', 'failures', 'errors', 'skipped')}
+    assert all(record['fixture_counts'][k] == 0 for k in ('failures', 'errors', 'skipped'))
+    run('build_wheel_from_sdist', [sys.executable, '-m', 'build', '--wheel', '--outdir', out / 'dist'], source)
+    wheel = next((out / 'dist').glob('*.whl'))
+    previous = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-precision-proxy-v1/dist')
+    old_wheel = next(previous.glob('*.whl'))
+    assert wheel.read_bytes() == old_wheel.read_bytes()
+    record['wheel'] = {'bytes': wheel.stat().st_size, 'sha256': sha(wheel),
+                      'byte_identical_to_preceding_verified_wheel': True}
+    old_archive = next(previous.glob('*.tar.gz'))
+    record['previous_source_archive'] = {'bytes': old_archive.stat().st_size, 'sha256': sha(old_archive)}
+    record['compressed_bytes_removed'] = old_archive.stat().st_size - archive_path.stat().st_size
+    run('twine', [sys.executable, '-m', 'twine', 'check', *sorted((out / 'dist').iterdir())], source)
+    record['status'] = 'passed'
+except Exception:
+    import traceback
+    record.update(status='failed', traceback=traceback.format_exc())
+finally:
+    record['finished_at'] = datetime.now(timezone.utc).isoformat(); save()
+print(json.dumps({'status': record['status'], 'record': str(out / 'verification.json')}))
+raise SystemExit(0 if record['status'] == 'passed' else 1)

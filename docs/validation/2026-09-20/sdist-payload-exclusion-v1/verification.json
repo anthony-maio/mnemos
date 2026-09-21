@@ -1,0 +1,118 @@
+{
+  "source_commit": "232d0da00457168141c3ae035a6ca5dc4e604a8d",
+  "started_at": "2026-09-21T02:33:00.415055+00:00",
+  "status": "passed",
+  "commands": [
+    {
+      "name": "build_sdist",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--sdist",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\dist"
+      ],
+      "cwd": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-sdist-payload-v1",
+      "status": "passed",
+      "exit_code": 0,
+      "log_sha256": "58475b76e9e11adb827a4625c89455a43035c60ba5e52ddf62d1dc9aa5f6516d"
+    },
+    {
+      "name": "fixture_tests",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_contract_v4.py",
+        "tests/test_hermes_reviewed_trace.py",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\process-temp\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\fixtures.xml"
+      ],
+      "cwd": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\extracted\\mnemos_memory-0.7.0",
+      "status": "passed",
+      "exit_code": 0,
+      "log_sha256": "47beef04c7ded0feccd513212ae23de2c416490c2593180b9be8928e10f1f7da"
+    },
+    {
+      "name": "build_wheel_from_sdist",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--wheel",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\dist"
+      ],
+      "cwd": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\extracted\\mnemos_memory-0.7.0",
+      "status": "passed",
+      "exit_code": 0,
+      "log_sha256": "bc3b78259a62893cd7d80014ad6d1bb418ca74564f2dad2ebc89c2548c364f53"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "cwd": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-sdist-payload-checks-v1\\extracted\\mnemos_memory-0.7.0",
+      "status": "passed",
+      "exit_code": 0,
+      "log_sha256": "5db274cbad1c44567735810e222dd0f34396bbe2d8fa898f90addbe32d5b9c16"
+    }
+  ],
+  "runner_sha256": "ca30d7fa892d19ff386cb83e1694c4297fe158066a234566a6916e8a0520e5ca",
+  "pyproject_sha256": "f4e34d9d15ef0cc4ebf28222a0c5adeb19f3083e58460cd32b90dd056aa18df3",
+  "source_archive": {
+    "bytes": 40653239,
+    "sha256": "91ebd052ce64b25e612d3bc16c1d98e33e707c504d425c43faa18d91a5ce5535",
+    "file_count": 11302,
+    "uncompressed_bytes": 254815560,
+    "excluded_payload_members": [],
+    "required_fixture_sha256": {
+      "docs/validation/2026-09-20/retrieval-fixture-audit-v1/dataset-exact.jsonl": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/report.json": "fe89115af14cb7b6e862bfcb71c29ae505808c7afa3581de4a5d3aca66d7aa77",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/teach/trace.jsonl": "57b2b542184d803b1bdbedd3d3ec96deaf0c5ebd52256c56a23ca531679e5169",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/recall_v1/trace.jsonl": "3227be43fabf6933e91a27907618b49c331608174593183667b952c2cfd0ccdc",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/correct/trace.jsonl": "5cb90a321544e893f9e2d17eb846766a5cbe00482573a84fad7f2dc5acda88ad",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/recall_v2/trace.jsonl": "d763504ac1611bac672ec4deb61de395b851a04068755e5ec49b597fecc3685a",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-1/recall_forgotten/trace.jsonl": "4d94aa6ad991c7e20b73145d942090aba36feb41c00df92bb6bcdb0ffd91603e",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/report.json": "4475a148284bbd9b984c85e10c69022c9577cb2153e15936cee2b7492deadace",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/teach/trace.jsonl": "921964fc90099f4dad16d990b281bdc8522e46f48244f6c97f8785fde4ed1e86",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/recall_v1/trace.jsonl": "05b6fca70c13faf45f172d6bec3a3af5ca77680ca2c9a1e82d7250452d0a3b5d",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/correct/trace.jsonl": "b327624d70784190551ba2112b6b3511f78e97d0fa0cd9b250a53d5d7ae6eea2",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/recall_v2/trace.jsonl": "5294b59e5d57b51f60d892e60a66b6c7bb7365337e2b50b0f67fec0dd02cb872",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-2/recall_forgotten/trace.jsonl": "05d483d46d757dbd172dfec6f7249a1b271a8a291805e98771d9cfdc973e9544",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-3/report.json": "afeec5d871d7739dea72c1ac8c15460595468d28a0022623e47f989b5592eec9",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-3/teach/trace.jsonl": "d1f4cb8591fa14d0cd575dc32bf5f8e3ffff7145863a6310e6b817d688881d3e",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-3/recall_v1/trace.jsonl": "b60c9420606054d0b31cc44f52cbdf0bfcefd4d933c572562bd03f73b51671b0",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-3/correct/trace.jsonl": "92587f0efed42a97ab05a580abe82b9b4ba685d3cf548b6467709bfd804d9436",
+      "docs/validation/2026-09-19/hermes-native-cohort-v5/attempt-3/recall_v2/trace.jsonl": "9fc3395d2d65be077ee0457683f9dfa22aee2fa4aeb9f048ff4441d2c06ec16d"
+    },
+    "native_trace_phase_count": 14
+  },
+  "fixture_counts": {
+    "tests": 50,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "wheel": {
+    "bytes": 310407,
+    "sha256": "ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30",
+    "byte_identical_to_preceding_verified_wheel": true
+  },
+  "previous_source_archive": {
+    "bytes": 399753409,
+    "sha256": "22bd3d42b39632892e55694d7a0740c9c4ffe7c4a13f41cfa92b86ce5d1dcbc4"
+  },
+  "compressed_bytes_removed": 359100170,
+  "finished_at": "2026-09-21T02:35:18.291133+00:00"
+}

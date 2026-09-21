@@ -16,6 +16,8 @@ The latest full source checkpoint is `a128ef7b58a9fc9be395c3b157565408b865eda7`.
 
 Verified wheel SHA-256: `ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30`. This identifies the tested build, not a published release.
 
+The later [packaging-only repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md), `232d0da`, reduces the source archive from 399.8 MB to 40.7 MB while preserving historical evidence in the repository. Fifty fixture-dependent tests pass from the extracted source archive, and its wheel matches the verified bytes above. This is separate from the full source-suite result on a128ef7.
+
 The verified checkpoint includes the [standalone graph visit-budget repair](../validation/2026-09-20/spreading-visit-budget-v1.md). It makes direct module calls honor their configured limit. The managed engine already passed the limit explicitly, so this is not a repair of the measured graph recall failures.
 
 T01-T16 are implemented, with subsequent correctness repairs. T17-T19 remain open: broader host acceptance, real-model quality and module benefit, complete provider recovery, daily-use evidence, and final claims reconciliation. No release was published, live host configuration changed, or live memory migrated as part of these validation runs. See the [implementation plan](../plans/2026-09-16-functional-local-memory.md) for the full scope.
