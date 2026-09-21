@@ -839,6 +839,18 @@ required unresolved outcome. Known-target correction and assistant authority
 handling worked in these cases. This candidate is not ready for adoption;
 end-to-end writes remain unexecuted.
 
+Reconciliation follow-up: [v2](../validation/2026-09-21/source-reconciliation-terminal-v2/README.md)
+restricts support to unique exact matches and blocks duplicate user-fact adds.
+Three new regressions pass; the combined experimental suite passes 96 tests and
+the Python 3.10 module type check passes. Six of ten frozen development cases
+match expectations. [V3](../validation/2026-09-21/source-reconciliation-terminal-v3/README.md)
+moves the same instructions outside source-data JSON and matches eight of ten.
+New facts alongside unrelated targets still become unresolved, including a mixed
+support/add case. An assistant conflict preserves role and authority but its
+model-written explanation incorrectly calls the source direct user content.
+Both runs include deliberately unresolved contract gaps in their match counts;
+neither closes semantic quality or production integration.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
