@@ -691,6 +691,22 @@ inflation, N02 unwanted retention and qualification defects remain. The extra
 46 review responses generated 13,813 output tokens, in addition to draft cost.
 The reviewer remains unadopted; no production default or earlier outcome changed.
 
+The [extractive selection v6 review](../validation/2026-09-20/source-selection-semantic-v6/README.md)
+covers all 46 unchanged cases with no runtime/validation errors. Every one of
+its 23 rendered excerpts independently verifies as an exact original source
+slice with matching identity, scope, role, time and content hash. The candidate
+passes 32 boundary tests and 102 combined extraction tests. It prevents invented
+memory wording but still omits continuing policies, corrections, a mixed-message
+marker and a manuscript requirement, while retaining some temporary/inspection
+material. It remains unadopted; runtime validity is not retention accuracy.
+
+Future integration must preserve the current `SleepDaemon.propose_facts` ->
+`LocalMemoryService.process_job` -> transactional `commit_fact_and_job` path.
+Source-only excerpts cannot directly become support/correction operations.
+Reconciliation still needs the scoped target snapshot, explicit user correction
+evidence and expected-version checks, including changes while embedding awaits.
+No experimental selector has been connected to production writes.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
