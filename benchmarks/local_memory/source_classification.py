@@ -114,6 +114,15 @@ in a mixed message, retaining its qualifications. Do not label a real historical
 report as quoted_material merely because it attributes a past result. Do not
 discard an explicit rejection, a genuine manuscript requirement, or an explicitly
 requested unresolved consideration just because it discusses a possible plan.
+
+Use continuing_requirement for a complete standalone prospective negative rule,
+including a user's direct statement that a feature, practice or option will not
+be kept in the project. Preserve the exact negation even when no earlier fact is
+available. Use correction_or_rejection only for a correction, supersession or
+rejection that refers to an existing assertion or prior project state and may
+need target reconciliation. Do not relabel a standalone negative requirement as
+correction_or_rejection merely because it contains words such as "not" or
+"won't", and do not invent a missing target or replacement.
 """
 
 

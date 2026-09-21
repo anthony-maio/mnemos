@@ -32,7 +32,9 @@ def build_source_role_binding_schema(events: list[EpisodicEvent]) -> dict[str, A
     user source can use every existing retained or discard kind. Every other
     source can retain attributed history or an explicit discard classification,
     but cannot emit a direct fact, preference, requirement, uncertainty, or
-    correction. Runtime rendering still rechecks these rules after decoding.
+    correction. In particular, ``continuing_requirement`` remains user-only;
+    a non-user report cannot acquire authority by describing a negative rule.
+    Runtime rendering still rechecks these rules after decoding.
     """
 
     snapshot = [event.model_copy(deep=True) for event in events]

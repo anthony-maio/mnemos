@@ -176,13 +176,24 @@ Kinds:
   asks to keep or remember. Set retention_request_unit to the unit containing
   that request and include it in the selected range. Merely stating uncertainty
   or thinking out loud is not a retention request.
-- correction_or_rejection: an explicit correction or rejection; retain earlier
-  and current status without converting rejection into an approved plan.
+- correction_or_rejection: an explicit correction, supersession or rejection
+  that refers to an existing assertion or prior project state; retain earlier
+  and current status without converting rejection into an approved plan. Use
+  this only when later reconciliation may need to identify the assertion being
+  corrected or rejected.
 - attributed_history: a dated or attributed report with its limitations. A
   non-user report can only be kept as attributed_history, not direct user fact.
   Unconfirmed assistant interpretations and unaccepted suggestions are omitted.
 
 Set retention_request_unit to null unless an actual request to remember is cited.
+Distinguish a standalone prospective negative requirement from a referential
+correction. A user rule such as "Never attach raw access logs to customer-facing
+reports" is a continuing_requirement and must retain its exact negation even
+when no earlier logging rule is available. It is not correction_or_rejection
+and must not be dropped merely because reconciliation has no target. Reserve
+correction_or_rejection for language that changes, rejects, or supersedes an
+identified earlier assertion or project state. Do not invent the missing target
+or replacement wording.
 Keep genuine manuscript requirements with the fictional rule they refer to;
 fictional dialogue alone is not a real user preference. Keep historical test
 reports with their date, attribution and untested limitations. Keep possible
