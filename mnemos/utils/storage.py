@@ -1681,10 +1681,14 @@ class SQLiteStore(MemoryStore):
         self._conn.execute("DROP TRIGGER IF EXISTS review_source_deleted")
         self._conn.execute("DROP TRIGGER IF EXISTS review_target_deleted")
         self._conn.execute("DROP TRIGGER IF EXISTS review_source_suppressed")
+        # Deletion alone only invalidates open reviews: retention prunes the
+        # sources of resolved and discarded reviews, and must not rewrite those
+        # outcomes. Forgetting a source also records a suppression, which the
+        # suppression trigger below applies to resolved reviews.
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_deleted
             AFTER DELETE ON episodic_events BEGIN
             UPDATE source_review_records SET state='invalidated_source'
-            WHERE source_event_id=OLD.id OR resolution_event_id=OLD.id; END""")
+            WHERE source_event_id=OLD.id AND state='open'; END""")
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_target_deleted
             AFTER DELETE ON memory_chunks BEGIN
             UPDATE source_review_records SET state='invalidated_target'
@@ -1693,7 +1697,8 @@ class SQLiteStore(MemoryStore):
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_suppressed
             AFTER INSERT ON memory_suppressions BEGIN
             UPDATE source_review_records SET state='invalidated_source'
-            WHERE source_event_id=NEW.source_event_id OR resolution_event_id=NEW.source_event_id;
+            WHERE (source_event_id=NEW.source_event_id OR resolution_event_id=NEW.source_event_id)
+              AND state IN ('open', 'resolved', 'invalidated_target');
             UPDATE source_review_records SET state='invalidated_target'
             WHERE (target_fact_id=NEW.fact_id OR resolved_fact_id=NEW.fact_id)
               AND state IN ('open', 'resolved'); END""")

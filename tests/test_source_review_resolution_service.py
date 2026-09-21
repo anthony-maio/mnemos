@@ -1,5 +1,6 @@
 """Explicit clarification must atomically resolve a review through normal jobs."""
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -212,3 +213,117 @@ async def test_foreign_project_cannot_resolve_review(tmp_path: Path) -> None:
         assert list(store._conn.iterdump()) == before
     finally:
         store.close()
+
+
+async def _resolve_by_adding(memory: Any, context: Any, store: Any, review_job: Any) -> Any:
+    await memory.dispatch(
+        "resolve_review",
+        review_payload(
+            context,
+            job_id=review_job.id,
+            candidate_index=0,
+            event_id="clarification-1",
+            operation="add",
+            content="The approved project marker is spruce-window-92.",
+        ),
+    )
+    await memory.process_job(store.claim_jobs(owner="resolver")[0])
+    return store.get_all()[0]
+
+
+async def _review_state(memory: Any, context: Any, review_job: Any) -> str:
+    review = (
+        await memory.dispatch(
+            "inspect_review",
+            review_payload(context, job_id=review_job.id, candidate_index=0),
+        )
+    )["review"]
+    return str(review["state"])
+
+
+@pytest.mark.asyncio
+async def test_retention_pruning_keeps_a_resolved_review_resolved(tmp_path: Path) -> None:
+    memory, context, store, review_job, _ = await create_review(tmp_path)
+    try:
+        await _resolve_by_adding(memory, context, store, review_job)
+        pruned = store.prune_processed_evidence(
+            before=datetime.now(timezone.utc) + timedelta(days=1), limit=1000
+        )
+        assert pruned >= 2  # the reviewed source and the clarification both expire
+        assert await _review_state(memory, context, review_job) == "resolved"
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+async def test_retention_pruning_keeps_a_discarded_review_discarded(tmp_path: Path) -> None:
+    memory, context, store, review_job, _ = await create_review(tmp_path)
+    try:
+        await memory.dispatch(
+            "discard_review", review_payload(context, job_id=review_job.id, candidate_index=0)
+        )
+        store.prune_processed_evidence(
+            before=datetime.now(timezone.utc) + timedelta(days=1), limit=1000
+        )
+        assert await _review_state(memory, context, review_job) == "discarded"
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+async def test_forgetting_the_resolved_fact_invalidates_its_review(tmp_path: Path) -> None:
+    memory, context, store, review_job, _ = await create_review(tmp_path)
+    try:
+        fact = await _resolve_by_adding(memory, context, store, review_job)
+        await memory.dispatch(
+            "forget",
+            {
+                "context": context.model_dump(),
+                "fact_id": fact.id,
+                "expected_version": fact.version,
+            },
+        )
+        # Forgetting the fact also suppresses its clarification source, and
+        # source invalidation takes precedence over target invalidation.
+        assert await _review_state(memory, context, review_job) == "invalidated_source"
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
+async def test_schema_nine_database_gains_resolution_columns(tmp_path: Path) -> None:
+    from mnemos.utils.storage import SQLiteStore
+
+    memory, context, store, review_job, _ = await create_review(tmp_path)
+    try:
+        for trigger in (
+            "review_source_deleted",
+            "review_target_deleted",
+            "review_source_suppressed",
+        ):
+            store._conn.execute(f"DROP TRIGGER {trigger}")
+        for column in (
+            "resolved_fact_id",
+            "resolved_version",
+            "resolution_event_id",
+            "resolved_at",
+        ):
+            store._conn.execute(f"ALTER TABLE source_review_records DROP COLUMN {column}")
+        store._conn.execute("UPDATE mnemos_meta SET value='9' WHERE key='schema_version'")
+        store._conn.commit()
+    finally:
+        store.close()
+    upgraded = SQLiteStore(str(tmp_path / "memory.sqlite"))
+    try:
+        review = upgraded.inspect_source_review(
+            review_job.id,
+            0,
+            user_profile_id=context.user_profile_id,
+            scope="project",
+            scope_id=context.project_id,
+        )
+        assert review["state"] == "open"
+        assert review["resolved_fact_id"] is None
+        assert upgraded.migration_backup is not None
+    finally:
+        upgraded.close()
