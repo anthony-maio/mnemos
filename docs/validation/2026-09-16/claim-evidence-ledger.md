@@ -2,6 +2,12 @@
 
 ## Current evidence, September 20, 2026
 
+The [v10 source-accounting comparison](../2026-09-20/source-coverage-semantic-v10/README.md)
+completed with 42 valid outputs, four failures and 32 source-verified excerpts.
+It exposes rather than repairs the mixed-policy omission, and introduces other
+classification and qualification-attachment regressions. Candidate unadopted;
+complete source coverage is not semantic accuracy.
+
 The [v9 explicit-discard classifier](../2026-09-20/source-classification-semantic-v9/README.md)
 completed 46 reused cases with 45 valid outputs, one authority rejection and 29
 source-verified excerpts. Several unwanted-retention cases improve, but the

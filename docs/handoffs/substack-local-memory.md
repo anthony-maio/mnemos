@@ -14,6 +14,12 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [complete source-accounting follow-up](../validation/2026-09-20/source-coverage-semantic-v10/README.md)
+completed with 42 valid outputs and four rejections. Requiring coverage exposed
+the missing marker but did not recover it, and introduced classification and
+qualification-attachment regressions. It remains unadopted. Accounting for every
+source unit did not make the model's decisions about those units correct.
+
 The [explicit-discard classification experiment](../validation/2026-09-20/source-classification-semantic-v9/README.md)
 completed all 46 reused development cases: 45 valid outputs, one authority
 rejection and 29 source-verified excerpts. Allowing explicit discard categories

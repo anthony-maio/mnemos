@@ -745,8 +745,12 @@ An updated prompt and post-validation require every nonblank source unit to be
 covered by a retained or discarded range. This exposes silent omission without
 certifying the assigned labels. All 64 focused tests pass, including a covered
 but wrongly discarded example; formatting and Python 3.10 type checking pass.
-The model comparison is running. No semantic result or production adoption is
-claimed, and complete coverage will not replace the original quality criteria.
+The [completed comparison](../validation/2026-09-20/source-coverage-semantic-v10/README.md)
+has 42 valid outputs, four rejections and 32 verified source excerpts. It exposes
+the omitted marker as an error without recovering it; other regressions discard
+the benchmark-date boundary, detach approval qualifications and retain a
+temporary tool instruction. This candidate is not adopted. Complete coverage
+does not replace the original semantic criteria.
 
 ### T19 - Reconcile release, documentation, and research claims
 
