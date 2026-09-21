@@ -1,0 +1,43 @@
+from pathlib import Path
+import hashlib,json,shutil
+repo=Path.cwd();root=Path("C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v1")
+assert not (root/"status.json").exists()
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+prep=json.loads((root/"preparation.json").read_bytes())
+for n,h in prep["files"].items():assert sha(root/n)==h
+preflight=json.loads((root/"offline-preflight.json").read_bytes())
+assert preflight["status"]=="passed" and preflight["cases"]==46 and preflight["model_generation_calls"]==0
+assert preflight["preparation_sha256"]==sha(root/"preparation.json")
+out=repo/"docs/validation/2026-09-20/assertion-inventory-preparation-v1";out.mkdir(exist_ok=False)
+for p in root.iterdir():
+    if p.is_file():shutil.copyfile(p,out/p.name)
+shutil.copyfile(__file__,out/"collector.py.txt")
+shutil.copyfile(repo/".venv/preflight_assertion_inventory_v1.py",out/"preflight.py.txt")
+shutil.copyfile(repo/"tests/test_assertion_inventory.py",out/"tests.py.txt")
+(out/"README.md").write_text("""# Source-only assertion inventory preparation
+
+This freezes 46 reused development cases before generation with Qwen2.5:14b,
+think omitted, temperature 1.0, 8192 output tokens and 180-second timeout on
+local Ollama. Exact model digest and source hashes are in preparation.json.
+The candidate module is bound to 60f79ca; provider/runtime code uses the same
+cc940ac snapshot as the preceding comparison. The candidate never sees the
+existing unrelated control fact and cannot propose support or correction.
+
+Sixteen deterministic candidate tests passed, Black passed, and Python 3.10
+mypy passed. Offline preflight checks all 46 source schemas, prompt isolation
+and source-ID binding with zero generation calls. Empty stub inventories are
+wiring checks, not successful extraction or evidence of abstention quality.
+
+All original semantic rubrics and ambiguity reviews remain unchanged. Review
+independent fact retention, unwanted retention, attribution and unsupported
+interpretation separately. Runtime quote/ID validation is not semantic proof.
+The source-only diagnostic does not validate target reconciliation, support,
+correction or durable service writes. Neither the production prompt nor the
+service contract is changed. No fresh evaluation corpus is exposed.
+
+At this preparation checkpoint the model run is NOT STARTED. Consult a later
+terminal archive for outcomes; never treat this preparation as a result.
+""")
+(out/".gitattributes").write_text("* -text\n")
+(out/"evidence-index.json").write_text(json.dumps({"files":{p.name:{"bytes":p.stat().st_size,"sha256":sha(p)} for p in out.iterdir() if p.is_file()}},indent=2)+"\n")
+print(out)
