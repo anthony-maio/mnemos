@@ -24,6 +24,8 @@ The two-week, two-project daily-use pilot is **NOT STARTED**. Its [protocol](../
 
 ## Original promises and the question we tested
 
+The [qualified inventory v2 review](../validation/2026-09-20/assertion-inventory-semantic-review-v2/README.md) preserves 46 completed development cases: 41 runtime-valid outputs and five contract rejections. Attaching qualifications repairs some omissions but also carries temporary instructions into memory. A literal quote about thinking out loud is still misread as a request to remember. The candidate remains unadopted; none of these calls wrote durable facts.
+
 Start with the [Mnemos website](https://mnemos.making-minds.ai/) and [paper](https://making-minds.ai/papers/mnemos.pdf). The [dated source snapshots](../validation/2026-09-19/writer-primary-sources-v1/README.md) preserve retrieved bytes, timestamps and hashes. They are not a proven snapshot of the original audit date. Research current sources directly and record retrieval dates; do not silently treat changed public copy as the original promise.
 
 The [original audit and capability inventory](../plans/2026-09-16-functional-local-memory.md) maps the promises to implementation gaps. The five modules concern surprise-based retention, evidence-based revision, affective retrieval, background consolidation and associative graph retrieval. Explain those functions in plain language. Biological inspiration is not evidence that a mechanism improves memory quality.

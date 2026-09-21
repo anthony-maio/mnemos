@@ -622,8 +622,10 @@ source-bound retention-request quotations for unresolved ideas. Forty-one
 combined tests, formatting, compatibility mypy and all 46 offline source checks
 pass. Missing/wrong external preparation digests fail before execution. This
 remains an unadopted extraction experiment. The [terminal record](../validation/2026-09-20/assertion-inventory-terminal-v2/README.md)
-preserves 41 runtime-valid outcomes and five errors; complete semantic review
-remains pending. Literal quotations do not establish
+preserves 41 runtime-valid outcomes and five errors. The [semantic review](../validation/2026-09-20/assertion-inventory-semantic-review-v2/README.md)
+rejects adoption: one continuing policy is lost, transient instructions leak
+into an attached qualification, and unrequested speculation is retained.
+All five errors are contract rejections, not provider outages. Literal quotations do not establish
 semantic support or request intent. The [independent v1 review](../validation/2026-09-20/assertion-inventory-independent-review-v1.md)
 preserves additional inventory-completeness and qualification findings.
 

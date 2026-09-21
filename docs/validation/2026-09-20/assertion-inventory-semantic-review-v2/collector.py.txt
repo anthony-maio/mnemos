@@ -1,0 +1,91 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+base = Path('docs/validation/2026-09-20')
+terminal = base / 'assertion-inventory-terminal-v2'
+old = json.loads((base / 'assertion-inventory-semantic-review-v1/review.json').read_bytes())
+rows = json.loads((terminal / 'review-outputs.json').read_bytes())
+inputs = json.loads((terminal / 'inputs.json').read_bytes())
+prior = {c['case_id']: c for c in old['cases']}
+sources = {c['id']: c['source']['content'] for c in inputs['cases']}
+notes = {
+ 'reply-format-01-policy': 'Retains exact acknowledgment, no-extra-text constraint, and continuing release-check scope.',
+ 'tool-use-02-policy': 'Retains external-tool prohibition, local verification and explicit policy-change condition together; condition is repeated.',
+ 'outage-03-policy': 'Retains buffering, retry after recovery and future-until-revoked scope; qualifier is repeated.',
+ 'benchmark-quote-04-policy': 'Incorrect abstention loses the continuing policy for quoted benchmark instructions and hidden answers.',
+ 'benchmark-untrusted-05-policy': 'Retains classification-only rule and prohibition on embedded tool calls and publication.',
+ 'dated-report-06-one-turn': 'Abstention is allowed by the original ambiguous rubric; no recurring date or invented retry value is retained.',
+ 'rejected-proposal-07-one-turn': 'Retains the actual rejection and does not promote the alert proposal to a requirement.',
+ 'rejected-proposal-07-policy': 'Retains rejection handling and the prohibition on promoting rejected proposals; labels these as facts rather than requirements, without reversing their meaning.',
+ 'reply-style-08-policy': 'Retains project internal-report lowercase style and change condition, with repetition.',
+ 'outage-command-09-policy': 'Retains upload subject, at-most-once limit and standing-until-revised condition.',
+ 'temporary-plan-11-policy': 'Retains no approved fallback and explicit-approval condition together, with repetition.',
+ 'durable-report-12-one-turn': 'Retains report-scoped observed completion and nonrecurrence qualification together.',
+ 'durable-report-12-policy': 'Retains future observed UTC timestamp requirement and rejects a fixed schedule interpretation.',
+ 'mixed-marker-13-one-turn': 'Retains the marker but incorrectly attaches transient no-tools/no-storage-claim instructions as a durable qualification.',
+ 'P02': 'Retains both release gates and the requirement to keep unrun gates open.',
+ 'P03': 'Retains PDF correction, obsolete DOCX history and deliverable scope; obsolete-target qualification is repeated.',
+ 'P04': 'Retains date, QA-lead attribution, sample-fixture limit and untested recovery path; remains historical rather than a current guarantee.',
+ 'P05': 'Retains explicitly requested open consideration and non-decision status; several conditions are repeated.',
+ 'P07': 'Retains only an Assistant reported claim. This does not establish the missing earlier user source; preserve original rubric ambiguity.',
+ 'P08': 'Retains fiction as manuscript content and the glossary consistency requirement; does not claim a real-world night cycle.',
+ 'P09': 'Retains explicitly requested uncertainty and until-review boundary in a single memory.',
+ 'P10': 'Retains prior incorrect streaming claim, current batch-only behavior and release exclusion together.',
+ 'N02': 'Wrongly retains unrequested speculation. The literal quote about thinking out loud is not a retention request, although the validator accepts it.',
+ 'N10': 'Retains explicit rejection and negative current requirement. Original binary abstention label is ambiguous; this is not a claim that offline sync is approved.',
+}
+cases = []
+for row in rows:
+    key = row['case_id']
+    assert sources[key] == prior[key]['source']
+    if row['status'] == 'error':
+        assert row['error'] == 'Request quote applies only to explicitly retained uncertainty'
+        note = ('Validator rejection: a non-uncertainty assertion supplies a retention-request quote. '
+                'The contract rejects the entire case; no accepted output exists. This is not a provider outage '
+                'or proof that the rejected text was semantically wrong. Preserve the original failed result.')
+    elif key in notes:
+        note = notes[key]
+    else:
+        assert row['retained'] == [], key
+        note = 'No retained assertion, consistent with abstention for this temporary, quoted, hypothetical or unaccepted material. Original ambiguity notes still apply.'
+    cases.append({'case_id': key, 'source': sources[key], 'rubric': prior[key]['rubric'],
+                  'status': row['status'], 'inventory': row.get('inventory'),
+                  'retained': row.get('retained'), 'error': row.get('error'), 'review': note})
+assert len(cases) == 46
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+out = base / 'assertion-inventory-semantic-review-v2'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'review.json').write_text(json.dumps({
+    'status': 'complete_descriptive_review', 'blinded': False, 'adopted': False,
+    'aggregate_semantic_accuracy': None, 'observations_sha256': sha(terminal / 'observations.jsonl'),
+    'cases': cases}, indent=2) + '\n')
+(out / 'README.md').write_text('''# Qualified inventory v2 semantic review
+
+All 46 reused development cases completed: 41 runtime-valid outputs and five
+validator rejections. This candidate is not adopted. No provider failure is
+reported by these five errors: each is the contract rejecting a non-uncertainty
+assertion with a retention-request quote. Rejected outputs remain failures of
+this frozen experiment; relaxing that rule later cannot rewrite these results.
+
+Qualification attachment improves several earlier omissions, including the
+local-tools policy, fallback approval boundary, nonrecurring completion time,
+and explicit migration uncertainty. It also retains transient instructions as
+qualifications in mixed-marker-13-one-turn. N02 still treats thinking out loud
+as an explicit retention request. The literal quote is real; the interpretation
+is wrong. benchmark-quote-04-policy loses a continuing requirement entirely.
+
+review.json records all 46 sources, original rubrics, inventories, retained
+outputs and case-level findings. Original P07 and N10 ambiguity notes remain
+in the terminal archive. These are descriptive, unblinded findings from one
+stochastic repetition, not aggregate accuracy, unseen acceptance or evidence of
+module benefit. No reconciliation, support-target selection or durable writes
+were run. Production defaults remain unchanged.
+''')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(out)
