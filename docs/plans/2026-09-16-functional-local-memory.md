@@ -681,10 +681,11 @@ is NOT STARTED and does not change the current run, rubrics or production defaul
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Latest fully verified source [995d9c2](../validation/2026-09-20/spreading-budget-source-checkpoint-v1/README.md)
+Latest fully verified source [a128ef7](../validation/2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
 passes 2,158 tests with four skips and all six source/package checks. It includes
-the support-version and standalone graph-budget repairs. Its changed wheel passes
-the [fresh installed check](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md):
+the support-version, standalone graph-budget and benchmark precision-label repairs.
+Its rebuilt wheel is byte-identical to 995d9c2. Those bytes passed
+the [installed check](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md):
 893 selected cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git
 environment isolation. The previous installed failure is preserved alongside
