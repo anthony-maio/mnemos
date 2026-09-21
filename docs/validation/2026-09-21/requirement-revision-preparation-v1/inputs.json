@@ -1,0 +1,287 @@
+{
+  "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-project-identity-v1",
+  "endpoint": "http://127.0.0.1:11434",
+  "temperature": 0.0,
+  "max_tokens": 8192,
+  "timeout": 180,
+  "model": "qwen2.5:14b",
+  "think": false,
+  "repetitions": 1,
+  "cases": [
+    {
+      "case_id": "negative-replacement-unobserved",
+      "source_events": [
+        {
+          "id": "negative-replacement-unobserved",
+          "content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "add",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "negative-replacement-observed",
+      "source_events": [
+        {
+          "id": "negative-replacement-observed",
+          "content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "negative-replacement-observed-old",
+          "content": "Future screenshots may display customer names.",
+          "version": 3,
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "expected_pipeline": {
+        "operation": "correct",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+        "target_fact_id": "negative-replacement-observed-old",
+        "expected_version": 3,
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "positive-replacement-unobserved",
+      "source_events": [
+        {
+          "id": "positive-replacement-unobserved",
+          "content": "Supersede the previous changelog rule: future entries must include the tested version.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "add",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Supersede the previous changelog rule: future entries must include the tested version.",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "positive-replacement-observed",
+      "source_events": [
+        {
+          "id": "positive-replacement-observed",
+          "content": "Supersede the previous changelog rule: future entries must include the tested version.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "positive-replacement-observed-old",
+          "content": "Changelog entries may omit the tested version.",
+          "version": 3,
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "expected_pipeline": {
+        "operation": "correct",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Supersede the previous changelog rule: future entries must include the tested version.",
+        "target_fact_id": "positive-replacement-observed-old",
+        "expected_version": 3,
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "referential-rejection-without-rule",
+      "source_events": [
+        {
+          "id": "referential-rejection-without-rule",
+          "content": "Reject the former screenshot policy; a replacement policy has not been approved.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "unresolved",
+        "required_kind": "correction_or_rejection",
+        "required_revision_intent": false,
+        "retained_content": "Reject the former screenshot policy; a replacement policy has not been approved.",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "assistant-reports-revision",
+      "source_events": [
+        {
+          "id": "assistant-reports-revision",
+          "content": "The user reportedly replaced the screenshot policy: future screenshots must omit customer names.",
+          "role": "assistant",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "assistant-reports-revision-old",
+          "content": "Future screenshots may display customer names.",
+          "version": 3,
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "expected_pipeline": {
+        "allowed_operations": [
+          "add",
+          "conflict",
+          "unresolved"
+        ],
+        "forbidden_operations": [
+          "support",
+          "correct"
+        ],
+        "required_source_role": "assistant",
+        "required_source_kind": "attributed_history",
+        "required_revision_intent": false,
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "question-about-replacement",
+      "source_events": [
+        {
+          "id": "question-about-replacement",
+          "content": "Should we replace the old screenshot policy and hide customer names?",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "discard",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "ambiguous-old-policy",
+      "source_events": [
+        {
+          "id": "ambiguous-old-policy",
+          "content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [
+        {
+          "id": "ambiguous-old-policy-old",
+          "content": "Future screenshots may display customer names.",
+          "version": 3,
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        },
+        {
+          "id": "ambiguous-old-policy-other-old",
+          "content": "Future screenshots may display customer names.",
+          "version": 3,
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "expected_pipeline": {
+        "operation": "unresolved",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Replace the earlier screenshot policy: future screenshots must omit customer names.",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "temporary-reformatting-command",
+      "source_events": [
+        {
+          "id": "temporary-reformatting-command",
+          "content": "For this answer only, replace bullet points with paragraphs.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "discard",
+        "contract_status": "accepted"
+      }
+    },
+    {
+      "case_id": "qualified-replacement-rule",
+      "source_events": [
+        {
+          "id": "qualified-replacement-rule",
+          "content": "Replace the earlier release-note rule: future notes must omit customer identifiers. This restriction does not apply to internal incident reports after review.",
+          "role": "user",
+          "scope": "project",
+          "scope_id": "revision-development",
+          "profile_id": "revision-profile",
+          "source": "manual"
+        }
+      ],
+      "target_facts": [],
+      "expected_pipeline": {
+        "operation": "add",
+        "required_kind": "continuing_requirement",
+        "required_revision_intent": true,
+        "retained_content": "Replace the earlier release-note rule: future notes must omit customer identifiers. This restriction does not apply to internal incident reports after review.",
+        "contract_status": "accepted"
+      }
+    }
+  ]
+}
