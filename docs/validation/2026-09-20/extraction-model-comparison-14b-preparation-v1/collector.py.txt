@@ -1,0 +1,55 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-model-comparison-14b-v1')
+prior = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-durability-history-development-v3')
+inputs = json.loads((root / 'inputs.json').read_bytes())
+old = json.loads((prior / 'inputs.json').read_bytes())
+allowed = {'model', 'think', 'prior_terminal_status', 'prior_terminal_archive', 'prior_semantic_review'}
+assert {k for k in set(inputs) | set(old) if inputs.get(k) != old.get(k)} == allowed
+prep = json.loads((root / 'preparation.json').read_bytes())
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert all(sha(root / name) == digest for name, digest in prep['files'].items())
+assert not (root / 'status.json').exists()
+preflight = json.loads((root / 'offline-preflight.json').read_bytes())
+assert preflight['offline_case_arm_checks'] == 92 and preflight['model_generation_calls'] == 0
+out = repo / 'docs/validation/2026-09-20/extraction-model-comparison-14b-preparation-v1'
+out.mkdir(exist_ok=False)
+for path in root.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/preflight_model_comparison_14b_v1.py', out / 'preflight.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Qwen2.5 14B model/configuration comparison: preparation
+
+Prepared, not started. Local discovery found qwen2.5:14b already installed with
+digest 7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6.
+The recorded GPU is an RTX 4080 with 16,376 MiB; this is inventory, not proof of
+GPU residency or exclusive access during a future run. No model was pulled.
+
+All 46 reused development cases, both prompt arms, schemas and rubrics are
+identical to the 9B v3 comparison. Temperature remains 1.0, token cap 8,192,
+timeout 180 seconds, one repetition with alternating arm order. The model is
+Qwen2.5 14B and the thinking option is omitted. This compares model/configuration
+bundles, not an isolated effect of thinking or model weights. The candidate's
+legacy arm label durability_v2 still identifies the exact frozen v3 clause.
+
+The runner refuses to start until the 9B run is complete, its raw observations
+are archived byte-identically, and its full semantic review exists. No parallel
+model evaluation is launched. Offline preflight passes 92 case/arm checks with
+zero generation calls. The preparation collector verifies that only model,
+thinking option and launch-gate references differ from the previous inputs.
+
+This does not change production defaults or establish improved quality. The
+fresh synthetic corpus remains unexecuted. Keep runtime failures, omitted facts,
+unwanted memories and preregistered rubric ambiguities in the eventual review.
+''')
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'sha256': sha(p), 'bytes': p.stat().st_size}
+    for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(out)
