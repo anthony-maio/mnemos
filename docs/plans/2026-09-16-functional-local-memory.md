@@ -851,6 +851,24 @@ model-written explanation incorrectly calls the source direct user content.
 Both runs include deliberately unresolved contract gaps in their match counts;
 neither closes semantic quality or production integration.
 
+Further development checks preserve [instructional examples v4](../validation/2026-09-21/source-reconciliation-terminal-v4/README.md),
+[model-only v5](../validation/2026-09-21/source-reconciliation-terminal-v5/README.md),
+and [generic-schema diagnostic v6](../validation/2026-09-21/source-reconciliation-terminal-v6/README.md).
+Examples and Qwen3.5:9b retain the same two independent-fact omissions. Generic
+decoding produces five provider-result validation failures and does not repair
+those omissions; it is not adopted. All original criteria remain preserved.
+
+The experimental write-free `source_pipeline.py` now composes classification and
+reconciliation with separate providers, snapshots across both awaits, explicit
+review outcomes, and exact-source proposals only for add/support/correct.
+Conflicts and unresolved candidates cannot silently become no-fact results.
+Standalone prospective negative rules are distinguished from referential
+corrections in classifier instructions. The combined focused suite passes 110
+tests; Python 3.10 pipeline type checks pass. The [raw-source pipeline run](../validation/2026-09-21/source-pipeline-preparation-v1/README.md)
+is prepared on sixteen authored development cases, with stronger retention
+criteria for the complete prospective negative rule. Production storage writes,
+fresh semantic acceptance and durable review integration remain open.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
