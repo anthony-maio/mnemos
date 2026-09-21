@@ -629,13 +629,19 @@ All five errors are contract rejections, not provider outages. Literal quotation
 semantic support or request intent. The [independent v1 review](../validation/2026-09-20/assertion-inventory-independent-review-v1.md)
 preserves additional inventory-completeness and qualification findings.
 
+The separate [v3 contract repair and offline review](../validation/2026-09-20/qualified-inventory-v3-review-v1.md)
+passes 51 candidate tests and revalidates all 46 original response texts without
+new inference. All 41 previously valid outputs remain unchanged; four former
+errors pass the revised contract and one still fails exact quotation checking.
+Original v2 results and semantic criteria remain unchanged. Extraction quality,
+qualification attachment and target reconciliation remain open.
+
 ### T19 - Reconcile release, documentation, and research claims
 
-Latest fully verified source [b984411](../validation/2026-09-20/qualified-inventory-v2-source-checkpoint-v1/README.md)
-passes 2,135 tests with four skips and all six source/package checks. A subsequent
-support-version race repair is under validation and is outside this checkpoint. Its wheel
-is byte-identical to the cc940ac artifact already verified below; the new code
-changes evaluation contracts and registry preflight, not the packaged engine.
+Latest fully verified source [2996d54](../validation/2026-09-20/support-revision-source-checkpoint-v1/README.md)
+passes 2,144 tests with four skips and all six source/package checks. It includes
+the support-version race repair. Its changed wheel is undergoing fresh isolated
+installed verification; the earlier installed result below does not verify it.
 The [installed check](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md)
 passes 859 cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git

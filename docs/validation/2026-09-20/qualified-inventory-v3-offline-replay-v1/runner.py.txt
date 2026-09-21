@@ -1,0 +1,78 @@
+"""Revalidate frozen responses offline; never calls a model or changes v2 evidence."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo))
+from benchmarks.local_memory.assertion_inventory import (
+    QualifiedInventory,
+    retained_qualified_assertions_v3,
+    validate_qualified_inventory_v3,
+)
+from mnemos.types import EpisodicEvent
+
+base = repo / 'docs/validation/2026-09-20'
+terminal = base / 'assertion-inventory-terminal-v2'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+source = repo / 'benchmarks/local_memory/assertion_inventory.py'
+source_hash = sha(source)
+subprocess.run(['git', 'diff', '--exit-code', 'HEAD', '--', str(source)], cwd=repo, check=True)
+index = json.loads((terminal / 'evidence-index.json').read_bytes())
+for name, binding in index['files'].items():
+    assert sha(terminal / name) == binding['sha256']
+inputs = json.loads((terminal / 'inputs.json').read_bytes())
+events = {c['id']: [EpisodicEvent.model_validate(c['source'])] for c in inputs['cases']}
+rows = [json.loads(line) for line in (terminal / 'observations.jsonl').read_text().splitlines()]
+outcomes = []
+for row in rows:
+    result = {'case_id': row['case_id'], 'original_status': row['status']}
+    try:
+        inventory = QualifiedInventory.model_validate_json(row['trace']['response'])
+        validate_qualified_inventory_v3(inventory, events[row['case_id']])
+        retained = [a.model_dump(mode='json') for a in retained_qualified_assertions_v3(inventory, events[row['case_id']])]
+        result.update(status='runtime_valid', inventory=inventory.model_dump(mode='json'), retained=retained)
+        if row['status'] == 'runtime_valid':
+            assert retained == row['retained'], row['case_id']
+            assert result['inventory'] == row['inventory'], row['case_id']
+    except (ValueError, KeyError) as exc:
+        result.update(status='error', error_type=type(exc).__name__, error=str(exc))
+    outcomes.append(result)
+assert len(outcomes) == 46
+assert sum(r['original_status'] == 'runtime_valid' for r in outcomes) == 41
+assert all(r['status'] == 'runtime_valid' for r in outcomes if r['original_status'] == 'runtime_valid')
+assert sha(source) == source_hash
+out = base / 'qualified-inventory-v3-offline-replay-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'replay.json').write_text(json.dumps({
+    'candidate_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+    'candidate_file_sha256': source_hash,
+    'original_observations_sha256': sha(terminal / 'observations.jsonl'),
+    'new_model_calls': 0, 'durable_writes': 0, 'adopted': False,
+    'original_41_valid_outputs_unchanged': True, 'cases': outcomes,
+}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'runner.py.txt')
+shutil.copyfile(source, out / 'assertion_inventory.py.txt')
+counts = {status: sum(r['status'] == status for r in outcomes) for status in ('runtime_valid', 'error')}
+(out / 'README.md').write_text(f'''# Offline contract replay of qualified inventory v2
+
+All 46 original response texts were revalidated under the separate v3 contract.
+New runtime outcomes: {counts}. All 41 originally accepted inventories and
+retained outputs are unchanged. No new model calls or durable writes occurred.
+The original v2 terminal errors remain recorded as failures of that experiment.
+
+This isolates validator behavior using identical response bytes. Allowing a
+source-bound request quote on an ordinary requirement removes an unnecessary
+contract restriction; it does not prove that the quote expresses a request.
+N02's unwanted speculation, lost benchmark policy and transient qualification
+contamination remain semantic failures. Newly accepted outputs require their
+own semantic review. No adoption or held-out accuracy is established.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'counts': counts, 'model_calls': 0}))
