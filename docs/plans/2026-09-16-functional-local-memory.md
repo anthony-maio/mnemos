@@ -829,8 +829,15 @@ tests, formatting and Python 3.10 reconciliation-module type checking. The
 authored `source_reconciliation_development_v1.json` contains ten development
 cases with eleven supplied selections; offline renderer/expected-decision checks
 pass without model calls. It distinguishes safe attributed-history routes,
-unresolved correction and the standalone-rejection gap. Real-model reconciliation
-and end-to-end writes remain unexecuted.
+unresolved correction and the standalone-rejection gap. The [real-model reconciliation development run](../validation/2026-09-21/source-reconciliation-terminal-v1/README.md)
+completed nine provider cases and one intentional pre-provider scope rejection.
+All nine provider decisions were mechanically valid, but only five of ten cases
+matched frozen expectations, including intentional unresolved outcomes and the
+known standalone-rejection gap. New facts were left unresolved, exact support
+became duplicate adds, and ambiguous correction became conflict rather than the
+required unresolved outcome. Known-target correction and assistant authority
+handling worked in these cases. This candidate is not ready for adoption;
+end-to-end writes remain unexecuted.
 
 ### T19 - Reconcile release, documentation, and research claims
 

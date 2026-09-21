@@ -175,3 +175,6 @@ Before finalizing the handoff or article:
 - Make a factual pass first, then the Anthony-voice pass. Leave unresolved questions in the source note rather than asserting answers.
 
 The [preserved accumulated handoff](substack-local-memory-history-v29.md) contains earlier experiments, failure chronology and additional source links. Its old current/running labels are historical and must not override the evidence above. Its filename identifies the prior packet era, not a new verified packet snapshot.
+
+
+Reconciliation development update, September 21: nine real-model provider cases returned valid decisions; a tenth rejected foreign scope before any provider call. Only five of ten frozen expectations matched, including intentionally unresolved outcomes and a known contract gap. New facts were omitted and exact support was proposed as duplicate adds. No production adoption or memory writes occurred. Evidence: `docs/validation/2026-09-21/source-reconciliation-terminal-v1/README.md`. This supersedes earlier statements that reconciliation had not been run.

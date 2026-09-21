@@ -1112,3 +1112,6 @@ publishing source has been located in this repository, and the hosted paper,
 website, and package have not been changed by this work. Absolute competitor,
 infinite-scale, production-readiness, and practical-superiority claims remain
 unsupported here. Publication requires separate authorization.
+
+
+Reconciliation development update, September 21: nine real-model provider cases returned valid decisions; a tenth rejected foreign scope before any provider call. Only five of ten frozen expectations matched, including intentionally unresolved outcomes and a known contract gap. New facts were omitted and exact support was proposed as duplicate adds. No production adoption or memory writes occurred. Evidence: `docs/validation/2026-09-21/source-reconciliation-terminal-v1/README.md`. This supersedes earlier statements that reconciliation had not been run.
