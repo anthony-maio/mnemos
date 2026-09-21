@@ -208,3 +208,147 @@ async def inventory_assertions(events: list[EpisodicEvent], provider: LLMProvide
         kwargs["format"] = schema
     response = await provider.predict(prompt, **kwargs)
     return validate_inventory(Inventory.model_validate_json(response), events)
+
+
+class Qualification(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    quote: str = Field(min_length=1)
+    content: str = Field(min_length=1, max_length=10000)
+
+    @field_validator("quote", "content")
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Qualification fields must contain text")
+        return value
+
+
+class QualifiedAssertion(Assertion):
+    qualifications: list[Qualification]
+    retention_request_quote: str | None
+
+
+class QualifiedInventory(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    assertions: list[QualifiedAssertion]
+
+
+QUALIFIED_PROMPT = INVENTORY_PROMPT + """
+Additional contract for qualification attachment:
+Each assertion also has qualifications (a list of {quote, content}) and
+retention_request_quote (a source quotation or null).
+
+Independent meanings need separate assertions; dependent conditions do not.
+Put a restriction, exception, interpretation rule, duration or approval boundary
+in qualifications on the assertion it governs. They inherit that assertion's
+retention. A condition is not a temporary instruction merely because it is
+written as an imperative. Never turn an until-review or until-revoked condition
+into a detached item. Do not create standalone items saying keep this rule,
+that is a requirement or it currently supports something. Name the actual
+subject in every assertion. Resolve pronouns using only the source, not guesses.
+
+For explicitly_retained_uncertainty, retention_request_quote must quote the
+user's actual request to keep or remember the unresolved consideration. A
+statement that a decision is open is not that request. Without a request,
+classify the unrequested idea as unrequested_speculation. A possible future
+exception qualifying a real requirement belongs in that requirement's
+qualifications, not as a separately requested uncertainty. For every other
+kind set retention_request_quote to null.
+
+A quotation must be long enough to substantiate the text attached to it.
+Qualification quotations must come from the same source as their assertion.
+Do not extract inspection-only nonadoption instructions as historical project
+corrections. A real correction or rejected project proposal changes project
+state; a pasted hypothetical rejected for inspection does not establish such
+state. Preserve the existing kinds, including temporary and quoted material,
+for meanings that should be discarded. Return JSON only.
+"""
+
+
+def validate_qualified_inventory(
+    inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> QualifiedInventory:
+    sources = _sources(events)
+    base = Inventory(
+        assertions=[
+            Assertion.model_validate(
+                a.model_dump(exclude={"qualifications", "retention_request_quote"})
+            )
+            for a in inventory.assertions
+        ]
+    )
+    validate_inventory(base, events)
+    firewall = MemoryWriteFirewall()
+    for assertion in inventory.assertions:
+        event = sources[assertion.source_id]
+        request = assertion.retention_request_quote
+        if assertion.kind == "explicitly_retained_uncertainty":
+            if request is None or not request.strip() or request not in event.content:
+                raise ValueError("Retained uncertainty requires a source-bound request quote")
+        elif request is not None:
+            raise ValueError("Request quote applies only to explicitly retained uncertainty")
+        seen = set()
+        for qualification in assertion.qualifications:
+            if qualification.quote not in event.content:
+                raise ValueError("Qualification quote is not present in cited source")
+            key = " ".join(qualification.content.casefold().split())
+            if key in seen:
+                raise ValueError("Assertion repeats a qualification")
+            seen.add(key)
+            safe = firewall.apply(qualification.content)
+            if not safe.allowed or safe.content != qualification.content:
+                raise ValueError("Qualification violates write policy")
+    return inventory
+
+
+def retained_qualified_assertions(
+    inventory: QualifiedInventory, events: list[EpisodicEvent]
+) -> list[QualifiedAssertion]:
+    validate_qualified_inventory(inventory, events)
+    sources = {e.id: e for e in events}
+    retained = []
+    for assertion in inventory.assertions:
+        if assertion.kind not in RETAINED_KINDS:
+            continue
+        content = " ".join([assertion.content] + [q.content for q in assertion.qualifications])
+        if sources[assertion.source_id].role != "user":
+            content = f"{sources[assertion.source_id].role.capitalize()} reported: {content}"
+        safe = MemoryWriteFirewall().apply(content)
+        if not safe.allowed or safe.content != content:
+            raise ValueError("Rendered qualified assertion violates write policy")
+        retained.append(
+            QualifiedAssertion.model_validate({**assertion.model_dump(), "content": content})
+        )
+    return retained
+
+
+async def inventory_qualified_assertions(
+    events: list[EpisodicEvent], provider: LLMProvider
+) -> QualifiedInventory:
+    sources = _sources(events)
+    schema = QualifiedInventory.model_json_schema()
+    schema["$defs"]["QualifiedAssertion"]["properties"]["source_id"] = {
+        "type": "string",
+        "enum": sorted(sources),
+    }
+    prompt = (
+        QUALIFIED_PROMPT
+        + "\nSOURCE EVENTS:\n"
+        + json.dumps(
+            [
+                {
+                    "id": e.id,
+                    "role": e.role,
+                    "occurred_at": e.occurred_at.isoformat(),
+                    "content": e.content,
+                }
+                for e in events
+            ],
+            ensure_ascii=True,
+        )
+    )
+    kwargs: dict[str, Any] = {}
+    if getattr(provider, "supports_structured_output", False):
+        kwargs["format"] = schema
+    response = await provider.predict(prompt, **kwargs)
+    return validate_qualified_inventory(QualifiedInventory.model_validate_json(response), events)
