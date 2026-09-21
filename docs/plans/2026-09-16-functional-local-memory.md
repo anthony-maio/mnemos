@@ -799,8 +799,9 @@ and rejects a response if those events change while the provider is awaited.
 Five regression cases reproduced the missing guard, including an assistant
 source changed to user that previously authorized a correction. The repaired
 path passes 62 focused extraction, lifecycle, correction and service tests,
-formatting and Python 3.10 type checking. Full source/package and installed-wheel
-verification for this new production change remain pending; previous wheel
+formatting and Python 3.10 type checking. The [full source/package checkpoint](../validation/2026-09-21/source-evidence-snapshot-checkpoint-v1/README.md)
+on 56687e0 passes 2,255 tests with four skips and all six checks. Its changed wheel
+requires separate installed verification, which is running; previous wheel
 checks do not cover it.
 
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
@@ -823,7 +824,7 @@ extracted distribution. Its rebuilt wheel is byte-identical to the verified
 wheel below. This packaging check on 232d0da is separate from the full source
 suite on a128ef7; no new model result or release publication is implied.
 
-Latest fully verified source [a128ef7](../validation/2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
+Historical fully verified source [a128ef7](../validation/2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
 passes 2,158 tests with four skips and all six source/package checks. It includes
 the support-version, standalone graph-budget and benchmark precision-label repairs.
 Its rebuilt wheel is byte-identical to 995d9c2. Those bytes passed

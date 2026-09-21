@@ -16,8 +16,10 @@ persist. The candidate is not adopted into production.
 
 The [source-mutation repair](../2026-09-21/source-evidence-snapshot-focused-v1/README.md)
 at 56687e0 passes 62 focused cases, formatting and Python 3.10 type checking.
-Full source/package and installed verification are pending. It changes production
-extraction, so prior wheel parity does not cover this newer source.
+The [full source/package checkpoint](../2026-09-21/source-evidence-snapshot-checkpoint-v1/README.md)
+passes 2,255 tests with four skips and all six checks. Installed verification is
+running. It changes production extraction, so prior wheel parity does not cover
+this newer source.
 
 The [Gemma 12B fixed-contract comparison](../2026-09-21/source-classification-semantic-v11/README.md)
 has 43 valid outputs, three validation failures and 31 source-verified excerpts.
@@ -44,7 +46,7 @@ Candidate not adopted. Prompt and schema change together; the newer full-suite c
 
 The [v8 temperature control](../2026-09-20/source-selection-semantic-v8/README.md) preserves 44 unchanged outcomes out of 46, removes one unwanted fixture and improves one retention-request reference. It has 44 runtime-valid cases, two authority failures and 34 exact source excerpts. Remaining selection defects prevent adoption; this is not fresh held-out acceptance.
 
-The latest full [source checkpoint](../2026-09-21/classification-source-checkpoint-v1/README.md)
+The previous full [source checkpoint](../2026-09-21/classification-source-checkpoint-v1/README.md)
 is f5c58f1: 2,241 tests pass with four skips and all six source/package checks.
 Its wheel is byte-identical to the 995d9c2 wheel covered by the
 [893-case installed suite](../2026-09-20/spreading-budget-installed-checkpoint-v1/README.md),

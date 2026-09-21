@@ -1,0 +1,58 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path.cwd()
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-evidence-snapshot-v1')
+record = json.loads((source / 'verification.json').read_bytes())
+assert record['status'] == 'passed'
+assert record['source_commit'] == '56687e0692866e6360ee4d8a4102690b50dd1713'
+assert [c['name'] for c in record['checks']] == ['pytest', 'black', 'mypy', 'javascript', 'build', 'twine']
+assert all(c['exit_code'] == 0 for c in record['checks'])
+cases = list(ET.parse(source / 'pytest.xml').getroot().iter('testcase'))
+for name, count in [('test_sleep_source_snapshot', 5), ('test_sleep_support_version', 4),
+                    ('test_support_revision_fence', 5), ('test_source_role_binding', 9)]:
+    selected = [c for c in cases if name in c.attrib.get('classname', '').split('.')]
+    assert len(selected) == count and all(len(c) == 0 for c in selected), (name, len(selected))
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == record['runner_sha256']
+for item in record['artifacts']:
+    path = Path(item['file'])
+    assert sha(path) == item['sha256'] and path.stat().st_size == item['bytes']
+out = repo / 'docs/validation/2026-09-21/source-evidence-snapshot-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/final_checkpoint_checks_v3.py', out / 'runner.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+counts = record['checks'][0]['counts']
+wheel = next(item for item in record['artifacts'] if item['file'].endswith('.whl'))
+previous = json.loads((repo / 'docs/validation/2026-09-20/spreading-budget-installed-checkpoint-v1/installation.json').read_bytes())
+assert wheel['sha256'] != previous['wheel']['sha256']
+(out / 'README.md').write_text(f'''# Source evidence snapshot checkpoint
+
+Frozen source 56687e0 passes {counts['tests'] - counts['skipped']:,} tests with
+{counts['skipped']} skips and all six source/package checks. The suite includes
+the five production source-mutation regressions and nine experimental
+source-role-binding cases, alongside the earlier correction/version guards.
+
+The production extractor now uses a frozen source snapshot and rejects evidence
+changes while awaiting prediction, including otherwise valid empty responses.
+The rebuilt wheel has SHA-256 {wheel['sha256']}.
+Its bytes differ from the previously installed 995d9c2 checkpoint, so earlier
+installed and native-host results cannot establish verification of this wheel.
+
+This archive establishes source and package checks only. Installed-wheel
+verification, model quality, full-module benefit and daily-use acceptance are
+separate gates. The model comparisons use their earlier frozen provider source;
+their identity does not change with this checkpoint. No live configuration,
+memory migration or publication occurred.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'counts': counts, 'wheel_sha256': wheel['sha256']}))

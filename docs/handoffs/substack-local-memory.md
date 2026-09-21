@@ -27,9 +27,9 @@ extraction or production adoption.
 
 A separate [production source-mutation repair](../validation/2026-09-21/source-evidence-snapshot-focused-v1/README.md)
 prevents caller-owned source evidence from changing correction authority while
-the model is awaited. It passes 62 focused tests. Full-suite/package and installed
-verification of source 56687e0 are pending, so earlier wheel verification must
-not be presented as covering this repair.
+the model is awaited. It passes 62 focused tests and the full source/package
+checkpoint below. Installed verification is running; earlier wheel verification
+must not be presented as covering this repair.
 
 The [fixed-contract Gemma 12B comparison](../validation/2026-09-21/source-classification-semantic-v11/README.md)
 completed with 43 valid outputs, three failures and 31 exact source excerpts.
@@ -58,7 +58,7 @@ message and incorrectly cited several requirements as requests to remember.
 The candidate remains unadopted. Its contracts are covered by the full source
 checkpoint below; experimental classifier code is not included in the installed wheel.
 
-The latest full source checkpoint is `f5c58f16681692ca0709ff7943637e224c0c0de2`. It passes **2,241 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its rebuilt wheel is byte-identical to the verified `995d9c2` wheel, which passed **893 installed cases with four matching skips**, installed-origin checks and the replay probe. These are different test selections, not independent estimates of reliability. The [source checkpoint and byte comparison](../validation/2026-09-21/classification-source-checkpoint-v1/README.md) bind that relationship to the earlier [installed checkpoint](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md). The newer source also labels exact-text precision explicitly as a proxy; semantic factual precision remains unmeasured. The [support-version repair](../validation/2026-09-20/support-revision-fence-v1.md) prevents stale evidence from attaching to a concurrently corrected fact and rejects conflicting operations in one extraction.
+The latest full [source checkpoint](../validation/2026-09-21/source-evidence-snapshot-checkpoint-v1/README.md) is `56687e0692866e6360ee4d8a4102690b50dd1713`. It passes **2,255 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its wheel differs from the earlier installed checkpoint; isolated installed verification is running. The previous [f5c58f1 checkpoint](../validation/2026-09-21/classification-source-checkpoint-v1/README.md) produced bytes identical to the [995d9c2 installed checkpoint](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md), which passed 893 installed cases with four matching skips. That historical relationship does not verify the new wheel. Semantic factual precision remains unmeasured. The [support-version repair](../validation/2026-09-20/support-revision-fence-v1.md) prevents stale evidence from attaching to a concurrently corrected fact and rejects conflicting operations in one extraction.
 
 Verified wheel SHA-256: `ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30`. This identifies the tested build, not a published release.
 
