@@ -752,6 +752,13 @@ the benchmark-date boundary, detach approval qualifications and retain a
 temporary tool instruction. This candidate is not adopted. Complete coverage
 does not replace the original semantic criteria.
 
+The [Gemma comparison v11](../validation/2026-09-21/source-classification-preparation-v11/README.md)
+changes only the requested model from v9 to the installed Gemma3:12B digest.
+All 46 paired prompts and schemas match; cases, rubrics, classifier bytes and
+generation settings remain fixed. The run is active, with no semantic result
+or adoption claimed. A full isolated source/package checkpoint on f5c58f1 is
+being prepared to include the newer experimental classifier and coverage tests.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
