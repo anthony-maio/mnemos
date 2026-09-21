@@ -17,10 +17,12 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 from urllib.request import urlopen
 
 from .artifacts import ArtifactRecorder
@@ -127,11 +129,41 @@ def _completed_observations(checkpoint: Path) -> int | None:
     return len(completed) if isinstance(completed, list) else None
 
 
+@contextmanager
+def _profile_lock(run: Path, profile: str) -> Iterator[None]:
+    """Refuse a second runner for one profile, such as after a kernel restart."""
+    path = run / "work" / f"{profile}.lock"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a+b") as handle:
+        try:
+            if sys.platform == "win32":
+                import msvcrt
+
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError as exc:
+            raise RuntimeError(f"another runner already holds profile {profile!r}") from exc
+        yield
+
+
 def run_profile(
     *, bundle: Path, source: Path, run: Path, mirror: Path, profile: str, endpoint: str
 ) -> dict[str, Any]:
     if profile not in PROFILE_NAMES:
         raise ValueError(f"unknown profile {profile!r}; expected one of {PROFILE_NAMES}")
+    with _profile_lock(run, profile):
+        return _run_locked(
+            bundle=bundle, source=source, run=run, mirror=mirror, profile=profile, endpoint=endpoint
+        )
+
+
+def _run_locked(
+    *, bundle: Path, source: Path, run: Path, mirror: Path, profile: str, endpoint: str
+) -> dict[str, Any]:
     preparation = verify_bundle(bundle, source)
     live = _live_model_metadata(endpoint, (preparation["model"], preparation["embedding_model"]))
     for name, record in preparation["models"].items():

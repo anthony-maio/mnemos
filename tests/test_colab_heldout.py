@@ -170,3 +170,26 @@ def test_aggregate_pairs_finished_profiles_with_the_baseline(tmp_path: Path) -> 
     stored = json.loads((reports / "baseline.json").read_text(encoding="utf-8"))
     assert stored["paired_comparisons"] == summary["paired_comparisons"]
     assert json.loads((tmp_path / "summary.json").read_text())["statuses"] == summary["statuses"]
+
+
+def test_a_second_runner_for_the_same_profile_is_refused(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    bundle, source = _bundle(tmp_path)
+    calls: list[dict[str, Any]] = []
+    _patch_run(monkeypatch, calls, DIGEST)
+    run = tmp_path / "vm"
+
+    # A runner that outlived a kernel restart still holds its profile.
+    with colab._profile_lock(run, "full"):
+        with pytest.raises(RuntimeError, match="already holds profile 'full'"):
+            colab.run_profile(
+                bundle=bundle,
+                source=source,
+                run=run,
+                mirror=tmp_path / "drive",
+                profile="full",
+                endpoint="x",
+            )
+    assert calls == []
+    assert not (tmp_path / "drive" / "status" / "full.json").exists()
