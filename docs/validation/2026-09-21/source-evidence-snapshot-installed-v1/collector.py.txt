@@ -1,0 +1,54 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = temp / 'mnemos-installed-checks-evidence-snapshot-v1'
+record = json.loads((source / 'installation.json').read_bytes())
+contract = json.loads((source / 'contract.json').read_bytes())
+assert record['status'] == contract['status'] == 'passed'
+assert record['bindings_after']['commit'] == '56687e0692866e6360ee4d8a4102690b50dd1713'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert record['runner_sha256'] == sha(repo / '.venv/run_combined_installed_check_v55.py')
+assert record['bindings_before']['checks_sha256'] == sha(temp / 'mnemos-package-checks-evidence-snapshot-v1/verification.json')
+for command in record['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(source / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+expected = json.loads((source / 'expected-contract-cases.json').read_bytes())
+for module, count in [('test_sleep_source_snapshot', 5), ('test_sleep_support_version', 4), ('test_support_revision_fence', 5),
+                      ('test_spreading_visit_budget', 4)]:
+    selected = [item for item in expected if item['module'] == module]
+    assert len(selected) == count and all(item['outcome'] == 'passed' for item in selected)
+for module in ('test_spreading_activation', 'test_spreading_isolation', 'test_spreading_mutual_builder'):
+    selected = [item for item in expected if item['module'] == module]
+    assert selected and all(item['outcome'] == 'passed' for item in selected)
+out = repo / 'docs/validation/2026-09-21/source-evidence-snapshot-installed-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+for name in ('run_combined_installed_check_v55.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(__file__, out / 'collector.py.txt')
+summary = record['contract']['junit_summary']
+(out / 'README.md').write_text(f'''# Source evidence snapshot installed-package checkpoint
+
+The wheel from frozen source 56687e0 passes {summary['tests'] - summary['skipped']}
+installed cases with {summary['skipped']} skips. Every selected outcome and skip
+reason matches the frozen source JUnit, including the five new source-mutation
+regressions. Installed module origins, wheel bytes, source/test hashes and the
+replay probe pass in a fresh environment outside the checkout.
+
+The production guard prevents changed source evidence from changing correction
+authority while a provider call is awaited. It does not repair semantic extraction.
+The installed subset is not the full source suite or a new native-host run.
+Full-module quality, fresh held-out acceptance and daily use remain open.
+No live installation, configuration, memory migration or publication occurred.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'junit': summary}))

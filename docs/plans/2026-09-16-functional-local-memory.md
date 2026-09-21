@@ -801,8 +801,10 @@ source changed to user that previously authorized a correction. The repaired
 path passes 62 focused extraction, lifecycle, correction and service tests,
 formatting and Python 3.10 type checking. The [full source/package checkpoint](../validation/2026-09-21/source-evidence-snapshot-checkpoint-v1/README.md)
 on 56687e0 passes 2,255 tests with four skips and all six checks. Its changed wheel
-requires separate installed verification, which is running; previous wheel
-checks do not cover it.
+passes the [isolated installed check](../validation/2026-09-21/source-evidence-snapshot-installed-v1/README.md):
+898 passed cases with four matching skips, installed origins, wheel/source hashes
+and the replay probe. This includes all five source-mutation regressions; it is
+not a new native-host or real-model quality result.
 
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
 identifies two empty structured final responses at the 8192-token limit. The

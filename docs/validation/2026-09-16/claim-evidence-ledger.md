@@ -17,9 +17,11 @@ persist. The candidate is not adopted into production.
 The [source-mutation repair](../2026-09-21/source-evidence-snapshot-focused-v1/README.md)
 at 56687e0 passes 62 focused cases, formatting and Python 3.10 type checking.
 The [full source/package checkpoint](../2026-09-21/source-evidence-snapshot-checkpoint-v1/README.md)
-passes 2,255 tests with four skips and all six checks. Installed verification is
-running. It changes production extraction, so prior wheel parity does not cover
-this newer source.
+passes 2,255 tests with four skips and all six checks. Its new
+[installed checkpoint](../2026-09-21/source-evidence-snapshot-installed-v1/README.md)
+passes 898 cases with four matching skips, installed-origin/hash checks and replay.
+This verifies the changed wheel independently; prior wheel parity does not cover
+this newer source. It supplies no new native-host or semantic quality acceptance.
 
 The [Gemma 12B fixed-contract comparison](../2026-09-21/source-classification-semantic-v11/README.md)
 has 43 valid outputs, three validation failures and 31 source-verified excerpts.
