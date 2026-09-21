@@ -756,7 +756,7 @@ class SpreadingActivation:
         max_hops: int | None = None,
         max_visited: int | None = None,
     ) -> dict[str, float]:
-        """Activate one seed using maximum propagated path energy."""
+        """Activate one seed, using the configured visit budget unless overridden."""
         if node_id not in self._nodes:
             raise KeyError(f"Node '{node_id}' not found in activation graph.")
         policy = self._query_policy(
@@ -776,7 +776,7 @@ class SpreadingActivation:
         hop_limit = max(0, int(max_hops if max_hops is not None else self._config.max_hops))
         visit_limit = max_visited
         if visit_limit is None:
-            visit_limit = max(1, 1 + hop_limit * self._max_neighbors())
+            visit_limit = self._config.max_visited
         visit_limit = max(1, int(visit_limit))
         threshold = float(self._config.activation_threshold)
         attenuation = 1.0 - float(self._config.decay_rate)

@@ -16,6 +16,8 @@ The latest fully verified source checkpoint is `2996d54db348c1600932ce28fb8ebd91
 
 Verified wheel SHA-256: `e74a3755035604719d6409784b6aaad38905bd9bb51bcb43dcbd27197cb32a13`. This identifies the tested build, not a published release.
 
+A subsequent [standalone graph visit-budget repair](../validation/2026-09-20/spreading-visit-budget-v1.md) is under broader validation and is outside that wheel checkpoint. It makes direct module calls honor their configured limit. The managed engine already passed the limit explicitly, so this is not a repair of the measured graph recall failures.
+
 T01-T16 are implemented, with subsequent correctness repairs. T17-T19 remain open: broader host acceptance, real-model quality and module benefit, complete provider recovery, daily-use evidence, and final claims reconciliation. No release was published, live host configuration changed, or live memory migrated as part of these validation runs. See the [implementation plan](../plans/2026-09-16-functional-local-memory.md) for the full scope.
 
 One bounded native lifecycle shared, corrected, retrieved and forgot memories across Codex, Claude Code and Hermes. All 11 phases passed on an earlier product, `e6887de`, using real Nomic query embeddings and **all five cognition modules disabled**. This is not evidence of the same lifecycle on the latest wheel, complete capture, Desktop support, full-module quality or general reliability. The [native v7 record](../validation/2026-09-20/three-host-native-v7/README.md) binds exact hosts, models, source and artifacts. The later [Hermes v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md) has its own product binding, `26c9ddb`; do not combine their versions into one imaginary tested release.

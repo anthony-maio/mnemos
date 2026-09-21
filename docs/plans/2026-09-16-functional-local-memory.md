@@ -251,6 +251,13 @@ Run: `py -3.13 -m pytest -q tests/test_retrieval_contract.py tests/test_inspecta
 
 ### T10 - Correct and bound associative graph retrieval
 
+The [standalone visit-budget repair](../validation/2026-09-20/spreading-visit-budget-v1.md)
+reproduces three configuration failures and a passing explicit-override control.
+Standalone calls now use the configured limit when no call override is supplied.
+The engine already supplied that limit explicitly; existing retrieval negatives
+are unchanged. The 54-test graph and 73-test source-association selections,
+formatting and type checking pass; full validation of this repair is in progress.
+
 Depends on: T02, T03; integrate revisions from T08.
 
 Files: `mnemos/modules/spreading.py`, `mnemos/utils/storage.py`, `mnemos/engine.py`, new `tests/test_spreading_contract.py`.
