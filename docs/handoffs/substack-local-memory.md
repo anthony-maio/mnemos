@@ -205,3 +205,16 @@ a full installed-wheel or real-model acceptance result. Review controls and the
 pilot remain open. The portable research packet still needs its final refresh.
 See [the integration record](../validation/2026-09-21/source-bound-service-integration-v1/README.md)
 and [the preceding full-suite result](../validation/2026-09-21/source-review-storage-full-v1/README.md).
+
+
+## Review controls checkpoint, September 21
+
+Scoped service/MCP listing, exact-source inspection and durable discard are
+implemented. Invalid sources return no excerpt; read operations leave SQLite
+unchanged. Discard releases the review retention hold and survives restart.
+The focused control/storage/restore/service suite passes 36 tests, with Python
+3.10 type checks passing. See
+[review control evidence](../validation/2026-09-21/source-review-controls-v1/README.md).
+Resolution of ambiguous reviews, current full-package verification, real-model
+quality and native-host acceptance remain open. This checkpoint does not close
+T17-T19 or establish a release-ready result.

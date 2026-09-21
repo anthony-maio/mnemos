@@ -76,7 +76,10 @@ READ_ONLY = {
     "mnemos_health",
     "mnemos_inspect",
     "mnemos_list",
+    "mnemos_reviews",
+    "mnemos_inspect_review",
 }
+REVIEW_DISCARDS = {"mnemos_discard_review"}
 PROVIDER_WRITES = {"mnemos_store", "mnemos_retrieve"}
 LOCAL_WRITES = {"mnemos_capture", "mnemos_feedback"}
 DESTRUCTIVE_WRITES = {"mnemos_correct", "mnemos_forget", "mnemos_forget_related"}
@@ -92,8 +95,14 @@ async def _registered_tools() -> dict[str, Any]:
 async def test_fastmcp_tools_publish_truthful_safety_annotations() -> None:
     tools = await _registered_tools()
 
-    assert READ_ONLY | PROVIDER_WRITES | LOCAL_WRITES | DESTRUCTIVE_WRITES | MAINTENANCE == set(
-        tools
+    assert (
+        READ_ONLY
+        | PROVIDER_WRITES
+        | LOCAL_WRITES
+        | DESTRUCTIVE_WRITES
+        | MAINTENANCE
+        | REVIEW_DISCARDS
+        == set(tools)
     )
 
     for name in READ_ONLY:
@@ -126,6 +135,14 @@ async def test_fastmcp_tools_publish_truthful_safety_annotations() -> None:
         assert annotations.readOnlyHint is False
         assert annotations.destructiveHint is True
         assert annotations.idempotentHint is False
+        assert annotations.openWorldHint is False
+
+    for name in REVIEW_DISCARDS:
+        annotations = tools[name].annotations
+        assert annotations is not None
+        assert annotations.readOnlyHint is False
+        assert annotations.destructiveHint is True
+        assert annotations.idempotentHint is True
         assert annotations.openWorldHint is False
 
     annotations = tools["mnemos_consolidate"].annotations

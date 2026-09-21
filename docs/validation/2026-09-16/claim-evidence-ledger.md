@@ -1137,3 +1137,16 @@ default. Review controls, current full-suite/installed-wheel validation and
 real-model acceptance remain open. No live migration or configuration change
 ran. Evidence: `../2026-09-21/source-review-storage-full-v1/` and
 `../2026-09-21/source-bound-service-integration-v1/`.
+
+
+## Review controls checkpoint, September 21
+
+Scoped service/MCP listing, exact-source inspection and durable discard are
+implemented. Invalid sources return no excerpt; read operations leave SQLite
+unchanged. Discard releases the review retention hold and survives restart.
+The focused control/storage/restore/service suite passes 36 tests, with Python
+3.10 type checks passing. See
+[review control evidence](../2026-09-21/source-review-controls-v1/README.md).
+Resolution of ambiguous reviews, current full-package verification, real-model
+quality and native-host acceptance remain open. This checkpoint does not close
+T17-T19 or establish a release-ready result.

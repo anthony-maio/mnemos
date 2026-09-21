@@ -43,6 +43,7 @@ from ..types import (
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from ..source_review import SourceReviewReference
+from ..memory_safety import MemoryWriteFirewall
 from ..errors import (
     RelatedForgetPreviewIncomplete,
     RelatedForgetPreviewStale,
@@ -519,6 +520,29 @@ class MemoryStore(ABC):
     def list_source_reviews(
         self, *, user_profile_id: str, scope: str, scope_id: str | None
     ) -> list[dict[str, Any]]:
+        raise NotImplementedError("This storage backend does not support durable reviews.")
+
+    def inspect_source_review(
+        self,
+        job_id: str,
+        candidate_index: int,
+        *,
+        user_profile_id: str,
+        scope: str,
+        scope_id: str | None,
+        firewall: MemoryWriteFirewall | None = None,
+    ) -> dict[str, Any]:
+        raise NotImplementedError("This storage backend does not support durable reviews.")
+
+    def discard_source_review(
+        self,
+        job_id: str,
+        candidate_index: int,
+        *,
+        user_profile_id: str,
+        scope: str,
+        scope_id: str | None,
+    ) -> bool:
         raise NotImplementedError("This storage backend does not support durable reviews.")
 
     def retry_job(self, job_id: str, *, now: datetime | None = None) -> bool:
@@ -4179,54 +4203,179 @@ class SQLiteStore(MemoryStore):
         ) or (event.role == "assistant" and self._contains_forgotten_id(event.content)):
             raise ValueError("Review source assertion is suppressed")
 
+    def _current_review_state_locked(self, review: SourceReviewReference) -> str:
+        """Derive validity without changing the durable review disposition."""
+        try:
+            self._validate_review_locked(review)
+        except ValueError:
+            target = self.get(review.target_fact_id) if review.target_fact_id else None
+            invalid_target = review.target_fact_id is not None and (
+                target is None
+                or target.version != review.expected_version
+                or target.metadata.get("scope") != review.scope
+                or target.metadata.get("scope_id") != review.scope_id
+                or target.metadata.get("user_profile_id") != review.user_profile_id
+                or self.is_suppressed(fact_id=review.target_fact_id)
+            )
+            return "invalidated_target" if invalid_target else "invalidated_source"
+        return "open"
+
     def _refresh_source_reviews_locked(self) -> None:
         rows = self._conn.execute(
             "SELECT job_id, candidate_index, reference FROM source_review_records WHERE state='open'"
         ).fetchall()
         for job_id, candidate_index, encoded in rows:
-            review = SourceReviewReference.model_validate_json(encoded)
-            try:
-                self._validate_review_locked(review)
-            except ValueError:
-                target = self.get(review.target_fact_id) if review.target_fact_id else None
-                invalid_target = review.target_fact_id is not None and (
-                    target is None
-                    or target.version != review.expected_version
-                    or target.metadata.get("scope") != review.scope
-                    or target.metadata.get("scope_id") != review.scope_id
-                    or target.metadata.get("user_profile_id") != review.user_profile_id
-                    or self.is_suppressed(fact_id=review.target_fact_id)
-                )
+            state = self._current_review_state_locked(
+                SourceReviewReference.model_validate_json(encoded)
+            )
+            if state != "open":
                 self._conn.execute(
                     "UPDATE source_review_records SET state=? WHERE job_id=? AND candidate_index=?",
-                    (
-                        "invalidated_target" if invalid_target else "invalidated_source",
-                        job_id,
-                        candidate_index,
-                    ),
+                    (state, job_id, candidate_index),
                 )
 
     def list_source_reviews(
         self, *, user_profile_id: str, scope: str, scope_id: str | None
     ) -> list[dict[str, Any]]:
-        """Inspect one explicit partition; service callers must authorize it first."""
+        """Inspect one explicit partition without persisting validity changes."""
         if not user_profile_id.strip() or scope not in {"project", "workspace", "global"}:
             raise ValueError("Review inspection requires an explicit profile and scope")
         if scope != "global" and not scope_id:
             raise ValueError("Review inspection requires a scope identity")
         with self._lock:
-            self._refresh_source_reviews_locked()
-            rows = self._conn.execute(
-                "SELECT job_id, candidate_index, state, reference FROM source_review_records "
-                "WHERE user_profile_id=? AND scope=? AND scope_id IS ? "
-                "ORDER BY job_id, candidate_index",
-                (user_profile_id, scope, scope_id),
-            ).fetchall()
-            self._conn.commit()
-        return [
-            dict(job_id=row[0], candidate_index=row[1], state=row[2], reference=json.loads(row[3]))
-            for row in rows
-        ]
+            self._conn.execute("BEGIN")
+            try:
+                rows = self._conn.execute(
+                    "SELECT job_id, candidate_index, state, reference FROM source_review_records "
+                    "WHERE user_profile_id=? AND scope=? AND scope_id IS ? "
+                    "ORDER BY job_id, candidate_index",
+                    (user_profile_id, scope, scope_id),
+                ).fetchall()
+                items = []
+                for job_id, candidate_index, state, encoded in rows:
+                    reference = json.loads(encoded)
+                    if state == "open":
+                        state = self._current_review_state_locked(
+                            SourceReviewReference.model_validate(reference)
+                        )
+                    items.append(
+                        dict(
+                            job_id=job_id,
+                            candidate_index=candidate_index,
+                            state=state,
+                            reference=reference,
+                        )
+                    )
+                self._conn.commit()
+                return items
+            except BaseException:
+                self._conn.rollback()
+                raise
+
+    def _review_item_locked(
+        self,
+        job_id: str,
+        candidate_index: int,
+        *,
+        user_profile_id: str,
+        scope: str,
+        scope_id: str | None,
+    ) -> dict[str, Any]:
+        if type(candidate_index) is not int or candidate_index < 0:
+            raise ValueError("Review candidate index must be a nonnegative integer")
+        if not user_profile_id.strip() or scope not in {"project", "workspace", "global"}:
+            raise ValueError("Review inspection requires an explicit profile and scope")
+        if scope != "global" and not scope_id:
+            raise ValueError("Review inspection requires a scope identity")
+        row = self._conn.execute(
+            "SELECT state, reference FROM source_review_records "
+            "WHERE job_id=? AND candidate_index=? AND user_profile_id=? "
+            "AND scope=? AND scope_id IS ?",
+            (job_id, candidate_index, user_profile_id, scope, scope_id),
+        ).fetchone()
+        if row is None:
+            raise ValueError("Review not found in the requested scope")
+        return dict(
+            job_id=job_id,
+            candidate_index=candidate_index,
+            state=row[0],
+            reference=json.loads(row[1]),
+        )
+
+    def inspect_source_review(
+        self,
+        job_id: str,
+        candidate_index: int,
+        *,
+        user_profile_id: str,
+        scope: str,
+        scope_id: str | None,
+        firewall: MemoryWriteFirewall | None = None,
+    ) -> dict[str, Any]:
+        """Resolve a current excerpt inside the same transaction as validation."""
+        with self._lock:
+            self._conn.execute("BEGIN")
+            try:
+                item = self._review_item_locked(
+                    job_id,
+                    candidate_index,
+                    user_profile_id=user_profile_id,
+                    scope=scope,
+                    scope_id=scope_id,
+                )
+                item["excerpt"] = None
+                if item["state"] == "open":
+                    review = SourceReviewReference.model_validate(item["reference"])
+                    item["state"] = self._current_review_state_locked(review)
+                if item["state"] == "open":
+                    event = self.get_episodic_event(review.source_id)
+                    assert event is not None  # validated in the same read snapshot
+                    target = self.get(review.target_fact_id) if review.target_fact_id else None
+                    try:
+                        item["excerpt"] = review.resolve_source(
+                            event, target=target, firewall=firewall
+                        )
+                    except ValueError:
+                        item["state"] = "invalidated_source"
+                self._conn.commit()
+                return item
+            except BaseException:
+                self._conn.rollback()
+                raise
+
+    def discard_source_review(
+        self,
+        job_id: str,
+        candidate_index: int,
+        *,
+        user_profile_id: str,
+        scope: str,
+        scope_id: str | None,
+    ) -> bool:
+        """Close an open review and release its source-retention hold."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                self._refresh_source_reviews_locked()
+                item = self._review_item_locked(
+                    job_id,
+                    candidate_index,
+                    user_profile_id=user_profile_id,
+                    scope=scope,
+                    scope_id=scope_id,
+                )
+                changed = bool(item["state"] == "open")
+                if changed:
+                    self._conn.execute(
+                        "UPDATE source_review_records SET state='discarded' "
+                        "WHERE job_id=? AND candidate_index=? AND state='open'",
+                        (job_id, candidate_index),
+                    )
+                self._conn.commit()
+                return changed
+            except BaseException:
+                self._conn.rollback()
+                raise
 
     def prune_processed_evidence(self, *, before: datetime, limit: int = 100) -> int:
         """Expire processed raw events; retained support excerpts remain inspectable."""

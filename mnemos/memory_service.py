@@ -14,6 +14,8 @@ from .contracts import (
     ForgetPreviewRequest,
     ForgetRelatedRequest,
     RetrievalRequest,
+    ReviewScopeRequest,
+    ReviewItemRequest,
 )
 from .claude_identity import legacy_event_id, scoped_event_id
 from .hermes_identity import (
@@ -777,6 +779,40 @@ class LocalMemoryService:
         }
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if operation in {"reviews", "inspect_review", "discard_review"}:
+            request = (
+                ReviewScopeRequest.model_validate(payload)
+                if operation == "reviews"
+                else ReviewItemRequest.model_validate(payload)
+            )
+            context = self.registry.validate_context(request.context)
+            metadata = context_metadata(context, request.scope)
+            if operation == "reviews":
+                rows = self.engine.store.list_source_reviews(
+                    user_profile_id=context.user_profile_id,
+                    scope=request.scope,
+                    scope_id=metadata["scope_id"],
+                )
+                return {"schema_version": 1, "reviews": rows}
+            assert isinstance(request, ReviewItemRequest)
+            if operation == "inspect_review":
+                item = self.engine.store.inspect_source_review(
+                    request.job_id,
+                    request.candidate_index,
+                    user_profile_id=context.user_profile_id,
+                    scope=request.scope,
+                    scope_id=metadata["scope_id"],
+                    firewall=self.firewall,
+                )
+                return {"schema_version": 1, "review": item}
+            changed = self.engine.store.discard_source_review(
+                request.job_id,
+                request.candidate_index,
+                user_profile_id=context.user_profile_id,
+                scope=request.scope,
+                scope_id=metadata["scope_id"],
+            )
+            return {"schema_version": 1, "status": "discarded" if changed else "unchanged"}
         if operation == "configure_project":
             from pathlib import Path
             from .scopes import default_registry_path

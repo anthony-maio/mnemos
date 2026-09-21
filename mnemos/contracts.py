@@ -96,6 +96,17 @@ def _extraction_response_json_schema(schema: dict[str, Any]) -> None:
     schema["oneOf"] = [facts_branch, no_facts_branch]
 
 
+class ReviewScopeRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    context: ScopeContext
+    scope: Literal["project", "workspace", "global"] = "project"
+
+
+class ReviewItemRequest(ReviewScopeRequest):
+    job_id: str = Field(min_length=1)
+    candidate_index: int = Field(ge=0, strict=True)
+
+
 class CaptureEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
     identity_version: Literal[1, 2] = 1

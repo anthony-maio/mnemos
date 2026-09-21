@@ -424,6 +424,12 @@ def _register_service_tools(mcp: Any) -> None:
         idempotentHint=False,
         openWorldHint=False,
     )
+    review_discard = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
 
     @mcp.tool(annotations=provider_write)
     async def mnemos_store(
@@ -757,6 +763,68 @@ def _register_service_tools(mcp: Any) -> None:
                 service_context,
                 "inspect",
                 {"fact_id": chunk_id, "context": service_context.scope.model_dump(mode="json")},
+            )
+        )
+
+    @mcp.tool(annotations=read_only)
+    async def mnemos_reviews(
+        scope: Literal["project", "workspace", "global"] = "project",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """List extraction reviews in one resolved scope."""
+        service_context = _service_context_from_ctx(ctx, "mnemos_reviews")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "reviews",
+                {
+                    "scope": scope,
+                    "context": service_context.scope.model_dump(mode="json"),
+                },
+            )
+        )
+
+    @mcp.tool(annotations=read_only)
+    async def mnemos_inspect_review(
+        job_id: str,
+        candidate_index: StrictInt,
+        scope: Literal["project", "workspace", "global"] = "project",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Inspect a pending review's source excerpt and validated provenance."""
+        service_context = _service_context_from_ctx(ctx, "mnemos_inspect_review")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "inspect_review",
+                {
+                    "job_id": job_id,
+                    "candidate_index": candidate_index,
+                    "scope": scope,
+                    "context": service_context.scope.model_dump(mode="json"),
+                },
+            )
+        )
+
+    @mcp.tool(annotations=review_discard)
+    async def mnemos_discard_review(
+        job_id: str,
+        candidate_index: StrictInt,
+        scope: Literal["project", "workspace", "global"] = "project",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Close a review and release its source-retention hold. Existing facts remain."""
+        service_context = _service_context_from_ctx(ctx, "mnemos_discard_review")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "discard_review",
+                {
+                    "job_id": job_id,
+                    "candidate_index": candidate_index,
+                    "scope": scope,
+                    "context": service_context.scope.model_dump(mode="json"),
+                },
             )
         )
 

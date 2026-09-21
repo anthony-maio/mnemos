@@ -905,8 +905,10 @@ The subsequent [source-bound service integration](../validation/2026-09-21/sourc
 adds atomic review storage, source-retention/forget handling and an explicit
 opt-in extraction mode. Its 211 focused tests and packaging smoke pass. The
 preceding storage checkpoint passed 2,352 full-suite tests with four skips;
-that full result predates the service adapter. Review inspection/resolution/
-discard controls, current full acceptance and real-model validation remain open.
+that full result predates the service adapter. [Review listing, inspection and discard](../validation/2026-09-21/source-review-controls-v1/README.md)
+now pass 36 focused control/storage/restore/service tests. Inspection is read-only
+and conceals invalid source excerpts; discard persists and releases retention.
+Review resolution, current full acceptance and real-model validation remain open.
 
 ### T19 - Reconcile release, documentation, and research claims
 
