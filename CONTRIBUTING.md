@@ -21,6 +21,12 @@ Mnemos v1 is a local-first memory layer for solo coding-agent workflows. Contrib
 
 ## Release bar for changes
 
+Source distributions omit validation ZIP archives, SQLite snapshots and raw
+provider dumps. The repository retains those records; use the repository at the
+recorded commit to verify complete evidence manifests. Source distributions
+still include the contract dataset and native trace fixtures required by tests.
+These exclusions do not change the wheel's runtime modules or bundled agents.
+
 Changes that affect memory correctness, storage, or host compatibility should include:
 
 - regression tests
