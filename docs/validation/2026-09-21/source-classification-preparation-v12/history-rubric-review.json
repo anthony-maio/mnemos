@@ -1,0 +1,48 @@
+{
+  "schema_version": "extraction_holdout_rubric_review_v1",
+  "review_scope": "Rubric ambiguity review for P07, N10, P05, and N02 only. The original authored cases were not edited.",
+  "original_artifact": {
+    "path": "D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/extraction_holdout_authored_v1.json",
+    "sha256": "62b3061e0066fc9fe3d583032e6c88ac40fde6310320181719da09d7aa43af77",
+    "model_execution": false,
+    "performance_evidence": false,
+    "synthetic_evaluation": true,
+    "ground_truth_status": "This is a rubric review of an authored set, not real-world truth."
+  },
+  "cases": [
+    {
+      "case_id": "P07",
+      "ambiguity": "The assistant says that the user stated a requirement and attributes it to an earlier instruction, but the cited user evidence is absent from this case. The wording supports a provenance report, yet it does not independently establish that the requirement is authoritative or currently accepted.",
+      "recommended_acceptance_interpretation": "Accept only a provenance-qualified report: the assistant reports that an earlier user instruction required preserving accepted baseline art during MVP release work. Do not score it as a directly verified user preference or requirement unless the referenced user evidence is available. Do not accept a newly invented assistant preference.",
+      "binary_abstention_score_justified": false,
+      "rationale": "A binary facts/no_durable_facts label collapses two distinct questions: whether the assistant utterance contains a durable attributed report, and whether the absent earlier evidence makes that report authoritative. The rubric should either permit a third provenance-qualified state or score required meaning and provenance separately."
+    },
+    {
+      "case_id": "N10",
+      "ambiguity": "The user rejects offline sync as an accepted proposal and current requirement. That rejected proposal is not an adopted positive fact, but the rejection and current exclusion are durable project state. The no_durable_facts label can therefore conflict with a memory policy that preserves explicit negative requirements and historical decisions.",
+      "recommended_acceptance_interpretation": "Accept a durable negative or historical state if the memory system preserves exclusions: the old offline-sync proposal was rejected, and offline sync is not a current requirement. Forbid storing the proposal as an accepted requirement. If the system stores only positive adopted facts, abstention is defensible, but that narrower policy must be stated explicitly.",
+      "binary_abstention_score_justified": false,
+      "rationale": "The case contains meaningful explicit negation and rejection. A binary label cannot distinguish correct abstention from correctly preserving a negative project constraint. The rubric should identify whether rejected proposals and negative requirements are in scope."
+    },
+    {
+      "case_id": "P05",
+      "ambiguity": "The user says the local-database move is undecided, asks that the open consideration be kept, and explicitly says not to record it as an architecture decision. The fact is an uncertainty state rather than an adopted decision.",
+      "recommended_acceptance_interpretation": "Accept the unresolved consideration and its status: the user is considering a local database for the cache, the decision is open, and it must not be represented as an adopted architecture decision. Reject any extraction that asserts the migration occurred or was approved.",
+      "binary_abstention_score_justified": true,
+      "rationale": "The explicit request to keep the uncertainty supplies a clear retention signal and a clear prohibition against overclaiming. A binary facts/no_durable_facts score is justified if facts includes uncertainty states and does not mean only settled decisions."
+    },
+    {
+      "case_id": "N02",
+      "ambiguity": "The user mentions a possible future HTML report format but says it is only thinking out loud and that no decision has been made. Unlike P05, there is no request to remember the consideration or to preserve an uncertainty state.",
+      "recommended_acceptance_interpretation": "Abstain from durable extraction. Do not store HTML as the current format, a user preference, or an adopted decision. The text may be retained as transient conversational context only if the system has such a separate context class.",
+      "binary_abstention_score_justified": true,
+      "rationale": "The explicit non-decision and lack of a retention request provide a clean contrast with P05. A binary abstention score is justified when the rubric recognizes that unresolved speculation without a retention signal is not durable memory."
+    }
+  ],
+  "cross_case_recommendation": "Define the acceptance policy before model execution. At minimum, distinguish direct user facts, assistant reports with missing provenance, durable negative or rejected states, explicitly retained uncertainty, and transient hypothetical thinking. If the benchmark must remain binary, document that facts may include qualified reports, negative constraints, and uncertainty states, then score required meaning and forbidden overclaiming manually rather than treating the label as a single semantic category.",
+  "limitations": [
+    "This review is authored and prompt-independent.",
+    "It does not inspect prompts, benchmark outputs, diagnostics, implementation, or model behavior.",
+    "It provides no performance evidence and is not real-world ground truth."
+  ]
+}

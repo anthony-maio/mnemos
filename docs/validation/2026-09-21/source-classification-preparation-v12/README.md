@@ -1,0 +1,3 @@
+# Gemma 27B model comparison preparation v12
+
+Same v9 classifier bytes, prompts, schemas, provider source, 46 development cases and original rubrics. Only requested model changes to installed gemma3:27b, digest a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203. Requested temperature 0, think=False, 8192 tokens and 180-second timeout remain fixed. Paired offline prompt/schema checks and launch guards pass. Reused development evidence only; preserve every failure without selective retry or relaxed criteria. No production adoption. GPU residency and latency are not assumed from model size.
