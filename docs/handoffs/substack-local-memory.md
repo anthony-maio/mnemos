@@ -14,6 +14,15 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [explicit-discard classification experiment](../validation/2026-09-20/source-classification-semantic-v9/README.md)
+completed all 46 reused development cases: 45 valid outputs, one authority
+rejection and 29 source-verified excerpts. Allowing explicit discard categories
+removed unwanted retention of the options question, fiction, hypothetical report
+and date fixture. It still omitted the independent marker in a mixed policy
+message and incorrectly cited several requirements as requests to remember.
+The candidate remains unadopted. Its focused tests pass, but it postdates the
+full source checkpoint below and is not included in the installed wheel.
+
 The latest full source checkpoint is `6e8456b3c5a8ee8756270e51e3d11112e5dd9791`. It passes **2,209 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its rebuilt wheel is byte-identical to the verified `995d9c2` wheel, which passed **893 installed cases with four matching skips**, installed-origin checks and the replay probe. These are different test selections, not independent estimates of reliability. The [source checkpoint and byte comparison](../validation/2026-09-20/extractive-source-checkpoint-v1/README.md) bind that relationship to the earlier [installed checkpoint](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md). The newer source also labels exact-text precision explicitly as a proxy; semantic factual precision remains unmeasured. The [support-version repair](../validation/2026-09-20/support-revision-fence-v1.md) prevents stale evidence from attaching to a concurrently corrected fact and rejects conflicting operations in one extraction.
 
 Verified wheel SHA-256: `ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30`. This identifies the tested build, not a published release.

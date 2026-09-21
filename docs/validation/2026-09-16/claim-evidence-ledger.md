@@ -2,6 +2,13 @@
 
 ## Current evidence, September 20, 2026
 
+The [v9 explicit-discard classifier](../2026-09-20/source-classification-semantic-v9/README.md)
+completed 46 reused cases with 45 valid outputs, one authority rejection and 29
+source-verified excerpts. Several unwanted-retention cases improve, but the
+mixed-policy marker omission and false retention-request metadata persist.
+Candidate not adopted. Prompt and schema change together; focused tests do not
+extend the earlier full-suite checkpoint to this newer experimental code.
+
 The [v8 temperature control](../2026-09-20/source-selection-semantic-v8/README.md) preserves 44 unchanged outcomes out of 46, removes one unwanted fixture and improves one retention-request reference. It has 44 runtime-valid cases, two authority failures and 34 exact source excerpts. Remaining selection defects prevent adoption; this is not fresh held-out acceptance.
 
 The latest full [source checkpoint](../2026-09-20/extractive-source-checkpoint-v1/README.md)

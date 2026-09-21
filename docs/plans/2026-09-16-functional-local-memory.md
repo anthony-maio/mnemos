@@ -732,8 +732,12 @@ classifier adds question, temporary-instruction, quoted-material, unrequested-
 speculation and unaccepted-suggestion labels; these remain auditable but emit
 no memory. Source, scope, authority and mutation guards still apply. The focused
 selector/classifier suite passes 57 tests, with formatting and Python 3.10 type
-checking passing. The local Qwen2.5:14b temperature-zero comparison is running;
-no semantic result or adoption is claimed. Prompt and schema change together.
+checking passing. The [completed local Qwen2.5:14b comparison](../validation/2026-09-20/source-classification-semantic-v9/README.md)
+has 45 valid outputs, one authority rejection and 29 verified original-source
+excerpts. It discards the options question, fiction, hypothetical report and date
+fixture retained in v8. The mixed-policy marker omission persists, and several
+requirements are incorrectly cited as retention requests. Prompt and schema
+change together; no fresh quality acceptance or production adoption is claimed.
 
 ### T19 - Reconcile release, documentation, and research claims
 
