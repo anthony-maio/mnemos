@@ -786,6 +786,15 @@ and production integration remain unexecuted for this candidate.
 
 ### T19 - Reconcile release, documentation, and research claims
 
+Production extraction now snapshots source events before constructing the prompt
+and rejects a response if those events change while the provider is awaited.
+Five regression cases reproduced the missing guard, including an assistant
+source changed to user that previously authorized a correction. The repaired
+path passes 62 focused extraction, lifecycle, correction and service tests,
+formatting and Python 3.10 type checking. Full source/package and installed-wheel
+verification for this new production change remain pending; previous wheel
+checks do not cover it.
+
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
 identifies two empty structured final responses at the 8192-token limit. The
 [provider-only control](../validation/2026-09-21/recovery-extraction-no-thinking-preparation-v1/README.md)

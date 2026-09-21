@@ -575,6 +575,8 @@ class SleepDaemon:
         """Extract typed proposals from one authorized partition without writing facts."""
         if not events:
             raise ValueError("Extraction requires source events")
+        source_events = events
+        events = [event.model_copy(deep=True) for event in source_events]
         partitions = {
             (event.metadata.get("user_profile_id"), event.scope, event.scope_id) for event in events
         }
@@ -646,6 +648,10 @@ class SleepDaemon:
             # do not advertise this capability retain the prompt-only path.
             predict_kwargs["format"] = _source_bound_extraction_schema(source_ids, targets)
         response = (await llm_provider.predict(prompt, **predict_kwargs)).strip()
+        if [event.model_dump(mode="json") for event in source_events] != [
+            event.model_dump(mode="json") for event in events
+        ]:
+            raise ValueError("Source events changed during extraction")
         if response.startswith("```") and response.endswith("```"):
             response = response.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         data = json.loads(response)
