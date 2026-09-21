@@ -1,0 +1,42 @@
+from pathlib import Path
+import asyncio
+import hashlib
+import json
+import subprocess
+import sys
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-selection-development-v6')
+inputs = json.loads((root / 'inputs.json').read_bytes())
+prep = json.loads((root / 'preparation.json').read_bytes())
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+for name, digest in prep['files'].items():
+    assert sha(root / name) == digest, name
+sys.path.insert(0, inputs['snapshot'])
+sys.path.insert(0, str(root))
+from candidate.source_selection import select_source_memories
+from mnemos.types import EpisodicEvent
+
+async def main():
+    checks = []
+    for case in inputs['cases']:
+        class Capture:
+            supports_structured_output = True
+            async def predict(self, prompt, **kwargs):
+                payload = json.loads(prompt.split('\nSOURCE EVENTS:\n')[1])
+                assert payload[0]['id'] == case['source']['id']
+                assert ''.join(u['text'] for u in payload[0]['units']) == case['source']['content']
+                assert kwargs['format']['$defs']['Selection']['properties']['source_id']['enum'] == [case['source']['id']]
+                checks.append({'case_id': case['id'], 'source_units': len(payload[0]['units']), 'prompt_sha256': hashlib.sha256(prompt.encode()).hexdigest(), 'schema_sha256': hashlib.sha256(json.dumps(kwargs['format'], sort_keys=True).encode()).hexdigest()})
+                return '{"selections": []}'
+        await select_source_memories([EpisodicEvent.model_validate(case['source'])], Capture())
+    assert len(checks) == 46
+    guards = []
+    for args in ([], ['wrong-digest']):
+        result = subprocess.run([sys.executable, str(root / 'runner.py'), *args], capture_output=True, text=True)
+        assert result.returncode != 0 and 'externally supplied matching preparation digest' in result.stderr
+        assert not (root / 'status.json').exists()
+        guards.append({'arguments': args, 'exit_code': result.returncode})
+    (root / 'offline-preflight.json').write_text(json.dumps({'status': 'passed', 'model_calls': 0, 'cases': checks, 'launch_guards': guards, 'limits': 'Lossless units, source/schema binding and mocked empty outputs do not demonstrate semantic quality.'}, indent=2) + '\n')
+    print(json.dumps({'offline_cases': len(checks), 'launch_guards': len(guards), 'model_calls': 0}))
+
+asyncio.run(main())
