@@ -135,6 +135,38 @@ verify model identities from that server. Keep the source, options, output,
 and work directories bound to their original run. Changed configurations need
 new directories and their own review.
 
+## Running the held-out matrix on a Colab GPU
+
+The held-out launcher runs profiles one after another, which took most of a day
+on the 4080. `colab/heldout_colab.ipynb` runs all seven at once on an A100 or
+H100, each profile as its own process against one Ollama server on the VM.
+
+Build a bundle from a committed HEAD on the machine that has the models:
+
+```text
+python -m benchmarks.local_memory.prepare_colab_bundle --corpus <corpus.jsonl> --output <folder>
+```
+
+The bundle holds a git archive of HEAD, the corpus, the live model digests, and
+the Ollama version and context length. Context is pinned because Ollama sizes
+its default from VRAM. The local 0.34.2 server ran qwen3.5:9b at 16384 on the
+16 GB card, and an 80 GB card would otherwise get a different context. Upload
+the folder to `MyDrive/mnemos-eval/`, open the notebook in Colab, set
+`BUNDLE_NAME`, and run the cells in order.
+
+Work stays on the VM's disk. Checkpoints are mirrored to Drive every five
+minutes, and running the notebook again resumes each unfinished profile from
+its mirrored checkpoint. The checkpoint identity binds the GPU model, Ollama
+version, context, and parallelism, so a resume on a different GPU model is
+refused rather than mixing hardware inside one profile. Ollama batches
+parallel requests, so greedy outputs can differ slightly from a one-at-a-time
+run. Compare profiles within one Colab run, not against a run from another
+machine.
+
+`aggregate` writes the paired comparisons into `reports/baseline.json` and a
+`summary.json` beside it. The same review rule applies: no result is valid
+until the artifacts and every partial failure have been read.
+
 ## Graph and affective mechanism checks
 
 [Protocol v2](../../docs/plans/2026-09-17-module-evaluation-protocol-v2.md)
