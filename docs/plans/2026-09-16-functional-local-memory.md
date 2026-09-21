@@ -754,6 +754,14 @@ does not replace the original semantic criteria.
 
 ### T19 - Reconcile release, documentation, and research claims
 
+Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
+identifies two empty structured final responses at the 8192-token limit. The
+[provider-only control](../validation/2026-09-21/recovery-extraction-no-thinking-preparation-v1/README.md)
+reconstructs both saved-event requests from the original d937892 wheel and
+freezes them before running with think=False. No store is opened. This also
+changes chat to generate; it is not an isolated reasoning experiment. The
+control is running and does not establish extraction quality or lifecycle recovery.
+
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
 reduces the observed source archive from 399.8 MB to 40.7 MB by excluding bulky
 validation payloads while preserving them in the repository. All required
