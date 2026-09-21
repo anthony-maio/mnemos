@@ -14,8 +14,9 @@ import hashlib
 import inspect
 import json
 import os
+from collections import deque
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import threading
 from typing import Any, Callable, Dict, List, Mapping, Optional, cast
@@ -26,7 +27,7 @@ from ..client import MnemosClient
 from ..hermes_identity import canonical_native_ref, is_summary_source_ref, scoped_event_id
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from .context import format_retrieved_context
-from .hermes_occurrences import occurrence_time
+from .hermes_occurrences import occurrence_time, occurrence_times
 from .hermes_tools import dispatch_tool, get_tool_schemas
 
 try:  # Hermes is an optional host dependency and is not installed in Mnemos' venv.
@@ -47,6 +48,9 @@ except ImportError:  # pragma: no cover - exercised by the normal Windows instal
 
 MAX_CONTEXT_CHARS = 8_000
 MAX_MESSAGE_CHARS = 100_000
+
+# payload digest, payload, failure callback, diagnostic action, diagnostic target
+_QueuedCapture = tuple[str, dict[str, Any], Optional[Callable[[dict[str, Any]], None]], str, str]
 
 
 @dataclass(frozen=True)
@@ -176,6 +180,9 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             if configured_registry_path
             else default_registry_path()
         )
+        # Only a caller's explicit profile outlives initialize(). One taken from
+        # a previous session's agent_identity or environment must not.
+        self._explicit_profile = user_profile_id
         self.user_profile_id = user_profile_id or os.environ.get("MNEMOS_USER_PROFILE_ID")
         self.max_context_tokens = max(0, min(int(max_context_tokens), 32_000))
         self.session_id = ""
@@ -189,6 +196,13 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self._lifecycle_diagnostics: list[dict[str, str]] = []
         self._failed_capture_ids: set[str] = set()
         self._failed_checkpoint = False
+        # Hermes hands over the whole message list on every turn. Captures run
+        # on one worker, and digests of accepted payloads let each turn send
+        # only rows that are new or changed instead of the whole history.
+        self._pending: deque[_QueuedCapture] = deque()
+        self._pending_digests: set[str] = set()
+        self._acknowledged: set[str] = set()
+        self._worker: threading.Thread | None = None
 
     @property
     def name(self) -> str:
@@ -217,13 +231,14 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         if next_home != self.hermes_home:
             with self._threads_lock:
                 self._occurrence_times.clear()
+                self._acknowledged.clear()
         self.session_id = str(session_id or "").strip()
         self.hermes_home = next_home
         self.cwd = str(kwargs.get("cwd") or "").strip()
         self.user_profile_id = (
-            self.user_profile_id
-            or str(kwargs.get("agent_identity") or "").strip()
+            self._explicit_profile
             or os.environ.get("MNEMOS_USER_PROFILE_ID")
+            or str(kwargs.get("agent_identity") or "").strip()
         )
         if self.registry is None:
             self.registry = load_registry(self.registry_path)
@@ -448,7 +463,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                 action="capture_identity", target="", status="partial_native_identity"
             )
         prefix = hashlib.sha256()
-        payloads = []
+        planned: list[tuple[ScopeContext, str, str, str, bool]] = []
         # Without a transcript, only the callback receipt is identifiable.
         # Preserve each receipt separately without counting it as fact evidence.
         namespace = f"provisional:v1:{uuid4()}" if provisional else "transcript:v1"
@@ -481,17 +496,46 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             )
             if entry.summary and not summary_native and not provisional:
                 source = f"provisional:v1:{uuid4()}:{index}:{prefix.hexdigest()}"
+            planned.append((canonical_context, role, content, source, provisional or entry.summary))
+        self._record_first_seen(
+            [
+                self._event_id(row_context, role=role, content=content, source=source)
+                for row_context, role, content, source, _ in planned
+            ]
+        )
+        payloads = []
+        for row_context, role, content, source, unassociated in planned:
             payloads.append(
-                self._capture_payload(
-                    canonical_context,
-                    role=role,
-                    content=content,
-                    source=source,
-                )
+                self._capture_payload(row_context, role=role, content=content, source=source)
             )
-            if provisional or entry.summary:
+            if unassociated:
                 payloads[-1]["identity_status"] = "provisional_unassociated"
         return payloads
+
+    def _record_first_seen(self, event_ids: list[str]) -> None:
+        """Put every row this provider has not seen yet into the ledger at once."""
+        if not self.hermes_home:
+            return
+        with self._threads_lock:
+            unseen = list(dict.fromkeys(e for e in event_ids if e not in self._occurrence_times))
+        if not unseen:
+            return
+        # One clock reading for the batch, stepped per row so rows keep their order.
+        base = datetime.now(timezone.utc)
+        observed = {
+            event_id: (base + timedelta(microseconds=offset)).isoformat()
+            for offset, event_id in enumerate(unseen)
+        }
+        recorded = occurrence_times(self.hermes_home, observed)
+        with self._threads_lock:
+            for event_id, occurred_at in recorded.items():
+                self._occurrence_times.setdefault(event_id, occurred_at)
+
+    @staticmethod
+    def _payload_digest(payload: Mapping[str, Any]) -> str:
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True, ensure_ascii=False, default=str).encode("utf-8")
+        ).hexdigest()
 
     def _enqueue_payloads(
         self,
@@ -501,25 +545,44 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         diagnostic_action: str = "capture",
         diagnostic_target: str = "transcript",
     ) -> None:
-
-        def write() -> None:
+        with self._threads_lock:
             for payload in payloads:
-                if self._capture_now(payload):
-                    with self._threads_lock:
-                        self._failed_capture_ids.discard(payload["event_id"])
-                else:
-                    with self._threads_lock:
-                        self._failed_capture_ids.add(payload["event_id"])
-                    self._record_lifecycle_diagnostic(
-                        action=diagnostic_action,
-                        target=diagnostic_target,
-                        status="capture_failed",
-                    )
-                    if on_failure is not None:
-                        on_failure(payload)
+                digest = self._payload_digest(payload)
+                # A changed payload has a new digest and is sent, so a rewritten
+                # row still meets its conflicting occurrence at the service.
+                if digest in self._acknowledged or digest in self._pending_digests:
+                    continue
+                self._pending_digests.add(digest)
+                self._pending.append(
+                    (digest, payload, on_failure, diagnostic_action, diagnostic_target)
+                )
+            if self._pending and self._worker is None:
+                self._worker = self._spawn(self._drain, "mnemos-hermes-sync")
 
-        if payloads:
-            self._spawn(write, "mnemos-hermes-sync")
+    def _drain(self) -> None:
+        """Deliver queued captures in order on the single capture worker."""
+        while True:
+            with self._threads_lock:
+                if not self._pending:
+                    # Decided under the lock, so a capture queued now starts a
+                    # new worker instead of waiting on this one.
+                    self._worker = None
+                    return
+                digest, payload, on_failure, action, target = self._pending.popleft()
+            accepted = self._capture_now(payload)
+            with self._threads_lock:
+                self._pending_digests.discard(digest)
+                if accepted:
+                    self._acknowledged.add(digest)
+                    self._failed_capture_ids.discard(payload["event_id"])
+                else:
+                    self._failed_capture_ids.add(payload["event_id"])
+            if not accepted:
+                self._record_lifecycle_diagnostic(
+                    action=action, target=target, status="capture_failed"
+                )
+                if on_failure is not None:
+                    on_failure(payload)
 
     def _flush(self, timeout: float = 3.0) -> bool:
         deadline = datetime.now(timezone.utc).timestamp() + max(0.0, timeout)
@@ -699,7 +762,16 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         evidence = self._transcript_entries(messages or [])
         accepted = True
         for payload in self._transcript_payloads(context, evidence):
-            accepted = self._capture_now(payload) and accepted
+            digest = self._payload_digest(payload)
+            with self._threads_lock:
+                if digest in self._acknowledged:
+                    # Already committed or in the durable outbox.
+                    continue
+            if self._capture_now(payload):
+                with self._threads_lock:
+                    self._acknowledged.add(digest)
+            else:
+                accepted = False
         self._failed_checkpoint = not accepted
         if require_checkpoint and not accepted:
             raise RuntimeError("Mnemos Hermes checkpoint was not durably accepted")

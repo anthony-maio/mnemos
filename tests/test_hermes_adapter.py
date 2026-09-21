@@ -278,13 +278,9 @@ def test_sync_turn_preserves_roles_and_is_idempotent_source_identity(tmp_path: P
         ],
     )
     instance.shutdown()
-    assert len(client.captures) == 4
-    assert sorted(item["role"] for item in client.captures) == [
-        "assistant",
-        "assistant",
-        "user",
-        "user",
-    ]
+    # The repeat carries the same identities, and delivered rows are not resent.
+    assert len(client.captures) == 2
+    assert sorted(item["role"] for item in client.captures) == ["assistant", "user"]
     assert len({item["event_id"] for item in client.captures if item["role"] == "user"}) == 1
     assert len({item["event_id"] for item in client.captures if item["role"] == "assistant"}) == 1
 
@@ -349,10 +345,14 @@ def test_repeated_same_event_reuses_occurrence_and_changed_content_gets_new_iden
 
     instance.shutdown()
     pending = outbox.pending()
-    assert len(client.payloads) == 3
-    assert client.payloads[0]["event_id"] == client.payloads[1]["event_id"]
-    assert client.payloads[0]["occurred_at"] == client.payloads[1]["occurred_at"]
-    assert client.payloads[0]["event_id"] != client.payloads[2]["event_id"]
+    # Session end rebuilds the same event and occurrence, so it is recognized
+    # as delivered and not sent again.
+    assert len(client.payloads) == 2
+    context = instance._current_context()
+    [repeat] = instance._transcript_payloads(context, instance._transcript_entries(messages))
+    assert repeat["event_id"] == client.payloads[0]["event_id"]
+    assert repeat["occurred_at"] == client.payloads[0]["occurred_at"]
+    assert client.payloads[0]["event_id"] != client.payloads[1]["event_id"]
     assert len(pending) == 2
 
 
