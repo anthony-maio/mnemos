@@ -35,7 +35,11 @@ TRANSCRIPT_UNAVAILABLE = "transcript_unavailable"
 AMBIGUOUS_TRANSCRIPT_REPLAY = "ambiguous_transcript_replay"
 AMBIGUOUS_TRANSCRIPT_ASSOCIATION = "ambiguous_transcript_association"
 CAPTURE_NOT_ACKNOWLEDGED = "capture_not_acknowledged"
+CAPTURE_REFUSED = "capture_refused"
 IDENTITY_REDACTION_AMBIGUOUS = "identity_redaction_ambiguous"
+# Refusals that repeat for the same record forever; transcript capture skips
+# them instead of holding its checkpoint and stalling the rest of the session.
+_PERMANENT_REFUSALS = frozenset({CAPTURE_REFUSED, IDENTITY_REDACTION_AMBIGUOUS})
 IDENTITY_REFERENCE_UNAVAILABLE = "identity_reference_unavailable"
 
 
@@ -350,6 +354,12 @@ class ClaudeCodeAdapter:
 
     def _read_checkpoint(self, context: ScopeContext) -> dict[str, Any]:
         target = self._checkpoint_path(context)
+        if not target.exists():
+            # Hardening a missing path fails differently per platform (POSIX
+            # reports permission denied), so absence is decided first.
+            if self._legacy_checkpoint_path(context.session_id).exists():
+                raise CheckpointScopeError("Claude checkpoint requires explicit scope binding")
+            return {}
         try:
             _protect_private_path(target)
             value = json.loads(target.read_text(encoding="utf-8"))
@@ -453,7 +463,8 @@ class ClaudeCodeAdapter:
             try:
                 sanitized = sanitizer({"content": content, "source_ref": source_ref})
             except (TypeError, ValueError):
-                return False, CAPTURE_NOT_ACKNOWLEDGED
+                # The write policy blocks this content outright.
+                return False, CAPTURE_REFUSED
             if not isinstance(sanitized, Mapping):
                 return False, IDENTITY_REDACTION_AMBIGUOUS
             safe_content = sanitized.get("content")
@@ -483,6 +494,9 @@ class ClaudeCodeAdapter:
             or result.get("status") == "committed"
             or result.get("status") == "queued"
         )
+        if not accepted and result.get("status") in {"rejected", "blocked"}:
+            # A policy decision about this record, not an outage.
+            return False, CAPTURE_REFUSED
         return bool(accepted), None if accepted else CAPTURE_NOT_ACKNOWLEDGED
 
     async def _capture_transcript(
@@ -530,6 +544,7 @@ class ClaudeCodeAdapter:
             return 0, set(), IDENTITY_REFERENCE_UNAVAILABLE
         delta_fingerprint_counts: dict[str, int] = {}
         association_ambiguous = False
+        refused = 0
         for delta in deltas:
             fingerprint = self._content_fingerprint(delta.role, delta.content)
             delta_fingerprint_counts[fingerprint] = delta_fingerprint_counts.get(fingerprint, 0) + 1
@@ -568,6 +583,11 @@ class ClaudeCodeAdapter:
                 source_ref=delta.source_ref,
                 occurred_at=delta.occurred_at,
             )
+            if not accepted and capture_error in _PERMANENT_REFUSALS:
+                # A record the policy refuses is refused on every retry. Skip
+                # it so the checkpoint advances and later turns are captured.
+                refused += 1
+                continue
             if not accepted:
                 return captured, contents, capture_error or CAPTURE_NOT_ACKNOWLEDGED
             captured += 1
@@ -594,6 +614,13 @@ class ClaudeCodeAdapter:
                 "last_assistant": assistant_marker,
             }
             self._write_checkpoint(context, checkpoint_value)
+        if refused:
+            emit_hook_diagnostic(
+                host="claude-code",
+                event=payload.get("hook_event_name"),
+                status="skipped",
+                reason="record_refused",
+            )
         return (
             captured,
             contents,

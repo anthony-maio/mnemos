@@ -26,6 +26,7 @@ _REASONS = frozenset(
         "capture_not_acknowledged",
         "identity_redaction_ambiguous",
         "identity_reference_unavailable",
+        "record_refused",
         "missing_cwd",
         "missing_session_id",
         "missing_user_profile",
