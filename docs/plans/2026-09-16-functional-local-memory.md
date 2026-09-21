@@ -683,10 +683,13 @@ The [source-grounded review v5 preparation](../validation/2026-09-20/assertion-r
 adds a separately recorded model pass over every frozen v4 draft, including all
 six rejected drafts. Its new candidate passes 70 focused tests, formatting and
 Python 3.10 type checks; all 46 offline bindings and both digest guards pass.
-The real-model run is now active. The reviewer is fallible and its schema-valid
-output is not a semantic verdict. Retention intent, supported wording, attached
-conditions and independent source coverage still require full descriptive review.
-No production default or earlier outcome changed.
+The [completed review](../validation/2026-09-20/assertion-review-semantic-v5/README.md)
+covers all 46 cases: 39 runtime-valid outputs and seven validation rejections.
+All six original rejections persist and one valid draft becomes a rejection.
+P01 commentary and one missing approval boundary improve, but P06 permission
+inflation, N02 unwanted retention and qualification defects remain. The extra
+46 review responses generated 13,813 output tokens, in addition to draft cost.
+The reviewer remains unadopted; no production default or earlier outcome changed.
 
 ### T19 - Reconcile release, documentation, and research claims
 

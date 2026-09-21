@@ -1,0 +1,39 @@
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+
+base = Path.cwd() / 'docs/validation/2026-09-20'
+parent = base / 'assertion-inventory-terminal-v4'
+review = base / 'assertion-review-terminal-v5'
+out = base / 'assertion-review-semantic-v5'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+def rows(path):
+    state = json.loads((path / 'status.json').read_bytes())
+    assert state['status'] == 'completed' and state['processed'] == 46
+    assert sha(path / 'observations.jsonl') == state['observations_sha256']
+    return [json.loads(s) for s in (path / 'observations.jsonl').read_text().splitlines()]
+a, b = rows(parent), rows(review)
+assert [r['case_id'] for r in a] == [r['case_id'] for r in b]
+def counters(items):
+    metas = [m for r in items for m in r['trace'].get('response_metadata', [])]
+    return {'recorded_responses': len(metas), **{
+        k: {'sum': sum(m[k] for m in metas if isinstance(m.get(k), (int, float))),
+            'observed': sum(isinstance(m.get(k), (int, float)) for m in metas)}
+        for k in ('eval_count', 'prompt_eval_count', 'total_duration', 'load_duration')
+    }}
+report = {
+    'parent_observations_sha256': sha(parent / 'observations.jsonl'),
+    'review_observations_sha256': sha(review / 'observations.jsonl'),
+    'runtime_transitions': dict(Counter(x['status'] + ' -> ' + y['status'] for x, y in zip(a, b))),
+    'parent_provider_counters': counters(a), 'additional_review_provider_counters': counters(b),
+    'limits': 'Counters are provider-reported; durations are nanoseconds and include model loading. Missing counters are not zero-cost calls. This is one development replay, not an isolated latency benchmark or semantic accuracy estimate.'
+}
+(out / 'comparison.json').write_text(json.dumps(report, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'comparison.py.txt')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.iterdir() if p.is_file() and p.name != 'evidence-index.json'
+}}, indent=2) + '\n')
+print(json.dumps(report))

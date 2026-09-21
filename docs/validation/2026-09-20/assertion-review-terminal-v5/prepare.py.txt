@@ -1,0 +1,78 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+from urllib.request import urlopen
+
+repo = Path.cwd()
+parent = repo / 'docs/validation/2026-09-20/assertion-inventory-terminal-v4'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-review-development-v5')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((parent / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert sha(parent / 'observations.jsonl') == state['observations_sha256']
+prep = json.loads((parent / 'preparation.json').read_bytes())
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+rows = [json.loads(s) for s in (parent / 'observations.jsonl').read_text().splitlines()]
+assert [r['case_id'] for r in rows] == [c['id'] for c in inputs['cases']]
+inputs['drafts'] = {r['case_id']: {'status': r['status'], 'error': r.get('error'),
+                                 'response': r['trace'].get('response')} for r in rows}
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as r:
+    model = next(m for m in json.loads(r.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == prep['model']['digest']
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as r:
+    version = json.loads(r.read())
+root.mkdir(exist_ok=False)
+(root / 'candidate').mkdir()
+(root / 'candidate/__init__.py').write_bytes(b'')
+shutil.copyfile(parent / 'assertion_inventory.py', root / 'candidate/assertion_inventory.py')
+shutil.copyfile(repo / 'benchmarks/local_memory/assertion_review.py', root / 'candidate/assertion_review.py')
+for name in ('durability-rubric.json', 'durability-rubric-review.json', 'history-rubric.json', 'history-rubric-review.json'):
+    shutil.copyfile(parent / name, root / name)
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+(root / 'parent-terminal-binding.json').write_text(json.dumps({
+    'directory': str(parent), 'preparation_sha256': sha(parent / 'preparation.json'),
+    'observations_sha256': sha(parent / 'observations.jsonl'),
+    'status_sha256': sha(parent / 'status.json')}, indent=2) + '\n')
+runner = (parent / 'runner.py').read_text()
+old = 'from assertion_inventory import inventory_qualified_assertions_v3 as inventory_assertions, retained_qualified_assertions_v3 as retained_assertions'
+new = 'from candidate.assertion_inventory import QualifiedInventory, retained_qualified_assertions_v3 as retained_assertions\nfrom candidate.assertion_review import review_qualified_inventory'
+assert old in runner
+runner = runner.replace(old, new)
+old = '            inventory = await inventory_assertions(events, provider)'
+new = '''            original = inputs["drafts"][case["id"]]
+            row["original_draft"] = original
+            draft = QualifiedInventory.model_validate_json(original["response"]) if original["response"] is not None else None
+            row["review_input_status"] = "missing" if draft is None else "generated_untrusted"
+            inventory = await review_qualified_inventory(events, draft, provider)
+            row["revision_disposition"] = "reconstructed" if draft is None else ("unchanged" if inventory == draft else "revised")'''
+assert old in runner
+runner = runner.replace(old, new)
+start = runner.rindex('if __name__ == "__main__":')
+runner = runner[:start] + '''if __name__ == "__main__":
+    binding = json.loads((root / "parent-terminal-binding.json").read_bytes())
+    parent = Path(binding["directory"])
+    for key, name in (("preparation_sha256", "preparation.json"), ("observations_sha256", "observations.jsonl"), ("status_sha256", "status.json")):
+        assert sha(parent / name) == binding[key]
+    asyncio.run(main())
+'''
+(root / 'runner.py').write_text(runner)
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'design': 'One review call per frozen v4 draft including all six rejected drafts. Same sources, original rubrics, model digest and generation settings. Review output is a new experimental result, not a rewritten v4 result.',
+    'acceptance': 'Review all46 outcomes manually for retention intent, unsupported meaning, qualifier attachment, independent fact coverage and original ambiguity notes. Runtime validity is not accuracy. Preserve errors and regressions; no selective retries or production adoption.',
+    'limits': 'Unblinded reused development cases and fallible same-model revision. No independent judge, fresh holdout, target reconciliation, durable write, full-module or host acceptance. Additional review latency and tokens must be included in any future pipeline estimate.'
+}, indent=2) + '\n')
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+new_prep = {k: prep[k] for k in ('source_commit', 'source_files')}
+new_prep.update(
+    prepared_at=datetime.now(timezone.utc).isoformat(),
+    candidate_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    model=model, ollama_version=version,
+    hardware_inventory=subprocess.check_output(['nvidia-smi', '--query-gpu=name,memory.total,driver_version', '--format=csv,noheader'], text=True).strip(),
+    files={str(p.relative_to(root)).replace('\\', '/'): sha(p) for p in root.rglob('*') if p.is_file()}
+)
+(root / 'preparation.json').write_text(json.dumps(new_prep, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'started': False}))
