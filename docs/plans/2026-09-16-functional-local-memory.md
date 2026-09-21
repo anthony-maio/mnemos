@@ -615,6 +615,16 @@ Literal quote/ID validity is not semantic support; no production adoption or
 fresh held-out inference is claimed. The separate launcher configuration change
 is validated by [75 focused checks](../validation/2026-09-20/heldout-generation-settings-v1.md).
 
+The [qualified inventory v2 preparation](../validation/2026-09-20/assertion-inventory-preparation-v2/README.md)
+freezes the next 46-case diagnostic at 1975f5e. It is now running on the same
+local model/settings, with qualifications attached to their assertions and
+source-bound retention-request quotations for unresolved ideas. Forty-one
+combined tests, formatting, compatibility mypy and all 46 offline source checks
+pass. Missing/wrong external preparation digests fail before execution. This
+remains an unadopted extraction experiment; literal quotations do not establish
+semantic support or request intent. The [independent v1 review](../validation/2026-09-20/assertion-inventory-independent-review-v1.md)
+preserves additional inventory-completeness and qualification findings.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Latest verified source [c1e2217](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md)
