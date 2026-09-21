@@ -601,11 +601,16 @@ fact. Earlier scores remain bound to their original code; this is not semantic
 precision or a new full-suite claim. Packaged engine code is unchanged.
 
 The [source-only assertion inventory](../validation/2026-09-20/assertion-inventory-preparation-v1/README.md)
-is frozen at candidate 60f79ca and is now running 46 reused development cases
-on local Qwen2.5:14b. Sixteen boundary tests, formatting, compatibility mypy
+is frozen at candidate 60f79ca and completed 46 reused development cases
+on local Qwen2.5:14b with no runtime errors. The [terminal record](../validation/2026-09-20/assertion-inventory-terminal-v1/README.md)
+and [semantic review](../validation/2026-09-20/assertion-inventory-semantic-review-v1/README.md)
+preserve improved marker retention and remaining eligibility/qualification
+failures. The candidate is not adopted. Sixteen boundary tests, formatting, compatibility mypy
 and all 46 offline prompt checks pass. It withholds existing facts during
 extraction, requires exact source quotations and distinguishes retained kinds
-from temporary instructions and suggestions. It cannot yet reconcile targets.
+from temporary instructions and suggestions. It cannot yet reconcile targets. The separate [scope repair](../validation/2026-09-20/assertion-inventory-scope-review-v1.md)
+passes 29 tests and all 46 frozen source-identity checks; original run bytes
+remain unchanged.
 Literal quote/ID validity is not semantic support; no production adoption or
 fresh held-out inference is claimed. The separate launcher configuration change
 is validated by [75 focused checks](../validation/2026-09-20/heldout-generation-settings-v1.md).
