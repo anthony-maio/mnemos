@@ -1,6 +1,38 @@
 # Mnemos claim and evidence ledger
 
-Current verified product is d937892. The [source/package checks](../2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
+## Current evidence, September 20, 2026
+
+The latest full [source checkpoint](../2026-09-20/precision-proxy-source-checkpoint-v1/README.md)
+is a128ef7: 2,158 tests pass with four skips and all six source/package checks.
+Its wheel is byte-identical to the 995d9c2 wheel covered by the
+[893-case installed suite](../2026-09-20/spreading-budget-installed-checkpoint-v1/README.md),
+with four matching skips, installed-origin checks and restart replay. These are
+different test populations. The later [232d0da packaging check](../2026-09-20/sdist-payload-exclusion-v1/README.md)
+passes 50 fixture-dependent tests from the extracted source archive and produces
+the same wheel bytes. It reduces the observed source archive from 399.8 MB to
+40.7 MB without deleting repository evidence. It is not a new full-suite result.
+
+| Claim | Evidence and limit |
+| --- | --- |
+| Cross-host scoped correction and forgetting | [Native v7](../2026-09-20/three-host-native-v7/README.md) passes 11 phases across Codex, Claude Code and Hermes on e6887de, with real Nomic embeddings and all five cognition modules disabled. This is one bounded lifecycle, not complete capture or full-module acceptance. |
+| Latest-wheel Hermes recovery and forgetting | [Hermes v36](../2026-09-20/hermes-revision-lifecycle-v36/README.md) passes six phases on the verified wheel using saved native captures and a temporary authenticated service. No fresh interactive host run or model extraction is implied. |
+| Compaction provenance and storage | [Growth v4](../2026-09-20/hermes-compaction-growth-v4/README.md) preserves exact carried and edited source evidence over repeated compaction/reopen and verifies whole-session pruning. Physical generations grow while the session remains open; bounded storage is unproved. |
+| Real-model module benefit | [Seven-profile v4](../2026-09-20/contract-v4-terminal-v1/README.md) preserves 4,150 complete and 50 partial observations out of 4,200 on reused synthetic cases. Acceptance remains unmet; exact-text scoring is not semantic precision. |
+| Automatic extraction quality | [Qualified inventory v2](../2026-09-20/assertion-inventory-semantic-review-v2/README.md) remains unadopted. The [v3 contract replay](../2026-09-20/qualified-inventory-v3-review-v1.md) repairs validation syntax, not semantic quality. The [Qwen3.5 experiment](../2026-09-20/assertion-inventory-preparation-v3/README.md) is still running; its [configuration follow-up](../2026-09-20/assertion-inventory-preparation-v4/README.md) is prepared but not started. Neither changes production defaults. |
+| Fresh evaluation and daily use | [Fresh v7 corpus](../2026-09-20/fresh-corpus-preparation-v7/README.md) has no evaluated-model results. The [two-project pilot](../../plans/2026-09-20-local-memory-daily-use-pilot.md) is NOT STARTED. Production readiness is not established. |
+
+The current task list and [writing handoff](../../handoffs/substack-local-memory.md)
+separate these bindings. No publication, live host reconfiguration or live memory
+migration follows from any local check.
+
+## Earlier checkpoint notes
+
+The notes below preserve the state at their original checkpoints. References to
+current, pending, running or not-run work in these notes are historical; use the
+current evidence above and the task list for present status. Original failed
+runs and narrower checks have not been replaced or relabeled as successes.
+
+At the following checkpoint, verified product was d937892. The [source/package checks](../2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
 pass 2,013 tests with four skips and all six checks. The [expanded installed suite](../2026-09-20/reconsolidation-return-installed-checkpoint-v2/README.md)
 passes 818 cases with four matching skips, including the direct-return
 reconsolidation regression. Its earlier 811-case selection omitted that file;
