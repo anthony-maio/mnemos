@@ -12,7 +12,7 @@ Working checkout: `D:/Development/mnemos/mnemos/.worktrees/functional-local-memo
 
 ## Start with the actual state
 
-The latest verified source is `6ec82597214ee24f4f8aa48847175f2950dc2b94`. It passes **2,055 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its wheel is byte-identical to the cc940ac build whose isolated installed check passed **859 selected cases with four matching skips**, installed-origin checks and the replay probe. These counts are different test selections, not independent estimates of reliability. See the [source checkpoint](../validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1/README.md) and [installed checkpoint](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md).
+The latest verified source is `c1e221734108ddbc5898ec13c50e0a7da3defae6`. It passes **2,081 source tests with four skips**, plus formatting, Python 3.10 strict type checking, JavaScript syntax, build and package metadata checks. Its wheel is byte-identical to the cc940ac build whose isolated installed check passed **859 selected cases with four matching skips**, installed-origin checks and the replay probe. These counts are different test selections, not independent estimates of reliability. See the [source checkpoint](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md) and [installed checkpoint](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md).
 
 Verified wheel SHA-256: `dd4427e4d403fc9149db03d49c273fd8b60bcd032b64b5b489a405ddd4416c87`. This identifies the tested build, not a published release.
 
@@ -56,7 +56,7 @@ A more accessible example comes from [provider recovery](../validation/2026-09-2
 
 The [52-call durability comparison](../validation/2026-09-20/extraction-durability-development-terminal-v1/README.md) makes the tradeoff clear. Production retained several temporary instructions. A candidate discarded more of them, but also discarded useful history and an independent project marker, and omitted policy conditions. All calls were runtime-valid. The [semantic review](../validation/2026-09-20/extraction-durability-semantic-review-v1.md) rejects adoption despite that runtime success. This is a strong article example: making an extractor more reluctant can make its output cleaner while making its memory less complete.
 
-A [92-call follow-up](../validation/2026-09-20/extraction-durability-history-preparation-v3/README.md) is now running over 46 reused development cases. It adds assertion-level separation and qualification guidance, and restores the earlier history/uncertainty cases to the comparison. No production prompt change is adopted. The preserved v2 preparation was never executed. Before writing final results, locate the terminal artifact and semantic review; a preparation document is not evidence of an outcome.
+The [92-call follow-up](../validation/2026-09-20/extraction-durability-history-terminal-v3/README.md) completed over 46 reused development cases, with one production error caused by an empty final response at the output limit. The [full semantic review](../validation/2026-09-20/extraction-durability-history-semantic-review-v3.md) still rejects the candidate: it omits a required marker and an explicitly requested open consideration, and retains an unwanted fictional passage. The fictional qualification is preserved; this is not a false claim about the real moon. Neither arm establishes release quality. A separately frozen Qwen2.5:14b comparison is running on local Ollama. Its model and thinking configuration both differ, so it cannot isolate the effect of model size. The preserved v2 preparation was never executed. No prompt or default model change is adopted.
 
 Graph and affective benefit remain unproved. The [graph-weight bound](../validation/2026-09-20/graph-weight-bound-audit-v1/README.md) is a useful negative: 15 of 30 inspected combinations lacked the target candidate altogether, and only three could reach top five even under optimistic fixed-pool scoring. That is a structural diagnostic, not executed retrieval improvement. Do not promote functioning graph traversal into a recall advantage.
 
@@ -89,7 +89,7 @@ Keep local tests, installed-wheel tests, native host observations, synthetic/mod
 
 Before finalizing the handoff or article:
 
-- Replace the running-comparison status with its bound terminal result and semantic review.
+- Review and bind the running 14B comparison before reporting its outcome; the 9B terminal result and semantic review are already linked above.
 - Reconcile the final source/wheel identity, host versions, module flags, model digests and provider settings.
 - Record full recovery, quality, module benefit, latency and pilot status without substituting one gate for another.
 - Recheck public claims and source links; review sensitive content before exporting examples.

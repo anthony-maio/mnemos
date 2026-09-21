@@ -565,7 +565,12 @@ The completed [v3 durability subset](../validation/2026-09-20/extraction-durabil
 preserves all 52 calls across 26 development cases. The candidate drops the
 required marker in the mixed ongoing-policy case; production loses it in the
 temporary-instruction variant. No adoption follows from these partial results.
-The remaining history portion continues under the unchanged frozen protocol.
+The history portion completed under the unchanged frozen protocol. The
+[terminal record](../validation/2026-09-20/extraction-durability-history-terminal-v3/README.md)
+preserves 92 calls with one production error. The [full semantic review](../validation/2026-09-20/extraction-durability-history-semantic-review-v3.md)
+rejects candidate adoption: required marker and open-consideration omissions
+and unwanted fictional retention remain. The prepared 14B comparison is now
+running separately on local Ollama; no fresh corpus calls have been made.
 
 The [fresh v2 corpus review](../validation/2026-09-20/fresh-corpus-semantic-review-v2/README.md)
 records ineffective corrections, incorrect old-source links, neutral state
@@ -582,7 +587,8 @@ sessions, 700 critical facts, 200 answerable queries, 220 no-answer queries and
 Repeated families and short sessions limit generalization; graph benefit is
 not established. No evaluated-model calls have been made on this corpus.
 Source c1e2217 passes 22 replay tests and 78 combined focused checks; full
-source/package verification is running separately. Original model outcomes
+source/package verification passes all six checks with 2,081 tests and four skips
+in the [replay checkpoint](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md). Original model outcomes
 and acceptance thresholds remain unchanged.
 
 The [extraction evidence scoring repair](../validation/2026-09-20/extraction-evidence-resolution-v1/README.md)
@@ -593,8 +599,8 @@ precision or a new full-suite claim. Packaged engine code is unchanged.
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Latest verified source [6ec8259](../validation/2026-09-20/evaluation-contract-v5-source-checkpoint-v1/README.md)
-passes 2,055 tests with four skips and all six source/package checks. Its wheel
+Latest verified source [c1e2217](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md)
+passes 2,081 tests with four skips and all six source/package checks. Its wheel
 is byte-identical to the cc940ac artifact already verified below; the new code
 changes evaluation contracts and registry preflight, not the packaged engine.
 The [installed check](../validation/2026-09-20/project-identity-installed-checkpoint-v1/README.md)
