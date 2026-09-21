@@ -125,3 +125,34 @@ async def test_schema_binds_source_and_records_discard_without_emission():
 
     inventory, kept = await classify_source_memories([source("Which color?")], Provider())
     assert len(inventory.selections) == 1 and kept == []
+
+
+@pytest.mark.asyncio
+async def test_invalid_source_cannot_reach_model_even_for_discard():
+    class Provider:
+        async def predict(self, *args, **kwargs):
+            pytest.fail("Invalid source reached model")
+
+    event = source()
+    event.metadata["project_id"] = "foreign"
+    with pytest.raises(ValueError, match="contradicts"):
+        await classify_source_memories([event], Provider())
+
+
+@pytest.mark.asyncio
+async def test_provider_failure_is_not_successful_discard():
+    class Provider:
+        async def predict(self, *args, **kwargs):
+            raise TimeoutError("unavailable")
+
+    with pytest.raises(TimeoutError):
+        await classify_source_memories([source()], Provider())
+
+
+def test_scope_partition_validation_applies_to_all_discarded_input():
+    other = source()
+    other.id = "other"
+    other.scope_id = "foreign"
+    other.metadata["project_id"] = "foreign"
+    with pytest.raises(ValueError, match="scope partitions"):
+        render([item(kind="question")], [source(), other])
