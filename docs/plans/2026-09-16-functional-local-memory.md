@@ -739,6 +739,15 @@ fixture retained in v8. The mixed-policy marker omission persists, and several
 requirements are incorrectly cited as retention requests. Prompt and schema
 change together; no fresh quality acceptance or production adoption is claimed.
 
+The [source-accounting v10 preparation](../validation/2026-09-20/source-coverage-preparation-v10/README.md)
+freezes the same 46 cases, rubrics, model settings and classification schema.
+An updated prompt and post-validation require every nonblank source unit to be
+covered by a retained or discarded range. This exposes silent omission without
+certifying the assigned labels. All 64 focused tests pass, including a covered
+but wrongly discarded example; formatting and Python 3.10 type checking pass.
+The model comparison is running. No semantic result or production adoption is
+claimed, and complete coverage will not replace the original quality criteria.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
