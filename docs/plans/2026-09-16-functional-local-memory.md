@@ -600,6 +600,16 @@ Every claimed source must now resolve before the exact-text proxy accepts a
 fact. Earlier scores remain bound to their original code; this is not semantic
 precision or a new full-suite claim. Packaged engine code is unchanged.
 
+The [source-only assertion inventory](../validation/2026-09-20/assertion-inventory-preparation-v1/README.md)
+is frozen at candidate 60f79ca and is now running 46 reused development cases
+on local Qwen2.5:14b. Sixteen boundary tests, formatting, compatibility mypy
+and all 46 offline prompt checks pass. It withholds existing facts during
+extraction, requires exact source quotations and distinguishes retained kinds
+from temporary instructions and suggestions. It cannot yet reconcile targets.
+Literal quote/ID validity is not semantic support; no production adoption or
+fresh held-out inference is claimed. The separate launcher configuration change
+is validated by [75 focused checks](../validation/2026-09-20/heldout-generation-settings-v1.md).
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Latest verified source [c1e2217](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md)

@@ -277,3 +277,13 @@ hard-drive failure or establish a code speedup. This command calls the model
 server for retrieval embeddings, so run it after any serialized model-quality
 evaluation finishes. Capture-only diagnostics need no model calls, but remain
 separate from the combined retrieval/performance result.
+
+## Source-only assertion inventory experiment
+
+`assertion_inventory.py` is a development-only candidate, not a production
+extraction default. It inventories independent meanings with exact source
+quotes, semantic kinds and deterministic role/scope checks before any target
+reconciliation. The [frozen preparation](../../docs/validation/2026-09-20/assertion-inventory-preparation-v1/README.md)
+records the reused development cases and limitations. No existing fact is
+shown to this stage, and it cannot emit support or correction operations.
+Exact quotations constrain provenance but cannot certify semantic entailment.
