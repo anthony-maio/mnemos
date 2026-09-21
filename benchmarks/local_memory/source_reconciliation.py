@@ -235,7 +235,7 @@ def build_reconciliation_schema(
         allowed_operations = ["add", "conflict", "unresolved"]
         if candidate.source_role == "user":
             if candidate.kind == "correction_or_rejection":
-                allowed_operations = ["conflict", "correct", "unresolved"]
+                allowed_operations = ["correct", "unresolved"]
             else:
                 allowed_operations = ["add", "conflict", "support", "unresolved"]
                 if exact_ids:
@@ -249,7 +249,13 @@ def build_reconciliation_schema(
             if operation in {"support", "correct"} and not target_ids:
                 continue
             if operation == "conflict":
-                paired_targets = [None, *targets]
+                # A targeted conflict cannot select one identity from an exact
+                # normalized duplicate set. Keep targetless conflict available
+                # for ordinary disagreement and attributed history.
+                paired_targets = [
+                    None,
+                    *[target for target in targets if target.id not in ambiguous_target_ids],
+                ]
             if operation == "support":
                 paired_targets = [target for target in targets if target.id in exact_ids]
                 if len(exact_ids) != 1:
@@ -355,6 +361,14 @@ def _validate_decisions(
                 raise ValueError("Only user correction candidates may be corrected")
             if decision.target_fact_id in ambiguous_target_ids:
                 raise ValueError("Correction target has ambiguous exact normalized content")
+        if decision.operation == "conflict" and candidate.kind == "correction_or_rejection":
+            raise ValueError("A user correction requires a target or unresolved outcome")
+        if (
+            decision.operation == "conflict"
+            and target is not None
+            and target.id in ambiguous_target_ids
+        ):
+            raise ValueError("Conflict target has ambiguous exact normalized content")
         if decision.operation == "support":
             if candidate.source_role != "user" or candidate.kind == "correction_or_rejection":
                 raise ValueError("Only direct user candidates may support a target")

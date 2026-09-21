@@ -318,11 +318,65 @@ def test_schema_binds_candidate_indices_and_operation_authority() -> None:
         branch["properties"]["operation"]["enum"][0]
         for branch in zero_target["properties"]["decisions"]["items"]["oneOf"]
     }
-    assert zero_operations == {"conflict", "unresolved"}
+    assert zero_operations == {"unresolved"}
     assert all(
         branch["properties"].get("target_fact_id") == {"type": "null"}
         for branch in zero_target["properties"]["decisions"]["items"]["oneOf"]
     )
+
+
+@pytest.mark.asyncio
+async def test_user_correction_cannot_be_staged_as_conflict() -> None:
+    source = event("correction-conflict", "The marker is quartz.")
+    correction = candidate(source, "correction_or_rejection")
+    schema = build_reconciliation_schema([correction], [target()])
+    validator = Draft202012Validator(schema)
+    assert not validator.is_valid(
+        {"decisions": [decision(0, "conflict", reason="The user correction was disputed.")]}
+    )
+    with pytest.raises(ValueError, match="requires a target or unresolved"):
+        await reconcile_source_candidates(
+            [correction],
+            [source],
+            [target()],
+            Provider(
+                {"decisions": [decision(0, "conflict", reason="The user correction was disputed.")]}
+            ),
+        )
+
+
+@pytest.mark.asyncio
+async def test_assistant_conflict_cannot_target_exact_duplicate_identity() -> None:
+    source = event("assistant-duplicate", "The marker is quartz.", "assistant")
+    history = candidate(source, "attributed_history")
+    targets = [target(), target("fact-duplicate", "  The marker is CEDAR. ")]
+    schema = build_reconciliation_schema([history], targets)
+    conflict_branches = [
+        branch
+        for branch in schema["properties"]["decisions"]["items"]["oneOf"]
+        if branch["properties"]["operation"]["enum"] == ["conflict"]
+    ]
+    assert len(conflict_branches) == 1
+    assert conflict_branches[0]["properties"]["target_fact_id"] == {"type": "null"}
+    with pytest.raises(ValueError, match="ambiguous exact normalized content"):
+        await reconcile_source_candidates(
+            [history],
+            [source],
+            targets,
+            Provider(
+                {
+                    "decisions": [
+                        decision(
+                            0,
+                            "conflict",
+                            target_fact_id="fact-1",
+                            expected_version=1,
+                            reason="The report disagrees.",
+                        )
+                    ]
+                }
+            ),
+        )
 
 
 @pytest.mark.asyncio
