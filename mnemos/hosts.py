@@ -4,11 +4,14 @@ mnemos/hosts.py — Host integration preview/apply helpers for onboarding.
 
 from __future__ import annotations
 
+import copy
 import json
+import os
 import re
 import shlex
 import shutil
 import sys
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from difflib import unified_diff
@@ -16,7 +19,6 @@ from pathlib import Path
 from typing import Any, Literal, Mapping
 
 from .antigravity import build_antigravity_artifact
-from .settings import _emit_toml_sections
 
 try:
     import tomllib
@@ -246,70 +248,178 @@ def _merge_hermes_config(existing_text: str) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+_CODEX_HOOK_MARKER = "mnemos.adapters.codex"
+_CODEX_HOOK_EVENTS: dict[str, dict[str, Any]] = {
+    "SessionStart": {
+        "matcher": "startup|resume|clear|compact",
+        "additionalContextLimit": 1200,
+    },
+    "UserPromptSubmit": {"additionalContextLimit": 1200},
+    "PreCompact": {"matcher": "manual|auto", "timeout": 10},
+    # PostCompact's command output schema cannot carry additionalContext.
+    "PostCompact": {"matcher": "manual|auto"},
+    "Stop": {"timeout": 3},
+    "SessionEnd": {"matcher": "other", "timeout": 3},
+}
+
+
+def _is_mnemos_codex_hook(handler: Any) -> bool:
+    return isinstance(handler, Mapping) and _CODEX_HOOK_MARKER in str(handler.get("command", ""))
+
+
+def codex_config_without_mnemos(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Return a parsed Codex config with every Mnemos-owned entry removed.
+
+    Setup must leave this view unchanged, and checks its own output with it
+    before writing.
+    """
+    data = copy.deepcopy(dict(payload))
+    servers = data.get("mcp_servers")
+    if isinstance(servers, dict):
+        servers.pop("mnemos", None)
+        if not servers:
+            data.pop("mcp_servers")
+    hooks = data.get("hooks")
+    if isinstance(hooks, dict):
+        for event in list(hooks):
+            groups = hooks[event]
+            if not isinstance(groups, list):
+                continue
+            kept = []
+            for group in groups:
+                handlers = group.get("hooks") if isinstance(group, dict) else None
+                if isinstance(handlers, list):
+                    retained = [item for item in handlers if not _is_mnemos_codex_hook(item)]
+                    if not retained:
+                        continue
+                    group = {**group, "hooks": retained}
+                kept.append(group)
+            if kept:
+                hooks[event] = kept
+            else:
+                del hooks[event]
+        if not hooks:
+            data.pop("hooks")
+    return data
+
+
+def _load_toml(text: str) -> dict[str, Any]:
+    if not text.strip():
+        return {}
+    if sys.version_info >= (3, 11):
+        return tomllib.loads(text)
+    return tomli.loads(text)  # pragma: no cover - exercised on Python 3.10
+
+
 def _merge_codex_config(
     existing_text: str,
     *,
     mnemos_config_path: Path,
     integration_env: IntegrationEnv = None,
 ) -> str:
-    if existing_text.strip():
-        if sys.version_info >= (3, 11):
-            payload = tomllib.loads(existing_text)
-        else:  # pragma: no cover - exercised on Python 3.10
-            payload = tomli.loads(existing_text)
-    else:
-        payload = {}
+    """Edit only Mnemos entries in a Codex config and keep everything else as written.
 
-    if not isinstance(payload, dict):
-        payload = {}
+    Comments, quoting and layout survive because the document is edited in
+    place. The result is parsed back and must match the original outside the
+    Mnemos-owned entries, or setup raises before anything is written.
+    Replacing existing Mnemos hooks can shift blank lines on the first rerun,
+    so the merge is repeated until it stops changing and setup is idempotent.
+    """
+    rendered = existing_text
+    if rendered and not rendered.endswith("\n"):
+        # tomlkit glues appended tables onto an unterminated last line.
+        rendered += "\n"
+    for _ in range(4):
+        merged = _merge_codex_config_once(
+            rendered, mnemos_config_path=mnemos_config_path, integration_env=integration_env
+        )
+        if merged == rendered:
+            return merged
+        rendered = merged
+    raise ValueError("Codex setup output did not settle; nothing was written")
 
-    servers = payload.get("mcp_servers")
-    if not isinstance(servers, dict):
-        servers = {}
-        payload["mcp_servers"] = servers
 
-    existing_entry = servers.get("mnemos")
-    mnemos_entry: dict[str, Any] = (
-        dict(existing_entry) if isinstance(existing_entry, Mapping) else {}
-    )
-    existing_env = mnemos_entry.get("env")
-    env: dict[str, Any] = dict(existing_env) if isinstance(existing_env, Mapping) else {}
-    rendered_env = _integration_environment(mnemos_config_path, integration_env)
-    env.update(rendered_env)
-    env["MNEMOS_HOST"] = "codex"
+def _merge_codex_config_once(
+    existing_text: str,
+    *,
+    mnemos_config_path: Path,
+    integration_env: IntegrationEnv,
+) -> str:
+    import tomlkit
+    from tomlkit.items import AoT
+
+    before = _load_toml(existing_text)
+    document = tomlkit.parse(existing_text) if existing_text.strip() else tomlkit.document()
+    servers = document.get("mcp_servers")
+    if servers is None:
+        servers = tomlkit.table(is_super_table=True)
+        document["mcp_servers"] = servers
+    previous = servers.get("mnemos")
+    entry = tomlkit.table()
+    if isinstance(previous, Mapping):
+        for key, value in previous.items():
+            if key not in {"command", "args", "env"}:
+                entry[key] = value
     # MCP and hooks must use the installation that generated this config.
     # A bare console script can resolve to an older installation on PATH.
-    mnemos_entry["command"] = sys.executable
-    mnemos_entry["args"] = ["-m", "mnemos.mcp_server"]
-    mnemos_entry["env"] = env
-    servers["mnemos"] = mnemos_entry
-    base = {key: value for key, value in payload.items() if key != "hooks"}
-    lines = _emit_toml_sections(base)
-    hook_lines = _render_codex_hooks(
-        payload.get("hooks"),
-        integration_env=rendered_env if integration_env is not None else None,
-    )
-    if hook_lines:
-        lines.extend(["", *hook_lines])
-    return "\n".join(lines).strip() + "\n"
+    entry["command"] = sys.executable
+    entry["args"] = ["-m", "mnemos.mcp_server"]
+    env = tomlkit.table()
+    previous_env = previous.get("env") if isinstance(previous, Mapping) else None
+    if isinstance(previous_env, Mapping):
+        for key, value in previous_env.items():
+            env[key] = value
+    rendered_env = _integration_environment(mnemos_config_path, integration_env)
+    for key, value in {**rendered_env, "MNEMOS_HOST": "codex"}.items():
+        env[key] = value
+    entry["env"] = env
+    servers["mnemos"] = entry
 
+    hooks = document.get("hooks")
+    if hooks is None:
+        hooks = tomlkit.table(is_super_table=True)
+        document["hooks"] = hooks
+    for event in list(hooks.keys()):
+        groups = hooks[event]
+        if not isinstance(groups, AoT):
+            continue
+        for group_index in reversed(range(len(groups))):
+            handlers = groups[group_index].get("hooks")
+            if isinstance(handlers, AoT):
+                for handler_index in reversed(range(len(handlers))):
+                    if _is_mnemos_codex_hook(handlers[handler_index]):
+                        del handlers[handler_index]
+                if len(handlers) == 0:
+                    del groups[group_index]
+        if len(groups) == 0:
+            del hooks[event]
+    # Codex runs command hooks as a command line. The interpreter path is
+    # quoted once inside the command; TOML escapes the command as a whole.
+    command = _codex_hook_command(rendered_env if integration_env is not None else None)
+    for event, options in _CODEX_HOOK_EVENTS.items():
+        group = tomlkit.table()
+        if "matcher" in options:
+            group["matcher"] = options["matcher"]
+        handler = tomlkit.table()
+        handler["type"] = "command"
+        handler["command"] = command
+        for key in ("timeout", "additionalContextLimit"):
+            if key in options:
+                handler[key] = options[key]
+        group_handlers = tomlkit.aot()
+        group_handlers.append(handler)
+        group["hooks"] = group_handlers
+        if event not in hooks:
+            hooks[event] = tomlkit.aot()
+        existing_groups = hooks[event]
+        if not isinstance(existing_groups, AoT):
+            raise ValueError(f"Codex hooks.{event} uses a layout setup cannot edit safely")
+        existing_groups.append(group)
 
-def _toml_string(value: str) -> str:
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
-
-
-def _toml_scalar(value: Any) -> str:
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, (int, float)):
-        return str(value)
-    if isinstance(value, list) and all(not isinstance(item, Mapping) for item in value):
-        return "[" + ", ".join(_toml_scalar(item) for item in value) + "]"
-    if isinstance(value, Mapping):
-        fields = ", ".join(f"{key} = {_toml_scalar(item)}" for key, item in value.items())
-        return "{" + fields + "}"
-    return _toml_string(str(value))
+    rendered = tomlkit.dumps(document)
+    if codex_config_without_mnemos(_load_toml(rendered)) != codex_config_without_mnemos(before):
+        raise ValueError("Codex setup would change settings it does not own; nothing was written")
+    return rendered
 
 
 def _powershell_executable() -> str | None:
@@ -373,93 +483,6 @@ def _codex_hook_command(integration_env: IntegrationEnv) -> str:
     if powershell is not None:
         return f"{command_prefix} -c {_powershell_literal(bootstrap)}"
     return f'{command_prefix} -c "{bootstrap}"'
-
-
-def _render_codex_hooks(
-    existing: Any,
-    *,
-    integration_env: IntegrationEnv = None,
-) -> list[str]:
-    """Render Codex array-of-table hooks while preserving unrelated entries."""
-    events: dict[str, list[dict[str, Any]]] = {}
-    if isinstance(existing, Mapping):
-        for event, groups in existing.items():
-            if not isinstance(groups, list):
-                continue
-            kept: list[dict[str, Any]] = []
-            for group in groups:
-                if not isinstance(group, Mapping):
-                    continue
-                handlers = group.get("hooks")
-                if isinstance(handlers, list):
-                    retained_handlers = [
-                        handler
-                        for handler in handlers
-                        if not (
-                            isinstance(handler, Mapping)
-                            and "mnemos.adapters.codex" in str(handler.get("command", ""))
-                        )
-                    ]
-                    retained_group = dict(group)
-                    retained_group["hooks"] = retained_handlers
-                    if retained_handlers:
-                        kept.append(retained_group)
-                else:
-                    kept.append(dict(group))
-            events[str(event)] = kept
-
-    # Codex executes command hooks as a command line.  Quote the interpreter
-    # once for paths such as ``C:\\Program Files\\Python\\python.exe`` and
-    # let the TOML serializer escape that command as a whole.
-    command = _codex_hook_command(integration_env)
-    generated: dict[str, dict[str, Any]] = {
-        "SessionStart": {
-            "matcher": "startup|resume|clear|compact",
-            "additionalContextLimit": 1200,
-        },
-        "UserPromptSubmit": {"additionalContextLimit": 1200},
-        "PreCompact": {"matcher": "manual|auto", "timeout": 10},
-        # PostCompact's command output schema cannot carry additionalContext.
-        "PostCompact": {"matcher": "manual|auto"},
-        "Stop": {"timeout": 3},
-        "SessionEnd": {"matcher": "other", "timeout": 3},
-    }
-    lines: list[str] = []
-    for event, groups in events.items():
-        for group in groups:
-            lines.append(f"[[hooks.{event}]]")
-            for key, value in group.items():
-                if key == "hooks" or (
-                    isinstance(value, list) and value and isinstance(value[0], Mapping)
-                ):
-                    continue
-                lines.append(f"{key} = {_toml_scalar(value)}")
-            handlers = group.get("hooks", [])
-            if isinstance(handlers, list):
-                for handler in handlers:
-                    if not isinstance(handler, Mapping):
-                        continue
-                    lines.append("")
-                    lines.append(f"[[hooks.{event}.hooks]]")
-                    for key, value in handler.items():
-                        if isinstance(value, list) and value and isinstance(value[0], Mapping):
-                            continue
-                        lines.append(f"{key} = {_toml_scalar(value)}")
-            lines.append("")
-    for event, options in generated.items():
-        lines.append(f"[[hooks.{event}]]")
-        if "matcher" in options:
-            lines.append(f"matcher = {_toml_scalar(options['matcher'])}")
-        lines.append("")
-        lines.append(f"[[hooks.{event}.hooks]]")
-        lines.append('type = "command"')
-        lines.append(f"command = {_toml_string(command)}")
-        if "timeout" in options:
-            lines.append(f"timeout = {options['timeout']}")
-        if "additionalContextLimit" in options:
-            lines.append(f"additionalContextLimit = {options['additionalContextLimit']}")
-        lines.append("")
-    return lines[:-1] if lines else lines
 
 
 def _render_host_config(
@@ -568,9 +591,39 @@ def preview_host_integration(
     )
 
 
-def _backup_path(path: Path) -> Path:
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-    return path.with_name(f"{path.name}.bak.{stamp}")
+def _write_backup(path: Path) -> Path:
+    """Copy a file to a new backup that never replaces an earlier backup."""
+    content = path.read_bytes()
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+    for attempt in range(1000):
+        suffix = stamp if attempt == 0 else f"{stamp}-{attempt}"
+        candidate = path.with_name(f"{path.name}.bak.{suffix}")
+        try:
+            with candidate.open("xb") as handle:
+                handle.write(content)
+        except FileExistsError:
+            continue
+        return candidate
+    raise FileExistsError(f"Could not create a unique backup for {path}")
+
+
+def _write_text_atomic(path: Path, text: str) -> None:
+    """Replace a file in one step so an interruption cannot leave it half written."""
+    descriptor, temporary = tempfile.mkstemp(
+        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
+    )
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+    except BaseException:
+        try:
+            os.unlink(temporary)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def apply_host_integration(
@@ -592,43 +645,38 @@ def apply_host_integration(
 
     backup_path: Path | None = None
     if preview.config_path.exists():
-        backup_path = _backup_path(preview.config_path)
-        backup_path.write_text(_read_text(preview.config_path), encoding="utf-8")
+        backup_path = _write_backup(preview.config_path)
 
-    preview.config_path.write_text(preview.rendered_config, encoding="utf-8")
+    _write_text_atomic(preview.config_path, preview.rendered_config)
     if host == "cursor":
         rule_path = _cursor_rule_path(_cwd_path(cwd))
         rule_path.parent.mkdir(parents=True, exist_ok=True)
         if rule_path.exists():
-            rule_backup_path = _backup_path(rule_path)
-            rule_backup_path.write_text(_read_text(rule_path), encoding="utf-8")
-        rule_path.write_text(
-            build_antigravity_artifact("cursor", "cursor-rule"),
-            encoding="utf-8",
-        )
+            _write_backup(rule_path)
+        _write_text_atomic(rule_path, build_antigravity_artifact("cursor", "cursor-rule"))
     elif host == "claude-code":
         agents_dir = _claude_agents_dir(_home_path(home))
         agents_dir.mkdir(parents=True, exist_ok=True)
         for agent_name in ("mnemos-recall.md", "mnemos-curator.md"):
             agent_path = agents_dir / agent_name
-            agent_path.write_text(
-                _render_claude_agent(_cwd_path(cwd), agent_name),
-                encoding="utf-8",
-            )
+            rendered_agent = _render_claude_agent(_cwd_path(cwd), agent_name)
+            # A hand-edited agent file is kept as a backup before replacement.
+            if agent_path.exists() and _read_text(agent_path) != rendered_agent:
+                _write_backup(agent_path)
+            _write_text_atomic(agent_path, rendered_agent)
     elif host == "codex":
         agents_path = _codex_agents_path(_cwd_path(cwd))
         agents_path.parent.mkdir(parents=True, exist_ok=True)
         existing_agents_text = _read_text(agents_path)
         if agents_path.exists():
-            agents_backup_path = _backup_path(agents_path)
-            agents_backup_path.write_text(existing_agents_text, encoding="utf-8")
-        agents_path.write_text(
+            _write_backup(agents_path)
+        _write_text_atomic(
+            agents_path,
             _merge_markdown_section(
                 existing_agents_text,
                 heading="Mnemos Memory",
                 rendered_section=build_antigravity_artifact("codex", "codex-agents"),
             ),
-            encoding="utf-8",
         )
     elif host == "hermes":
         # Hermes setup owns provider-specific sidecar values.  This host

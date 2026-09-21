@@ -16,6 +16,7 @@ from pathlib import Path
 import pytest
 
 import mnemos.hosts as hosts
+from mnemos.settings import _emit_toml_sections
 from mnemos.hosts import apply_host_integration, preview_host_integration
 from mnemos.mcp_server import _service_scope_context
 from mnemos.scopes import ScopeRegistry
@@ -190,9 +191,7 @@ def test_mcp_launch_binding_replaces_old_args_without_path_lookup(
         "other": {"command": "other-mcp", "args": ["keep"]},
     }
     if host == "codex":
-        path.write_text(
-            "\n".join(hosts._emit_toml_sections({"mcp_servers": original})), encoding="utf-8"
-        )
+        path.write_text("\n".join(_emit_toml_sections({"mcp_servers": original})), encoding="utf-8")
     else:
         path.write_text(json.dumps({"mcpServers": original}), encoding="utf-8")
     preview = preview_host_integration(
