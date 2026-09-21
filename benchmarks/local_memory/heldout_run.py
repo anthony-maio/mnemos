@@ -13,10 +13,11 @@ import json
 import re
 from uuid import uuid4
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Literal, Mapping
 from urllib.request import Request, urlopen
 
 from mnemos.settings import OllamaProviderSettings
+from mnemos.config import SleepConfig
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
 from mnemos.runtime import embedding_task_contract
 
@@ -121,6 +122,7 @@ def run_heldout(
     module_challenge_path: Path | None = None,
     root: Path | None = None,
     think: OllamaThink = None,
+    extraction_mode: Literal["generated", "source_bound"] = "generated",
     temperature: float = 0.0,
     max_tokens: int = 512,
     timeout_seconds: float = 120.0,
@@ -131,6 +133,7 @@ def run_heldout(
     run_namespace: str = "t18-heldout",
     experiment_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
+    selected_extraction = SleepConfig(extraction_mode=extraction_mode).extraction_mode
     generation = OllamaProviderSettings(
         temperature=temperature, max_tokens=max_tokens, timeout=timeout_seconds
     )
@@ -160,6 +163,7 @@ def run_heldout(
     model_metadata = model_records[model]
     embedding_metadata = model_records[embedding_model]
     options: dict[str, Any] = {
+        "extraction_mode": selected_extraction,
         "temperature": generation.temperature,
         "max_tokens": generation.max_tokens,
         "timeout_seconds": generation.timeout,
@@ -256,6 +260,7 @@ def run_heldout(
             temperature=float(options["temperature"]),
             max_tokens=int(options["max_tokens"]),
             think=think,
+            extraction_mode=selected_extraction,
             query_prefix=query_prefix,
             document_prefix=document_prefix,
             symmetric_prefix=symmetric_prefix,
@@ -327,6 +332,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--embedding-model", default="nomic-embed-text:latest")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="append", dest="profiles")
+    parser.add_argument(
+        "--extraction-mode", choices=("generated", "source_bound"), default="generated"
+    )
     parser.add_argument("--think", type=parse_ollama_think, default=None)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=512)
@@ -346,6 +354,7 @@ def main(argv: list[str] | None = None) -> int:
         profile_names=set(args.profiles) if args.profiles else None,
         module_challenge_path=args.module_challenge_dataset,
         think=args.think,
+        extraction_mode=args.extraction_mode,
         temperature=args.temperature,
         max_tokens=args.max_tokens,
         timeout_seconds=args.timeout_seconds,

@@ -1638,6 +1638,7 @@ def make_ollama_service_factory(
     temperature: float = 0.0,
     max_tokens: int = 512,
     think: OllamaThink = None,
+    extraction_mode: Literal["generated", "source_bound"] = "generated",
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
@@ -1650,6 +1651,9 @@ def make_ollama_service_factory(
     constructor grows new module settings.
     """
 
+    from mnemos.config import SleepConfig
+
+    selected_extraction = SleepConfig(extraction_mode=extraction_mode).extraction_mode
     selected_think = _validate_ollama_think(think)
     task_contract = embedding_task_contract(
         query_prefix=query_prefix,
@@ -1666,6 +1670,7 @@ def make_ollama_service_factory(
         from mnemos.utils.storage import SQLiteStore
 
         config = MnemosConfig()
+        config.sleep.extraction_mode = selected_extraction
         enabled = set(profile.enabled_modules)
         # Keep both the current per-module switches and the parent integration
         # switch object aligned when either API is present.
@@ -1696,6 +1701,7 @@ def make_ollama_service_factory(
         if trace is None:
             trace = {
                 "config": {
+                    "extraction_mode": selected_extraction,
                     "endpoint": base_url.rstrip("/"),
                     "model": model,
                     "embedding_model": embedding_model,

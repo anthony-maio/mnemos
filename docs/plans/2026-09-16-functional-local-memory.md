@@ -1026,3 +1026,14 @@ attempt four. All five module flags were enabled; this small fixture does not
 prove useful execution or superiority of every module. Earlier zero-fact runs
 remain preserved. Fresh held-out ablations, native-host acceptance, the pilot,
 review resolution and current full-package verification remain open.
+
+
+## Evaluation configuration checkpoint, September 21
+
+The held-out launcher now selects generated or source_bound extraction and binds
+that choice into resumable evaluation fingerprints. All seven profiles preserve
+their original module switches in both modes. Eighty focused evaluator tests,
+formatting and Python 3.10 checks pass. Evidence:
+[source-bound evaluator settings](../validation/2026-09-21/source-bound-evaluator-settings-v1/README.md).
+The fresh v7 corpus remains unchanged and unexecuted; these tests are not T18
+quality acceptance.

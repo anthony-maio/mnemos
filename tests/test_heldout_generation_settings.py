@@ -29,6 +29,7 @@ def invoke(tmp_path, **kwargs):
 @pytest.mark.parametrize(
     "setting,value",
     [
+        ("extraction_mode", "invalid"),
         ("temperature", -1.0),
         ("temperature", float("nan")),
         ("temperature", float("inf")),
@@ -71,12 +72,20 @@ def test_settings_reach_factory_and_change_checkpoint_binding(monkeypatch, tmp_p
 
     monkeypatch.setattr(runner, "ExperimentHarness", Harness)
     adapter = lambda *args, **kwargs: None
-    variations = [{}, {"temperature": 1.0}, {"max_tokens": 8192}, {"timeout_seconds": 180.0}]
+    variations = [
+        {},
+        {"temperature": 1.0},
+        {"max_tokens": 8192},
+        {"timeout_seconds": 180.0},
+        {"extraction_mode": "source_bound"},
+    ]
     for index, changes in enumerate(variations):
         root = tmp_path / str(index)
         invoke(root, adapter_type=adapter, **changes)
         manifest = json.loads((root / "work/baseline.manifest.json").read_text())
         options = manifest["provider"]["options"]
+        assert options["extraction_mode"] == changes.get("extraction_mode", "generated")
+        assert factories[-1]["extraction_mode"] == options["extraction_mode"]
         assert options["temperature"] == changes.get("temperature", 0.0)
         assert options["max_tokens"] == changes.get("max_tokens", 512)
         assert options["timeout_seconds"] == changes.get("timeout_seconds", 120.0)
@@ -84,7 +93,7 @@ def test_settings_reach_factory_and_change_checkpoint_binding(monkeypatch, tmp_p
         assert factories[-1]["max_tokens"] == options["max_tokens"]
         assert factories[-1]["timeout"] == options["timeout_seconds"]
         assert configs[-1].options_sha256 == manifest["options_sha256"]
-    assert len({c.options_sha256 for c in configs}) == 4
+    assert len({c.options_sha256 for c in configs}) == 5
 
 
 def test_cli_passes_explicit_generation_settings(monkeypatch, tmp_path):
@@ -102,6 +111,8 @@ def test_cli_passes_explicit_generation_settings(monkeypatch, tmp_path):
                 str(tmp_path / "out"),
                 "--work-dir",
                 str(tmp_path / "work"),
+                "--extraction-mode",
+                "source_bound",
                 "--temperature",
                 "1.0",
                 "--max-tokens",
@@ -112,4 +123,36 @@ def test_cli_passes_explicit_generation_settings(monkeypatch, tmp_path):
         )
         == 0
     )
+    assert seen["extraction_mode"] == "source_bound"
     assert (seen["temperature"], seen["max_tokens"], seen["timeout_seconds"]) == (1.0, 8192, 180.0)
+
+
+@pytest.mark.parametrize("profile", runner.DEFAULT_PROFILES)
+@pytest.mark.parametrize("mode", ["generated", "source_bound"])
+def test_factory_selects_extractor_without_changing_ablation_switches(tmp_path, profile, mode):
+    from benchmarks.local_memory.ollama_adapter import make_ollama_service_factory
+    from mnemos.scopes import ScopeRegistry
+
+    factory = make_ollama_service_factory(
+        tmp_path / "memory.sqlite",
+        ScopeRegistry(),
+        base_url="http://unused.invalid",
+        extraction_mode=mode,
+    )
+    service = factory(profile, "extraction-mode")
+    try:
+        assert service.engine.config.sleep.extraction_mode == mode
+        assert service._benchmark_provider_trace["config"]["extraction_mode"] == mode
+        expected = {
+            "surprisal": "surprisal_gating",
+            "mutable_rag": "mutable_rag",
+            "affective": "affective_routing",
+            "sleep": "sleep_consolidation",
+            "spreading": "spreading_activation",
+        }
+        for switch, module in expected.items():
+            assert getattr(service.engine.config.modules, switch) == (
+                module in profile.enabled_modules
+            )
+    finally:
+        service.engine.store.close()

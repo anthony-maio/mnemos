@@ -153,3 +153,30 @@ attempt four. All five module flags were enabled; this small fixture does not
 prove useful execution or superiority of every module. Earlier zero-fact runs
 remain preserved. Fresh held-out ablations, native-host acceptance, the pilot,
 review resolution and current full-package verification remain open.
+
+
+## Explicit resolution design
+
+Resolution remains unimplemented. Add a typed resolve_review request with a
+scoped review identity, new explicit clarification content, and either add or
+correct intent. A correction requires an explicit target and expected version;
+a targeted review cannot silently switch targets. Do not use the old review
+excerpt or model explanations as clarification content.
+
+Capture clarification as a separate explicit event and durable remember/correct
+job. Carry the review identity in the job payload. At commit_fact_and_job,
+validate the open review, original source, partition, suppression and target
+version inside the existing transaction. Commit the clarified fact and its new
+evidence, resolve canonical fact identity, and mark the review resolved with
+fact ID/version and clarification event ID atomically. Concurrent resolution,
+discard, forgotten sources, expired leases and stale targets must not leave an
+accepted fact without its corresponding review transition.
+
+Additive schema fields require the existing backed-up migration mechanism.
+Forgetting the resolved fact or clarification source must invalidate its link,
+including after restoring a backup with newer suppressions. Ordinary pruning
+must not delete an open review's source; closed reviews release that hold.
+Test add/correct resolution, provenance, scope rejection, races, rollback,
+restart, forget/replay and restore before exposing the MCP operation. Existing
+explicit correction behavior remains available when automatic mutable RAG is
+disabled. No live migration is authorized by this design checkpoint.
