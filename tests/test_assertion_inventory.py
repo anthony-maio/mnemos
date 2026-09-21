@@ -1,0 +1,148 @@
+"""Deterministic boundaries for a development-only extraction candidate."""
+
+import json
+from datetime import datetime, timezone
+
+import pytest
+
+from benchmarks.local_memory.assertion_inventory import (
+    Assertion,
+    Inventory,
+    inventory_assertions,
+    retained_assertions,
+    validate_inventory,
+)
+from mnemos.types import EpisodicEvent
+
+
+def source(content="The project marker is cedar. For this reply only, use lowercase.", role="user"):
+    return EpisodicEvent(
+        id="event-one",
+        event_fingerprint="event-one",
+        role=role,
+        content=content,
+        normalized_content=content.lower(),
+        scope="project",
+        scope_id="project-one",
+        source="manual",
+        metadata={"user_profile_id": "profile-one"},
+        occurred_at=datetime.now(timezone.utc),
+    )
+
+
+def assertion(event, **changes):
+    data = {
+        "source_id": event.id,
+        "quote": event.content,
+        "content": event.content,
+        "kind": "asserted_fact",
+    }
+    data.update(changes)
+    return Assertion(**data)
+
+
+def test_mixed_message_retains_independent_fact_and_discards_one_turn_instruction():
+    event = source()
+    inv = Inventory(
+        assertions=[
+            assertion(
+                event, quote="The project marker is cedar.", content="The project marker is cedar."
+            ),
+            assertion(
+                event,
+                quote="For this reply only, use lowercase.",
+                content="Use lowercase for this reply only.",
+                kind="temporary_instruction",
+            ),
+        ]
+    )
+    kept = retained_assertions(inv, [event])
+    assert len(kept) == 1
+    assert kept[0].content == "The project marker is cedar."
+    assert len(inv.assertions) == 2
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "user_preference",
+        "continuing_requirement",
+        "asserted_fact",
+        "explicitly_retained_uncertainty",
+        "correction_or_rejection",
+    ],
+)
+def test_assistant_cannot_claim_direct_user_assertion(kind):
+    event = source("You might like haiku replies.", role="assistant")
+    with pytest.raises(ValueError, match="Non-user"):
+        validate_inventory(Inventory(assertions=[assertion(event, kind=kind)]), [event])
+
+
+def test_attributed_history_remains_attributed_without_mutating_inventory():
+    event = source("The previous user note requested a PDF.", role="assistant")
+    inv = Inventory(assertions=[assertion(event, kind="attributed_history")])
+    kept = retained_assertions(inv, [event])
+    assert kept[0].content.startswith("Assistant reported: ")
+    assert not inv.assertions[0].content.startswith("Assistant reported: ")
+
+
+@pytest.mark.parametrize(
+    "change,message",
+    [
+        ({"source_id": "unrelated-existing-fact"}, "unavailable source"),
+        ({"quote": "The unrelated control label is quartz."}, "quote is not present"),
+    ],
+)
+def test_source_and_quote_are_bound(change, message):
+    event = source()
+    with pytest.raises(ValueError, match=message):
+        validate_inventory(Inventory(assertions=[assertion(event, **change)]), [event])
+
+
+def test_cross_scope_and_duplicate_sources_rejected():
+    event = source()
+    for other in [event, event.model_copy(update={"id": "other", "scope_id": "elsewhere"})]:
+        with pytest.raises(ValueError):
+            validate_inventory(Inventory(assertions=[]), [event, other])
+
+
+def test_quote_validation_is_not_semantic_entailment():
+    event = source("The marker is cedar.")
+    inv = Inventory(assertions=[assertion(event, content="The marker is quartz.")])
+    # This records the deliberate boundary: source anchoring alone cannot certify truth.
+    assert validate_inventory(inv, [event]) is inv
+
+
+async def test_structured_request_contains_only_sources_and_binds_ids():
+    event = source()
+
+    class Provider:
+        supports_structured_output = True
+
+        async def predict(self, prompt, **kwargs):
+            assert "EXISTING FACTS" not in prompt
+            assert event.content in prompt
+            assert kwargs["format"]["$defs"]["Assertion"]["properties"]["source_id"]["enum"] == [
+                event.id
+            ]
+            return json.dumps({"assertions": []})
+
+    assert (await inventory_assertions([event], Provider())).assertions == []
+
+
+def test_duplicate_assertions_rejected():
+    event = source()
+    with pytest.raises(ValueError, match="repeats an assertion"):
+        validate_inventory(Inventory(assertions=[assertion(event), assertion(event)]), [event])
+
+
+@pytest.mark.parametrize("extra", [{"operation": "support"}, {"target_fact_id": "old-fact"}])
+def test_source_inventory_cannot_choose_existing_targets(extra):
+    event = source()
+    with pytest.raises(ValueError):
+        assertion(event, **extra)
+
+
+def test_blank_quote_rejected():
+    with pytest.raises(ValueError):
+        assertion(source(), quote="  ")
