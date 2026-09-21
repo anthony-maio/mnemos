@@ -19,7 +19,11 @@ completed all 46 cases with 43 structurally valid outputs and three failures,
 including the initial provider retry exhaustion. Its 34 excerpts preserve source
 text and provenance, but it retains temporary instructions and duplicates policy
 meaning. It recovers one previously omitted marker; that improvement does not
-justify adoption. The schema-only source-authority comparison is now running.
+justify adoption. The [schema-only source-authority comparison](../validation/2026-09-21/source-role-binding-semantic-v13/README.md)
+then produced 46 valid outputs: 45 match v9 exactly, while one assistant report
+now passes as attributed history. Its 30 source excerpts are verified; the earlier
+semantic mistakes remain. This is a bounded authority improvement, not dependable
+extraction or production adoption.
 
 A separate [production source-mutation repair](../validation/2026-09-21/source-evidence-snapshot-focused-v1/README.md)
 prevents caller-owned source evidence from changing correction authority while

@@ -8,6 +8,12 @@ source-verified excerpts. It recovers a marker while introducing unwanted
 retention and duplicate meaning. The initial provider retry failure remains in
 the result. No adoption or fresh held-out acceptance follows.
 
+The [source-role-bound schema comparison](../2026-09-21/source-role-binding-semantic-v13/README.md)
+has 46 runtime-valid outputs and 30 exact excerpts. Forty-five outcomes match v9;
+the remaining assistant report now passes as attributed history. No regressions
+are observed in this one reused repetition, but the prior semantic mistakes
+persist. The candidate is not adopted into production.
+
 The [source-mutation repair](../2026-09-21/source-evidence-snapshot-focused-v1/README.md)
 at 56687e0 passes 62 focused cases, formatting and Python 3.10 type checking.
 Full source/package and installed verification are pending. It changes production

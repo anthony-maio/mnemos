@@ -785,8 +785,12 @@ mechanical constraint, not evidence of correct durability judgments. The
 [v13 preparation](../validation/2026-09-21/source-role-binding-preparation-v13/README.md)
 freezes the same 46 v9 cases, model settings and rubrics. Offline paired calls
 confirm unchanged prompts and source-specific schema branches; two launch
-guards reject missing or incorrect preparation digests. The real-model comparison
-started after v12 completed; production integration remains unexecuted.
+guards reject missing or incorrect preparation digests. The [completed comparison](../validation/2026-09-21/source-role-binding-semantic-v13/README.md)
+has 46 runtime-valid outputs and 30 source-verified excerpts. Forty-five outcomes
+match v9 exactly; P07 now retains the qualified assistant report as attributed
+history instead of failing authority validation. The earlier semantic mistakes
+remain, including marker omission and false retention-request references.
+Production integration and fresh quality acceptance remain unexecuted.
 
 ### T19 - Reconcile release, documentation, and research claims
 

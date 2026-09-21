@@ -1,0 +1,42 @@
+from pathlib import Path
+from datetime import datetime
+import hashlib
+import json
+import shutil
+
+base = Path.cwd() / 'docs/validation/2026-09-21'
+root = base / 'source-role-binding-terminal-v13'
+out = base / 'source-role-binding-semantic-v13'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((root / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['observations_sha256'] == sha(root / 'observations.jsonl')
+cases = {c['id']: c for c in json.loads((root / 'inputs.json').read_bytes())['cases']}
+rows = [json.loads(s) for s in (root / 'observations.jsonl').read_text().splitlines()]
+count = 0
+for row in rows:
+    if row['status'] == 'error':
+        assert not row.get('retained')
+        continue
+    source = cases[row['case_id']]['source']
+    assert sum(s['kind'] not in {'question', 'temporary_instruction', 'quoted_material', 'unrequested_speculation', 'unaccepted_suggestion'} for s in row['inventory']['selections']) == len(row['retained'])
+    for memory in row['retained']:
+        assert 0 <= memory['start'] < memory['end'] <= len(source['content'])
+        assert memory['content'] == source['content'][memory['start']:memory['end']]
+        assert memory['source_content_sha256'] == hashlib.sha256(source['content'].encode()).hexdigest()
+        for memory_key, source_key in (('source_id', 'id'), ('source_role', 'role'), ('source_fingerprint', 'event_fingerprint'), ('source_channel', 'source'), ('scope', 'scope'), ('scope_id', 'scope_id')):
+            assert memory[memory_key] == source[source_key]
+        assert memory['profile_id'] == source['metadata']['user_profile_id']
+        assert datetime.fromisoformat(memory['occurred_at'].replace('Z', '+00:00')) == datetime.fromisoformat(source['occurred_at'].replace('Z', '+00:00'))
+        count += 1
+report = {'status': 'passed', 'cases': len(rows), 'runtime_valid_cases': sum(r['status'] == 'runtime_valid' for r in rows), 'rendered_excerpts': count,
+          'observations_sha256': state['observations_sha256'],
+          'checks': ['Exact original source substring for every rendered memory', 'Source content hash, role, identity, scope, profile, timestamp and channel preserved'],
+          'limits': 'No semantic retention, selection completeness, authority, correction or deduplication conclusion.'}
+(out / 'slice-verification.json').write_text(json.dumps(report, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'slice-verifier.py.txt')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.iterdir() if p.is_file() and p.name != 'evidence-index.json'
+}}, indent=2) + '\n')
+print(json.dumps(report))
