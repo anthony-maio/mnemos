@@ -771,6 +771,15 @@ All offline paired checks pass; execution is running. The loading log reports
 45 of 63 layers offloaded to the GPU, so this is not an all-GPU configuration
 or an isolated latency benchmark. No quality result or adoption is claimed.
 
+The experimental `source_role_binding.py` wrapper binds each source ID to its
+allowed memory kinds in the structured decoding schema. Non-user sources can
+produce attributed history or discard classifications; runtime authority and
+mutation guards remain active even when a provider ignores the schema. The
+prompt and rendered output are compared directly with the original classifier.
+The combined selector/classifier/role-binding suite passes 66 tests. This is a
+mechanical constraint, not evidence of correct durability judgments. Real-model
+comparison and production integration remain unexecuted for this candidate.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
