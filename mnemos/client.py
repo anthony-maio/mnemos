@@ -243,8 +243,10 @@ class MnemosClient:
         self._autostart_attempted = False
         self._outbox_drained = False
         self._child: subprocess.Popen[bytes] | None = None
-        self._http_client: httpx.AsyncClient | None = None
-        self._http_loop: asyncio.AbstractEventLoop | None = None
+        # One connection pool per event loop. Hosts call a single client from
+        # several threads, each running its own short-lived loop.
+        self._http_clients: dict[asyncio.AbstractEventLoop, httpx.AsyncClient] = {}
+        self._http_lock = threading.Lock()
 
     def _descriptor(self) -> dict[str, Any] | None:
         return read_runtime_descriptor(self.descriptor_path)
@@ -292,6 +294,25 @@ class MnemosClient:
         return httpx.AsyncClient(
             timeout=timeout, verify=context, trust_env=False, follow_redirects=False
         )
+
+    def _loop_http_client(self) -> httpx.AsyncClient:
+        """Return the running loop's pool, never touching another loop's.
+
+        Closing or replacing a pool that belongs to a loop in another thread
+        breaks its requests in flight, which surfaced as a healthy service
+        reporting itself unavailable.
+        """
+        loop = asyncio.get_running_loop()
+        with self._http_lock:
+            for finished in [owner for owner in self._http_clients if owner.is_closed()]:
+                # Its loop is gone, so it cannot be closed from here. Dropping
+                # it lets its sockets be collected.
+                del self._http_clients[finished]
+            client = self._http_clients.get(loop)
+            if client is None or client.is_closed:
+                client = self._loopback_http_client(self.request_timeout)
+                self._http_clients[loop] = client
+            return client
 
     async def _owner_reachable(
         self, descriptor: dict[str, Any], *, timeout: float | None = None
@@ -389,20 +410,7 @@ class MnemosClient:
         }
         body = {"schema_version": SCHEMA_VERSION, "operation": operation, "payload": payload}
         try:
-            loop = asyncio.get_running_loop()
-            if (
-                self._http_client is None
-                or self._http_client.is_closed
-                or self._http_loop is not loop
-            ):
-                # Keep one connection pool per owning event loop.  Host
-                # adapters may invoke one client from a short-lived loop, so
-                # never reuse an AsyncClient across loop boundaries.
-                if self._http_client is not None and not self._http_client.is_closed:
-                    await self._http_client.aclose()
-                self._http_client = self._loopback_http_client(self.request_timeout)
-                self._http_loop = loop
-            response = await self._http_client.post(url, headers=headers, json=body)
+            response = await self._loop_http_client().post(url, headers=headers, json=body)
         except (
             httpx.ConnectError,
             httpx.TimeoutException,
@@ -617,10 +625,15 @@ class MnemosClient:
     async def close(self) -> None:
         # A host session may have started the shared runtime, but it does not
         # own its lifetime. Other hosts and background maintenance still use it.
-        if self._http_client is not None and not self._http_client.is_closed:
-            await self._http_client.aclose()
-        self._http_client = None
-        self._http_loop = None
+        # Only this loop's pool can be closed from here; other threads close
+        # their own, and pools of finished loops are dropped.
+        loop = asyncio.get_running_loop()
+        with self._http_lock:
+            client = self._http_clients.pop(loop, None)
+            for finished in [owner for owner in self._http_clients if owner.is_closed()]:
+                del self._http_clients[finished]
+        if client is not None and not client.is_closed:
+            await client.aclose()
         self._child = None
 
 

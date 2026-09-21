@@ -240,10 +240,9 @@ async def test_malformed_rejection_code_is_not_forwarded(tmp_path: Path, error: 
         "error": error,
         "message": None,
     }
-    client._http_client = httpx.AsyncClient(
+    client._http_clients[asyncio.get_running_loop()] = httpx.AsyncClient(
         transport=httpx.MockTransport(lambda request: httpx.Response(409, json=body))
     )
-    client._http_loop = asyncio.get_running_loop()
     try:
         with pytest.raises(ServiceClientError, match="HTTP 409"):
             await client._dispatch_http(

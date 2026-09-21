@@ -501,8 +501,9 @@ async def test_unrecognized_409_is_not_surfaced(tmp_path: Path, operation: str, 
         auto_start=False,
     )
     transport = httpx.MockTransport(lambda request: httpx.Response(409, json=body, request=request))
-    client._http_client = httpx.AsyncClient(transport=transport)  # noqa: SLF001
-    client._http_loop = asyncio.get_running_loop()  # noqa: SLF001
+    client._http_clients[asyncio.get_running_loop()] = httpx.AsyncClient(  # noqa: SLF001
+        transport=transport
+    )
     descriptor = {"host": "127.0.0.1", "port": 1, "token": "test"}
     try:
         with pytest.raises(ServiceClientError, match="HTTP 409"):
