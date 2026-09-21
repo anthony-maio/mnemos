@@ -1,0 +1,65 @@
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-instruction-examples-development-v14')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((root / 'status.json').read_bytes())
+prep = json.loads((root / 'preparation.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['preparation_sha256'] == sha(root / 'preparation.json')
+assert state['observations_sha256'] == sha(root / 'observations.jsonl')
+assert sha(root / 'preparation.json') == sha(repo / 'docs/validation/2026-09-21/source-instruction-examples-preparation-v14/preparation.json')
+inputs = json.loads((root / 'inputs.json').read_bytes())
+for name, digest in prep['files'].items():
+    assert sha(root / name) == digest, name
+for name, digest in prep['source_files'].items():
+    assert sha(Path(inputs['snapshot']) / name) == digest, name
+binding = json.loads((root / 'parent-terminal-binding.json').read_bytes())
+parent = Path(binding['directory'])
+for key, name in (('preparation_sha256', 'preparation.json'), ('observations_sha256', 'observations.jsonl'), ('status_sha256', 'status.json')):
+    assert sha(parent / name) == binding[key], key
+rows = [json.loads(s) for s in (root / 'observations.jsonl').read_text().splitlines()]
+assert [r['case_id'] for r in rows] == [c['id'] for c in inputs['cases']]
+assert sum(r['status'] == 'error' for r in rows) == state['errors']
+counts = dict(Counter(r['status'] for r in rows))
+out = repo / 'docs/validation/2026-09-21/source-instruction-examples-terminal-v14'
+out.mkdir(exist_ok=False)
+for src in root.rglob('*'):
+    if src.is_file() and '__pycache__' not in src.parts:
+        dst = out / src.relative_to(root)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'runtime-summary.json').write_text(json.dumps({'counts': counts, 'semantic_review': 'pending; exact source slices do not establish semantic selection accuracy'}, indent=2) + '\n')
+(out / 'review-outputs.json').write_text(json.dumps([{k: v for k, v in r.items() if k != 'trace'} for r in rows], indent=2) + '\n')
+counters = [{
+    'case_id': r['case_id'],
+    'status': r['status'],
+    'provider_responses': [{k: m.get(k) for k in ('done_reason', 'eval_count', 'prompt_eval_count', 'load_duration', 'prompt_eval_duration', 'eval_duration', 'total_duration')}
+                           for m in r['trace'].get('response_metadata', [])]
+} for r in rows]
+(out / 'provider-counters.json').write_text(json.dumps({'cases': counters, 'limits': 'Provider-reported counters; missing responses are not zero-cost calls. Single source-selection pass; no draft generation or review calls in this run. No isolated latency benchmark.'}, indent=2) + '\n')
+(out / 'README.md').write_text(f'''# Instructional examples classification terminal v14
+
+All 46 planned cases completed. Runtime outcomes: {counts}.
+The same original source events and rubrics are preserved. Explicit non-retained classifications remain in the inventory for audit and emit no memories. This candidate uses
+no prior draft outputs and creates no new memory wording: rendered content is
+an exact contiguous source slice. That guarantee does not establish appropriate
+retention, complete qualifiers or authority. Review every selected and omitted
+meaning, including cases that returned a valid empty selection.
+
+Provider counters record output and model-loading cost separately. This is one
+stochastic reused-development repetition, not a fresh held-out result. No target
+reconciliation, canonical-fact deduplication, durable writes or full-module/native
+acceptance is established. The candidate remains experimental and unadopted.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    str(p.relative_to(out)).replace('\\', '/'): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.rglob('*') if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'runtime': counts}))

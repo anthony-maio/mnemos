@@ -2,6 +2,13 @@
 
 ## Current evidence, September 20, 2026
 
+The September 21 [instructional-example comparison](../2026-09-21/source-instruction-examples-semantic-v14/README.md)
+has 46 runtime-valid outputs, 31 exact source excerpts and 13 changed outcomes
+relative to v13. It recovers a marker and removes some unsupported request
+references, but duplicates policy meaning and introduces a wrong uncertainty
+label/request reference on a standing policy. This mixed development result
+does not justify adoption or establish fresh quality acceptance.
+
 September 21: the [Gemma 27B comparison](../2026-09-21/source-classification-semantic-v12/README.md)
 finishes 46 cases with 43 structurally valid outputs, three failures and 34
 source-verified excerpts. It recovers a marker while introducing unwanted

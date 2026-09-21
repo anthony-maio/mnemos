@@ -807,9 +807,13 @@ The [v14 instructional-example comparison](../validation/2026-09-21/source-instr
 changes only the v13 prompt by adding three worked examples. All 46 paired
 offline calls preserve the complete role-bound schema and exact real source
 payload. The combined experimental suite passes 89 tests; formatting and Python
-3.10 module type checking pass. The prepared source is 179b189, with model
-execution now running against the unchanged original cases and rubrics. These
-examples target known development failure classes; this is not fresh acceptance.
+3.10 module type checking pass. The prepared source is 179b189. The
+[completed comparison](../validation/2026-09-21/source-instruction-examples-semantic-v14/README.md)
+has 46 runtime-valid outputs and 31 source-verified excerpts. Thirty-three
+outcomes match v13; the marker omission is repaired, but overlapping policy
+meaning and false uncertainty/request metadata remain. A standing policy also
+gains an incorrect uncertainty label. Candidate not adopted. These examples
+target known development failure classes; this is not fresh acceptance.
 
 ### T19 - Reconcile release, documentation, and research claims
 

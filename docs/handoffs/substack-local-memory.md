@@ -14,6 +14,13 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [worked-example comparison](../validation/2026-09-21/source-instruction-examples-semantic-v14/README.md)
+produces 46 valid outputs and 31 source-verified excerpts. It recovers a missing
+marker and removes several false request references, but repeats policy meaning
+and mislabels a standing policy as uncertainty. All original criteria remain;
+the candidate is unadopted. A prompt can improve one failure while creating
+another, even when every output is valid JSON and every word comes from a source.
+
 The [Gemma 27B comparison](../validation/2026-09-21/source-classification-semantic-v12/README.md)
 completed all 46 cases with 43 structurally valid outputs and three failures,
 including the initial provider retry exhaustion. Its 34 excerpts preserve source
