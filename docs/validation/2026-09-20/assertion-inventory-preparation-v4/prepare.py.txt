@@ -1,0 +1,59 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+from urllib.request import urlopen
+
+repo = Path.cwd()
+parent = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v3')
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v4')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+parent_digest = 'b1df7daae61fb5eaa3d2e143e868e101265dd69afd78186a2f6e8276167367e5'
+assert sha(parent / 'preparation.json') == parent_digest
+prep = json.loads((parent / 'preparation.json').read_bytes())
+for name, digest in prep['files'].items():
+    assert sha(parent / name) == digest
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+assert inputs['think'] is True
+inputs['think'] = False
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == prep['model']['digest']
+root.mkdir(exist_ok=False)
+for name in ('assertion_inventory.py', 'durability-rubric.json', 'durability-rubric-review.json',
+             'history-rubric.json', 'history-rubric-review.json'):
+    shutil.copyfile(parent / name, root / name)
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+runner = (parent / 'runner.py').read_text()
+needle = 'if __name__ == "__main__":\n    asyncio.run(main())'
+assert runner.count(needle) == 1
+guard = '''if __name__ == "__main__":
+    parent = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v3")
+    assert sha(parent / "preparation.json") == "b1df7daae61fb5eaa3d2e143e868e101265dd69afd78186a2f6e8276167367e5"
+    parent_state = json.loads((parent / "status.json").read_bytes())
+    if parent_state["status"] != "completed" or parent_state["processed"] != 46:
+        raise RuntimeError("Parent v3 experiment must complete all 46 cases before v4 generation")
+    assert parent_state["observations_sha256"] == sha(parent / "observations.jsonl")
+    (root / "parent-terminal-binding.json").write_text(json.dumps({
+        "preparation_sha256": sha(parent / "preparation.json"),
+        "observations_sha256": sha(parent / "observations.jsonl"),
+        "status_sha256": sha(parent / "status.json")}, indent=2) + "\\n")
+    asyncio.run(main())'''
+(root / 'runner.py').write_text(runner.replace(needle, guard))
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'parent_preparation_sha256': parent_digest,
+    'comparison': 'Same source-only qualified inventory v3, cases, rubrics, model digest, provider source, temperature, token budget and timeout. Only think changes from true to false in generation inputs. This also selects generate rather than chat in the frozen managed provider; treat it as a configuration/route comparison, not isolated reasoning causality.',
+    'criteria': 'Preserve original meanings and ambiguity notes. Review all 46 runtime and semantic outcomes; no selective retries, aggregate accuracy from parse counts, threshold relaxation or adoption from runtime validity.',
+    'limits': 'Reused unblinded development cases, one stochastic repetition. No fresh corpus, reconciliation, durable memory writes, full-module or host acceptance.',
+    'launch': 'External preparation digest required. Parent v3 must be completed with all 46 observations and matching terminal digest before any generation.'
+}, indent=2) + '\n')
+new_prep = {k: prep[k] for k in ('source_commit', 'source_files', 'candidate_commit', 'model', 'ollama_version', 'hardware_inventory')}
+new_prep.update(prepared_at=datetime.now(timezone.utc).isoformat(),
+                parent_preparation_sha256=parent_digest,
+                model_metadata_verified_now=model,
+                files={p.name: sha(p) for p in root.iterdir() if p.is_file()})
+(root / 'preparation.json').write_text(json.dumps(new_prep, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'started': False}))

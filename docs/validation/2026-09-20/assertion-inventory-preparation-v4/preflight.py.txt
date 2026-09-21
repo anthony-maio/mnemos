@@ -1,0 +1,57 @@
+from pathlib import Path
+import asyncio
+import hashlib
+import json
+import runpy
+import subprocess
+import sys
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v4')
+parent = root.with_name('mnemos-assertion-inventory-development-v3')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+sys.path.insert(0, str(root))
+child = runpy.run_path(str(root / 'runner.py'), run_name='offline_preflight')
+prior = runpy.run_path(str(parent / 'runner.py'), run_name='offline_preflight')
+assert {k for k in child['inputs'] if child['inputs'][k] != prior['inputs'][k]} == {'think'}
+assert child['inputs']['think'] is False and prior['inputs']['think'] is True
+assert sha(root / 'assertion_inventory.py') == sha(parent / 'assertion_inventory.py')
+
+class Offline:
+    supports_structured_output = True
+    async def predict(self, prompt, **kwargs):
+        assert 'EXISTING FACTS' not in prompt and 'cedar-quartz-118' not in prompt
+        assert kwargs['format']['$defs']['QualifiedAssertion']['properties']['source_id']['enum'] == [self.source_id]
+        self.request = {'prompt': prompt, 'kwargs': kwargs}
+        return '{"assertions":[]}'
+
+async def check():
+    digests = {}
+    for case in child['inputs']['cases']:
+        requests = []
+        for namespace in (prior, child):
+            provider = Offline()
+            provider.source_id = case['source']['id']
+            event = namespace['EpisodicEvent'].model_validate(case['source'])
+            result = await namespace['inventory_assertions']([event], provider)
+            assert result.assertions == []
+            requests.append(provider.request)
+        assert requests[0] == requests[1]
+        digests[case['id']] = hashlib.sha256(json.dumps(requests[0], sort_keys=True).encode()).hexdigest()
+    assert len(digests) == 46
+    return digests
+
+report = {'status': 'passed', 'model_generation_calls': 0, 'cases': 46,
+          'preparation_sha256': sha(root / 'preparation.json'),
+          'only_input_difference': 'think', 'same_prompt_and_schema': asyncio.run(check()),
+          'launch_checks': [],
+          'limits': 'Offline empty inventories establish binding and prompt parity, not semantic quality.'}
+for args, message in (([], 'externally supplied matching preparation digest'),
+                      (['wrong-digest'], 'externally supplied matching preparation digest'),
+                      ([sha(root / 'preparation.json')], 'Parent v3 experiment must complete all 46 cases')):
+    result = subprocess.run([sys.executable, str(root / 'runner.py'), *args], capture_output=True, text=True)
+    assert result.returncode != 0 and message in result.stderr, result.stderr
+    assert not (root / 'status.json').exists()
+    report['launch_checks'].append({'arguments': args, 'exit_code': result.returncode,
+                                    'expected_failure': message, 'model_generation_calls': 0})
+(root / 'offline-preflight.json').write_text(json.dumps(report, indent=2) + '\n')
+print(json.dumps({k: v for k, v in report.items() if k != 'same_prompt_and_schema'}))

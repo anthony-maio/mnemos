@@ -1,0 +1,57 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path.cwd()
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v4')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+prep = json.loads((root / 'preparation.json').read_bytes())
+assert not (root / 'status.json').exists()
+for name, digest in prep['files'].items():
+    assert sha(root / name) == digest
+report = json.loads((root / 'offline-preflight.json').read_bytes())
+assert report['status'] == 'passed' and report['cases'] == 46
+assert report['model_generation_calls'] == 0 and len(report['same_prompt_and_schema']) == 46
+assert report['preparation_sha256'] == sha(root / 'preparation.json')
+assert len(report['launch_checks']) == 3
+out = repo / 'docs/validation/2026-09-20/assertion-inventory-preparation-v4'
+out.mkdir(exist_ok=False)
+for path in root.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(repo / '.venv/preflight_assertion_inventory_v4.py', out / 'preflight.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Source-only inventory thinking-disabled comparison preparation
+
+This freezes the same 46 reused development cases and qualified-inventory v3
+candidate as the thinking-enabled Qwen3.5:9b experiment. Exact model digest,
+provider source, prompt, schema, case order, temperature 1.0, 8192 output tokens
+and 180-second timeout remain unchanged. The only generation-input difference
+is think=false. In the frozen managed provider this also changes chat to generate,
+so this is a configuration/route comparison, not isolated reasoning causality.
+The candidate contract remains v3; v4 identifies this experiment preparation.
+
+All 46 offline paired requests have identical prompts and schemas and valid
+source bindings. Missing/wrong external preparation digests fail. A correct
+digest also fails before generation while the parent experiment remains
+unfinished. The launcher requires all 46 parent cases completed and matching
+terminal observation bytes, then records that binding before starting.
+No inference was performed during this preparation or its preflight.
+
+The parent experiment remains unchanged. Review every original required and
+forbidden meaning, preserving ambiguity notes, runtime errors and unwanted
+retention. One stochastic repetition on reused unblinded cases cannot establish
+held-out accuracy, full-module benefit or general reliability. Existing targets
+remain absent; there is no reconciliation or durable write. No production
+default changes or adoption follow from parse success. Hardware/Ollama inventory
+is inherited from the bound parent preparation; model digest was checked again.
+
+Status: NOT STARTED. Start only after the unchanged parent run is terminal,
+using this archive's preparation digest. Do not retry only negative cases.
+''')
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'preparation_sha256': sha(root / 'preparation.json')}))

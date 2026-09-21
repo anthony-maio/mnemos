@@ -671,6 +671,14 @@ pass and the run is now active. Its model, thinking mode and prompt differ from
 the 14B experiment; no single-component causal claim or fresh held-out exposure
 is implied. No production default changed.
 
+The [thinking-disabled follow-up preparation](../validation/2026-09-20/assertion-inventory-preparation-v4/README.md)
+freezes the same 46 cases, v3 candidate, model and generation inputs except
+think=false. All offline paired prompts and schemas match. The launcher rejects
+missing/wrong digests and an unfinished parent before generation. It also binds
+the parent's terminal observations. This changes the provider route as well as
+thinking configuration, so no isolated reasoning claim is planned. The follow-up
+is NOT STARTED and does not change the current run, rubrics or production defaults.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Latest fully verified source [995d9c2](../validation/2026-09-20/spreading-budget-source-checkpoint-v1/README.md)
