@@ -255,7 +255,9 @@ async def test_unrelated_extraction_survives_suppressed_proposal(tmp_path):
                 context=context,
                 occurred_at=datetime.now(timezone.utc),
                 role="assistant",
-                content="The release label is cedar-otter.",
+                # A bare copy of the forgotten text is removed by the forget
+                # itself; a mixed message reaches per-proposal suppression.
+                content="The release label is cedar-otter. Keep river-slate in release notes.",
                 source_kind="codex_hook",
             )
         )

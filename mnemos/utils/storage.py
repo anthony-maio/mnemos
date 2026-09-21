@@ -30,7 +30,7 @@ import struct
 import threading
 from uuid import uuid4
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
@@ -614,6 +614,16 @@ class MemoryStore(ABC):
         *,
         fact_id: str | None = None,
         canonical_key: str | None = None,
+        source_event_id: str | None = None,
+    ) -> bool:
+        raise NotImplementedError("This storage backend does not support suppressions.")
+
+    def suppression_blocks(
+        self,
+        *,
+        canonical_keys: Iterable[str],
+        occurred_at: datetime,
+        explicit: bool,
         source_event_id: str | None = None,
     ) -> bool:
         raise NotImplementedError("This storage backend does not support suppressions.")
@@ -1293,7 +1303,9 @@ class SQLiteStore(MemoryStore):
             canonical_key TEXT,
             source_event_id TEXT,
             reason TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            superseded_at TEXT,
+            superseded_by_event_id TEXT
         );
     """
 
@@ -1625,6 +1637,8 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
+        self._ensure_column("memory_suppressions", "superseded_at", "TEXT")
+        self._ensure_column("memory_suppressions", "superseded_by_event_id", "TEXT")
         self._conn.execute("""CREATE TABLE IF NOT EXISTS source_review_records (
             job_id TEXT NOT NULL,
             candidate_index INTEGER NOT NULL,
@@ -1680,6 +1694,14 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_fact_id "
             "ON memory_suppressions(fact_id, reason) WHERE fact_id IS NOT NULL"
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_key "
+            "ON memory_suppressions(canonical_key) WHERE canonical_key IS NOT NULL"
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_source "
+            "ON memory_suppressions(source_event_id) WHERE source_event_id IS NOT NULL"
         )
         self._conn.execute(self._CREATE_CHUNK_ACCESS_SQL)
         if self._meta_value("migration_8") != "applied":
@@ -3005,51 +3027,50 @@ class SQLiteStore(MemoryStore):
                 accepted_by_input: dict[str, str] = {}
                 accepted_chunks: list[MemoryChunk] = []
                 suppressed_ids: set[str] = set()
-                source_role_row = self._conn.execute(
-                    "SELECT role, content FROM episodic_events WHERE id=?",
-                    (json.loads(lease_row[1]).get("event_id"),),
-                ).fetchone()
-                source_is_assistant = (
-                    source_role_row is not None and str(source_role_row[0]) == "assistant"
+                lease_kind = str(lease_row[0])
+                source_id = leased_payload.get("event_id")
+                source_row = (
+                    self._conn.execute(
+                        "SELECT role, content, occurred_at FROM episodic_events WHERE id=?",
+                        (source_id,),
+                    ).fetchone()
+                    if isinstance(source_id, str)
+                    else None
                 )
-                source_contains_forgotten_id = source_is_assistant and self._contains_forgotten_id(
-                    str(source_role_row[1])
+                source_role = str(source_row[0]) if source_row is not None else ""
+                source_is_assistant = source_role == "assistant"
+                source_contains_forgotten_id = (
+                    source_row is not None
+                    and source_is_assistant
+                    and self._contains_forgotten_id(str(source_row[1]))
                 )
+                # Forget ordering applies to every job kind. The leased source's
+                # occurrence time decides whether it predates a forget.
+                source_occurred_at = (
+                    self._parse_dt(str(source_row[2])) if source_row is not None else None
+                ) or committed_at
+                source_blocked = self._source_suppressed_locked(
+                    source_id if isinstance(source_id, str) else None
+                )
+                supersede_ids: list[str] = []
                 for index, candidate in enumerate(fact_chunks):
-                    if lease_row[0] == "extract":
-                        if source_contains_forgotten_id or (
-                            source_is_assistant and self._contains_forgotten_id(candidate.content)
-                        ):
-                            suppressed_ids.add(candidate.id)
-                            continue
-                        canonical = compute_canonical_key(
-                            candidate.content,
-                            candidate.metadata.get("scope", "unassigned"),
-                            candidate.metadata.get("scope_id"),
-                            candidate.metadata.get("user_profile_id"),
-                        )
-                        source_id = json.loads(lease_row[1]).get("event_id")
-                        suppression_keys = [canonical]
-                        source_role_row = self._conn.execute(
-                            "SELECT role FROM episodic_events WHERE id=?", (source_id,)
-                        ).fetchone()
-                        source_role = str(source_role_row[0]) if source_role_row else ""
-                        prefix = f"{source_role.capitalize()} reported: "
-                        if source_role != "user" and candidate.content.startswith(prefix):
-                            suppression_keys.append(
-                                compute_canonical_key(
-                                    candidate.content[len(prefix) :],
-                                    candidate.metadata.get("scope", "unassigned"),
-                                    candidate.metadata.get("scope_id"),
-                                    candidate.metadata.get("user_profile_id"),
-                                )
-                            )
-                        if any(
-                            self.is_suppressed(canonical_key=key, source_event_id=source_id)
-                            for key in suppression_keys
-                        ):
-                            suppressed_ids.add(candidate.id)
-                            continue
+                    if lease_kind == "extract" and (
+                        source_contains_forgotten_id
+                        or (source_is_assistant and self._contains_forgotten_id(candidate.content))
+                    ):
+                        suppressed_ids.add(candidate.id)
+                        continue
+                    if source_blocked:
+                        suppressed_ids.add(candidate.id)
+                        continue
+                    blocked, supersede = self._content_suppression_locked(
+                        self._suppression_keys(candidate, source_role),
+                        occurred_at=source_occurred_at,
+                        explicit=lease_kind in {"remember", "correct"},
+                    )
+                    if blocked:
+                        suppressed_ids.add(candidate.id)
+                        continue
                     prior = self.get(candidate.id)
                     versioned = (expected_version is not None and index == 0) or candidate.id in (
                         expected_versions or {}
@@ -3067,11 +3088,23 @@ class SQLiteStore(MemoryStore):
                     accepted_chunks.append(accepted)
                     accepted_by_input[candidate.id] = accepted.id
                     accepted_by_input[accepted.id] = accepted.id
+                    supersede_ids.extend(supersede)
                     if prior is not None and (
                         prior.content != accepted.content or prior.embedding != accepted.embedding
                     ):
                         self._invalidate_graph_derivation_locked({accepted.id})
 
+                if supersede_ids:
+                    # An explicit re-teach that commits lifts the forget for later
+                    # observations of the same content, never for earlier ones.
+                    self._conn.executemany(
+                        "UPDATE memory_suppressions SET superseded_at=?, superseded_by_event_id=? "
+                        "WHERE suppression_id=? AND superseded_at IS NULL",
+                        [
+                            (committed_at.isoformat(), source_id, suppression_id)
+                            for suppression_id in dict.fromkeys(supersede_ids)
+                        ],
+                    )
                 if suppressed_ids and not accepted_chunks:
                     result_payload["decision"] = "review_pending" if reviews else "suppressed"
                 for item in evidence or []:
@@ -3215,20 +3248,28 @@ class SQLiteStore(MemoryStore):
         """Atomically check suppression and persist the event and its job.
 
         Source aliases must come from the caller's verified host identity.
-        A fresh explicit write may override canonical suppression, but neither
-        an explicit write nor automatic capture may replay a forgotten source.
+        Content suppression follows forget ordering: a fresh explicit write
+        may supersede it, and automatic capture resumes only once it has been
+        superseded. Neither may replay a forgotten source.
         """
         source_identity_key = _source_identity_key(event)
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             self._transaction_active = True
             try:
-                canonical = compute_canonical_key(
-                    event.content,
-                    event.scope,
-                    event.scope_id,
-                    event.metadata.get("user_profile_id"),
-                )
+                profile = event.metadata.get("user_profile_id")
+                content_keys = [
+                    compute_canonical_key(event.content, event.scope, event.scope_id, profile)
+                ]
+                if event.role != "user":
+                    content_keys.append(
+                        compute_canonical_key(
+                            f"{event.role.capitalize()} reported: {event.content}",
+                            event.scope,
+                            event.scope_id,
+                            profile,
+                        )
+                    )
                 if (
                     job.kind == "extract"
                     and event.role == "assistant"
@@ -3236,15 +3277,17 @@ class SQLiteStore(MemoryStore):
                 ):
                     self._conn.commit()
                     return None
+                content_blocked, _ = self._content_suppression_locked(
+                    content_keys,
+                    occurred_at=event.occurred_at,
+                    explicit=job.kind in {"remember", "correct"},
+                )
                 if (
                     any(
-                        self.is_suppressed(source_event_id=source_id)
+                        self._source_suppressed_locked(source_id)
                         for source_id in (event.id, *suppression_source_ids)
                     )
-                    or (
-                        job.kind not in {"remember", "correct"}
-                        and self.is_suppressed(canonical_key=canonical)
-                    )
+                    or content_blocked
                     or (
                         job.kind == "correct"
                         and self.is_suppressed(fact_id=job.payload.get("target_fact_id"))
@@ -3951,6 +3994,8 @@ class SQLiteStore(MemoryStore):
         *,
         expected_version: int,
         preserve_shared_sources: bool = False,
+        record_suppressions: bool = True,
+        remove_raw_copies: bool = False,
     ) -> bool:
         chunk = self.get(fact_id)
         if chunk is None:
@@ -3977,35 +4022,34 @@ class SQLiteStore(MemoryStore):
             ).fetchall()
             if row[0]
         )
-        keys = {
-            chunk.canonical_key
-            or compute_canonical_key(
-                chunk.content,
-                chunk.metadata.get("scope", "unassigned"),
-                chunk.metadata.get("scope_id"),
-                chunk.metadata.get("user_profile_id"),
-            )
-        }
+        scope = chunk.metadata.get("scope", "unassigned")
+        scope_id = chunk.metadata.get("scope_id")
+        profile = chunk.metadata.get("user_profile_id")
+        current_key = chunk.canonical_key or compute_canonical_key(
+            chunk.content, scope, scope_id, profile
+        )
+        forgotten_texts = {current_key: chunk.content}
         for revision in self.list_fact_revisions(fact_id):
-            keys.add(
-                compute_canonical_key(
-                    revision.content,
-                    chunk.metadata.get("scope", "unassigned"),
-                    chunk.metadata.get("scope_id"),
-                    chunk.metadata.get("user_profile_id"),
-                )
-            )
+            key = compute_canonical_key(revision.content, scope, scope_id, profile)
+            if key in forgotten_texts:
+                continue
+            # An older wording that another live fact asserts independently is
+            # not what the user forgot. Suppressing it would starve that fact of
+            # evidence and delete it on restore.
+            if self._conn.execute(
+                "SELECT 1 FROM memory_chunks WHERE canonical_key=? AND id != ? LIMIT 1",
+                (key, fact_id),
+            ).fetchone():
+                continue
+            forgotten_texts[key] = revision.content
         stamp = datetime.now(timezone.utc).isoformat()
-        for key in keys:
-            self._conn.execute(
-                "INSERT INTO memory_suppressions VALUES (?, ?, ?, NULL, 'explicit_forget', ?)",
-                (str(uuid4()), fact_id, key, stamp),
-            )
-        for absorbed_id in chunk.metadata.get("absorbed_captured_ids", []):
-            self._conn.execute(
-                "INSERT INTO memory_suppressions VALUES (?, ?, NULL, NULL, 'explicit_forget', ?)",
-                (str(uuid4()), absorbed_id, stamp),
-            )
+        if record_suppressions:
+            for key in forgotten_texts:
+                self._insert_suppression_locked(
+                    fact_id=fact_id, canonical_key=key, created_at=stamp
+                )
+            for absorbed_id in chunk.metadata.get("absorbed_captured_ids", []):
+                self._insert_suppression_locked(fact_id=absorbed_id, created_at=stamp)
         for event_id in event_ids:
             shared = (
                 preserve_shared_sources
@@ -4014,22 +4058,16 @@ class SQLiteStore(MemoryStore):
                     (event_id, fact_id),
                 ).fetchone()
             )
-            self._conn.execute(
-                "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
-                (str(uuid4()), fact_id, event_id, stamp),
-            )
+            if record_suppressions:
+                self._insert_suppression_locked(
+                    fact_id=fact_id, source_event_id=event_id, created_at=stamp
+                )
             if not shared:
                 self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
                 self._conn.execute("DELETE FROM fact_evidence WHERE source_event_id=?", (event_id,))
-                self._conn.execute(
-                    "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
-                    "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
-                    "payload=json_remove(payload, '$.content') "
-                    "WHERE json_extract(payload, '$.event_id')=? OR EXISTS ("
-                    "SELECT 1 FROM json_each(memory_jobs.payload, '$.evidence_ids') "
-                    "WHERE value=?)",
-                    (json.dumps({"decision": "forgotten"}), stamp, event_id, event_id),
-                )
+                self._complete_forgotten_jobs_locked(event_id, stamp)
+        if remove_raw_copies:
+            self._forget_raw_copies_locked(forgotten_texts, chunk=chunk, stamp=stamp)
         self._conn.execute(
             "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
             "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
@@ -4052,6 +4090,64 @@ class SQLiteStore(MemoryStore):
         self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (fact_id,))
         return True
 
+    def _forget_raw_copies_locked(
+        self, forgotten_texts: dict[str, str], *, chunk: MemoryChunk, stamp: str
+    ) -> None:
+        """Remove pipeline copies of forgotten wording that no remaining fact cites.
+
+        A copy is a deferred provisional capture, or an event whose job can
+        still run: pending, failed or exhausted. Such copies would otherwise
+        keep the text until retention and feed it back into later prediction
+        prompts. Copies whose job is leased are left to the commit-time
+        ordering check, which records them as suppressed without revoking a
+        live worker's lease. Events outside the pipeline are left alone.
+        """
+        scope = chunk.metadata.get("scope", "unassigned")
+        scope_id = chunk.metadata.get("scope_id")
+        profile = chunk.metadata.get("user_profile_id")
+        normalized: set[str] = set()
+        for text in forgotten_texts.values():
+            normalized.add(normalize_memory_text(text))
+            attributed = re.match(r"(?:User|Assistant|Tool|System) reported: ", text)
+            if attributed:
+                normalized.add(normalize_memory_text(text[attributed.end() :]))
+        cutoff = cast(datetime, self._parse_dt(stamp))
+        placeholders = ",".join("?" for _ in normalized)
+        rows = self._conn.execute(
+            f"""SELECT id, role, content, occurred_at, metadata FROM episodic_events AS e
+                WHERE scope=? AND scope_id IS ? AND normalized_content IN ({placeholders})
+                  AND NOT EXISTS (SELECT 1 FROM fact_evidence WHERE source_event_id=e.id)
+                  AND NOT EXISTS (
+                      SELECT 1 FROM memory_jobs
+                      WHERE status='leased' AND json_extract(payload, '$.event_id')=e.id
+                  )
+                  AND (
+                      e.status='deferred'
+                      OR EXISTS (
+                          SELECT 1 FROM memory_jobs
+                          WHERE status IN ('pending', 'failed', 'exhausted')
+                            AND json_extract(payload, '$.event_id')=e.id
+                      )
+                  )""",
+            (scope, scope_id, *normalized),
+        ).fetchall()
+        for event_id, role, content, occurred_at, raw_metadata in rows:
+            if json.loads(raw_metadata or "{}").get("user_profile_id") != profile:
+                continue
+            occurred = self._parse_dt(str(occurred_at))
+            if occurred is None or occurred > cutoff:
+                continue
+            text = str(content)
+            spoken = text if role == "user" else f"{str(role).capitalize()} reported: {text}"
+            event_keys = {
+                compute_canonical_key(text, scope, scope_id, profile),
+                compute_canonical_key(spoken, scope, scope_id, profile),
+            }
+            if event_keys.isdisjoint(forgotten_texts):
+                continue
+            self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
+            self._complete_forgotten_jobs_locked(str(event_id), stamp)
+
     def _suppress_related_source_locked(self, source_event_id: str, *, fact_id: str) -> None:
         event = self.get_episodic_event(source_event_id)
         if event is None:
@@ -4061,23 +4157,14 @@ class SQLiteStore(MemoryStore):
             "SELECT 1 FROM fact_evidence WHERE source_event_id=? AND fact_id != ? LIMIT 1",
             (source_event_id, fact_id),
         ).fetchone()
-        self._conn.execute(
-            "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
-            (str(uuid4()), fact_id, source_event_id, stamp),
+        self._insert_suppression_locked(
+            fact_id=fact_id, source_event_id=source_event_id, created_at=stamp
         )
         if shared:
             raise ValueError("Source selection would remove an unselected derived fact")
         self._conn.execute("DELETE FROM episodic_events WHERE id=?", (source_event_id,))
         self._conn.execute("DELETE FROM fact_evidence WHERE source_event_id=?", (source_event_id,))
-        self._conn.execute(
-            "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
-            "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
-            "payload=json_remove(payload, '$.content') "
-            "WHERE json_extract(payload, '$.event_id')=? OR EXISTS ("
-            "SELECT 1 FROM json_each(memory_jobs.payload, '$.evidence_ids') "
-            "WHERE value=?)",
-            (json.dumps({"decision": "forgotten"}), stamp, source_event_id, source_event_id),
-        )
+        self._complete_forgotten_jobs_locked(source_event_id, stamp)
 
     def forget_related(
         self,
@@ -4242,7 +4329,10 @@ class SQLiteStore(MemoryStore):
             self._transaction_active = True
             try:
                 forgotten = self._forget_fact_locked(
-                    fact_id, expected_version=expected_version, preserve_shared_sources=False
+                    fact_id,
+                    expected_version=expected_version,
+                    preserve_shared_sources=False,
+                    remove_raw_copies=True,
                 )
                 if not forgotten:
                     self._conn.rollback()
@@ -4255,6 +4345,97 @@ class SQLiteStore(MemoryStore):
             finally:
                 self._transaction_active = False
 
+    def enforce_suppressions(self) -> dict[str, int]:
+        """Apply the stored forget ordering to every row, as after a restore.
+
+        Removal records no new suppressions: a restored store must reach the
+        live store's decisions, not widen them.
+        """
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                removed_facts = 0
+                for chunk in self.get_all():
+                    if self._fact_blocked_locked(chunk) and self._forget_fact_locked(
+                        chunk.id, expected_version=chunk.version, record_suppressions=False
+                    ):
+                        removed_facts += 1
+                removed_events = self._remove_blocked_events_locked()
+                self._conn.commit()
+                return {"facts": removed_facts, "events": removed_events}
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                self._transaction_active = False
+
+    def _fact_blocked_locked(self, chunk: MemoryChunk) -> bool:
+        if self._conn.execute(
+            "SELECT 1 FROM memory_suppressions WHERE fact_id=? LIMIT 1", (chunk.id,)
+        ).fetchone():
+            return True
+        key = chunk.canonical_key or compute_canonical_key(
+            chunk.content,
+            chunk.metadata.get("scope", "unassigned"),
+            chunk.metadata.get("scope_id"),
+            chunk.metadata.get("user_profile_id"),
+        )
+        blocked, _ = self._content_suppression_locked(
+            [key], occurred_at=chunk.last_observed_at or chunk.created_at, explicit=False
+        )
+        return blocked
+
+    def _remove_blocked_events_locked(self) -> int:
+        stamp = datetime.now(timezone.utc).isoformat()
+        self._conn.execute(
+            "UPDATE memory_jobs SET status='completed', "
+            'result=\'{"decision":"suppressed"}\', lease_owner=NULL, lease_token=NULL, '
+            "lease_until=NULL WHERE json_extract(payload, '$.event_id') IN "
+            "(SELECT source_event_id FROM memory_suppressions WHERE source_event_id IS NOT NULL)"
+        )
+        removed = int(
+            self._conn.execute(
+                "DELETE FROM episodic_events WHERE id IN "
+                "(SELECT source_event_id FROM memory_suppressions "
+                "WHERE source_event_id IS NOT NULL)"
+            ).rowcount
+        )
+        suppressed_keys = {
+            str(row[0])
+            for row in self._conn.execute(
+                "SELECT canonical_key FROM memory_suppressions WHERE canonical_key IS NOT NULL"
+            )
+        }
+        if not suppressed_keys:
+            return removed
+        rows = self._conn.execute(
+            """SELECT id, role, content, scope, scope_id, occurred_at, metadata
+               FROM episodic_events AS e
+               WHERE NOT EXISTS (SELECT 1 FROM fact_evidence WHERE source_event_id=e.id)"""
+        ).fetchall()
+        for event_id, role, content, scope, scope_id, occurred_at, raw_metadata in rows:
+            metadata = json.loads(raw_metadata or "{}")
+            profile = metadata.get("user_profile_id")
+            text = str(content)
+            spoken = text if role == "user" else f"{str(role).capitalize()} reported: {text}"
+            keys = {
+                compute_canonical_key(text, str(scope), scope_id, profile),
+                compute_canonical_key(spoken, str(scope), scope_id, profile),
+            }
+            if keys.isdisjoint(suppressed_keys):
+                continue
+            blocked, _ = self._content_suppression_locked(
+                keys,
+                occurred_at=self._parse_dt(str(occurred_at)) or datetime.now(timezone.utc),
+                explicit=bool(metadata.get("explicit_remember")),
+            )
+            if blocked:
+                self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
+                self._complete_forgotten_jobs_locked(str(event_id), stamp)
+                removed += 1
+        return removed
+
     def _validate_review_locked(self, review: SourceReviewReference) -> None:
         event = self.get_episodic_event(review.source_id)
         if event is None or self.is_suppressed(source_event_id=review.source_id):
@@ -4263,11 +4444,14 @@ class SQLiteStore(MemoryStore):
         if review.target_fact_id is not None and self.is_suppressed(fact_id=review.target_fact_id):
             raise ValueError("Review target is suppressed")
         excerpt = review.resolve_source(event, target=target)
-        if self.is_suppressed(
-            canonical_key=compute_canonical_key(
-                excerpt, review.scope, review.scope_id, review.user_profile_id
-            )
-        ) or (event.role == "assistant" and self._contains_forgotten_id(event.content)):
+        excerpt_blocked, _ = self._content_suppression_locked(
+            [compute_canonical_key(excerpt, review.scope, review.scope_id, review.user_profile_id)],
+            occurred_at=event.occurred_at,
+            explicit=False,
+        )
+        if excerpt_blocked or (
+            event.role == "assistant" and self._contains_forgotten_id(event.content)
+        ):
             raise ValueError("Review source assertion is suppressed")
 
     def _validate_resolution_locked(
@@ -4620,6 +4804,104 @@ class SQLiteStore(MemoryStore):
                 tuple(value for _, value in selectors),
             ).fetchone()
         return row is not None
+
+    def suppression_blocks(
+        self,
+        *,
+        canonical_keys: Iterable[str],
+        occurred_at: datetime,
+        explicit: bool,
+        source_event_id: str | None = None,
+    ) -> bool:
+        """Report whether forget ordering blocks a write, without superseding anything."""
+        with self._lock:
+            if self._source_suppressed_locked(source_event_id):
+                return True
+            blocked, _ = self._content_suppression_locked(
+                canonical_keys, occurred_at=occurred_at, explicit=explicit
+            )
+            return blocked
+
+    def _source_suppressed_locked(self, source_event_id: str | None) -> bool:
+        if not source_event_id:
+            return False
+        row = self._conn.execute(
+            "SELECT 1 FROM memory_suppressions WHERE source_event_id=? LIMIT 1",
+            (source_event_id,),
+        ).fetchone()
+        return row is not None
+
+    def _content_suppression_locked(
+        self, canonical_keys: Iterable[str], *, occurred_at: datetime, explicit: bool
+    ) -> tuple[bool, list[str]]:
+        """Apply forget ordering to the content keys of one write.
+
+        Evidence that occurred at or before the latest suppression of a key is
+        always blocked. Later evidence stays blocked while any suppression of
+        the key is active, unless it arrives as an explicit remember or
+        correction. The caller supersedes the returned rows once that write
+        commits.
+        """
+        if occurred_at.tzinfo is None:
+            occurred_at = occurred_at.replace(tzinfo=timezone.utc)
+        supersede: list[str] = []
+        for key in dict.fromkeys(key for key in canonical_keys if key):
+            rows = self._conn.execute(
+                "SELECT suppression_id, created_at, superseded_at FROM memory_suppressions "
+                "WHERE canonical_key=?",
+                (key,),
+            ).fetchall()
+            if not rows:
+                continue
+            latest = max(cast(datetime, self._parse_dt(str(row[1]))) for row in rows)
+            if occurred_at <= latest:
+                return True, []
+            active = [str(row[0]) for row in rows if row[2] is None]
+            if active and not explicit:
+                return True, []
+            supersede.extend(active)
+        return False, supersede
+
+    @staticmethod
+    def _suppression_keys(candidate: MemoryChunk, source_role: str) -> list[str]:
+        """Content keys for a candidate fact, with and without speaker attribution."""
+        scope = candidate.metadata.get("scope", "unassigned")
+        scope_id = candidate.metadata.get("scope_id")
+        profile = candidate.metadata.get("user_profile_id")
+        keys = [compute_canonical_key(candidate.content, scope, scope_id, profile)]
+        prefix = f"{source_role.capitalize()} reported: "
+        if source_role and source_role != "user" and candidate.content.startswith(prefix):
+            keys.append(
+                compute_canonical_key(candidate.content[len(prefix) :], scope, scope_id, profile)
+            )
+        return keys
+
+    def _insert_suppression_locked(
+        self,
+        *,
+        fact_id: str | None,
+        created_at: str,
+        canonical_key: str | None = None,
+        source_event_id: str | None = None,
+        reason: str = "explicit_forget",
+    ) -> None:
+        self._conn.execute(
+            """INSERT INTO memory_suppressions
+               (suppression_id, fact_id, canonical_key, source_event_id, reason, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (str(uuid4()), fact_id, canonical_key, source_event_id, reason, created_at),
+        )
+
+    def _complete_forgotten_jobs_locked(self, event_id: str, stamp: str) -> None:
+        self._conn.execute(
+            "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+            "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
+            "payload=json_remove(payload, '$.content') "
+            "WHERE json_extract(payload, '$.event_id')=? OR EXISTS ("
+            "SELECT 1 FROM json_each(memory_jobs.payload, '$.evidence_ids') "
+            "WHERE value=?)",
+            (json.dumps({"decision": "forgotten"}), stamp, event_id, event_id),
+        )
 
     def _contains_forgotten_id(self, content: str) -> bool:
         """Match exact explicitly forgotten IDs without exposing tombstones.

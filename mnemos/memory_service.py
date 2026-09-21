@@ -219,11 +219,16 @@ class LocalMemoryService:
                     "status": "rejected",
                     "reason": "Claude scoped identity cannot be verified",
                 }
+        # The transactional capture below also checks the attributed wording of
+        # non-user events, after legacy identity handling has run.
         canonical = compute_canonical_key(
             safety.content, scope, metadata["scope_id"], event.context.user_profile_id
         )
-        if self.engine.store.is_suppressed(source_event_id=key) or (
-            not explicit and self.engine.store.is_suppressed(canonical_key=canonical)
+        if self.engine.store.suppression_blocks(
+            canonical_keys=[canonical],
+            occurred_at=event.occurred_at.astimezone(timezone.utc),
+            explicit=explicit,
+            source_event_id=key,
         ):
             return {
                 "schema_version": 1,
@@ -599,8 +604,12 @@ class LocalMemoryService:
             raw_canonical_key = compute_canonical_key(
                 raw_safe.content, scope, event.scope_id, context.user_profile_id
             )
-            if job.kind == "extract" and self.engine.store.is_suppressed(
-                canonical_key=raw_canonical_key, source_event_id=event.id
+            explicit_write = job.kind in {"remember", "correct"}
+            if self.engine.store.suppression_blocks(
+                canonical_keys=[raw_canonical_key],
+                occurred_at=event.occurred_at,
+                explicit=explicit_write,
+                source_event_id=event.id,
             ):
                 decision = "suppressed"
                 continue
@@ -616,8 +625,11 @@ class LocalMemoryService:
             if canonical_key in seen_keys:
                 continue
             seen_keys.add(canonical_key)
-            if job.kind == "extract" and self.engine.store.is_suppressed(
-                canonical_key=canonical_key, source_event_id=event.id
+            if self.engine.store.suppression_blocks(
+                canonical_keys=[canonical_key],
+                occurred_at=event.occurred_at,
+                explicit=explicit_write,
+                source_event_id=event.id,
             ):
                 decision = "suppressed"
                 continue

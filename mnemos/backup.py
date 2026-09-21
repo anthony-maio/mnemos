@@ -117,28 +117,28 @@ def restore_backup(
         restored = SQLiteStore(str(snapshot))
         try:
             if current_store is not None:
+                columns = (
+                    "suppression_id, fact_id, canonical_key, source_event_id, reason, "
+                    "created_at, superseded_at, superseded_by_event_id"
+                )
                 with current_store._lock:
                     rows = current_store._conn.execute(
-                        "SELECT * FROM memory_suppressions"
+                        f"SELECT {columns} FROM memory_suppressions"
                     ).fetchall()
+                # Supersession only moves forward, so a row superseded in either
+                # copy stays superseded after the merge.
                 restored._conn.executemany(
-                    "INSERT OR IGNORE INTO memory_suppressions VALUES (?, ?, ?, ?, ?, ?)", rows
+                    f"""INSERT INTO memory_suppressions ({columns})
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(suppression_id) DO UPDATE SET
+                          superseded_at=COALESCE(superseded_at, excluded.superseded_at),
+                          superseded_by_event_id=COALESCE(
+                              superseded_by_event_id, excluded.superseded_by_event_id
+                          )""",
+                    rows,
                 )
                 restored._conn.commit()
-                for chunk in restored.get_all():
-                    if restored.is_suppressed(fact_id=chunk.id, canonical_key=chunk.canonical_key):
-                        restored.forget_fact(chunk.id, expected_version=chunk.version)
-                restored._conn.execute(
-                    "DELETE FROM episodic_events WHERE id IN "
-                    "(SELECT source_event_id FROM memory_suppressions WHERE source_event_id IS NOT NULL)"
-                )
-                restored._conn.execute(
-                    "UPDATE memory_jobs SET status='completed', "
-                    'result=\'{"decision":"suppressed"}\', lease_owner=NULL, lease_token=NULL, lease_until=NULL '
-                    "WHERE json_extract(payload, '$.event_id') IN "
-                    "(SELECT source_event_id FROM memory_suppressions WHERE source_event_id IS NOT NULL)"
-                )
-                restored._conn.commit()
+                restored.enforce_suppressions()
             _integrity(restored._conn)
             restored._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         finally:
