@@ -16,6 +16,12 @@ from mnemos.client import MnemosClient, ServiceClientError
 from mnemos.service import MnemosService, _write_private_json
 
 
+@pytest.fixture(autouse=True)
+def enable_default_autostart(monkeypatch: pytest.MonkeyPatch) -> None:
+    # These tests exercise the default launcher path; each one replaces Popen.
+    monkeypatch.setenv("MNEMOS_AUTO_START", "1")
+
+
 class RecordingDispatcher:
     def __init__(self) -> None:
         self.calls: list[tuple[str, dict[str, Any]]] = []

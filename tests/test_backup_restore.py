@@ -19,6 +19,8 @@ async def test_offline_reindex_requires_exclusive_owner_and_backs_up_activation(
     from mnemos.settings import AppSettings, save_settings, load_settings
     from mnemos.runtime import embedding_identity, build_mnemos_config_from_settings
 
+    monkeypatch.delenv("MNEMOS_SQLITE_PATH", raising=False)  # the config names the database
+
     database = tmp_path / "memory.sqlite"
     config = tmp_path / "mnemos.toml"
     settings = AppSettings(

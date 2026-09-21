@@ -233,7 +233,7 @@ provider = "openrouter"
 
 
 def test_persistent_env_fallback_resolves_registry_references_without_process_env(
-    monkeypatch, tmp_path: Path
+    monkeypatch, tmp_path: Path, real_persistent_env: None
 ) -> None:
     config_path = tmp_path / "mnemos.toml"
     config_path.write_text(

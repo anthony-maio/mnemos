@@ -89,6 +89,7 @@ def test_mcp_build_config_reads_governance_env(monkeypatch: pytest.MonkeyPatch) 
 def test_mcp_builders_use_mnemos_config_path(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    monkeypatch.delenv("MNEMOS_SQLITE_PATH", raising=False)  # the config names the database
     config_path = tmp_path / "mnemos.toml"
     db_path = tmp_path / "mcp-configured.db"
     config_path.write_text(

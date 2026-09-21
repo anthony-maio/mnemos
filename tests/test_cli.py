@@ -121,6 +121,7 @@ def test_build_engine_reads_memory_governance_env(
 def test_build_engine_uses_mnemos_config_path(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
+    monkeypatch.delenv("MNEMOS_SQLITE_PATH", raising=False)  # the config names the database
     config_path = tmp_path / "mnemos.toml"
     db_path = tmp_path / "configured.db"
     config_path.write_text(
