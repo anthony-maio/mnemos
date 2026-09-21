@@ -569,8 +569,11 @@ The history portion completed under the unchanged frozen protocol. The
 [terminal record](../validation/2026-09-20/extraction-durability-history-terminal-v3/README.md)
 preserves 92 calls with one production error. The [full semantic review](../validation/2026-09-20/extraction-durability-history-semantic-review-v3.md)
 rejects candidate adoption: required marker and open-consideration omissions
-and unwanted fictional retention remain. The prepared 14B comparison is now
-running separately on local Ollama; no fresh corpus calls have been made.
+and unwanted fictional retention remain. The [14B comparison](../validation/2026-09-20/extraction-model-comparison-14b-terminal-v1/README.md)
+completed all 92 calls without runtime errors. Its [semantic review](../validation/2026-09-20/extraction-model-comparison-14b-semantic-review-v1/README.md)
+rejects both prompts: marker loss, unsupported user-preference inference and
+unwanted retention persist. Candidate N08 also cites an unrelated source as
+support for an existing control fact. No fresh corpus calls have been made.
 
 The [fresh v2 corpus review](../validation/2026-09-20/fresh-corpus-semantic-review-v2/README.md)
 records ineffective corrections, incorrect old-source links, neutral state

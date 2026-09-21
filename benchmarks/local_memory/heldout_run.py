@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any, Mapping
 from urllib.request import Request, urlopen
 
+from mnemos.settings import OllamaProviderSettings
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
 from mnemos.runtime import embedding_task_contract
 
@@ -120,6 +121,9 @@ def run_heldout(
     module_challenge_path: Path | None = None,
     root: Path | None = None,
     think: OllamaThink = None,
+    temperature: float = 0.0,
+    max_tokens: int = 512,
+    timeout_seconds: float = 120.0,
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
@@ -127,6 +131,9 @@ def run_heldout(
     run_namespace: str = "t18-heldout",
     experiment_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
+    generation = OllamaProviderSettings(
+        temperature=temperature, max_tokens=max_tokens, timeout=timeout_seconds
+    )
     dataset = load_dataset(dataset_path)
     if len(dataset.heldout_sessions) < 200:
         raise ValueError("held-out dataset does not meet the 200-session minimum")
@@ -153,9 +160,9 @@ def run_heldout(
     model_metadata = model_records[model]
     embedding_metadata = model_records[embedding_model]
     options: dict[str, Any] = {
-        "temperature": 0.0,
-        "max_tokens": 512,
-        "timeout_seconds": 120.0,
+        "temperature": generation.temperature,
+        "max_tokens": generation.max_tokens,
+        "timeout_seconds": generation.timeout,
         "top_k": 5,
         "max_context_tokens": 1200,
         "runtime": environment_metadata(),
@@ -321,6 +328,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="append", dest="profiles")
     parser.add_argument("--think", type=parse_ollama_think, default=None)
+    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--max-tokens", type=int, default=512)
+    parser.add_argument("--timeout-seconds", type=float, default=120.0)
     parser.add_argument("--query-prefix", default="")
     parser.add_argument("--document-prefix", default="")
     parser.add_argument("--symmetric-prefix", default="")
@@ -336,6 +346,9 @@ def main(argv: list[str] | None = None) -> int:
         profile_names=set(args.profiles) if args.profiles else None,
         module_challenge_path=args.module_challenge_dataset,
         think=args.think,
+        temperature=args.temperature,
+        max_tokens=args.max_tokens,
+        timeout_seconds=args.timeout_seconds,
         query_prefix=args.query_prefix,
         document_prefix=args.document_prefix,
         symmetric_prefix=args.symmetric_prefix,

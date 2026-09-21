@@ -106,6 +106,14 @@ launcher is:
 python -m benchmarks.local_memory.heldout_run --model qwen3.5:9b --embedding-model nomic-embed-text:latest --think false --output-dir artifacts/heldout-new --work-dir artifacts/heldout-new-work
 ```
 
+The launcher accepts `--temperature`, `--max-tokens`, and `--timeout-seconds`.
+Their historical defaults remain 0.0, 512, and 120.0. Select and freeze these
+settings on development data before a new held-out run. Each value is validated
+before provider discovery, passed to the service factory, and included in the
+options hash. Changing any of them requires a new run binding; do not resume
+an old checkpoint with changed generation settings. These controls change no
+acceptance thresholds and do not establish model quality.
+
 It verifies live Ollama model digests, binds dataset/config/options/code hashes
 into checkpoints, and resumes one profile at a time. The earlier 42-hour
 estimate for 200 sessions, three repetitions, and seven profiles came from a
