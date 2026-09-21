@@ -679,6 +679,15 @@ the parent's terminal observations. This changes the provider route as well as
 thinking configuration, so no isolated reasoning claim is planned. The follow-up
 completed all 46 cases: 40 runtime-valid inventories and six validation rejections, with no empty-final failures. The [paired review](../validation/2026-09-20/assertion-inventory-comparison-v3-v4/README.md) preserves all results. Retention-intent errors, unsupported paraphrases and qualification loss remain; neither configuration is adopted. Original results, rubrics and production defaults are unchanged.
 
+The [source-grounded review v5 preparation](../validation/2026-09-20/assertion-review-preparation-v5/README.md)
+adds a separately recorded model pass over every frozen v4 draft, including all
+six rejected drafts. Its new candidate passes 70 focused tests, formatting and
+Python 3.10 type checks; all 46 offline bindings and both digest guards pass.
+The real-model run is now active. The reviewer is fallible and its schema-valid
+output is not a semantic verdict. Retention intent, supported wording, attached
+conditions and independent source coverage still require full descriptive review.
+No production default or earlier outcome changed.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 The [source distribution repair](../validation/2026-09-20/sdist-payload-exclusion-v1/README.md)
