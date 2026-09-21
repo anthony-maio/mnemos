@@ -21,7 +21,7 @@ from .source_selection import (
     render_selections,
     source_units,
 )
-from mnemos.memory_safety import MemoryWriteFirewall
+from mnemos.memory_safety import source_firewall
 from mnemos.types import EpisodicEvent
 from mnemos.utils.llm import LLMProvider
 
@@ -71,7 +71,7 @@ def render_classifications(
     sources = {e.id: e for e in events}
     seen = set()
     retained = []
-    firewall = MemoryWriteFirewall()
+    firewall = source_firewall()
     for item in inventory.selections:
         event = sources.get(item.source_id)
         if event is None:

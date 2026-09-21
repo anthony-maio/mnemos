@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Literal, cast
 
 from ..contracts import FactProposal
+from ..memory_safety import MemoryWriteFirewall, bound_source_firewall
 from ..source_review import SourceReviewReference
 from ..types import EpisodicEvent, MemoryChunk
 from ..utils.llm import LLMProvider
@@ -18,9 +19,26 @@ class SourceExtractionResult:
     proposals: list[FactProposal]
     reviews: list[SourceReviewReference]
     deferred_corrections: int
+    oversized_candidates: int = 0
 
 
 async def extract_source_bound(
+    events: list[EpisodicEvent],
+    targets: list[MemoryChunk],
+    provider: LLMProvider,
+    *,
+    allow_corrections: bool,
+    firewall: MemoryWriteFirewall | None = None,
+) -> SourceExtractionResult:
+    # Source checks must apply the policy capture used, or content stored
+    # under a non-default policy can never pass validation.
+    with bound_source_firewall(firewall or MemoryWriteFirewall()):
+        return await _extract_source_bound(
+            events, targets, provider, allow_corrections=allow_corrections
+        )
+
+
+async def _extract_source_bound(
     events: list[EpisodicEvent],
     targets: list[MemoryChunk],
     provider: LLMProvider,
@@ -74,5 +92,8 @@ async def extract_source_bound(
         reviews.append(review)
         deferred += 1
     return SourceExtractionResult(
-        proposals=proposals, reviews=reviews, deferred_corrections=deferred
+        proposals=proposals,
+        reviews=reviews,
+        deferred_corrections=deferred,
+        oversized_candidates=result.oversized_candidates,
     )

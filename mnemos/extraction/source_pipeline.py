@@ -15,7 +15,7 @@ from .source_classification import ClassifiedInventory
 from .source_instruction_ablation import classify_source_memories_without_uncertainty_example
 from .source_reconciliation import StagedReconciliation, reconcile_source_candidates
 from .source_selection import ExtractiveMemory, Kind
-from mnemos.contracts import FactProposal
+from mnemos.contracts import FACT_CONTENT_LIMIT, FactProposal
 from mnemos.source_review import SourceReviewReference
 from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider
@@ -45,6 +45,7 @@ class SourcePipelineResult(BaseModel):
     proposals: list[FactProposal]
     reviews: list[ReviewOutcome]
     review_references: list[SourceReviewReference] = Field(default_factory=list)
+    oversized_candidates: int = Field(default=0, ge=0)
 
 
 def _snapshot_events(events: list[EpisodicEvent]) -> list[EpisodicEvent]:
@@ -126,6 +127,13 @@ async def run_source_pipeline(
     )
     if events != original_events or targets != original_targets:
         raise ValueError("Pipeline inputs changed during classification")
+    # A slice longer than any fact can hold can never become one. Leave it out
+    # before reconciliation rather than failing every other candidate with it.
+    fitting = [
+        candidate for candidate in candidates if len(candidate.content) <= FACT_CONTENT_LIMIT
+    ]
+    oversized = len(candidates) - len(fitting)
+    candidates = fitting
 
     if not candidates:
         return SourcePipelineResult(
@@ -134,6 +142,7 @@ async def run_source_pipeline(
             reconciliations=[],
             proposals=[],
             reviews=[],
+            oversized_candidates=oversized,
         )
 
     reconciliation_events = _snapshot_events(original_events)
@@ -192,6 +201,7 @@ async def run_source_pipeline(
         proposals=proposals,
         reviews=reviews,
         review_references=references,
+        oversized_candidates=oversized,
     )
 
 

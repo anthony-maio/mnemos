@@ -16,7 +16,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from .assertion_inventory import Inventory, validate_inventory
-from mnemos.memory_safety import MemoryWriteFirewall
+from mnemos.memory_safety import source_firewall
 from mnemos.types import EpisodicEvent
 from mnemos.utils.llm import LLMProvider
 
@@ -100,7 +100,7 @@ def render_selections(
     sources = {event.id: event for event in events}
     memories = []
     seen = set()
-    firewall = MemoryWriteFirewall()
+    firewall = source_firewall()
     for selection in inventory.selections:
         event = sources.get(selection.source_id)
         if event is None:

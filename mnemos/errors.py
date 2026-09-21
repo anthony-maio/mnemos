@@ -45,9 +45,18 @@ class EventIdentityConflict(MnemosRejection):
     safe_message = "This event identity was already recorded with different content."
 
 
+class ContentTooLarge(MnemosRejection):
+    """An explicit memory is longer than a stored fact can hold."""
+
+    code = "content_too_large"
+    safe_message = (
+        "Explicit memories are limited to 10,000 characters. Store a shorter summary instead."
+    )
+
+
 REQUEST_REJECTIONS = {
     rejection.code: rejection.safe_message
-    for rejection in (MnemosRejection, VersionConflict, EventIdentityConflict)
+    for rejection in (MnemosRejection, VersionConflict, EventIdentityConflict, ContentTooLarge)
 }
 
 

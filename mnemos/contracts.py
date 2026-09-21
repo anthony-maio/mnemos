@@ -151,9 +151,12 @@ class CaptureEvent(BaseModel):
         return value
 
 
+FACT_CONTENT_LIMIT = 10_000
+
+
 class FactProposal(BaseModel):
     model_config = ConfigDict(extra="forbid", json_schema_extra=_fact_proposal_json_schema)
-    content: str = Field(min_length=1, max_length=10_000)
+    content: str = Field(min_length=1, max_length=FACT_CONTENT_LIMIT)
     evidence_ids: list[str] = Field(min_length=1)
     operation: Literal["add", "support", "correct", "conflict"]
     target_fact_id: str | None = None

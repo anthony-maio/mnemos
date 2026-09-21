@@ -9,6 +9,7 @@ from typing import Any, Literal, TypedDict
 from uuid import uuid4
 
 from .contracts import (
+    FACT_CONTENT_LIMIT,
     CaptureEvent,
     FactProposal,
     ForgetPreviewRequest,
@@ -25,7 +26,7 @@ from .hermes_identity import (
     scoped_event_id as hermes_scoped_event_id,
 )
 from .engine import MnemosEngine
-from .errors import EventIdentityConflict, VersionConflict
+from .errors import ContentTooLarge, EventIdentityConflict, MnemosRejection, VersionConflict
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
@@ -39,6 +40,10 @@ from .utils.storage import SQLiteStore, compute_canonical_key, normalize_memory_
 
 class _RetrievalViewOptions(TypedDict, total=False):
     view: Literal["memory", "captured_evidence"]
+
+
+class _ProposalSuppressed(Exception):
+    """Forget ordering blocks this proposal; the job records it as suppressed."""
 
 
 class LocalMemoryService:
@@ -125,6 +130,9 @@ class LocalMemoryService:
         safety = self.firewall.apply(event.content)
         if not safety.allowed:
             return {"schema_version": 1, "status": "rejected", "reason": safety.reason}
+        if explicit and len(safety.content) > FACT_CONTENT_LIMIT:
+            # Reject now rather than queue a job that can never become a fact.
+            raise ContentTooLarge("Explicit memory exceeds the fact content limit")
         claude_provisional = (
             event.identity_version == 2
             and event.context.host == "claude-code"
@@ -498,7 +506,11 @@ class LocalMemoryService:
         review_references: list[SourceReviewReference] = []
         decision = "facts"
         captured_passthrough = job.kind == "extract" and not self.engine.config.modules.sleep
+        rejected_candidates: list[dict[str, Any]] = []
         if job.kind in {"remember", "correct"}:
+            if len(event.content) > FACT_CONTENT_LIMIT:
+                # Queued before the capture-time limit existed; it can never fit.
+                raise ContentTooLarge("Explicit memory exceeds the fact content limit")
             proposals = [
                 FactProposal(
                     content=event.content,
@@ -548,15 +560,23 @@ class LocalMemoryService:
                         existing,
                         self.engine.llm,
                         allow_corrections=self.engine.config.modules.mutable_rag,
+                        firewall=self.firewall,
                     )
                     proposals = extracted.proposals
                     review_references = extracted.reviews
                     diagnostics["extraction_mode"] = "source_bound"
                     diagnostics["deferred_corrections"] = extracted.deferred_corrections
+                    if extracted.oversized_candidates:
+                        diagnostics["oversized_candidates"] = extracted.oversized_candidates
                 elif self.engine.config.modules.sleep:
                     proposals = await self.engine.sleep_daemon.propose_facts(
                         [event], self.engine.llm, existing_facts=existing
                     )
+                elif len(event.content) > FACT_CONTENT_LIMIT:
+                    # Raw capture passes through unchanged, so an event longer
+                    # than a fact stays evidence instead of failing the job.
+                    proposals = []
+                    rejected_candidates.append({"candidate": 0, "error": ContentTooLarge.code})
                 else:
                     proposals = [
                         FactProposal(
@@ -572,140 +592,84 @@ class LocalMemoryService:
             if proposals and self.engine.config.modules.affective
             else None
         )
-        chunks = []
-        evidence = []
-        revisions = []
-        expected_versions = {}
-        seen_keys = set()
+        chunks: list[MemoryChunk] = []
+        evidence: list[FactEvidence] = []
+        revisions: list[FactRevision] = []
+        expected_versions: dict[str, int] = {}
+        seen_keys: set[str] = set()
+        # A correction alongside any other operation on the same target has no
+        # order-independent answer, so none of them applies. The rest of the
+        # message still commits.
+        operations_by_target: dict[str, list[str]] = {}
         for proposal in proposals:
-            if set(proposal.evidence_ids) != {event.id}:
-                raise ValueError("Fact proposal has unauthorized evidence")
-            proposed_content = proposal.content
-            supported = None
-            if proposal.operation == "support":
-                assert proposal.target_fact_id is not None
-                supported = self.engine.store.get(proposal.target_fact_id)
-                if supported is None or not scope_allows(supported.metadata, context, (scope,)):
-                    raise ValueError("Support target is unavailable in this scope")
-                if (
-                    proposal.expected_version is None
-                    or supported.version != proposal.expected_version
-                ):
-                    raise ValueError("Support version conflict")
-                proposed_content = supported.content
-            if (
-                proposal.operation == "correct"
-                and job.kind != "correct"
-                and not self.engine.config.modules.mutable_rag
-            ):
-                proposal.operation = "conflict"
-            raw_safe = self.firewall.apply(proposed_content)
-            if not raw_safe.allowed:
-                raise ValueError("Fact proposal violates write policy")
-            raw_canonical_key = compute_canonical_key(
-                raw_safe.content, scope, event.scope_id, context.user_profile_id
+            if proposal.operation in {"support", "correct"} and proposal.target_fact_id:
+                operations_by_target.setdefault(proposal.target_fact_id, []).append(
+                    proposal.operation
+                )
+        conflicted_targets = {
+            target
+            for target, operations in operations_by_target.items()
+            if len(operations) > 1 and "correct" in operations
+        }
+        for index, proposal in enumerate(proposals):
+            if proposal.target_fact_id in conflicted_targets and proposal.operation in {
+                "support",
+                "correct",
+            }:
+                rejected_candidates.append(
+                    {"candidate": index, "error": "conflicting_target_operations"}
+                )
+                continue
+            checkpoint = (
+                len(chunks),
+                len(evidence),
+                len(revisions),
+                dict(expected_versions),
+                set(seen_keys),
             )
-            explicit_write = job.kind in {"remember", "correct"}
-            if self.engine.store.suppression_blocks(
-                canonical_keys=[raw_canonical_key],
-                occurred_at=event.occurred_at,
-                explicit=explicit_write,
-                source_event_id=event.id,
-            ):
+            try:
+                await self._stage_proposal(
+                    proposal,
+                    job=job,
+                    event=event,
+                    context=context,
+                    scope=scope,
+                    diagnostics=diagnostics,
+                    state=state,
+                    captured_passthrough=captured_passthrough,
+                    chunks=chunks,
+                    evidence=evidence,
+                    revisions=revisions,
+                    expected_versions=expected_versions,
+                    seen_keys=seen_keys,
+                )
+            except _ProposalSuppressed:
                 decision = "suppressed"
-                continue
-            proposed_content = raw_safe.content
-            if event.role != "user":
-                proposed_content = f"{event.role.capitalize()} reported: {proposed_content}"
-            safe = self.firewall.apply(proposed_content)
-            if not safe.allowed:
-                raise ValueError("Fact proposal violates write policy")
-            canonical_key = compute_canonical_key(
-                safe.content, scope, event.scope_id, context.user_profile_id
-            )
-            if canonical_key in seen_keys:
-                continue
-            seen_keys.add(canonical_key)
-            if self.engine.store.suppression_blocks(
-                canonical_keys=[canonical_key],
-                occurred_at=event.occurred_at,
-                explicit=explicit_write,
-                source_event_id=event.id,
-            ):
-                decision = "suppressed"
-                continue
-            if supported is not None:
-                if supported.id in expected_versions:
-                    raise ValueError("A single extraction cannot mutate a fact twice")
-                # The embedding await below allows another writer to revise the
-                # target. Recheck this version inside the atomic store commit.
-                expected_versions[supported.id] = supported.version
-            metadata = {
-                **context_metadata(context, scope),
-                "source": (
-                    "explicit_remember"
-                    if job.kind == "remember"
-                    else (
-                        "explicit_correction"
-                        if job.kind == "correct"
-                        else (
-                            "captured_passthrough"
-                            if captured_passthrough
-                            else "sleep_consolidation"
-                        )
-                    )
-                ),
-                "source_roles": [event.role],
-                "source_event_ids": [event.id],
-                "encoding_diagnostics": diagnostics,
-                "assertion_status": (
-                    "conflict"
-                    if proposal.operation == "conflict"
-                    else "unknown" if captured_passthrough else "asserted"
-                ),
-            }
-            embedding = await embed_text_async(self.engine.embedder, safe.content, role="document")
-            if proposal.operation == "correct":
-                previous, _ = self.engine.mutable_rag._validate_proposal(proposal)
-                if previous is None or not scope_allows(previous.metadata, context, (scope,)):
-                    raise ValueError("Correction target is unavailable in this scope")
-                if previous.version != proposal.expected_version:
-                    raise VersionConflict("Correction version conflict")
-                if previous.id in expected_versions:
-                    raise ValueError("A single extraction cannot correct a fact twice")
-                expected_versions[previous.id] = previous.version
-                chunk = previous.reconsolidate(safe.content)
-                chunk.embedding = embedding
-                chunk.metadata = {**chunk.metadata, **metadata}
-                chunk.canonical_key = canonical_key
-                revisions.append(
-                    FactRevision(
-                        fact_id=chunk.id,
-                        version=previous.version,
-                        content=previous.content,
-                        reason="Before source-backed correction",
-                    )
+            except ValueError as exc:
+                if job.kind != "extract":
+                    raise
+                # One unusable candidate is dropped and recorded; the rest of the
+                # message still commits. Provider failures are not ValueErrors,
+                # so they still fail the job and let it wait for the provider.
+                del chunks[checkpoint[0] :], evidence[checkpoint[1] :], revisions[checkpoint[2] :]
+                expected_versions.clear()
+                expected_versions.update(checkpoint[3])
+                seen_keys.clear()
+                seen_keys.update(checkpoint[4])
+                rejected_candidates.append(
+                    {
+                        "candidate": index,
+                        "error": (
+                            exc.code if isinstance(exc, MnemosRejection) else type(exc).__name__
+                        ),
+                    }
                 )
-            else:
-                chunk = MemoryChunk(
-                    content=safe.content,
-                    embedding=embedding,
-                    metadata=metadata,
-                    canonical_key=canonical_key,
-                )
-            chunk.last_observed_at = event.occurred_at
-            self.engine.affective_router.tag_chunk(chunk, state)
-            chunks.append(chunk)
-            evidence.append(
-                FactEvidence(
-                    fact_id=chunk.id,
-                    source_event_id=event.id,
-                    excerpt=event.content[:1000],
-                    source_ref=event.metadata.get("source_ref"),
-                )
-            )
+        if rejected_candidates:
+            diagnostics["rejected_candidates"] = rejected_candidates
         if review_references:
             decision = "facts" if chunks else "review_pending"
+        elif not chunks and decision == "facts":
+            decision = "no_durable_facts"
         committed = self.engine.store.commit_fact_and_job(
             job.id,
             owner=job.lease_owner,
@@ -734,6 +698,146 @@ class LocalMemoryService:
             current = self.engine.store.get(fact_id)
             if current is not None:
                 self.engine.refresh_graph_chunk(current)
+
+    async def _stage_proposal(
+        self,
+        proposal: FactProposal,
+        *,
+        job: DurableJob,
+        event: EpisodicEvent,
+        context: ScopeContext,
+        scope: str,
+        diagnostics: dict[str, Any],
+        state: Any,
+        captured_passthrough: bool,
+        chunks: list[MemoryChunk],
+        evidence: list[FactEvidence],
+        revisions: list[FactRevision],
+        expected_versions: dict[str, int],
+        seen_keys: set[str],
+    ) -> None:
+        """Validate one proposal and append its fact, evidence and revision.
+
+        Raises ``_ProposalSuppressed`` when forget ordering blocks it and a
+        ``ValueError`` when the proposal itself is unusable.
+        """
+        if set(proposal.evidence_ids) != {event.id}:
+            raise ValueError("Fact proposal has unauthorized evidence")
+        proposed_content = proposal.content
+        supported = None
+        if proposal.operation == "support":
+            assert proposal.target_fact_id is not None
+            supported = self.engine.store.get(proposal.target_fact_id)
+            if supported is None or not scope_allows(supported.metadata, context, (scope,)):
+                raise ValueError("Support target is unavailable in this scope")
+            if proposal.expected_version is None or supported.version != proposal.expected_version:
+                raise ValueError("Support version conflict")
+            proposed_content = supported.content
+        if (
+            proposal.operation == "correct"
+            and job.kind != "correct"
+            and not self.engine.config.modules.mutable_rag
+        ):
+            proposal.operation = "conflict"
+        raw_safe = self.firewall.apply(proposed_content)
+        if not raw_safe.allowed:
+            raise ValueError("Fact proposal violates write policy")
+        raw_canonical_key = compute_canonical_key(
+            raw_safe.content, scope, event.scope_id, context.user_profile_id
+        )
+        explicit_write = job.kind in {"remember", "correct"}
+        if self.engine.store.suppression_blocks(
+            canonical_keys=[raw_canonical_key],
+            occurred_at=event.occurred_at,
+            explicit=explicit_write,
+            source_event_id=event.id,
+        ):
+            raise _ProposalSuppressed()
+        proposed_content = raw_safe.content
+        if event.role != "user":
+            proposed_content = f"{event.role.capitalize()} reported: {proposed_content}"
+        safe = self.firewall.apply(proposed_content)
+        if not safe.allowed:
+            raise ValueError("Fact proposal violates write policy")
+        canonical_key = compute_canonical_key(
+            safe.content, scope, event.scope_id, context.user_profile_id
+        )
+        if canonical_key in seen_keys:
+            return
+        seen_keys.add(canonical_key)
+        if self.engine.store.suppression_blocks(
+            canonical_keys=[canonical_key],
+            occurred_at=event.occurred_at,
+            explicit=explicit_write,
+            source_event_id=event.id,
+        ):
+            raise _ProposalSuppressed()
+        if supported is not None:
+            if supported.id in expected_versions:
+                raise ValueError("A single extraction cannot mutate a fact twice")
+            # The embedding await below allows another writer to revise the
+            # target. Recheck this version inside the atomic store commit.
+            expected_versions[supported.id] = supported.version
+        metadata = {
+            **context_metadata(context, scope),
+            "source": (
+                "explicit_remember"
+                if job.kind == "remember"
+                else (
+                    "explicit_correction"
+                    if job.kind == "correct"
+                    else ("captured_passthrough" if captured_passthrough else "sleep_consolidation")
+                )
+            ),
+            "source_roles": [event.role],
+            "source_event_ids": [event.id],
+            "encoding_diagnostics": diagnostics,
+            "assertion_status": (
+                "conflict"
+                if proposal.operation == "conflict"
+                else "unknown" if captured_passthrough else "asserted"
+            ),
+        }
+        embedding = await embed_text_async(self.engine.embedder, safe.content, role="document")
+        if proposal.operation == "correct":
+            previous, _ = self.engine.mutable_rag._validate_proposal(proposal)
+            if previous is None or not scope_allows(previous.metadata, context, (scope,)):
+                raise ValueError("Correction target is unavailable in this scope")
+            if previous.version != proposal.expected_version:
+                raise VersionConflict("Correction version conflict")
+            if previous.id in expected_versions:
+                raise ValueError("A single extraction cannot correct a fact twice")
+            expected_versions[previous.id] = previous.version
+            chunk = previous.reconsolidate(safe.content)
+            chunk.embedding = embedding
+            chunk.metadata = {**chunk.metadata, **metadata}
+            chunk.canonical_key = canonical_key
+            revisions.append(
+                FactRevision(
+                    fact_id=chunk.id,
+                    version=previous.version,
+                    content=previous.content,
+                    reason="Before source-backed correction",
+                )
+            )
+        else:
+            chunk = MemoryChunk(
+                content=safe.content,
+                embedding=embedding,
+                metadata=metadata,
+                canonical_key=canonical_key,
+            )
+        chunk.last_observed_at = event.occurred_at
+        self.engine.affective_router.tag_chunk(chunk, state)
+        chunks.append(chunk)
+        evidence.append(
+            FactEvidence(
+                fact_id=chunk.id,
+                source_event_id=event.id,
+                excerpt=event.content[:1000],
+                source_ref=event.metadata.get("source_ref"),
+            )
+        )
 
     async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
         self.registry.validate_context(request.context)

@@ -274,7 +274,17 @@ async def test_support_and_correction_same_target_are_rejected_in_one_extraction
         )
         assert captured["processing_status"] == "pending"
         source_event_id = captured["event_id"]
-        assert await memory.maintenance.run_once(force=True) == 0
+        # Neither contradictory operation applies, in either order, and the
+        # job finishes instead of exhausting the rest of the message.
+        assert await memory.maintenance.run_once(force=True) == 1
+        job = memory.engine.store.get_job(captured["job_id"])
+        assert job is not None and job.status == "completed"
+        assert [
+            item["error"] for item in job.result["encoding_diagnostics"]["rejected_candidates"]
+        ] == [
+            "conflicting_target_operations",
+            "conflicting_target_operations",
+        ]
 
         current = memory.engine.store.get(target.id)
         assert current is not None

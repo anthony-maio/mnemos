@@ -12,7 +12,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from mnemos.memory_safety import MemoryWriteFirewall
+from mnemos.memory_safety import source_firewall
 from mnemos.types import EpisodicEvent
 from mnemos.utils.llm import LLMProvider
 
@@ -132,7 +132,7 @@ def _sources(events: list[EpisodicEvent]) -> dict[str, EpisodicEvent]:
                 raise ValueError("Inventory context metadata contradicts canonical identity")
     if len({(e.metadata.get("user_profile_id"), e.scope, e.scope_id) for e in events}) != 1:
         raise ValueError("Inventory cannot combine scope partitions")
-    firewall = MemoryWriteFirewall()
+    firewall = source_firewall()
     for event in events:
         safe = firewall.apply(event.content)
         if not safe.allowed or safe.content != event.content:
@@ -142,7 +142,7 @@ def _sources(events: list[EpisodicEvent]) -> dict[str, EpisodicEvent]:
 
 def validate_inventory(inventory: Inventory, events: list[EpisodicEvent]) -> Inventory:
     sources = _sources(events)
-    firewall = MemoryWriteFirewall()
+    firewall = source_firewall()
     seen: set[tuple[str, str]] = set()
     for assertion in inventory.assertions:
         key = (assertion.source_id, " ".join(assertion.content.casefold().split()))
@@ -290,7 +290,7 @@ def _validate_qualified_inventory(
         ]
     )
     validate_inventory(base, events)
-    firewall = MemoryWriteFirewall()
+    firewall = source_firewall()
     for assertion in inventory.assertions:
         event = sources[assertion.source_id]
         request = assertion.retention_request_quote
@@ -347,7 +347,7 @@ def _render_retained_qualified_assertions(
         content = " ".join([assertion.content] + [q.content for q in assertion.qualifications])
         if sources[assertion.source_id].role != "user":
             content = f"{sources[assertion.source_id].role.capitalize()} reported: {content}"
-        safe = MemoryWriteFirewall().apply(content)
+        safe = source_firewall().apply(content)
         if not safe.allowed or safe.content != content:
             raise ValueError("Rendered qualified assertion violates write policy")
         retained.append(

@@ -9,6 +9,9 @@ from __future__ import annotations
 
 import re
 from bisect import bisect_right
+from collections.abc import Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Literal
 
@@ -164,3 +167,26 @@ class MemoryWriteFirewall:
         if category == "secret":
             return self._config.secret_action
         return self._config.pii_action
+
+
+_SOURCE_FIREWALL: ContextVar[MemoryWriteFirewall | None] = ContextVar(
+    "mnemos_source_firewall", default=None
+)
+
+
+def source_firewall() -> MemoryWriteFirewall:
+    """Return the write policy a running source extraction must honor.
+
+    The service binds its configured policy for one extraction, so source
+    checks agree with what capture stored. Otherwise the default applies.
+    """
+    return _SOURCE_FIREWALL.get() or MemoryWriteFirewall()
+
+
+@contextmanager
+def bound_source_firewall(firewall: MemoryWriteFirewall) -> Iterator[None]:
+    token = _SOURCE_FIREWALL.set(firewall)
+    try:
+        yield
+    finally:
+        _SOURCE_FIREWALL.reset(token)
