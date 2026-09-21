@@ -1,0 +1,40 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib, json, shutil, subprocess
+from urllib.request import urlopen
+repo=Path.cwd()
+prior=Path("C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v1")
+root=Path("C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v2")
+assert json.loads((prior/"status.json").read_bytes())["status"]=="completed"
+root.mkdir(exist_ok=False)
+old=json.loads((prior/"preparation.json").read_bytes())
+base=json.loads((prior/"inputs.json").read_bytes())
+inputs={k:base[k] for k in ("snapshot","endpoint","model","think","temperature","max_tokens","timeout")}
+inputs["cases"]=[{k:c[k] for k in ("id","source","rubric")} for c in base["cases"]]
+inputs["repetitions"]=1
+(root/"inputs.json").write_text(json.dumps(inputs,indent=2)+"\n")
+for name in ("durability-rubric.json","durability-rubric-review.json","history-rubric.json","history-rubric-review.json"):
+    shutil.copyfile(prior/name,root/name)
+shutil.copyfile(repo/"benchmarks/local_memory/assertion_inventory.py",root/"assertion_inventory.py")
+shutil.copyfile(repo/".venv/assertion_inventory_runner_v2.py",root/"runner.py")
+shutil.copyfile(__file__,root/"prepare.py.txt")
+(root/"protocol.json").write_text(json.dumps({
+    "status":"prepared_not_executed", "calls":46,"repetitions":1,
+    "scope":"Source-only qualified assertion inventory v2 over reused development cases. No existing facts are shown, no target reconciliation or storage is attempted.",
+    "comparison":"Compare retained meanings, qualification attachment, attribution, unwanted retention and unsupported interpretations with frozen v1 inventory and earlier 14B prompt outcomes. Pipeline and schema change together; no isolated component causal claim.",
+    "review":"All original required/forbidden meanings and prior ambiguity notes remain unchanged. Evaluate omitted independent assertions and unsupported content even when IDs and quotes validate. Report validator rejection separately from model abstention.",
+    "invariants":"Only supplied source IDs, exact nonblank quotes, no cross-scope input, no direct user assertions from non-user events, no repeated normalized assertion per source. Retained assistant history is explicitly prefixed. Qualifications are same-source quotes and rendered with the retained assertion. Explicitly retained uncertainty requires a source-bound request quote. Live launch requires an externally supplied preparation digest.",
+    "limits":"Neither a statement quote nor a retention-request quote proves semantic entailment. A source excerpt may be real but not an actual request. These semantic failures must remain visible. Role alone cannot establish authorship of quoted material. Single unblinded stochastic repetition, no fresh corpus exposure, no semantic accuracy percentage or production adoption.",
+    "acceptance":"A subsequent reconciliation candidate must preserve immutable assertion text and citations, validate scope/target/version, and be tested on actual support/correction/restart/forget workflows before adoption. This source-only test cannot close those gates."
+},indent=2)+"\n")
+with urlopen(inputs["endpoint"]+"/api/tags",timeout=10) as response:
+    model=next(m for m in json.loads(response.read())["models"] if m["name"]==inputs["model"])
+assert model["digest"]==old["model"]["digest"]
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+prep={"prepared_at":datetime.now(timezone.utc).isoformat(),"source_commit":old["source_commit"],
+    "source_files":old["source_files"],"candidate_commit":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
+    "model":model,"parent_observations_sha256":sha(prior/"observations.jsonl"),
+    "ollama_version":old["ollama_version"],"hardware_inventory":old["hardware_inventory"],
+    "files":{p.name:sha(p) for p in root.iterdir() if p.is_file()}}
+(root/"preparation.json").write_text(json.dumps(prep,indent=2)+"\n")
+print(json.dumps({"root":str(root),"preparation_sha256":sha(root/"preparation.json"),"model":model["name"],"started":False}))

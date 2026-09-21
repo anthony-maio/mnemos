@@ -1,0 +1,127 @@
+{
+  "source_commit": "b984411e7652284a5ada01bc3a1e3b8bd84f8ada",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-qualified-inventory-v2",
+  "status": "passed",
+  "started_at": "2026-09-21T01:04:38.748076+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-pytest-qualified-inventory-v2\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-21T01:04:38.749343+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-21T01:10:35.850106+00:00",
+      "counts": {
+        "tests": 2139,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-21T01:10:35.868292+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-21T01:10:40.632242+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-21T01:10:40.633396+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-21T01:10:52.145709+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-21T01:10:52.147032+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-21T01:10:52.228998+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-21T01:10:52.230387+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-21T01:13:34.986820+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-pytest-qualified-inventory-v2",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-pytest-qualified-inventory-v2",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-pytest-qualified-inventory-v2",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-pytest-qualified-inventory-v2",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-21T01:13:41.442281+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 310155,
+      "sha256": "dd4427e4d403fc9149db03d49c273fd8b60bcd032b64b5b489a405ddd4416c87"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-qualified-inventory-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 399113981,
+      "sha256": "04b651dad6f0161914874a95171054827a679a09d79b43a66ca0ec651bf00358"
+    }
+  ]
+}
