@@ -1,0 +1,45 @@
+# Fresh corpus preparation v7, contract v6
+
+The corpus is prepared and unexecuted. Its authoring revision is v7; its schema
+is local-memory-heldout-v6, which adds original-source replay. Historical event
+and fact ID prefixes preserve authoring history. The byte hash, not those
+prefixes, binds a run. This record does not freeze a model or authorize inference.
+
+It derives from the [preserved v6 authoring draft](../fresh-corpus-drafts-v3-v6/README.md).
+Independent review covered all 220 sessions through source and lifecycle checks
+and normalized question families. Every fact was supported by its designated
+user source; corrections had actual targets and materially changed values.
+No questions embedded whole answers. The 150 ordinary heldout no-answer queries
+and 50 foreign canaries did not ask for facts present in their allowed pools.
+
+Review found two remaining protocol issues. Some natural-language project names
+omitted the version component present in project_id. These names are now
+normalized throughout source, fact and query text. The 20 purported replays
+were questions, not resent sources. V7 replaces them with exact original-source
+delivery actions after forget and restart, and adds 20 dedicated post-forget
+no-answer queries. No other source assertions, gold statuses or required
+answers change. The preparation script validates all source bodies and replay
+ordering without model calls.
+
+Counts: 200 heldout sessions, 20 development sessions, 700 heldout critical
+supported facts, 200 heldout answerable queries, 220 heldout no-answer queries,
+80 matched state pairs. There are 760 total facts. One hundred heldout sessions
+have six current facts; the other hundred have one. Critical-fact evidence
+remains 370 explicit and 330 automatic. All 20 forget sources remain automatic:
+failure to acquire a target must be reported separately from failed forgetting,
+without seeding a fact to force the later operation to succeed.
+
+Limitations are material. The ranking pools repeat five release-policy
+competitors; corrections use three semantic families; development has five
+question families. State pairs are concentrated in the first 80 sessions.
+Graph target fields are empty, so this corpus alone cannot establish associative
+retrieval benefit. Short event sequences are not realistic long-session stress.
+The independent review judged v6 usable as controlled synthetic input, not
+evidence of model quality, human acceptance or real conversations. V7 preserves
+those limits. The protocol reviser has seen separate development-model results;
+wholly blinded authoring is not claimed.
+
+The lexical audit found no exact normalized text or ID overlap in 6,340 fields
+against eight named prior input corpora. This excludes unexecuted parent drafts
+and is not an exhaustive exposure or semantic-independence audit. The existing
+thresholds remain unchanged; no model result is available for this corpus.

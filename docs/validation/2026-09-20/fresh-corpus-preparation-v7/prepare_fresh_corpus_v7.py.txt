@@ -1,0 +1,76 @@
+"""Mechanical protocol repair of reviewed draft v6, without model inference."""
+import hashlib
+import json
+from pathlib import Path
+
+from benchmarks.local_memory.contracts import load_dataset
+
+repo = Path(__file__).resolve().parents[1]
+source = repo / '.venv/fresh-corpus-authored-v6.jsonl'
+assert hashlib.sha256(source.read_bytes()).hexdigest() == '2436d7b9fc0599e7429994b8c8e8da2f2e2495b802390c5ec72a00f958cb6b83'
+rows = [json.loads(line) for line in source.read_text().splitlines()]
+
+def rename(value, old, new):
+    if isinstance(value, str):
+        return value.replace(old, new)
+    if isinstance(value, list):
+        return [rename(v, old, new) for v in value]
+    if isinstance(value, dict):
+        return {k: rename(v, old, new) for k, v in value.items()}
+    return value
+
+for i, row in enumerate(rows[1:], 1):
+    project = row['project_id']
+    row = rows[i] = rename(row, project.replace('-v2-', '-'), project)
+    forgets = [e for e in row['events'] if e['lifecycle_operation'] == 'forget']
+    for forget in forgets:
+        original = next(e for e in row['events'] if e['event_id'] == forget['target_source_event_id'])
+        delivery = next(e for e in row['events'] if e['event_id'].endswith('-replay'))
+        action_id, delivered_at = delivery['event_id'], delivery['occurred_at']
+        delivery.clear()
+        delivery.update(original)
+        delivery.update(event_id=action_id, occurred_at=delivered_at,
+                        lifecycle_operation='replay', evidence_fact_ids=[],
+                        target_source_event_id=original['event_id'])
+        row['queries'].append({
+            'query_id': 'fresh-v7-forgotten-' + row['session_id'],
+            'text': f'Which checklist does the temporary {project} demo use?',
+            'kind': 'no_answer', 'relevant_fact_ids': [], 'expected_answer': None,
+        })
+
+manifest = rows[0]
+manifest.update(
+    dataset_version='local-memory-heldout-v6',
+    authoring_revision='fresh-corpus-authored-v7',
+    revision_of='reviewed fresh-corpus-authored-v6 (contract v5); prior drafts preserved',
+    authoring_basis='Synthetic draft v6 plus mechanical project-name normalization, original-source replay actions and post-forget no-answer queries. No evaluated-model calls on these drafts. Protocol reviser has seen separate development-model outputs; this is not a claim of wholly blinded authoring.',
+    no_answer_query_count=220,
+    replay_design='20 original source payloads and identities resent after forget and restart; source acquisition remains automatic and may fail before forgetting can be evaluated.',
+    naming_design='Natural-language project names normalized to the exact project_id; historical event/fact ID prefixes retain authoring provenance.',
+)
+manifest['family_counts']['ordinary_in_scope_no_answer'] = 170
+manifest['family_counts'].pop('development_semantic_families', None)
+manifest['family_counts']['development_question_families'] = 5
+manifest['family_counts']['post_forget_no_answer'] = 20
+manifest['family_counts']['original_source_replay'] = 20
+manifest['tag_audit']['forgotten_replay'] = 'forget followed by restart and exact original-source replay with a dedicated no-answer query'
+out = repo / '.venv/fresh-corpus-authored-v7.jsonl'
+assert not out.exists()
+out.write_text(''.join(json.dumps(row, ensure_ascii=True) + '\n' for row in rows))
+dataset = load_dataset(out)
+assert len(dataset.heldout_sessions) == 200
+replays = [e for s in dataset.heldout_sessions for e in s.events if e.lifecycle_operation == 'replay']
+assert len(replays) == 20
+for session in dataset.sessions:
+    events = {e.event_id: e for e in session.events}
+    for fact in session.facts:
+        for event_id in fact.evidence_event_ids:
+            event = events[event_id]
+            body = event.replacement_content if event.lifecycle_operation == 'correct' else event.content
+            assert body is not None and fact.content in body
+    for replay in (e for e in session.events if e.lifecycle_operation == 'replay'):
+        forget = next(e for e in session.events if e.lifecycle_operation == 'forget' and e.target_source_event_id == replay.target_source_event_id)
+        assert any(forget.occurred_at < e.occurred_at < replay.occurred_at and e.lifecycle_operation == 'restart' for e in session.events)
+print(json.dumps({'file': str(out), 'sha256': hashlib.sha256(out.read_bytes()).hexdigest(),
+                  'contract': dataset.version, 'source_replays': len(replays),
+                  'heldout_no_answer': manifest['no_answer_query_count'], 'model_calls': 0}))

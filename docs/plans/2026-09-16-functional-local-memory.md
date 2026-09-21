@@ -561,11 +561,29 @@ finds only three of 30 recorded combinations could reach top five under its
 optimistic assumptions; 15 lack the target candidate altogether. This is a
 structural diagnostic, not retrieval improvement or a changed graph default.
 
+The completed [v3 durability subset](../validation/2026-09-20/extraction-durability-history-v3-durability-subset/README.md)
+preserves all 52 calls across 26 development cases. The candidate drops the
+required marker in the mixed ongoing-policy case; production loses it in the
+temporary-instruction variant. No adoption follows from these partial results.
+The remaining history portion continues under the unchanged frozen protocol.
+
 The [fresh v2 corpus review](../validation/2026-09-20/fresh-corpus-semantic-review-v2/README.md)
 records ineffective corrections, incorrect old-source links, neutral state
 paraphrases and singleton retrieval pools. New drafts are being revised before
 inference; none is frozen or accepted. Zero exact overlap does not establish
 semantic independence.
+
+The [v7 preparation](../validation/2026-09-20/fresh-corpus-preparation-v7/README.md)
+repairs question semantics, source links and project-name consistency. Its new
+v6 contract supports exact original-source replay after forget and restart,
+rather than treating a post-restart question as replay. It has 200 heldout
+sessions, 700 critical facts, 200 answerable queries, 220 no-answer queries and
+80 matched state pairs. One hundred ranking pools have six current facts.
+Repeated families and short sessions limit generalization; graph benefit is
+not established. No evaluated-model calls have been made on this corpus.
+Source c1e2217 passes 22 replay tests and 78 combined focused checks; full
+source/package verification is running separately. Original model outcomes
+and acceptance thresholds remain unchanged.
 
 The [extraction evidence scoring repair](../validation/2026-09-20/extraction-evidence-resolution-v1/README.md)
 passes 113 focused and adjacent tests, Black and compatibility mypy on e082790.
