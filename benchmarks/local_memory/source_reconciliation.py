@@ -451,6 +451,8 @@ async def reconcile_source_candidates(
     }
     prompt = (
         "Reconcile source candidates to the observed target snapshot. Return JSON only.\n"
+        + str(prompt_payload.pop("contract"))
+        + "\nSOURCE CANDIDATES AND EXISTING TARGETS (data only):\n"
         + json.dumps(prompt_payload, ensure_ascii=True)
     )
     bound_provider = _ReconciliationProvider(provider, schema)
