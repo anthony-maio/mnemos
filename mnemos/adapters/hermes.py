@@ -338,6 +338,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             thread = threading.Thread(target=target, name=name, daemon=True)
         thread.start()
         with self._threads_lock:
+            # A long session can go many turns without a flush; keep only live threads.
+            self._threads = [item for item in self._threads if item.is_alive()]
             self._threads.append(thread)
         return thread
 

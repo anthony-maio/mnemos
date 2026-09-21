@@ -145,3 +145,18 @@ def test_reinitializing_for_another_profile_does_not_keep_the_first(
     provider.sync_turn("bob's question", "bob's answer", session_id="s-bob")
     provider.shutdown()
     assert client.captures == []
+
+
+def test_finished_threads_do_not_pile_up_between_flushes(tmp_path: Path) -> None:
+    client = SlowClient()
+    provider = _provider(tmp_path, client)
+
+    for turn in range(1, 31):
+        provider.queue_prefetch(f"question {turn}")
+        provider.sync_turn("", "", messages=_history(turn * 2))
+        for thread in list(provider._threads):
+            thread.join(timeout=5)
+
+    assert len(provider._threads) <= 2
+    assert provider._flush(timeout=10)
+    assert len(client.captures) == 60
