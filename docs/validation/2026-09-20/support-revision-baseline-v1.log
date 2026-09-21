@@ -1,0 +1,177 @@
+.F.FF                                                                    [100%]
+================================== FAILURES ===================================
+_____ test_support_cannot_attach_evidence_after_model_snapshot_correction _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4439/test_support_cannot_attach_evi0')
+
+    @pytest.mark.asyncio
+    async def test_support_cannot_attach_evidence_after_model_snapshot_correction(tmp_path):
+        memory, context = service(tmp_path)
+        support_event_id = "support-before-read"
+        old_content = "The export format is PDF."
+        new_content = "The export format is HTML."
+        model_returned = asyncio.Event()
+        release_model = asyncio.Event()
+        try:
+            configure_sleep(memory)
+            target = await remember_target(memory, context, old_content)
+    
+            async def support_proposal(events, _llm, *, existing_facts):
+                assert any(fact.id == target.id and fact.version == 1 for fact in existing_facts)
+                model_returned.set()
+                await release_model.wait()
+                return [
+                    FactProposal(
+                        content="The export format is PDF.",
+                        evidence_ids=[events[0].id],
+                        operation="support",
+                        target_fact_id=target.id,
+                        expected_version=1,
+                    )
+                ]
+    
+            memory.engine.sleep_daemon.propose_facts = support_proposal
+            captured = memory.capture(
+                CaptureEvent(
+                    event_id=support_event_id,
+                    context=context,
+                    occurred_at=datetime.now(timezone.utc),
+                    role="user",
+                    content="The export format remains the same.",
+                    source_kind="codex_hook",
+                )
+            )
+            assert captured["processing_status"] == "pending"
+            support_event_id = captured["event_id"]
+            support_run = asyncio.create_task(memory.maintenance.run_once(force=True))
+            await asyncio.wait_for(model_returned.wait(), timeout=10)
+    
+            await commit_correction(memory, context, target, new_content, owner="before-read-race")
+            release_model.set()
+            await support_run
+    
+            current = memory.engine.store.get(target.id)
+            assert current is not None
+            assert current.content == new_content
+            assert current.version == 2
+>           assert all(
+                evidence.source_event_id != support_event_id
+                for evidence in memory.engine.store.list_fact_evidence(target.id)
+            )
+E           assert False
+E            +  where False = all(<generator object test_support_cannot_attach_evidence_after_model_snapshot_correction.<locals>.<genexpr> at 0x000002CAE03C1490>)
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py:175: AssertionError
+_ test_support_and_correction_same_target_are_rejected_in_one_extraction[order0] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4439/test_support_and_correction_sa0')
+order = ('support', 'correct')
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("order", [("support", "correct"), ("correct", "support")])
+    async def test_support_and_correction_same_target_are_rejected_in_one_extraction(tmp_path, order):
+        memory, context = service(tmp_path)
+        source_event_id = f"mixed-{order[0]}-then-{order[1]}"
+        old_content = "The deployment region is us-east-1."
+        new_content = "The deployment region is eu-west-1."
+        try:
+            configure_sleep(memory)
+            memory.engine.config.modules.mutable_rag = True
+            target = await remember_target(memory, context, old_content)
+    
+            async def mixed_proposals(events, _llm, *, existing_facts):
+                assert any(fact.id == target.id and fact.version == 1 for fact in existing_facts)
+                proposals = {
+                    "support": FactProposal(
+                        content="Ignored support wording.",
+                        evidence_ids=[events[0].id],
+                        operation="support",
+                        target_fact_id=target.id,
+                        expected_version=1,
+                    ),
+                    "correct": FactProposal(
+                        content=new_content,
+                        evidence_ids=[events[0].id],
+                        operation="correct",
+                        target_fact_id=target.id,
+                        expected_version=1,
+                    ),
+                }
+                return [proposals[name] for name in order]
+    
+            memory.engine.sleep_daemon.propose_facts = mixed_proposals
+            captured = memory.capture(
+                CaptureEvent(
+                    event_id=source_event_id,
+                    context=context,
+                    occurred_at=datetime.now(timezone.utc),
+                    role="user",
+                    content="The deployment region changed.",
+                    source_kind="codex_hook",
+                )
+            )
+            assert captured["processing_status"] == "pending"
+            source_event_id = captured["event_id"]
+>           assert await memory.maintenance.run_once(force=True) == 0
+E           assert 1 == 0
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py:277: AssertionError
+_ test_support_and_correction_same_target_are_rejected_in_one_extraction[order1] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4439/test_support_and_correction_sa1')
+order = ('correct', 'support')
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("order", [("support", "correct"), ("correct", "support")])
+    async def test_support_and_correction_same_target_are_rejected_in_one_extraction(tmp_path, order):
+        memory, context = service(tmp_path)
+        source_event_id = f"mixed-{order[0]}-then-{order[1]}"
+        old_content = "The deployment region is us-east-1."
+        new_content = "The deployment region is eu-west-1."
+        try:
+            configure_sleep(memory)
+            memory.engine.config.modules.mutable_rag = True
+            target = await remember_target(memory, context, old_content)
+    
+            async def mixed_proposals(events, _llm, *, existing_facts):
+                assert any(fact.id == target.id and fact.version == 1 for fact in existing_facts)
+                proposals = {
+                    "support": FactProposal(
+                        content="Ignored support wording.",
+                        evidence_ids=[events[0].id],
+                        operation="support",
+                        target_fact_id=target.id,
+                        expected_version=1,
+                    ),
+                    "correct": FactProposal(
+                        content=new_content,
+                        evidence_ids=[events[0].id],
+                        operation="correct",
+                        target_fact_id=target.id,
+                        expected_version=1,
+                    ),
+                }
+                return [proposals[name] for name in order]
+    
+            memory.engine.sleep_daemon.propose_facts = mixed_proposals
+            captured = memory.capture(
+                CaptureEvent(
+                    event_id=source_event_id,
+                    context=context,
+                    occurred_at=datetime.now(timezone.utc),
+                    role="user",
+                    content="The deployment region changed.",
+                    source_kind="codex_hook",
+                )
+            )
+            assert captured["processing_status"] == "pending"
+            source_event_id = captured["event_id"]
+>           assert await memory.maintenance.run_once(force=True) == 0
+E           assert 1 == 0
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py:277: AssertionError
+=========================== short test summary info ===========================
+FAILED D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py::test_support_cannot_attach_evidence_after_model_snapshot_correction
+FAILED D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py::test_support_and_correction_same_target_are_rejected_in_one_extraction[order0]
+FAILED D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_support_revision_fence.py::test_support_and_correction_same_target_are_rejected_in_one_extraction[order1]
+3 failed, 2 passed in 16.13s

@@ -580,7 +580,7 @@ class SleepDaemon:
         }
         if len(partitions) != 1:
             raise ValueError("Extraction cannot combine scope partitions")
-        targets = {fact.id: fact for fact in existing_facts or []}
+        targets = {fact.id: fact.model_copy(deep=True) for fact in existing_facts or []}
         for fact in targets.values():
             if (
                 fact.metadata.get("user_profile_id"),
@@ -667,6 +667,12 @@ class SleepDaemon:
                 target = targets.get(target_fact_id)
                 if target is None:
                     raise ValueError("Proposal target was not supplied for review")
+                if proposal.operation == "support":
+                    if proposal.expected_version not in (None, target.version):
+                        raise ValueError("Support requires the observed target version")
+                    # Bind to the immutable snapshot shown to the provider, not
+                    # whichever revision exists when the service later commits.
+                    proposal.expected_version = target.version
                 if proposal.operation == "correct" and (
                     proposal.expected_version != target.version
                     or any(

@@ -551,11 +551,17 @@ class LocalMemoryService:
             if set(proposal.evidence_ids) != {event.id}:
                 raise ValueError("Fact proposal has unauthorized evidence")
             proposed_content = proposal.content
+            supported = None
             if proposal.operation == "support":
                 assert proposal.target_fact_id is not None
                 supported = self.engine.store.get(proposal.target_fact_id)
                 if supported is None or not scope_allows(supported.metadata, context, (scope,)):
                     raise ValueError("Support target is unavailable in this scope")
+                if (
+                    proposal.expected_version is None
+                    or supported.version != proposal.expected_version
+                ):
+                    raise ValueError("Support version conflict")
                 proposed_content = supported.content
             if (
                 proposal.operation == "correct"
@@ -591,6 +597,12 @@ class LocalMemoryService:
             ):
                 decision = "suppressed"
                 continue
+            if supported is not None:
+                if supported.id in expected_versions:
+                    raise ValueError("A single extraction cannot mutate a fact twice")
+                # The embedding await below allows another writer to revise the
+                # target. Recheck this version inside the atomic store commit.
+                expected_versions[supported.id] = supported.version
             metadata = {
                 **context_metadata(context, scope),
                 "source": (
