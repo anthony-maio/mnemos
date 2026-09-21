@@ -45,6 +45,40 @@ source must invalidate its review references even when another fact preserves
 that source. The existing source-deletion path clears job results, but that alone
 does not cover every shared-source or target-only invalidation case.
 
+Persistence decision after inspecting `SQLiteStore` and `backup.restore_backup`:
+use a dedicated indexed review table, keyed by job ID and candidate index, with
+the typed reference and lifecycle state. Keep only review identities/counts in
+the job result. Existing forget queries inspect job payload dependencies, so
+placing all review dependencies in opaque result JSON would leave target-only
+forget and shared-source suppression uncovered.
+
+Required lifecycle behavior for the implementation:
+
+- Commit references in the existing fact/job transaction after validating the
+  leased source, processed source IDs, current target versions and suppression.
+  Unresolved-only jobs complete with an explicit review decision; mixed results
+  retain both facts and review identities.
+- Keep open-review sources out of `prune_processed_evidence`. Ordinary age-based
+  pruning must not silently destroy unresolved work. Explicit discard or
+  invalidation may release that retention pin.
+- Invalidate source-linked reviews when the source is suppressed, including
+  shared sources retained for another fact. Source presence alone is not enough
+  to keep a review actionable. Invalidate targeted reviews when their target is
+  forgotten or deleted; changed target versions require renewed reconciliation.
+- Apply the same invalidation after `backup.py` merges current suppressions into
+  a restored database. The restore path also directly deletes suppressed events,
+  separately from `forget_fact`.
+- Revalidate provenance and suppression on scoped inspection and resolution,
+  even when the persisted lifecycle status still says open. Low-level chunk
+  deletion is not a substitute for the explicit forget operation.
+- Project configuration currently enables/disables registry entries; there is
+  no project-data deletion operation. Apply registry scope checks to review
+  access. Do not describe disabling a project as deleting its data.
+
+The contract evidence is archived in
+`../validation/2026-09-21/source-review-reference-v1/`. The dedicated table,
+retention pins and lifecycle operations above are still unimplemented.
+
 Persist each candidate outcome atomically with the job result, using a versioned record keyed by job and candidate index. The record needs the source event, source range/hash, validated role/kind, operation, observed target/version when applicable, and review state. Diagnostic reasons must be labeled separately from source evidence. Decide whether the durable job-result payload suffices or a dedicated indexed table is needed for scoped review before adding a migration.
 
 Accepted facts and unresolved outcomes can coexist in one extraction. Record counts and identities explicitly. Provider, malformed-output, lease and version failures still follow durable retry behavior. A valid unresolved result is not a provider failure and must not cause endless identical retries.
