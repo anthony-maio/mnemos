@@ -865,9 +865,15 @@ Conflicts and unresolved candidates cannot silently become no-fact results.
 Standalone prospective negative rules are distinguished from referential
 corrections in classifier instructions. The combined focused suite passes 110
 tests; Python 3.10 pipeline type checks pass. The [raw-source pipeline run](../validation/2026-09-21/source-pipeline-preparation-v1/README.md)
-is prepared on sixteen authored development cases, with stronger retention
-criteria for the complete prospective negative rule. Production storage writes,
-fresh semantic acceptance and durable review integration remain open.
+completed on sixteen authored development cases. The [terminal result](../validation/2026-09-21/source-pipeline-terminal-v1/README.md)
+contains fifteen runtime-valid cases and one pre-provider scope rejection,
+six exact-source proposals and seven explicit review outcomes. Thirteen of
+sixteen frozen expectations match, including intended unresolved/discarded cases.
+Both independent-fact omissions remain, and the complete negative rule with a
+referential rejection prefix is still unresolved. Pure negative requirements
+work, including a mixed one-turn instruction. Misleading assistant reasoning and
+imprecise source kinds remain documented. Production storage writes, fresh
+semantic acceptance and durable review integration remain open.
 
 ### T19 - Reconcile release, documentation, and research claims
 
