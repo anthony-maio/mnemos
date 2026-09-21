@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -154,6 +155,113 @@ def test_hook_wrapper_is_a_real_stdio_subprocess(tmp_path: Path) -> None:
     assert completed.returncode == 23
     assert completed.stdout == 'received:{"hook_event_name":"Stop"}'
     assert completed.stderr == ""
+
+
+def _stub_runtime(tmp_path: Path, exit_code: int) -> Path:
+    stub = tmp_path / "stub"
+    (stub / "mnemos" / "adapters").mkdir(parents=True)
+    (stub / "mnemos" / "__init__.py").write_text("", encoding="utf-8")
+    (stub / "mnemos" / "adapters" / "__init__.py").write_text("", encoding="utf-8")
+    (stub / "mnemos" / "adapters" / "claude_code.py").write_text(
+        f"import sys\nsys.stdin.read()\nraise SystemExit({exit_code})\n", encoding="utf-8"
+    )
+    return stub
+
+
+def _run_hook_command(
+    event: str, plugin_root: Path, env: dict[str, str], cwd: Path
+) -> subprocess.CompletedProcess[str]:
+    """Run the exact hooks.json command the way a host shell would."""
+    hooks = json.loads(Path("hooks/hooks.json").read_text(encoding="utf-8"))["hooks"]
+    command = hooks[event][0]["hooks"][0]["command"]
+    assert command.startswith("python ")
+    # Claude Code substitutes the plugin root into the command text.
+    command = f'"{sys.executable}"' + command[len("python") :]
+    command = command.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root))
+    return subprocess.run(
+        command,
+        shell=True,
+        input=json.dumps({"hook_event_name": event}),
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CLAUDE_PLUGIN_ROOT": str(plugin_root), **env},
+        cwd=cwd,
+        check=False,
+    )
+
+
+def test_a_runtime_exit_of_two_never_reaches_claude_as_a_block(tmp_path: Path) -> None:
+    stub = _stub_runtime(tmp_path, 2)
+    completed = _run_hook_command(
+        "Stop",
+        Path(".").resolve(),
+        {"MNEMOS_PLUGIN_PYTHON": sys.executable, "PYTHONPATH": str(stub)},
+        cwd=stub,
+    )
+    assert completed.returncode == 1, completed.stderr
+
+
+def test_a_removed_plugin_directory_does_not_block_stop_or_prompts(tmp_path: Path) -> None:
+    # A plugin update can delete the version directory a running session uses.
+    for event in ("Stop", "UserPromptSubmit"):
+        completed = _run_hook_command(
+            event,
+            tmp_path / "removed-version",
+            {"MNEMOS_PLUGIN_PYTHON": sys.executable},
+            cwd=tmp_path,
+        )
+        assert completed.returncode == 1, completed.stderr
+
+
+def test_hooks_skip_until_the_runtime_is_installed(monkeypatch, tmp_path: Path, capsys) -> None:
+    runtime = _load_wrapper()
+    sys.modules["run_mnemos_mcp"] = runtime
+    try:
+        spec = spec_from_file_location(
+            "mnemos_plugin_hook_runtime_tests", Path(".claude-plugin/run_mnemos_hook.py")
+        )
+        assert spec is not None and spec.loader is not None
+        hook = module_from_spec(spec)
+        spec.loader.exec_module(hook)
+    finally:
+        del sys.modules["run_mnemos_mcp"]
+    root = _plugin_root(tmp_path)
+
+    def must_not_install(*args: object, **kwargs: object) -> None:
+        raise AssertionError("a hook must not build or install the runtime")
+
+    monkeypatch.delenv("MNEMOS_PLUGIN_PYTHON", raising=False)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(root))
+    monkeypatch.setattr(runtime, "_create_venv", must_not_install)
+    monkeypatch.setattr(runtime, "_install_plugin", must_not_install)
+    monkeypatch.setattr(hook.subprocess, "run", must_not_install)
+    monkeypatch.setattr(hook.sys, "argv", ["run_mnemos_hook.py", "UserPromptSubmit"])
+
+    assert hook.main() == 0
+    assert "reason=runtime_not_ready" in capsys.readouterr().err
+
+    # Once the MCP server has installed and stamped the runtime, hooks use it.
+    venv_dir = root / ".claude-plugin" / ".venv"
+    _fake_create_venv(venv_dir)
+    (venv_dir / ".mnemos-install-stamp").write_text(
+        runtime._expected_install_stamp(root, {}), encoding="utf-8"
+    )
+    assert runtime._ready_runtime_python(root, {}) == str(runtime._venv_python(venv_dir))
+    (root / "mnemos" / "module.py").write_text("VALUE = 3\n", encoding="utf-8")
+    assert runtime._ready_runtime_python(root, {}) is None
+
+
+def test_a_failed_install_ends_the_mcp_launcher_with_a_message(monkeypatch, capsys) -> None:
+    wrapper = _load_wrapper()
+
+    def offline(root: Path, env: dict[str, str]) -> str:
+        raise subprocess.CalledProcessError(1, ["pip", "install"])
+
+    monkeypatch.setattr(wrapper, "_resolve_runtime_python", offline)
+
+    assert wrapper.main() == 1
+    err = capsys.readouterr().err
+    assert "CalledProcessError" in err and "Traceback" not in err
 
 
 def test_plugin_mcp_child_receives_claude_host(monkeypatch) -> None:

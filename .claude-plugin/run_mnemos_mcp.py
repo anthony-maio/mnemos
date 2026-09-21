@@ -184,6 +184,22 @@ def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
     return str(_ensure_runtime(venv_dir, plugin_root, env))
 
 
+def _ready_runtime_python(plugin_root: Path, env: dict[str, str]) -> str | None:
+    """Return the runtime only if it is already installed for this source."""
+    explicit_python = env.get("MNEMOS_PLUGIN_PYTHON", "").strip()
+    if explicit_python:
+        return explicit_python
+    venv_dir = plugin_root / ".claude-plugin" / ".venv"
+    venv_python = _venv_python(venv_dir)
+    try:
+        current = (venv_dir / ".mnemos-install-stamp").read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    if not venv_python.exists() or current != _expected_install_stamp(plugin_root, env):
+        return None
+    return str(venv_python)
+
+
 def _is_windows() -> bool:
     return os.name == "nt"
 
@@ -201,7 +217,17 @@ def _apply_default_env(plugin_root: Path) -> dict[str, str]:
 def main() -> int:
     plugin_root = _plugin_root()
     env = _apply_default_env(plugin_root)
-    runtime_python = _resolve_runtime_python(plugin_root, env)
+    try:
+        runtime_python = _resolve_runtime_python(plugin_root, env)
+    except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+        # Offline pip, a failed venv, or another session holding the install
+        # lock. No stamp is written, so the next server start tries again.
+        print(
+            f"Mnemos runtime is not installed ({type(exc).__name__}); "
+            "the MCP server retries the install when it next starts",
+            file=sys.stderr,
+        )
+        return 1
 
     completed = subprocess.run(
         [runtime_python, "-m", "mnemos.mcp_server"],

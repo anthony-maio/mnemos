@@ -187,17 +187,23 @@ def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
     consolidate_command = hooks["PreCompact"][0]["hooks"][0]["command"]
     stop_command = hooks["Stop"][0]["hooks"][0]["command"]
 
-    assert prompt_command == (
-        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" UserPromptSubmit'
+    # runpy turns a missing script into an exception (exit 1). ``python script``
+    # exits 2 instead, which Claude reads as a block.
+    runner = (
+        'python -c "import runpy,sys;sys.argv[:]=sys.argv[1:];'
+        "runpy.run_path(sys.argv[0],run_name='__main__')\" "
+        '"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py"'
     )
-    assert session_command == (
-        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" SessionStart'
+    assert prompt_command == f"{runner} UserPromptSubmit"
+    assert session_command == f"{runner} SessionStart"
+    assert consolidate_command == f"{runner} PreCompact"
+    assert stop_command == f"{runner} Stop"
+    # No shell operators: the same text has to run under bash, cmd, and PowerShell.
+    assert all(
+        token not in command
+        for command in (prompt_command, session_command, consolidate_command, stop_command)
+        for token in ("||", "&&", "2>", "$(")
     )
-    assert consolidate_command == (
-        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" PreCompact'
-    )
-    assert stop_command == 'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" Stop'
-    assert "||" not in consolidate_command
 
 
 def test_plugin_hook_forwards_stdin_stdout_and_explicit_runtime(
@@ -209,7 +215,7 @@ def test_plugin_hook_forwards_stdin_stdout_and_explicit_runtime(
 
     monkeypatch.setenv("MNEMOS_PLUGIN_PYTHON", runtime_python)
     monkeypatch.setattr(wrapper.sys, "argv", ["run_mnemos_hook.py", "Stop"])
-    monkeypatch.setattr(wrapper, "_resolve_runtime_python", lambda root, env: runtime_python)
+    monkeypatch.setattr(wrapper, "_ready_runtime_python", lambda root, env: runtime_python)
 
     def fake_run(args, env, check):
         captured["args"] = args
