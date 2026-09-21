@@ -12,7 +12,9 @@ The fallback now uses the configured max_visited. Explicit call overrides,
 scope filtering, path energy, thresholds, hop limits and cycle handling remain
 unchanged. All four new cases pass inside a 54-test graph selection; formatting
 and Python 3.10 mypy pass. A separate source-association selection passes 73
-tests. Full source/package verification is tracked separately.
+tests. The [full source checkpoint](spreading-budget-source-checkpoint-v1/README.md)
+passes 2,158 tests with four skips and all six source/package checks. Its changed
+wheel is undergoing fresh installed-package verification.
 
 The engine already passes its configured max_visited explicitly. This repair
 does not explain or supersede the existing production retrieval failures.

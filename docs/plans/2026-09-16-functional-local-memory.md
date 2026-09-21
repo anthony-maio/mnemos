@@ -255,8 +255,9 @@ The [standalone visit-budget repair](../validation/2026-09-20/spreading-visit-bu
 reproduces three configuration failures and a passing explicit-override control.
 Standalone calls now use the configured limit when no call override is supplied.
 The engine already supplied that limit explicitly; existing retrieval negatives
-are unchanged. The 54-test graph and 73-test source-association selections,
-formatting and type checking pass; full validation of this repair is in progress.
+are unchanged. The 54-test graph and 73-test source-association selections pass.
+The full source/package checkpoint passes 2,158 tests with four skips and all
+six checks; fresh installed-package verification is in progress.
 
 Depends on: T02, T03; integrate revisions from T08.
 
@@ -652,12 +653,12 @@ is implied. No production default changed.
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Latest fully verified source [2996d54](../validation/2026-09-20/support-revision-source-checkpoint-v1/README.md)
-passes 2,144 tests with four skips and all six source/package checks. It includes
-the support-version race repair. Its changed wheel passes fresh isolated
-installed verification.
+Latest fully verified source [995d9c2](../validation/2026-09-20/spreading-budget-source-checkpoint-v1/README.md)
+passes 2,158 tests with four skips and all six source/package checks. It includes
+the support-version and standalone graph-budget repairs. Its changed wheel is
+undergoing fresh isolated installed verification.
 The [installed check](../validation/2026-09-20/support-revision-installed-checkpoint-v1/README.md)
-passes 868 cases with four matching skips and the replay probe. It includes
+for preceding source 2996d54 passes 868 cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git
 environment isolation. The previous installed failure is preserved alongside
 its repair. Earlier verified d937892 and Hermes v35 evidence remain bound to
