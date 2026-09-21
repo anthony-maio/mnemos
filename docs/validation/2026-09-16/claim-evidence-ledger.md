@@ -23,13 +23,12 @@ The [v9 explicit-discard classifier](../2026-09-20/source-classification-semanti
 completed 46 reused cases with 45 valid outputs, one authority rejection and 29
 source-verified excerpts. Several unwanted-retention cases improve, but the
 mixed-policy marker omission and false retention-request metadata persist.
-Candidate not adopted. Prompt and schema change together; focused tests do not
-extend the earlier full-suite checkpoint to this newer experimental code.
+Candidate not adopted. Prompt and schema change together; the newer full-suite checkpoint covers its structural tests, not model quality.
 
 The [v8 temperature control](../2026-09-20/source-selection-semantic-v8/README.md) preserves 44 unchanged outcomes out of 46, removes one unwanted fixture and improves one retention-request reference. It has 44 runtime-valid cases, two authority failures and 34 exact source excerpts. Remaining selection defects prevent adoption; this is not fresh held-out acceptance.
 
-The latest full [source checkpoint](../2026-09-20/extractive-source-checkpoint-v1/README.md)
-is 6e8456b: 2,209 tests pass with four skips and all six source/package checks.
+The latest full [source checkpoint](../2026-09-21/classification-source-checkpoint-v1/README.md)
+is f5c58f1: 2,241 tests pass with four skips and all six source/package checks.
 Its wheel is byte-identical to the 995d9c2 wheel covered by the
 [893-case installed suite](../2026-09-20/spreading-budget-installed-checkpoint-v1/README.md),
 with four matching skips, installed-origin checks and restart replay. These are

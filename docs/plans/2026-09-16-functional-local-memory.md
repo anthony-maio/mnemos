@@ -759,8 +759,10 @@ generation settings remain fixed. The [completed comparison](../validation/2026-
 has 43 valid outputs, three rejections and 31 source-verified excerpts. Some
 request-reference errors disappear, but temporary instructions and fixtures are
 retained and mixed-message/range failures remain. Candidate not adopted. A full
-isolated source/package checkpoint on f5c58f1 is running to include the newer
-experimental classifier and coverage tests.
+isolated [source/package checkpoint on f5c58f1](../validation/2026-09-21/classification-source-checkpoint-v1/README.md)
+passes 2,241 tests with four skips and all six checks, including the newer
+classifier and coverage contracts. The wheel remains byte-identical to the
+previous installed checkpoint; no model quality or native acceptance follows.
 
 The [Gemma 27B comparison v12](../validation/2026-09-21/source-classification-preparation-v12/README.md)
 uses the same v9 classifier, prompt, schema, settings and 46 original cases.
