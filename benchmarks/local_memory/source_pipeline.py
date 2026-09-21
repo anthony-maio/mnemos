@@ -16,6 +16,7 @@ from .source_instruction_ablation import classify_source_memories_without_uncert
 from .source_reconciliation import StagedReconciliation, reconcile_source_candidates
 from .source_selection import ExtractiveMemory, Kind
 from mnemos.contracts import FactProposal
+from mnemos.source_review import SourceReviewReference
 from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider
 
@@ -43,6 +44,7 @@ class SourcePipelineResult(BaseModel):
     reconciliations: list[StagedReconciliation]
     proposals: list[FactProposal]
     reviews: list[ReviewOutcome]
+    review_references: list[SourceReviewReference] = Field(default_factory=list)
 
 
 def _snapshot_events(events: list[EpisodicEvent]) -> list[EpisodicEvent]:
@@ -151,12 +153,45 @@ async def run_source_pipeline(
         if item.operation in {"add", "support", "correct"}
     ]
     reviews = [_to_outcome(item) for item in staged if item.operation in {"conflict", "unresolved"}]
+    references = []
+    for review in reviews:
+        candidate = candidates[review.candidate_index]
+        reference = SourceReviewReference(
+            candidate_index=review.candidate_index,
+            source_id=candidate.source_id,
+            source_fingerprint=candidate.source_fingerprint,
+            source_content_sha256=candidate.source_content_sha256,
+            source_role=candidate.source_role,
+            source_channel=candidate.source_channel,
+            occurred_at=candidate.occurred_at,
+            user_profile_id=candidate.profile_id,
+            scope=candidate.scope,  # type: ignore[arg-type]
+            scope_id=candidate.scope_id,
+            start=candidate.start,
+            end=candidate.end,
+            source_kind=candidate.kind,
+            operation=review.operation,
+            target_fact_id=review.target_fact_id,
+            expected_version=review.expected_version,
+            revises_existing_requirement=candidate.revises_existing_requirement,
+        )
+        excerpt = reference.resolve_source(
+            next(event for event in original_events if event.id == reference.source_id),
+            target=next(
+                (target for target in original_targets if target.id == reference.target_fact_id),
+                None,
+            ),
+        )
+        if excerpt != review.content:
+            raise ValueError("Review content differs from its source reference")
+        references.append(reference)
     return SourcePipelineResult(
         inventory=inventory,
         candidates=candidates,
         reconciliations=staged,
         proposals=proposals,
         reviews=reviews,
+        review_references=references,
     )
 
 

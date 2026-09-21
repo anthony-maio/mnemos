@@ -28,6 +28,23 @@ Existing support does persist evidence: the service creates a candidate using th
 
 ## Keep unresolved work durable and inspectable
 
+The first integration contract is now implemented in `mnemos/source_review.py`.
+`SourceReviewReference` retains the candidate index, source identity and hash,
+exact range, partition, role/kind, revision flag and observed target/version.
+It contains neither copied source text nor model-written explanations. Resolving
+the excerpt rechecks source provenance, current target version and partition,
+and the write firewall. The experimental pipeline now returns these references
+alongside its existing diagnostic review objects. This does not persist reviews
+or authorize their resolution; storage must check suppression and leases inside
+the transaction. The focused suite passes 157 tests, and Python 3.10 type checks
+pass for the new contract, pipeline adapter and contract tests.
+
+Storage integration remains open. In particular, completed-job retention must
+not prune a source while a review still needs it. Forgetting a target or a shared
+source must invalidate its review references even when another fact preserves
+that source. The existing source-deletion path clears job results, but that alone
+does not cover every shared-source or target-only invalidation case.
+
 Persist each candidate outcome atomically with the job result, using a versioned record keyed by job and candidate index. The record needs the source event, source range/hash, validated role/kind, operation, observed target/version when applicable, and review state. Diagnostic reasons must be labeled separately from source evidence. Decide whether the durable job-result payload suffices or a dedicated indexed table is needed for scoped review before adding a migration.
 
 Accepted facts and unresolved outcomes can coexist in one extraction. Record counts and identities explicitly. Provider, malformed-output, lease and version failures still follow durable retry behavior. A valid unresolved result is not a provider failure and must not cause endless identical retries.

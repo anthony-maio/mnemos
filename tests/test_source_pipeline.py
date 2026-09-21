@@ -117,6 +117,12 @@ async def test_mixed_pipeline_preserves_exact_content_evidence_and_version() -> 
     assert result.proposals[1].expected_version == 3
     assert result.reviews[0].content == sources[2].content
     assert result.reviews[0].reason == "No accepted replacement target was observed."
+    assert len(result.review_references) == 1
+    reference = result.review_references[0]
+    assert reference.candidate_index == 2
+    assert reference.resolve_source(sources[2]) == sources[2].content
+    assert "reason" not in reference.model_dump()
+    assert "content" not in reference.model_dump()
 
 
 @pytest.mark.asyncio
