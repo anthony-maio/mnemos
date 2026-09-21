@@ -888,6 +888,21 @@ a referential rejection prefix still remains unresolved; imprecise source kinds
 also remain documented. All 119 focused tests pass. This is development evidence,
 not storage integration, held-out accuracy or final acceptance.
 
+Prospective requirement content now remains separate from a strict
+`revises_existing_requirement` flag, allowed only for direct user continuing
+requirements. Guarded reconciliation can add a complete new rule or correct a
+uniquely observed old rule; referential rejection without replacement remains
+unresolved. The [pipeline v3 run](../validation/2026-09-21/source-pipeline-terminal-v3/README.md)
+matches all sixteen unchanged operation/content expectations, returning nine
+proposals and four review outcomes. An additional missed revision-intent flag on
+the side-panel case remains explicitly documented; the original criterion did
+not check that new field. The [separate ten-case revision run](../validation/2026-09-21/requirement-revision-terminal-v1/README.md)
+matches all frozen requirements for observed/unobserved targets, positive and
+negative policies, ambiguity, authority and an exception-bearing rule. These
+small authored families do not establish held-out accuracy or production writes.
+All 129 focused tests pass, with Python 3.10 checks for eight changed files.
+Storage integration, durable review lifecycle and broader acceptance remain open.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Production extraction now snapshots source events before constructing the prompt
