@@ -231,12 +231,15 @@ def build_reconciliation_schema(
         for target_id in target_ids
     }
     for index, candidate in enumerate(candidates):
+        exact_ids = normalized_target_ids.get(normalize_memory_text(candidate.content), [])
         allowed_operations = ["add", "conflict", "unresolved"]
         if candidate.source_role == "user":
             if candidate.kind == "correction_or_rejection":
                 allowed_operations = ["conflict", "correct", "unresolved"]
             else:
                 allowed_operations = ["add", "conflict", "support", "unresolved"]
+                if exact_ids:
+                    allowed_operations.remove("add")
         for operation in allowed_operations:
             paired_targets: list[MemoryChunk | None]
             if operation in {"support", "correct"}:
@@ -247,6 +250,10 @@ def build_reconciliation_schema(
                 continue
             if operation == "conflict":
                 paired_targets = [None, *targets]
+            if operation == "support":
+                paired_targets = [target for target in targets if target.id in exact_ids]
+                if len(exact_ids) != 1:
+                    continue
             for observed_target in paired_targets:
                 if (
                     operation == "correct"
@@ -355,8 +362,16 @@ def _validate_decisions(
                 target.content
             ):
                 raise ValueError("Support requires exact normalized target content")
+            if decision.target_fact_id in ambiguous_target_ids:
+                raise ValueError("Support target has ambiguous exact normalized content")
         if decision.operation == "add" and candidate.kind == "correction_or_rejection":
             raise ValueError("An unresolved correction cannot become an add")
+        if (
+            decision.operation == "add"
+            and candidate.source_role == "user"
+            and normalize_memory_text(candidate.content) in normalized_target_ids
+        ):
+            raise ValueError("Cannot add an existing exact normalized user fact")
         staged.append(
             StagedReconciliation(
                 candidate_index=index,
@@ -421,7 +436,17 @@ async def reconcile_source_candidates(
             "correction_or_rejection candidate and its current target version; conflict records "
             "an unresolved contradiction; unresolved records a missing or uncertain target. "
             "Use only observed target IDs and versions. Never generate replacement content. "
-            "Non-user attributed history cannot support or correct a direct user fact."
+            "Non-user attributed history cannot support or correct a direct user fact. "
+            "All targets listed here already exist in the store. Candidate indices and source "
+            "offsets are not fact versions. A new independent fact requires add even when "
+            "there are no targets or the targets describe unrelated facts. Missing a matching "
+            "target is not a reason to leave a new independent fact unresolved. A direct user "
+            "candidate that exactly matches one existing target after normalization requires "
+            "support with that target's observed version, not another add. If multiple target "
+            "identities match, use unresolved rather than choosing one. A correction whose "
+            "intended target is missing or ambiguous also requires unresolved; do not relabel "
+            "uncertain target identity as conflict. Conflict is for a known disagreement "
+            "without authority to replace the existing fact."
         ),
     }
     prompt = (

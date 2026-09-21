@@ -210,7 +210,7 @@ async def test_correction_rejects_ambiguous_exact_targets_but_keeps_unique_and_a
 
 @pytest.mark.asyncio
 async def test_add_and_support_preserve_candidate_content_without_generation() -> None:
-    first = event("new-source", "The marker is cedar.")
+    first = event("new-source", "The review window is Tuesday.")
     second = event("support-source", "The marker is cedar.")
     candidates = [candidate(first), candidate(second)]
     provider = Provider(
@@ -227,6 +227,45 @@ async def test_add_and_support_preserve_candidate_content_without_generation() -
     assert [item.operation for item in staged] == ["add", "support"]
     assert [item.content for item in staged] == [first.content, second.content]
     assert all("content" not in item for item in provider.response["decisions"])
+
+
+@pytest.mark.asyncio
+async def test_exact_existing_user_fact_cannot_be_added_again() -> None:
+    source = event("repeat-source", "The marker is cedar.")
+    repeated = candidate(source)
+    existing = target(content="  The marker is CEDAR. ")
+    schema = build_reconciliation_schema([repeated], [existing])
+    validator = Draft202012Validator(schema)
+    duplicate = {"decisions": [decision(0, "add")]}
+    assert not validator.is_valid(duplicate)
+    assert validator.is_valid(
+        {"decisions": [decision(0, "support", target_fact_id=existing.id, expected_version=1)]}
+    )
+    provider = Provider(duplicate)
+    provider.supports_structured_output = False
+    with pytest.raises(ValueError, match="existing exact normalized"):
+        await reconcile_source_candidates([repeated], [source], [existing], provider)
+
+
+@pytest.mark.asyncio
+async def test_support_cannot_choose_between_duplicate_identities() -> None:
+    source = event("repeat-source", "The marker is cedar.")
+    targets = [target("first"), target("second")]
+    response = {"decisions": [decision(0, "support", target_fact_id="first", expected_version=1)]}
+    schema = build_reconciliation_schema([candidate(source)], targets)
+    assert not Draft202012Validator(schema).is_valid(response)
+    with pytest.raises(ValueError, match="ambiguous exact normalized"):
+        await reconcile_source_candidates(
+            [candidate(source)], [source], targets, Provider(response)
+        )
+
+
+def test_support_schema_excludes_nonmatching_targets() -> None:
+    source = event("repeat-source", "The marker is cedar.")
+    schema = build_reconciliation_schema([candidate(source)], [target(content="Different fact.")])
+    assert not Draft202012Validator(schema).is_valid(
+        {"decisions": [decision(0, "support", target_fact_id="fact-1", expected_version=1)]}
+    )
 
 
 def test_schema_binds_candidate_indices_and_operation_authority() -> None:
