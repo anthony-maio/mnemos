@@ -18,7 +18,13 @@ DATASET_VERSION = "local-memory-heldout-v2"
 LIFECYCLE_V3_VERSION = "local-memory-heldout-v3"
 CONTRACT_V4_VERSION = "local-memory-heldout-v4"
 CONTRACT_V5_VERSION = "local-memory-heldout-v5"
-LIFECYCLE_TARGET_VERSIONS = {LIFECYCLE_V3_VERSION, CONTRACT_V4_VERSION, CONTRACT_V5_VERSION}
+CONTRACT_V6_VERSION = "local-memory-heldout-v6"
+LIFECYCLE_TARGET_VERSIONS = {
+    LIFECYCLE_V3_VERSION,
+    CONTRACT_V4_VERSION,
+    CONTRACT_V5_VERSION,
+    CONTRACT_V6_VERSION,
+}
 SUPPORTED_DATASET_VERSIONS = {DATASET_VERSION, *LIFECYCLE_TARGET_VERSIONS}
 # This version repairs a fixed, audited v3 family; future datasets get new versions.
 V4_REPAIRED_CANARY_SESSIONS = {f"heldout-{number:03d}" for number in range(61, 81)}
@@ -34,7 +40,16 @@ SPLITS = {"heldout", "development"}
 QUERY_KINDS = {"answerable", "no_answer"}
 EVENT_ROLES = {"user", "assistant", "system"}
 WRITE_MODES = {"none", "automatic", "explicit"}
-LIFECYCLE_OPERATIONS = {"capture", "remember", "correct", "forget", "restart", "noise", "response"}
+LIFECYCLE_OPERATIONS = {
+    "capture",
+    "remember",
+    "correct",
+    "forget",
+    "restart",
+    "noise",
+    "response",
+    "replay",
+}
 FACT_STATUSES = {"supported", "superseded", "forgotten", "rejected", "conflict"}
 SCENARIO_TAGS = {
     "conflicting",
@@ -397,6 +412,48 @@ def _canonical_lines(path: Path) -> bytes:
     return path.read_bytes()
 
 
+def resolve_replay_source(session: SessionScenario, event: SourceEvent) -> SourceEvent:
+    """Resolve a delivery action without permitting a changed source payload."""
+    positions = {item.event_id: index for index, item in enumerate(session.events)}
+    source = next(
+        (item for item in session.events if item.event_id == event.target_source_event_id), None
+    )
+    if (
+        source is None
+        or event.event_id not in positions
+        or positions[source.event_id] >= positions[event.event_id]
+    ):
+        raise ValueError("replay source must exist before the delivery action")
+    if source.lifecycle_operation not in {"capture", "remember"} or source.role != "user":
+        raise ValueError("replay source must be a user capture or remember")
+    if source.write_mode not in {"automatic", "explicit"} or (
+        source.lifecycle_operation == "remember" and source.write_mode != "explicit"
+    ):
+        raise ValueError("replay source must have a valid write mode")
+    if datetime.fromisoformat(source.occurred_at.replace("Z", "+00:00")) >= datetime.fromisoformat(
+        event.occurred_at.replace("Z", "+00:00")
+    ):
+        raise ValueError("replay delivery must occur after its source")
+    if (
+        event.evidence_fact_ids
+        or event.target_fact_id is not None
+        or event.replacement_content is not None
+    ):
+        raise ValueError("replay cannot declare new evidence or a fact mutation")
+    for field in (
+        "content",
+        "role",
+        "source_kind",
+        "write_mode",
+        "target_user_profile_id",
+        "target_project_id",
+        "target_workspace_id",
+    ):
+        if getattr(event, field) != getattr(source, field):
+            raise ValueError(f"replay source payload mismatch for {field}")
+    return source
+
+
 def _validate_v3_lifecycle_targets(
     session: SessionScenario,
     events_by_id: dict[str, SourceEvent],
@@ -414,6 +471,9 @@ def _validate_v3_lifecycle_targets(
         }
 
     for event in session.events:
+        if event.lifecycle_operation == "replay":
+            resolve_replay_source(session, event)
+            continue
         has_target = any(
             value is not None
             for value in (
@@ -604,7 +664,7 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
         raise ValueError("session IDs must be unique")
     if set(dataset.development_session_ids) != {session.session_id for session in development}:
         raise ValueError("development_session_ids must exactly identify development rows")
-    if dataset.version == CONTRACT_V5_VERSION:
+    if dataset.version in {CONTRACT_V5_VERSION, CONTRACT_V6_VERSION}:
         for kind, identities in (
             ("event", [event.event_id for session in sessions for event in session.events]),
             ("query", [query.query_id for session in sessions for query in session.queries]),
@@ -685,11 +745,13 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
             ):
                 raise ValueError(f"supported fact {fact.fact_id} needs user evidence")
         for event in session.events:
+            if event.lifecycle_operation == "replay" and dataset.version != CONTRACT_V6_VERSION:
+                raise ValueError("original source replay requires local-memory-heldout-v6")
             if set(event.evidence_fact_ids) - fact_ids_for_session:
                 raise ValueError(f"event {event.event_id} references an unknown fact")
         if dataset.version in LIFECYCLE_TARGET_VERSIONS:
             _validate_v3_lifecycle_targets(session, events_by_id, facts_by_id)
-        if dataset.version in {CONTRACT_V4_VERSION, CONTRACT_V5_VERSION}:
+        if dataset.version in {CONTRACT_V4_VERSION, CONTRACT_V5_VERSION, CONTRACT_V6_VERSION}:
             _validate_v4_contract(
                 session,
                 events_by_id,

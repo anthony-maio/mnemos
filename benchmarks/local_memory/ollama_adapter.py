@@ -21,7 +21,14 @@ from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
-from .contracts import FactRecord, QueryRecord, SessionScenario, SourceEvent, StatePair
+from .contracts import (
+    FactRecord,
+    QueryRecord,
+    SessionScenario,
+    SourceEvent,
+    StatePair,
+    resolve_replay_source,
+)
 from .harness import ExperimentProfile, RunObservation
 from mnemos.retrieval import score_candidate
 from mnemos.memory_service import LocalMemoryService
@@ -208,6 +215,8 @@ class OllamaEvaluatorAdapter:
                         "fact_id",
                         "forgotten",
                         "expected_version",
+                        "replayed_source_event_id",
+                        "replayed_runtime_event_id",
                     ):
                         value = result.get(field)
                         if value is not None:
@@ -470,6 +479,16 @@ class OllamaEvaluatorAdapter:
         profile: ExperimentProfile,
         repetition: int,
     ) -> Mapping[str, Any]:
+        if event.lifecycle_operation == "replay":
+            source = resolve_replay_source(session, event)
+            result = dict(
+                self._event_operation(service, source, session, context, profile, repetition)
+            )
+            result["replayed_source_event_id"] = source.event_id
+            result["replayed_runtime_event_id"] = self._runtime_event_id(
+                source.event_id, profile, repetition
+            )
+            return result
         event_id = self._runtime_event_id(event.event_id, profile, repetition)
         if event.lifecycle_operation in {"capture", "noise", "response"}:
             event_context = self._target_context(context, event)

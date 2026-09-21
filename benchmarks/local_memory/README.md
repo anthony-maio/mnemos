@@ -221,6 +221,20 @@ latency gate. Production retrieval defaults and host configuration are unchanged
 The [retrieval checkpoint](../../docs/validation/2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
 records the frozen source checks, installed adapter cases, and offline preparation.
 
+## Original-source replay
+
+The `local-memory-heldout-v6` contract adds an explicit `replay` delivery action.
+Its `target_source_event_id` must identify an earlier user capture or remember.
+Body, role, source kind, write mode and context must match that source; replay
+cannot introduce fact evidence, replacement content or a fact mutation target.
+The adapter resends the original operation, payload, runtime event ID and
+original source timestamp. The replay row's later timestamp describes delivery
+order. Raw operations retain both the delivery action ID and replayed source ID.
+Earlier dataset versions reject this operation. V5 identity checks and generic
+scope/body checks remain in force. A question about forgotten content is not an
+original-event replay. This contract adds measurement capability, not real-model
+or native-host evidence.
+
 ## Extraction evidence resolution
 
 Extraction evidence resolution was tightened on September 20: every declared
