@@ -156,3 +156,39 @@ def test_scope_partition_validation_applies_to_all_discarded_input():
     other.metadata["project_id"] = "foreign"
     with pytest.raises(ValueError, match="scope partitions"):
         render([item(kind="question")], [source(), other])
+
+
+@pytest.mark.parametrize("mutation", ["append", "remove", "replace"])
+@pytest.mark.asyncio
+async def test_event_list_change_during_provider_call_rejected(mutation):
+    events = [source()]
+
+    class Provider:
+        async def predict(self, *args, **kwargs):
+            if mutation == "append":
+                events.append(source())
+            elif mutation == "remove":
+                events.clear()
+            else:
+                events[0] = source("A replacement event.")
+            return '{"selections": []}'
+
+    with pytest.raises(ValueError, match="changed during"):
+        await classify_source_memories(events, Provider())
+
+
+@pytest.mark.parametrize(
+    "content",
+    [
+        "The test report from January 1 says restart passed; outages were not tested.",
+        "Restart always works.",
+    ],
+)
+def test_nonuser_history_preserves_provenance_without_certifying_claim(content):
+    event = source(content, role="assistant")
+    kept = render([item(kind="attributed_history")], [event])
+    assert kept[0].content == content
+    assert kept[0].source_role == "assistant"
+    assert kept[0].occurred_at == event.occurred_at.isoformat()
+    # Both pass structurally. The second lacks report qualifications; semantic
+    # review must not mistake retained provenance for independent verification.

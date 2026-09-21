@@ -561,9 +561,10 @@ The [durability comparison](../validation/2026-09-20/extraction-durability-devel
 completed all 52 calls without runtime errors. Its [semantic review](../validation/2026-09-20/extraction-durability-semantic-review-v1.md)
 rejects adoption: fewer transient instructions were retained, but historical
 facts, independent markers and policy qualifications were lost. Production
-also retains unwanted temporary instructions. The [v3 follow-up](../validation/2026-09-20/extraction-durability-history-preparation-v3/README.md)
-is running on 46 reused development cases, including the previous history set,
-with assertion-level separation and qualification guidance. V2 was prepared
+also retains unwanted temporary instructions. The [v3 follow-up](../validation/2026-09-20/extraction-durability-history-terminal-v3/README.md)
+completed 92 calls across two arms on 46 reused development cases, including
+the previous history set. Production had 45 valid outputs and one error; the
+candidate had 46 valid outputs. Runtime validity does not prove extraction quality. V2 was prepared
 but never executed. No prompt is adopted; this comparison cannot close T18 alone.
 
 Depends on: T07-T11, T17.
@@ -730,7 +731,7 @@ freezes all 46 original cases and rubrics before execution. The experimental
 classifier adds question, temporary-instruction, quoted-material, unrequested-
 speculation and unaccepted-suggestion labels; these remain auditable but emit
 no memory. Source, scope, authority and mutation guards still apply. The focused
-selector/classifier suite passes 52 tests, with formatting and Python 3.10 type
+selector/classifier suite passes 57 tests, with formatting and Python 3.10 type
 checking passing. The local Qwen2.5:14b temperature-zero comparison is running;
 no semantic result or adoption is claimed. Prompt and schema change together.
 
