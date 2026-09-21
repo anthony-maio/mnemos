@@ -16,6 +16,7 @@ from .contracts import (
     RetrievalRequest,
     ReviewScopeRequest,
     ReviewItemRequest,
+    ReviewResolutionRequest,
 )
 from .claude_identity import legacy_event_id, scoped_event_id
 from .hermes_identity import (
@@ -27,7 +28,7 @@ from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
-from .source_review import SourceReviewReference
+from .source_review import SourceReviewReference, ReviewResolutionReference
 from .retrieval import RetrievedChunks, assertion_status, render_context_chunk
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
@@ -101,6 +102,7 @@ class LocalMemoryService:
         scope: str | None = None,
         explicit: bool = False,
         correction: dict[str, Any] | None = None,
+        review_resolution: ReviewResolutionReference | None = None,
     ) -> dict[str, Any]:
         self.registry.validate_context(event.context)
         scope = scope or event.scope
@@ -332,6 +334,8 @@ class LocalMemoryService:
             ).hexdigest(),
             **(correction or {}),
         }
+        if review_resolution is not None:
+            job_payload["review_resolution"] = review_resolution.model_dump(mode="json")
         if event.identity_status == "provisional_unassociated":
             job_payload["identity_status"] = event.identity_status
         job = DurableJob(
@@ -699,6 +703,11 @@ class LocalMemoryService:
             processed_event_ids=[event.id],
             expected_source_event=expected_source_event,
             review_references=review_references,
+            review_resolution=(
+                ReviewResolutionReference.model_validate(job.payload["review_resolution"])
+                if "review_resolution" in job.payload
+                else None
+            ),
             expected_version=job.payload.get("expected_version"),
             expected_versions=expected_versions,
             result={"decision": decision, "encoding_diagnostics": diagnostics},
@@ -779,6 +788,68 @@ class LocalMemoryService:
         }
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if operation == "resolve_review":
+            resolution_request = ReviewResolutionRequest.model_validate(payload)
+            context = self.registry.validate_context(resolution_request.context)
+            metadata = context_metadata(context, resolution_request.scope)
+            item = self.engine.store.inspect_source_review(
+                resolution_request.job_id,
+                resolution_request.candidate_index,
+                user_profile_id=context.user_profile_id,
+                scope=resolution_request.scope,
+                scope_id=metadata["scope_id"],
+                firewall=self.firewall,
+            )
+            if item["state"] != "open" or item["excerpt"] is None:
+                raise ValueError("Review is no longer open and valid")
+            original = SourceReviewReference.model_validate(item["reference"])
+            if original.target_fact_id is not None and (
+                resolution_request.operation != "correct"
+                or resolution_request.target_fact_id != original.target_fact_id
+            ):
+                raise ValueError("Targeted review resolution must correct its observed target")
+            if resolution_request.operation == "correct":
+                assert resolution_request.target_fact_id is not None
+                target = self.engine.store.get(resolution_request.target_fact_id)
+                if target is None or any(
+                    target.metadata.get(key) != metadata[key]
+                    for key in ("user_profile_id", "scope", "scope_id")
+                ):
+                    raise ValueError("Resolution target not found in the requested scope")
+                if target.version != resolution_request.expected_version:
+                    raise ValueError("Resolution target version changed")
+            resolution = ReviewResolutionReference(
+                review_job_id=resolution_request.job_id,
+                candidate_index=resolution_request.candidate_index,
+                user_profile_id=context.user_profile_id,
+                scope=resolution_request.scope,
+                scope_id=metadata["scope_id"],
+                operation=resolution_request.operation,
+                target_fact_id=resolution_request.target_fact_id,
+                expected_version=resolution_request.expected_version,
+            )
+            event = CaptureEvent(
+                event_id=resolution_request.event_id,
+                context=context,
+                role="user",
+                occurred_at=datetime.now(timezone.utc),
+                content=resolution_request.content,
+                source_kind="explicit_review_resolution",
+            )
+            return self.capture(
+                event,
+                scope=resolution_request.scope,
+                explicit=True,
+                review_resolution=resolution,
+                correction=(
+                    {
+                        "target_fact_id": resolution_request.target_fact_id,
+                        "expected_version": resolution_request.expected_version,
+                    }
+                    if resolution_request.operation == "correct"
+                    else None
+                ),
+            )
         if operation in {"reviews", "inspect_review", "discard_review"}:
             request = (
                 ReviewScopeRequest.model_validate(payload)

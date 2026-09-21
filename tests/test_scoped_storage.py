@@ -66,7 +66,7 @@ def test_migration_preserves_fact_and_rejects_future_database(tmp_path):
     store.close()
     store = SQLiteStore(path)
     assert store.get("stable").content == "Keep this fact"
-    assert store.get_stats()["schema_version"] == 9
+    assert store.get_stats()["schema_version"] == int(SQLiteStore._SCHEMA_VERSION)
     import sqlite3
 
     assert store.migration_backup is not None

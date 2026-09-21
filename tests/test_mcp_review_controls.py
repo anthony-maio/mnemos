@@ -57,3 +57,48 @@ async def test_mcp_review_roundtrip_uses_resolved_context_and_never_queues(tmp_p
         assert store.get_all() == []
     finally:
         store.close()
+
+
+@pytest.mark.asyncio
+async def test_mcp_resolution_enqueues_explicit_scoped_clarification(tmp_path: Path) -> None:
+    memory, scope, store, job, _ = await create_review(tmp_path)
+
+    class Client:
+        async def request(
+            self, operation: str, payload: dict[str, Any], *, queue_on_failure: bool
+        ) -> dict[str, Any]:
+            assert operation == "resolve_review"
+            assert payload["context"] == scope.model_dump(mode="json")
+            assert queue_on_failure is False
+            return await memory.dispatch(operation, payload)
+
+    context = SimpleNamespace(
+        request_context=SimpleNamespace(
+            lifespan_context=ServiceMCPContext(client=cast(MnemosClient, Client()), scope=scope)
+        )
+    )
+    tool = _create_service_mcp_server()._tool_manager.get_tool("mnemos_resolve_review")
+    assert tool is not None
+    try:
+        result, _ = await tool.run(
+            {
+                "job_id": job.id,
+                "candidate_index": 0,
+                "event_id": "mcp-clarification",
+                "content": "The project marker is spruce-window-92.",
+                "operation": "add",
+            },
+            context=context,
+            convert_result=True,
+        )
+        response = json.loads(result[0].text)
+        assert response["processing_status"] == "pending"
+        assert store.get_all() == []
+        captured = store.get_episodic_event(response["event_id"])
+        assert captured is not None and captured.role == "user"
+        assert captured.metadata["source_kind"] == "explicit_review_resolution"
+        pending = store.claim_jobs(owner="resolver")[0]
+        await memory.process_job(pending)
+        assert len(store.get_all()) == 1
+    finally:
+        store.close()

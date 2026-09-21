@@ -160,7 +160,7 @@ def test_schema_eight_upgrade_preserves_data_and_pre_upgrade_backup(tmp_path: Pa
     try:
         existing = upgraded.get("existing")
         assert existing is not None and existing.content == "Keep this fact"
-        assert upgraded.get_stats()["schema_version"] == 9
+        assert upgraded.get_stats()["schema_version"] == int(SQLiteStore._SCHEMA_VERSION)
         assert (
             upgraded.list_source_reviews(
                 user_profile_id="owner", scope="project", scope_id="project-a"
@@ -169,7 +169,7 @@ def test_schema_eight_upgrade_preserves_data_and_pre_upgrade_backup(tmp_path: Pa
         )
     finally:
         upgraded.close()
-    backups = list(tmp_path.glob("old.sqlite.pre-schema-9-*.sqlite"))
+    backups = list(tmp_path.glob(f"old.sqlite.pre-schema-{SQLiteStore._SCHEMA_VERSION}-*.sqlite"))
     assert len(backups) == 1
     connection = sqlite3.connect(backups[0])
     try:

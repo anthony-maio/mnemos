@@ -82,7 +82,12 @@ READ_ONLY = {
 REVIEW_DISCARDS = {"mnemos_discard_review"}
 PROVIDER_WRITES = {"mnemos_store", "mnemos_retrieve"}
 LOCAL_WRITES = {"mnemos_capture", "mnemos_feedback"}
-DESTRUCTIVE_WRITES = {"mnemos_correct", "mnemos_forget", "mnemos_forget_related"}
+DESTRUCTIVE_WRITES = {
+    "mnemos_correct",
+    "mnemos_forget",
+    "mnemos_forget_related",
+    "mnemos_resolve_review",
+}
 MAINTENANCE = {"mnemos_consolidate"}
 
 

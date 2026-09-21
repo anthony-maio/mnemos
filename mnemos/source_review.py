@@ -107,3 +107,39 @@ class SourceReviewReference(BaseModel):
         if not excerpt.strip() or not decision.allowed or decision.content != excerpt:
             raise ValueError("Review source excerpt violates write policy")
         return excerpt
+
+
+class ReviewResolutionReference(BaseModel):
+    """Explicit user-authored resolution attached to a durable write job."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    review_job_id: str = Field(min_length=1)
+    candidate_index: int = Field(ge=0, strict=True)
+    user_profile_id: str = Field(min_length=1)
+    scope: Literal["project", "workspace", "global"]
+    scope_id: str | None
+    operation: Literal["add", "correct"]
+    target_fact_id: str | None = Field(default=None, min_length=1)
+    expected_version: int | None = Field(default=None, ge=1, strict=True)
+
+    @model_validator(mode="after")
+    def validate_contract(self) -> "ReviewResolutionReference":
+        if self.scope != "global" and not self.scope_id:
+            raise ValueError("Project and workspace resolutions require a scope identity")
+        if self.scope == "global" and self.scope_id is not None:
+            raise ValueError("Global resolutions cannot carry a scope identity")
+        if self.operation == "add" and (
+            self.target_fact_id is not None or self.expected_version is not None
+        ):
+            raise ValueError("Add resolutions cannot select a target")
+        if self.operation == "correct" and (
+            self.target_fact_id is None or self.expected_version is None
+        ):
+            raise ValueError("Correct resolutions require a target and expected version")
+        if (self.target_fact_id is None) != (self.expected_version is None):
+            raise ValueError("Resolution target and version must be supplied together")
+        return self
+
+
+__all__ = ["ReviewResolutionReference", "SourceReviewReference"]

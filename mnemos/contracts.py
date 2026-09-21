@@ -107,6 +107,25 @@ class ReviewItemRequest(ReviewScopeRequest):
     candidate_index: int = Field(ge=0, strict=True)
 
 
+class ReviewResolutionRequest(ReviewItemRequest):
+    event_id: str = Field(min_length=1)
+    content: str = Field(min_length=1)
+    operation: Literal["add", "correct"]
+    target_fact_id: str | None = Field(default=None, min_length=1)
+    expected_version: int | None = Field(default=None, ge=1, strict=True)
+
+    @model_validator(mode="after")
+    def validate_resolution(self) -> ReviewResolutionRequest:
+        if not self.content.strip() or not self.event_id.strip():
+            raise ValueError("Resolution requires explicit clarification and event identity")
+        if self.operation == "add":
+            if self.target_fact_id is not None or self.expected_version is not None:
+                raise ValueError("Add resolution cannot name a correction target")
+        elif self.target_fact_id is None or self.expected_version is None:
+            raise ValueError("Correction resolution requires a target and expected version")
+        return self
+
+
 class CaptureEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
     identity_version: Literal[1, 2] = 1

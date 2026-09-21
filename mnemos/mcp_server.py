@@ -828,6 +828,43 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
+    @mcp.tool(annotations=durable_update)
+    async def mnemos_resolve_review(
+        job_id: str,
+        candidate_index: StrictInt,
+        event_id: str,
+        content: str,
+        operation: Literal["add", "correct"],
+        target_fact_id: str | None = None,
+        expected_version: StrictInt | None = None,
+        scope: Literal["project", "workspace", "global"] = "project",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Resolve a review using explicit clarification, never an inferred replacement.
+
+        Supply a stable event_id for this clarification. Correction requires the
+        inspected target ID and version. Acceptance is pending until its durable
+        job completes; this call does not imply a fact has been committed.
+        """
+        service_context = _service_context_from_ctx(ctx, "mnemos_resolve_review")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "resolve_review",
+                {
+                    "job_id": job_id,
+                    "candidate_index": candidate_index,
+                    "event_id": event_id,
+                    "content": content,
+                    "operation": operation,
+                    "target_fact_id": target_fact_id,
+                    "expected_version": expected_version,
+                    "scope": scope,
+                    "context": service_context.scope.model_dump(mode="json"),
+                },
+            )
+        )
+
     @mcp.tool(annotations=read_only)
     async def mnemos_list(
         limit: int = 20,

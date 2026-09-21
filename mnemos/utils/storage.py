@@ -42,7 +42,7 @@ from ..types import (
     RetrievalFeedbackEvent,
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
-from ..source_review import SourceReviewReference
+from ..source_review import ReviewResolutionReference, SourceReviewReference
 from ..memory_safety import MemoryWriteFirewall
 from ..errors import (
     RelatedForgetPreviewIncomplete,
@@ -510,6 +510,7 @@ class MemoryStore(ABC):
         processed_event_ids: list[str] | None = None,
         expected_source_event: EpisodicEvent | None = None,
         review_references: list[SourceReviewReference] | None = None,
+        review_resolution: ReviewResolutionReference | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
         result: dict[str, Any] | None = None,
@@ -1359,7 +1360,7 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "9"
+    _SCHEMA_VERSION = "10"
     _CHUNK_SELECT_COLUMNS = """
         id, content, embedding, metadata, salience, cognitive_state,
         created_at, updated_at,
@@ -1634,9 +1635,17 @@ class SQLiteStore(MemoryStore):
             scope_id TEXT,
             reference TEXT NOT NULL,
             state TEXT NOT NULL DEFAULT 'open',
+            resolved_fact_id TEXT,
+            resolved_version INTEGER,
+            resolution_event_id TEXT,
+            resolved_at TEXT,
             PRIMARY KEY (job_id, candidate_index),
             FOREIGN KEY (job_id) REFERENCES memory_jobs(id) ON DELETE CASCADE
         )""")
+        self._ensure_column("source_review_records", "resolved_fact_id", "TEXT")
+        self._ensure_column("source_review_records", "resolved_version", "INTEGER")
+        self._ensure_column("source_review_records", "resolution_event_id", "TEXT")
+        self._ensure_column("source_review_records", "resolved_at", "TEXT")
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_review_source "
             "ON source_review_records(source_event_id, state)"
@@ -1649,20 +1658,25 @@ class SQLiteStore(MemoryStore):
             "CREATE INDEX IF NOT EXISTS idx_review_scope "
             "ON source_review_records(user_profile_id, scope, scope_id)"
         )
+        self._conn.execute("DROP TRIGGER IF EXISTS review_source_deleted")
+        self._conn.execute("DROP TRIGGER IF EXISTS review_target_deleted")
+        self._conn.execute("DROP TRIGGER IF EXISTS review_source_suppressed")
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_deleted
             AFTER DELETE ON episodic_events BEGIN
             UPDATE source_review_records SET state='invalidated_source'
-            WHERE source_event_id=OLD.id; END""")
+            WHERE source_event_id=OLD.id OR resolution_event_id=OLD.id; END""")
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_target_deleted
             AFTER DELETE ON memory_chunks BEGIN
             UPDATE source_review_records SET state='invalidated_target'
-            WHERE target_fact_id=OLD.id AND state='open'; END""")
+            WHERE (target_fact_id=OLD.id OR resolved_fact_id=OLD.id)
+              AND state IN ('open', 'resolved'); END""")
         self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_suppressed
             AFTER INSERT ON memory_suppressions BEGIN
             UPDATE source_review_records SET state='invalidated_source'
-            WHERE source_event_id=NEW.source_event_id;
+            WHERE source_event_id=NEW.source_event_id OR resolution_event_id=NEW.source_event_id;
             UPDATE source_review_records SET state='invalidated_target'
-            WHERE target_fact_id=NEW.fact_id AND state='open'; END""")
+            WHERE (target_fact_id=NEW.fact_id OR resolved_fact_id=NEW.fact_id)
+              AND state IN ('open', 'resolved'); END""")
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_fact_id "
             "ON memory_suppressions(fact_id, reason) WHERE fact_id IS NOT NULL"
@@ -2819,6 +2833,7 @@ class SQLiteStore(MemoryStore):
         processed_event_ids: list[str] | None = None,
         expected_source_event: EpisodicEvent | None = None,
         review_references: list[SourceReviewReference] | None = None,
+        review_resolution: ReviewResolutionReference | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
         result: dict[str, Any] | None = None,
@@ -2834,14 +2849,25 @@ class SQLiteStore(MemoryStore):
         if chunk is not None:
             fact_chunks.insert(0, chunk)
         result_payload = dict(result or {})
+        resolution = (
+            ReviewResolutionReference.model_validate(review_resolution.model_dump())
+            if review_resolution is not None
+            else None
+        )
         reviews = [
             SourceReviewReference.model_validate(item.model_dump())
             for item in review_references or []
         ]
         if len({item.candidate_index for item in reviews}) != len(reviews):
             raise ValueError("Review candidate indices must be unique within a job")
+        if resolution is not None and reviews:
+            raise ValueError("A job cannot insert and resolve reviews together")
+        if resolution is not None and expected_source_event is None:
+            raise ValueError("Review resolutions require an expected source event")
         if "review_count" in result_payload or "review_indices" in result_payload:
             raise ValueError("Review result summary is controlled by the transaction")
+        if resolution is not None and "resolved_review" in result_payload:
+            raise ValueError("Resolved review result summary is controlled by the transaction")
         if reviews and result_payload.get("decision") in {
             "no_durable_facts",
             "identity_pending",
@@ -2898,6 +2924,19 @@ class SQLiteStore(MemoryStore):
                         or self.get_episodic_event(source_snapshot.id) != source_snapshot
                     ):
                         raise ValueError("Expected source event changed before atomic commit")
+                resolution_review: SourceReviewReference | None = None
+                if resolution is not None:
+                    assert source_snapshot is not None
+                    resolution_review, _ = self._validate_resolution_locked(
+                        resolution,
+                        source_snapshot=source_snapshot,
+                        lease_kind=str(lease_row[0]),
+                        leased_payload=leased_payload,
+                        processed_event_ids=processed_event_ids,
+                        fact_chunks=fact_chunks,
+                        evidence=evidence,
+                        expected_versions=expected_versions,
+                    )
                 for review in reviews:
                     if (
                         lease_row[0] != "extract"
@@ -3101,6 +3140,34 @@ class SQLiteStore(MemoryStore):
                             review.model_dump_json(),
                         ),
                     )
+                if resolution is not None:
+                    assert resolution_review is not None
+                    assert source_snapshot is not None
+                    if len(accepted_chunks) != 1:
+                        raise ValueError("Review resolution fact was suppressed or not accepted")
+                    accepted = accepted_chunks[0]
+                    self._conn.execute(
+                        """UPDATE source_review_records
+                           SET state='resolved', resolved_fact_id=?, resolved_version=?,
+                               resolution_event_id=?, resolved_at=?
+                           WHERE job_id=? AND candidate_index=? AND state='open'""",
+                        (
+                            accepted.id,
+                            accepted.version,
+                            source_snapshot.id,
+                            committed_at.isoformat(),
+                            resolution.review_job_id,
+                            resolution.candidate_index,
+                        ),
+                    )
+                    if self._conn.execute("SELECT changes()").fetchone()[0] != 1:
+                        raise ValueError("Review is no longer open")
+                    result_payload["resolved_review"] = {
+                        "job_id": resolution.review_job_id,
+                        "candidate_index": resolution.candidate_index,
+                        "fact_id": accepted.id,
+                        "version": accepted.version,
+                    }
                 if reviews:
                     result_payload["review_count"] = len(reviews)
                     result_payload["review_indices"] = [item.candidate_index for item in reviews]
@@ -4203,6 +4270,96 @@ class SQLiteStore(MemoryStore):
         ) or (event.role == "assistant" and self._contains_forgotten_id(event.content)):
             raise ValueError("Review source assertion is suppressed")
 
+    def _validate_resolution_locked(
+        self,
+        resolution: ReviewResolutionReference,
+        *,
+        source_snapshot: EpisodicEvent,
+        lease_kind: str,
+        leased_payload: dict[str, Any],
+        processed_event_ids: list[str] | None,
+        fact_chunks: list[MemoryChunk],
+        evidence: list[FactEvidence] | None,
+        expected_versions: dict[str, int] | None,
+    ) -> tuple[SourceReviewReference, str]:
+        if lease_kind not in {"remember", "correct"}:
+            raise ValueError("Review resolutions require an explicit remember or correct job")
+        if leased_payload.get("review_resolution") != resolution.model_dump(mode="json"):
+            raise ValueError("Review resolution does not match the leased job")
+        if (
+            source_snapshot.role != "user"
+            or source_snapshot.metadata.get("source_kind") != "explicit_review_resolution"
+        ):
+            raise ValueError("Review resolutions require a direct user clarification source")
+        if source_snapshot.metadata.get("user_profile_id") != resolution.user_profile_id:
+            raise ValueError("Review resolution profile does not match its source")
+        if (
+            source_snapshot.scope != resolution.scope
+            or source_snapshot.scope_id != resolution.scope_id
+        ):
+            raise ValueError("Review resolution scope does not match its source")
+        if processed_event_ids != [source_snapshot.id]:
+            raise ValueError("Review resolution must process its clarification source only")
+        if resolution.operation == "add" and lease_kind != "remember":
+            raise ValueError("Add resolutions require a remember job")
+        if resolution.operation == "correct" and lease_kind != "correct":
+            raise ValueError("Correct resolutions require a correct job")
+        if len(fact_chunks) != 1 or len(evidence or []) != 1:
+            raise ValueError("Review resolutions require one fact and one evidence row")
+        item = self._conn.execute(
+            "SELECT state, reference FROM source_review_records "
+            "WHERE job_id=? AND candidate_index=? AND user_profile_id=? "
+            "AND scope=? AND scope_id IS ?",
+            (
+                resolution.review_job_id,
+                resolution.candidate_index,
+                resolution.user_profile_id,
+                resolution.scope,
+                resolution.scope_id,
+            ),
+        ).fetchone()
+        if item is None or item[0] != "open":
+            raise ValueError("Review is no longer open")
+        review = SourceReviewReference.model_validate_json(item[1])
+        if review.user_profile_id != resolution.user_profile_id or review.scope != resolution.scope:
+            raise ValueError("Review resolution partition mismatch")
+        if review.scope_id != resolution.scope_id:
+            raise ValueError("Review resolution scope mismatch")
+        self._validate_review_locked(review)
+        if review.target_fact_id is not None:
+            if (
+                resolution.operation != "correct"
+                or resolution.target_fact_id != review.target_fact_id
+                or resolution.expected_version != review.expected_version
+            ):
+                raise ValueError("A targeted review requires correction of its observed target")
+        target = self.get(resolution.target_fact_id) if resolution.target_fact_id else None
+        if resolution.operation == "correct":
+            if target is None or target.version != resolution.expected_version:
+                raise ValueError("Review resolution target is unavailable or stale")
+            if (expected_versions or {}).get(target.id) != target.version:
+                raise ValueError("Review resolution target is not fenced by its expected version")
+        fact = fact_chunks[0]
+        evidence_item = (evidence or [])[0]
+        if fact.content != source_snapshot.content:
+            raise ValueError("Review resolution fact must use the explicit clarification content")
+        if (
+            fact.metadata.get("user_profile_id") != resolution.user_profile_id
+            or fact.metadata.get("scope") != resolution.scope
+            or fact.metadata.get("scope_id") != resolution.scope_id
+        ):
+            raise ValueError("Review resolution fact is outside its partition")
+        if resolution.operation == "correct" and fact.id != resolution.target_fact_id:
+            raise ValueError("Review correction must retain its target fact identity")
+        if evidence_item.source_event_id != source_snapshot.id:
+            raise ValueError("Review resolution evidence must cite its clarification source")
+        if (
+            evidence_item.fact_id != fact.id
+            or evidence_item.excerpt != source_snapshot.content[:1000]
+        ):
+            raise ValueError("Review resolution evidence does not match its clarification source")
+        return review, fact.id
+
     def _current_review_state_locked(self, review: SourceReviewReference) -> str:
         """Derive validity without changing the durable review disposition."""
         try:
@@ -4246,13 +4403,24 @@ class SQLiteStore(MemoryStore):
             self._conn.execute("BEGIN")
             try:
                 rows = self._conn.execute(
-                    "SELECT job_id, candidate_index, state, reference FROM source_review_records "
+                    "SELECT job_id, candidate_index, state, reference, resolved_fact_id, "
+                    "resolved_version, resolution_event_id, resolved_at "
+                    "FROM source_review_records "
                     "WHERE user_profile_id=? AND scope=? AND scope_id IS ? "
                     "ORDER BY job_id, candidate_index",
                     (user_profile_id, scope, scope_id),
                 ).fetchall()
                 items = []
-                for job_id, candidate_index, state, encoded in rows:
+                for (
+                    job_id,
+                    candidate_index,
+                    state,
+                    encoded,
+                    resolved_fact_id,
+                    resolved_version,
+                    resolution_event_id,
+                    resolved_at,
+                ) in rows:
                     reference = json.loads(encoded)
                     if state == "open":
                         state = self._current_review_state_locked(
@@ -4264,6 +4432,10 @@ class SQLiteStore(MemoryStore):
                             candidate_index=candidate_index,
                             state=state,
                             reference=reference,
+                            resolved_fact_id=resolved_fact_id,
+                            resolved_version=resolved_version,
+                            resolution_event_id=resolution_event_id,
+                            resolved_at=resolved_at,
                         )
                     )
                 self._conn.commit()
@@ -4288,7 +4460,8 @@ class SQLiteStore(MemoryStore):
         if scope != "global" and not scope_id:
             raise ValueError("Review inspection requires a scope identity")
         row = self._conn.execute(
-            "SELECT state, reference FROM source_review_records "
+            "SELECT state, reference, resolved_fact_id, resolved_version, "
+            "resolution_event_id, resolved_at FROM source_review_records "
             "WHERE job_id=? AND candidate_index=? AND user_profile_id=? "
             "AND scope=? AND scope_id IS ?",
             (job_id, candidate_index, user_profile_id, scope, scope_id),
@@ -4300,6 +4473,10 @@ class SQLiteStore(MemoryStore):
             candidate_index=candidate_index,
             state=row[0],
             reference=json.loads(row[1]),
+            resolved_fact_id=row[2],
+            resolved_version=row[3],
+            resolution_event_id=row[4],
+            resolved_at=row[5],
         )
 
     def inspect_source_review(
