@@ -39,7 +39,7 @@ or authorize their resolution; storage must check suppression and leases inside
 the transaction. The focused suite passes 157 tests, and Python 3.10 type checks
 pass for the new contract, pipeline adapter and contract tests.
 
-Storage integration remains open. In particular, completed-job retention must
+Service integration remains open. In particular, completed-job retention must
 not prune a source while a review still needs it. Forgetting a target or a shared
 source must invalidate its review references even when another fact preserves
 that source. The existing source-deletion path clears job results, but that alone
@@ -76,8 +76,24 @@ Required lifecycle behavior for the implementation:
   access. Do not describe disabling a project as deleting its data.
 
 The contract evidence is archived in
-`../validation/2026-09-21/source-review-reference-v1/`. The dedicated table,
-retention pins and lifecycle operations above are still unimplemented.
+`../validation/2026-09-21/source-review-reference-v1/`.
+
+The SQLite persistence seam now implements the dedicated `source_review_records`
+table in schema 9. `commit_fact_and_job` validates references before fact writes
+and again before committing review rows, source status and job completion. It
+supports explicit review-only completion and mixed fact/review results. Review
+references carry no source text or diagnostic explanations. Scoped storage
+inspection revalidates current source, target and suppression state.
+
+Open reviews pin their source against normal processed-evidence pruning.
+Database triggers invalidate reviews on source deletion, source suppression and
+target deletion, including the direct deletion path used by backup restore.
+Inspection/pruning also detect stale versions and source changes. Isolated
+schema-upgrade tests verify preserved facts and a pre-schema-9 backup; restore
+tests verify open-review retention and invalidation under newer suppressions.
+No live data migration has run. Service selection of the new extraction path,
+authorized review inspection/resolution/discard, and real-model lifecycle
+acceptance remain open.
 
 Persist each candidate outcome atomically with the job result, using a versioned record keyed by job and candidate index. The record needs the source event, source range/hash, validated role/kind, operation, observed target/version when applicable, and review state. Diagnostic reasons must be labeled separately from source evidence. Decide whether the durable job-result payload suffices or a dedicated indexed table is needed for scoped review before adding a migration.
 

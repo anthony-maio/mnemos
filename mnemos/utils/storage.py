@@ -42,6 +42,7 @@ from ..types import (
     RetrievalFeedbackEvent,
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
+from ..source_review import SourceReviewReference
 from ..errors import (
     RelatedForgetPreviewIncomplete,
     RelatedForgetPreviewStale,
@@ -506,12 +507,18 @@ class MemoryStore(ABC):
         revision: FactRevision | None = None,
         revisions: list[FactRevision] | None = None,
         processed_event_ids: list[str] | None = None,
+        review_references: list[SourceReviewReference] | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
         result: dict[str, Any] | None = None,
         now: datetime | None = None,
     ) -> bool:
         raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def list_source_reviews(
+        self, *, user_profile_id: str, scope: str, scope_id: str | None
+    ) -> list[dict[str, Any]]:
+        raise NotImplementedError("This storage backend does not support durable reviews.")
 
     def retry_job(self, job_id: str, *, now: datetime | None = None) -> bool:
         raise NotImplementedError("This storage backend does not support durable jobs.")
@@ -1327,7 +1334,7 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "8"
+    _SCHEMA_VERSION = "9"
     _CHUNK_SELECT_COLUMNS = """
         id, content, embedding, metadata, salience, cognitive_state,
         created_at, updated_at,
@@ -1592,6 +1599,45 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
+        self._conn.execute("""CREATE TABLE IF NOT EXISTS source_review_records (
+            job_id TEXT NOT NULL,
+            candidate_index INTEGER NOT NULL,
+            source_event_id TEXT NOT NULL,
+            target_fact_id TEXT,
+            user_profile_id TEXT NOT NULL,
+            scope TEXT NOT NULL,
+            scope_id TEXT,
+            reference TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'open',
+            PRIMARY KEY (job_id, candidate_index),
+            FOREIGN KEY (job_id) REFERENCES memory_jobs(id) ON DELETE CASCADE
+        )""")
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_review_source "
+            "ON source_review_records(source_event_id, state)"
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_review_target "
+            "ON source_review_records(target_fact_id, state)"
+        )
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_review_scope "
+            "ON source_review_records(user_profile_id, scope, scope_id)"
+        )
+        self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_deleted
+            AFTER DELETE ON episodic_events BEGIN
+            UPDATE source_review_records SET state='invalidated_source'
+            WHERE source_event_id=OLD.id; END""")
+        self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_target_deleted
+            AFTER DELETE ON memory_chunks BEGIN
+            UPDATE source_review_records SET state='invalidated_target'
+            WHERE target_fact_id=OLD.id AND state='open'; END""")
+        self._conn.execute("""CREATE TRIGGER IF NOT EXISTS review_source_suppressed
+            AFTER INSERT ON memory_suppressions BEGIN
+            UPDATE source_review_records SET state='invalidated_source'
+            WHERE source_event_id=NEW.source_event_id;
+            UPDATE source_review_records SET state='invalidated_target'
+            WHERE target_fact_id=NEW.fact_id AND state='open'; END""")
         self._conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_fact_id "
             "ON memory_suppressions(fact_id, reason) WHERE fact_id IS NOT NULL"
@@ -2746,6 +2792,7 @@ class SQLiteStore(MemoryStore):
         revision: FactRevision | None = None,
         revisions: list[FactRevision] | None = None,
         processed_event_ids: list[str] | None = None,
+        review_references: list[SourceReviewReference] | None = None,
         expected_version: int | None = None,
         expected_versions: dict[str, int] | None = None,
         result: dict[str, Any] | None = None,
@@ -2756,6 +2803,24 @@ class SQLiteStore(MemoryStore):
         if chunk is not None:
             fact_chunks.insert(0, chunk)
         result_payload = dict(result or {})
+        reviews = [
+            SourceReviewReference.model_validate(item.model_dump())
+            for item in review_references or []
+        ]
+        if len({item.candidate_index for item in reviews}) != len(reviews):
+            raise ValueError("Review candidate indices must be unique within a job")
+        if "review_count" in result_payload or "review_indices" in result_payload:
+            raise ValueError("Review result summary is controlled by the transaction")
+        if reviews and result_payload.get("decision") in {
+            "no_durable_facts",
+            "identity_pending",
+            "suppressed",
+            "surprisal_filtered",
+            "length_noise_filtered",
+        }:
+            raise ValueError("Review outcomes cannot be reported as discarded or deferred")
+        if result_payload.get("decision") == "review_pending" and not reviews:
+            raise ValueError("Review-pending results require review references")
         if not fact_chunks:
             decision = result_payload.get("decision")
             if not processed_event_ids or decision not in {
@@ -2764,6 +2829,7 @@ class SQLiteStore(MemoryStore):
                 "length_noise_filtered",
                 "suppressed",
                 "identity_pending",
+                "review_pending",
             }:
                 raise ValueError(
                     "A no-fact commit requires processed events and an explicit decision"
@@ -2793,6 +2859,14 @@ class SQLiteStore(MemoryStore):
                     self._conn.rollback()
                     return False
                 leased_payload = json.loads(lease_row[1] or "{}")
+                for review in reviews:
+                    if (
+                        lease_row[0] != "extract"
+                        or review.source_id != leased_payload.get("event_id")
+                        or review.source_id not in (processed_event_ids or [])
+                    ):
+                        raise ValueError("Review must belong to the leased extraction source")
+                    self._validate_review_locked(review)
                 if (
                     lease_row[0] == "capture_only"
                     and result_payload.get("decision") != "identity_pending"
@@ -2921,7 +2995,7 @@ class SQLiteStore(MemoryStore):
                         self._invalidate_graph_derivation_locked({accepted.id})
 
                 if suppressed_ids and not accepted_chunks:
-                    result_payload["decision"] = "suppressed"
+                    result_payload["decision"] = "review_pending" if reviews else "suppressed"
                 for item in evidence or []:
                     if item.fact_id in suppressed_ids:
                         continue
@@ -2968,6 +3042,29 @@ class SQLiteStore(MemoryStore):
                     if result_payload.get("decision") == "identity_pending"
                     else "consolidated"
                 )
+                for review in reviews:
+                    # Fact writes above can change an observed review target.
+                    # Revalidate before completing the shared transaction.
+                    self._validate_review_locked(review)
+                    self._conn.execute(
+                        """INSERT INTO source_review_records
+                        (job_id, candidate_index, source_event_id, target_fact_id,
+                         user_profile_id, scope, scope_id, reference)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                        (
+                            job_id,
+                            review.candidate_index,
+                            review.source_id,
+                            review.target_fact_id,
+                            review.user_profile_id,
+                            review.scope,
+                            review.scope_id,
+                            review.model_dump_json(),
+                        ),
+                    )
+                if reviews:
+                    result_payload["review_count"] = len(reviews)
+                    result_payload["review_indices"] = [item.candidate_index for item in reviews]
                 for event_id in processed_event_ids or []:
                     updated_event = self._conn.execute(
                         """UPDATE episodic_events SET status=?, error=NULL WHERE id=?""",
@@ -4052,15 +4149,83 @@ class SQLiteStore(MemoryStore):
             finally:
                 self._transaction_active = False
 
+    def _validate_review_locked(self, review: SourceReviewReference) -> None:
+        event = self.get_episodic_event(review.source_id)
+        if event is None or self.is_suppressed(source_event_id=review.source_id):
+            raise ValueError("Review source is missing or suppressed")
+        target = self.get(review.target_fact_id) if review.target_fact_id is not None else None
+        if review.target_fact_id is not None and self.is_suppressed(fact_id=review.target_fact_id):
+            raise ValueError("Review target is suppressed")
+        excerpt = review.resolve_source(event, target=target)
+        if self.is_suppressed(
+            canonical_key=compute_canonical_key(
+                excerpt, review.scope, review.scope_id, review.user_profile_id
+            )
+        ) or (event.role == "assistant" and self._contains_forgotten_id(event.content)):
+            raise ValueError("Review source assertion is suppressed")
+
+    def _refresh_source_reviews_locked(self) -> None:
+        rows = self._conn.execute(
+            "SELECT job_id, candidate_index, reference FROM source_review_records WHERE state='open'"
+        ).fetchall()
+        for job_id, candidate_index, encoded in rows:
+            review = SourceReviewReference.model_validate_json(encoded)
+            try:
+                self._validate_review_locked(review)
+            except ValueError:
+                target = self.get(review.target_fact_id) if review.target_fact_id else None
+                invalid_target = review.target_fact_id is not None and (
+                    target is None
+                    or target.version != review.expected_version
+                    or target.metadata.get("scope") != review.scope
+                    or target.metadata.get("scope_id") != review.scope_id
+                    or target.metadata.get("user_profile_id") != review.user_profile_id
+                    or self.is_suppressed(fact_id=review.target_fact_id)
+                )
+                self._conn.execute(
+                    "UPDATE source_review_records SET state=? WHERE job_id=? AND candidate_index=?",
+                    (
+                        "invalidated_target" if invalid_target else "invalidated_source",
+                        job_id,
+                        candidate_index,
+                    ),
+                )
+
+    def list_source_reviews(
+        self, *, user_profile_id: str, scope: str, scope_id: str | None
+    ) -> list[dict[str, Any]]:
+        """Inspect one explicit partition; service callers must authorize it first."""
+        if not user_profile_id.strip() or scope not in {"project", "workspace", "global"}:
+            raise ValueError("Review inspection requires an explicit profile and scope")
+        if scope != "global" and not scope_id:
+            raise ValueError("Review inspection requires a scope identity")
+        with self._lock:
+            self._refresh_source_reviews_locked()
+            rows = self._conn.execute(
+                "SELECT job_id, candidate_index, state, reference FROM source_review_records "
+                "WHERE user_profile_id=? AND scope=? AND scope_id IS ? "
+                "ORDER BY job_id, candidate_index",
+                (user_profile_id, scope, scope_id),
+            ).fetchall()
+            self._conn.commit()
+        return [
+            dict(job_id=row[0], candidate_index=row[1], state=row[2], reference=json.loads(row[3]))
+            for row in rows
+        ]
+
     def prune_processed_evidence(self, *, before: datetime, limit: int = 100) -> int:
         """Expire processed raw events; retained support excerpts remain inspectable."""
         with self._lock:
+            self._refresh_source_reviews_locked()
             cursor = self._conn.execute(
                 "DELETE FROM episodic_events WHERE id IN (SELECT id FROM episodic_events "
                 "WHERE status IN ('consolidated', 'deferred') AND created_at < ? "
                 "AND NOT EXISTS (SELECT 1 FROM memory_jobs WHERE "
                 "json_extract(payload, '$.event_id')=episodic_events.id "
-                "AND status != 'completed') ORDER BY created_at LIMIT ?)",
+                "AND status != 'completed') "
+                "AND NOT EXISTS (SELECT 1 FROM source_review_records WHERE "
+                "source_event_id=episodic_events.id AND state='open') "
+                "ORDER BY created_at LIMIT ?)",
                 (before.isoformat(), max(0, min(limit, 1000))),
             )
             self._conn.commit()

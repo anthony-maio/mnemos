@@ -43,7 +43,7 @@ def test_fresh_schema_failure_rolls_back_every_object_and_retry_succeeds(
     monkeypatch.undo()
     store = SQLiteStore(str(path))
     try:
-        assert store._meta_value("schema_version") == "8"  # noqa: SLF001
+        assert store._meta_value("schema_version") == "9"  # noqa: SLF001
         assert "memory_chunks" in _schema_tables(path)
         assert (
             store._conn.execute("PRAGMA journal_mode").fetchone()[0].lower() == "wal"
@@ -98,7 +98,7 @@ def test_migration_failure_preserves_prior_data_and_verified_backup(
         ).fetchone() == ("Prior durable fact",)
         assert connection.execute("PRAGMA integrity_check").fetchone() == ("ok",)
 
-    backups = sorted(tmp_path.glob("legacy.sqlite.pre-schema-8-*.sqlite"))
+    backups = sorted(tmp_path.glob("legacy.sqlite.pre-schema-9-*.sqlite"))
     assert len(backups) == 1
     with sqlite3.connect(backups[0]) as backup:
         assert (
