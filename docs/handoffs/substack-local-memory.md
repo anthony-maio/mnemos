@@ -14,6 +14,12 @@ The [temperature-zero control](../validation/2026-09-20/source-selection-semanti
 
 ## Start with the actual state
 
+The [fixed-contract Gemma 12B comparison](../validation/2026-09-21/source-classification-semantic-v11/README.md)
+completed with 43 valid outputs, three failures and 31 exact source excerpts.
+Some request-reference mistakes disappeared, but temporary instructions and a
+quoted date fixture were retained; the mixed-policy case still failed. The
+candidate remains unadopted. A model change alone did not establish dependable extraction.
+
 The [latest-wheel recovery follow-up](../validation/2026-09-21/all-module-provider-recovery-terminal-v2/README.md)
 separates operational recovery from useful memory: with thinking disabled, both
 pending jobs completed, but the model omitted the required project marker.

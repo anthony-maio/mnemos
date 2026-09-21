@@ -2,6 +2,11 @@
 
 ## Current evidence, September 20, 2026
 
+The [Gemma 12B fixed-contract comparison](../2026-09-21/source-classification-semantic-v11/README.md)
+has 43 valid outputs, three validation failures and 31 source-verified excerpts.
+Its mixture of corrected metadata and retention/range regressions does not
+justify adoption or a model-superiority claim.
+
 September 21 follow-up: [provider recovery v2](../2026-09-21/all-module-provider-recovery-terminal-v2/README.md)
 completed both pending jobs on the verified installed wheel with think=False,
 but emitted no facts and failed the unchanged marker assertion. Later lifecycle

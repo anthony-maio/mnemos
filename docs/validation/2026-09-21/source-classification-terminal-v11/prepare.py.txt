@@ -1,0 +1,53 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+from urllib.request import urlopen
+
+repo = Path.cwd()
+parent = repo / 'docs/validation/2026-09-20/source-classification-terminal-v9'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-classification-development-v11')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((parent / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert sha(parent / 'observations.jsonl') == state['observations_sha256']
+prep = json.loads((parent / 'preparation.json').read_bytes())
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+assert inputs['model'] == 'qwen2.5:14b' and inputs['temperature'] == 0.0
+inputs['model'] = 'gemma3:12B'
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as r:
+    model = next(m for m in json.loads(r.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == 'f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a'
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as r:
+    version = json.loads(r.read())
+root.mkdir(exist_ok=False)
+for name in ('candidate/__init__.py', 'candidate/assertion_inventory.py', 'candidate/source_selection.py', 'candidate/source_classification.py', 'runner.py',
+             'durability-rubric.json', 'durability-rubric-review.json', 'history-rubric.json', 'history-rubric-review.json'):
+    assert sha(parent / name) == prep['files'][name]
+    dst = root / name
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(parent / name, dst)
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+(root / 'parent-terminal-binding.json').write_text(json.dumps({
+    'directory': str(parent), 'preparation_sha256': sha(parent / 'preparation.json'),
+    'observations_sha256': sha(parent / 'observations.jsonl'),
+    'status_sha256': sha(parent / 'status.json')}, indent=2) + '\n')
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'design': 'Only model changes from Qwen2.5:14b to installed Gemma3:12B. Same candidate bytes, prompt, schema, provider source, cases, rubrics, requested temperature zero, think=False, token budget and timeout. Model weights, architecture and tokenizer change together; no isolated size claim. Review omissions and unwanted retention; discarded labels remain auditable. No production adoption.',
+    'acceptance': 'Review all46 outputs against original meanings and ambiguity notes, including omissions, unwanted retention, kinds and qualifier completeness. Exact source slices and runtime validity are not accuracy. Preserve errors without selective retries or rubric changes.',
+    'limits': 'One stochastic repetition on reused unblinded development cases. No fresh holdout, target reconciliation, durable writes or production/default change.'
+}, indent=2) + '\n')
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+new_prep = {k: prep[k] for k in ('source_commit', 'source_files', 'candidate_commit')}
+new_prep.update(
+    candidate_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+    prepared_at=datetime.now(timezone.utc).isoformat(), model=model, ollama_version=version,
+    hardware_inventory=subprocess.check_output(['nvidia-smi', '--query-gpu=name,memory.total,driver_version', '--format=csv,noheader'], text=True).strip(),
+    parent_preparation_sha256=sha(parent / 'preparation.json'),
+    files={str(p.relative_to(root)).replace('\\', '/'): sha(p) for p in root.rglob('*') if p.is_file()}
+)
+(root / 'preparation.json').write_text(json.dumps(new_prep, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'started': False}))

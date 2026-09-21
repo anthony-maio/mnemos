@@ -755,9 +755,12 @@ does not replace the original semantic criteria.
 The [Gemma comparison v11](../validation/2026-09-21/source-classification-preparation-v11/README.md)
 changes only the requested model from v9 to the installed Gemma3:12B digest.
 All 46 paired prompts and schemas match; cases, rubrics, classifier bytes and
-generation settings remain fixed. The run is active, with no semantic result
-or adoption claimed. A full isolated source/package checkpoint on f5c58f1 is
-being prepared to include the newer experimental classifier and coverage tests.
+generation settings remain fixed. The [completed comparison](../validation/2026-09-21/source-classification-semantic-v11/README.md)
+has 43 valid outputs, three rejections and 31 source-verified excerpts. Some
+request-reference errors disappear, but temporary instructions and fixtures are
+retained and mixed-message/range failures remain. Candidate not adopted. A full
+isolated source/package checkpoint on f5c58f1 is running to include the newer
+experimental classifier and coverage tests.
 
 ### T19 - Reconcile release, documentation, and research claims
 
