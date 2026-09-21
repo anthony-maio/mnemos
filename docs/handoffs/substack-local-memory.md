@@ -188,3 +188,20 @@ The raw-source pipeline run has now completed: 15 runtime-valid cases, one scope
 Relationship-vocabulary update: v7 fixes both new-fact omissions but exposes an ambiguous correction-to-conflict fallback. V8 closes that schema/runtime path and matches all ten original operation expectations, including intentional unresolved cases. Raw-source pipeline v2 preserves all v1 classification inventories and matches fifteen of sixteen frozen pipeline expectations, returning eight exact-source proposals and five review outcomes. The prospective negative rule with a rejection prefix remains incomplete, and imprecise source kinds remain documented. The combined focused suite passes 119 tests. Evidence: `docs/validation/2026-09-21/source-reconciliation-terminal-v8/README.md` and `docs/validation/2026-09-21/source-pipeline-terminal-v2/README.md`. No storage writes, production adoption or fresh acceptance.
 
 Prospective-rule update: pipeline v3 matches all sixteen unchanged operation/content expectations (nine exact-source proposals, four review outcomes). The side-panel rule is retained but its revision-intent metadata is falsely negative, an additional limitation not covered by the old criterion. A separate ten-case authored revision corpus matches its frozen operation/kind/role/intent/content requirements, including corrections against versioned targets and retaining an exception. Results are development evidence, not accuracy or production writes. The combined focused suite passes 129 tests and Python 3.10 checks pass for eight changed files. Evidence: `docs/validation/2026-09-21/source-pipeline-terminal-v3/README.md` and `docs/validation/2026-09-21/requirement-revision-terminal-v1/README.md`. Durable integration and fresh acceptance remain open.
+
+## September 21 integration update for the writer
+
+The new source-bound extractor now reaches the persistent service as an explicit
+opt-in. Facts and unresolved review references commit together. Reviews retain
+their source while pending and become invalid when the source is suppressed or
+the target is forgotten. Disabling correction leaves a pending review instead
+of authorizing a correction. A final source-snapshot check also closes the gap
+between extraction and asynchronous embedding.
+
+Keep the evidence levels separate: the earlier storage checkpoint passed 2,352
+full-suite tests with four skips; the later service integration passed 211
+focused tests and a wheel import/source-byte smoke check. The latter is not yet
+a full installed-wheel or real-model acceptance result. Review controls and the
+pilot remain open. The portable research packet still needs its final refresh.
+See [the integration record](../validation/2026-09-21/source-bound-service-integration-v1/README.md)
+and [the preceding full-suite result](../validation/2026-09-21/source-review-storage-full-v1/README.md).

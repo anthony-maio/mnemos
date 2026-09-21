@@ -901,7 +901,12 @@ matches all frozen requirements for observed/unobserved targets, positive and
 negative policies, ambiguity, authority and an exception-bearing rule. These
 small authored families do not establish held-out accuracy or production writes.
 All 129 focused tests pass, with Python 3.10 checks for eight changed files.
-Storage integration, durable review lifecycle and broader acceptance remain open.
+The subsequent [source-bound service integration](../validation/2026-09-21/source-bound-service-integration-v1/README.md)
+adds atomic review storage, source-retention/forget handling and an explicit
+opt-in extraction mode. Its 211 focused tests and packaging smoke pass. The
+preceding storage checkpoint passed 2,352 full-suite tests with four skips;
+that full result predates the service adapter. Review inspection/resolution/
+discard controls, current full acceptance and real-model validation remain open.
 
 ### T19 - Reconcile release, documentation, and research claims
 

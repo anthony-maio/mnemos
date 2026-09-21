@@ -1,6 +1,6 @@
 # Source reconciliation integration follow-up
 
-Status: implementation design; production integration is not complete. This supplements T17-T19 without changing their acceptance criteria.
+Status: opt-in service integration implemented; review controls and acceptance remain open. This supplements T17-T19 without changing their acceptance criteria.
 
 ## Evidence motivating the work
 
@@ -94,6 +94,23 @@ tests verify open-review retention and invalidation under newer suppressions.
 No live data migration has run. Service selection of the new extraction path,
 authorized review inspection/resolution/discard, and real-model lifecycle
 acceptance remain open.
+
+The subsequent [service integration](../validation/2026-09-21/source-bound-service-integration-v1/README.md)
+closes the extraction-selection seam. `[sleep] extraction_mode = "source_bound"`
+is now an explicit opt-in; `generated` remains the default for baseline
+comparisons. Nine extraction implementations moved unchanged into
+`mnemos/extraction`, and benchmark modules re-export them. The service commits
+accepted proposals and review references together, defers corrections when
+mutable RAG is disabled, and retains capture passthrough when sleep is disabled.
+The cognition probe follows the selected extraction mode. The final transaction
+now validates the original full source snapshot after all asynchronous work.
+
+The service candidate passes 211 focused tests, Python 3.10 type checks and
+formatting; its built wheel imports the extractor with benchmark imports blocked.
+That packaging smoke is not a full installed-wheel check. The preceding storage
+checkpoint separately passed [2,352 full-suite tests with four skips](../validation/2026-09-21/source-review-storage-full-v1/README.md).
+Those full-suite results predate the service integration. Review controls and
+the broader acceptance work remain open; no live settings were changed.
 
 Persist each candidate outcome atomically with the job result, using a versioned record keyed by job and candidate index. The record needs the source event, source range/hash, validated role/kind, operation, observed target/version when applicable, and review state. Diagnostic reasons must be labeled separately from source evidence. Decide whether the durable job-result payload suffices or a dedicated indexed table is needed for scoped review before adding a migration.
 
