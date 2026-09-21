@@ -1,0 +1,97 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import asyncio
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+
+repo = Path.cwd()
+parent = repo / 'docs/validation/2026-09-21/source-instruction-examples-terminal-v14'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-instruction-ablation-development-v15')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+prep = json.loads((parent / 'preparation.json').read_bytes())
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+state = json.loads((parent / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['observations_sha256'] == sha(parent / 'observations.jsonl')
+root.mkdir(exist_ok=False)
+names = [name for name in prep['files'] if name.startswith('candidate/')]
+names += ['inputs.json', 'durability-rubric.json', 'durability-rubric-review.json', 'history-rubric.json', 'history-rubric-review.json']
+for name in names:
+    assert sha(parent / name) == prep['files'][name]
+    target = root / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(parent / name, target)
+shutil.copyfile(repo / 'benchmarks/local_memory/source_instruction_ablation.py', root / 'candidate/source_instruction_ablation.py')
+runner = (parent / 'runner.py').read_text()
+old = 'from candidate.source_instruction_examples import classify_source_memories_with_instruction_examples as select_source_memories'
+assert runner.count(old) == 1
+(root / 'runner.py').write_text(runner.replace(old, 'from candidate.source_instruction_ablation import classify_source_memories_without_uncertainty_example as select_source_memories'))
+(root / 'parent-terminal-binding.json').write_text(json.dumps({
+    'directory': str(parent), 'preparation_sha256': sha(parent / 'preparation.json'),
+    'observations_sha256': sha(parent / 'observations.jsonl'), 'status_sha256': sha(parent / 'status.json')}, indent=2) + '\n')
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'design': 'Only the uncertainty example is removed from v14 instructions and the example count is updated. Schema, original events, requested model, provider source, settings and rubrics remain fixed.',
+    'acceptance': 'Review every retained and omitted meaning against original source/rubric, preserve errors and ambiguities, no selective retries or adjusted thresholds. Examples are a development intervention, not fresh evidence.',
+    'limits': 'Prompt ablation targets a known development regression. Reused unblinded cases cannot establish held-out generalization. No reconciliation, writes or production adoption.'}, indent=2) + '\n')
+sys.path.insert(0, inputs['snapshot'])
+sys.path.insert(0, str(root))
+from candidate.source_instruction_examples import classify_source_memories_with_instruction_examples as classify_source_memories_with_role_binding
+from candidate.source_instruction_ablation import classify_source_memories_without_uncertainty_example as classify_source_memories_with_instruction_examples
+from mnemos.types import EpisodicEvent
+
+async def preflight():
+    checks = []
+    marker = '\nSOURCE EVENTS:\n'
+    for case in inputs['cases']:
+        calls = []
+        class Capture:
+            supports_structured_output = True
+            async def predict(self, prompt, **kwargs):
+                calls.append((prompt, kwargs['format']))
+                return '{"selections": []}'
+        event = EpisodicEvent.model_validate(case['source'])
+        await classify_source_memories_with_role_binding([event], Capture())
+        await classify_source_memories_with_instruction_examples([event], Capture())
+        assert calls[0][1] == calls[1][1]
+        instructions, payload = calls[0][0].split(marker, 1)
+        start = instructions.index('EXAMPLE 2 -- possible plan, explicit non-approval, and an actual remember request\n')
+        end = instructions.index('EXAMPLE 3 -- continuing requirement without a remember request\n', start)
+        expected = (instructions[:start] + instructions[end:]).replace('These three examples', 'These two examples', 1)
+        assert calls[1][0] == expected + marker + payload
+        assert calls[0][0].split(marker, 1)[1] == calls[1][0].split(marker, 1)[1]
+        checks.append({'case_id': case['id'], 'prompt_sha256': hashlib.sha256(calls[1][0].encode()).hexdigest(),
+                       'schema_sha256': hashlib.sha256(json.dumps(calls[1][1], sort_keys=True).encode()).hexdigest()})
+    assert len(checks) == 46
+    (root / 'offline-preflight.json').write_text(json.dumps({'status': 'passed', 'model_calls': 0, 'cases': checks}, indent=2) + '\n')
+asyncio.run(preflight())
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+new_prep = {k: prep[k] for k in ('source_commit', 'source_files', 'model', 'ollama_version', 'hardware_inventory') if k in prep}
+new_prep.update(candidate_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                prepared_at=datetime.now(timezone.utc).isoformat(),
+                parent_preparation_sha256=sha(parent / 'preparation.json'),
+                files={str(p.relative_to(root)).replace('\\', '/'): sha(p) for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts})
+(root / 'preparation.json').write_text(json.dumps(new_prep, indent=2) + '\n')
+guards = []
+for args in ([], ['wrong-digest']):
+    result = subprocess.run([sys.executable, str(root / 'runner.py'), *args], capture_output=True, text=True)
+    assert result.returncode != 0 and 'externally supplied matching preparation digest' in result.stderr
+    assert not (root / 'status.json').exists()
+    guards.append({'arguments': args, 'exit_code': result.returncode})
+(root / 'launch-guard-checks.json').write_text(json.dumps(guards, indent=2) + '\n')
+out = repo / 'docs/validation/2026-09-21/source-instruction-ablation-preparation-v15'
+out.mkdir(exist_ok=False)
+for src in root.rglob('*'):
+    if src.is_file() and '__pycache__' not in src.parts:
+        dst = out / src.relative_to(root)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'README.md').write_text('# Uncertainty example ablation preparation v15\n\nThe sole intervention over v14 removes the uncertainty worked example and\nupdates the example count. All 46 paired offline calls preserve the full schema\nand exact real source payload; full prompt equality verifies no other changes.\nBoth preparation-digest launch guards pass. No model calls have run.\n\nThe original cases, ambiguity notes, rubrics, model and settings remain fixed.\nProvider identity is inherited and checked live by the runner. This is a reused\ndevelopment comparison, not fresh acceptance or a default change.\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    str(p.relative_to(out)).replace('\\', '/'): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.rglob('*') if p.is_file()}}, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'offline_cases': 46, 'model_calls': 0}))
