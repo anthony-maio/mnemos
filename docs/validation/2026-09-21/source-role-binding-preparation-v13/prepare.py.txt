@@ -1,0 +1,108 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import asyncio
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+
+repo = Path.cwd()
+parent = repo / 'docs/validation/2026-09-20/source-classification-terminal-v9'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-role-binding-development-v13')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+prep = json.loads((parent / 'preparation.json').read_bytes())
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+state = json.loads((parent / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 46
+assert state['observations_sha256'] == sha(parent / 'observations.jsonl')
+root.mkdir(exist_ok=False)
+for name in ('candidate/__init__.py', 'candidate/assertion_inventory.py', 'candidate/source_selection.py',
+             'candidate/source_classification.py', 'durability-rubric.json', 'durability-rubric-review.json',
+             'history-rubric.json', 'history-rubric-review.json', 'inputs.json'):
+    assert sha(parent / name) == prep['files'][name]
+    target = root / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(parent / name, target)
+shutil.copyfile(repo / 'benchmarks/local_memory/source_role_binding.py', root / 'candidate/source_role_binding.py')
+runner = (parent / 'runner.py').read_text()
+old = 'from candidate.source_classification import classify_source_memories as select_source_memories'
+assert runner.count(old) == 1
+runner = runner.replace(old, 'from candidate.source_role_binding import classify_source_memories_with_role_binding as select_source_memories')
+(root / 'runner.py').write_text(runner)
+(root / 'parent-terminal-binding.json').write_text(json.dumps({
+    'directory': str(parent), 'preparation_sha256': sha(parent / 'preparation.json'),
+    'observations_sha256': sha(parent / 'observations.jsonl'), 'status_sha256': sha(parent / 'status.json')}, indent=2) + '\n')
+(root / 'protocol.json').write_text(json.dumps({
+    'status': 'prepared_not_executed', 'calls': 46, 'repetitions': 1,
+    'design': 'Same v9 model, source events, prompt, rubrics and generation settings. Only source-role-bound structured schema changes. Original runtime renderer and snapshot guard remain active.',
+    'acceptance': 'Review all original cases for retained and omitted meanings, authority, qualification completeness and errors. No selective retries, no rubric changes, no production adoption from mechanical validity.',
+    'limits': 'Reused unblinded development cases; no held-out or full-pipeline acceptance. Schema constraints can divert an incorrect judgment into an allowed but still incorrect category.'}, indent=2) + '\n')
+sys.path.insert(0, inputs['snapshot'])
+sys.path.insert(0, str(root))
+from candidate.source_classification import classify_source_memories
+from candidate.source_role_binding import classify_source_memories_with_role_binding, USER_SOURCE_KINDS, NON_USER_SOURCE_KINDS
+from mnemos.types import EpisodicEvent
+from jsonschema import Draft202012Validator
+
+async def preflight():
+    checks = []
+    for case in inputs['cases']:
+        calls = []
+        class Capture:
+            supports_structured_output = True
+            async def predict(self, prompt, **kwargs):
+                calls.append((prompt, kwargs['format']))
+                return '{"selections": []}'
+        event = EpisodicEvent.model_validate(case['source'])
+        await classify_source_memories([event], Capture())
+        await classify_source_memories_with_role_binding([event], Capture())
+        assert calls[0][0] == calls[1][0]
+        schema = calls[1][1]
+        Draft202012Validator.check_schema(schema)
+        branch = schema['properties']['selections']['items']['oneOf']
+        assert len(branch) == 1
+        assert branch[0]['properties']['source_id']['enum'] == [event.id]
+        allowed = USER_SOURCE_KINDS if event.role == 'user' else NON_USER_SOURCE_KINDS
+        assert set(branch[0]['properties']['kind']['enum']) == allowed
+        checks.append({'case_id': case['id'], 'prompt_sha256': hashlib.sha256(calls[1][0].encode()).hexdigest(),
+                       'schema_sha256': hashlib.sha256(json.dumps(schema, sort_keys=True).encode()).hexdigest()})
+    assert len(checks) == 46
+    (root / 'offline-preflight.json').write_text(json.dumps({'status': 'passed', 'model_calls': 0, 'cases': checks}, indent=2) + '\n')
+asyncio.run(preflight())
+shutil.copyfile(__file__, root / 'prepare.py.txt')
+new_prep = {k: prep[k] for k in ('source_commit', 'source_files', 'model', 'ollama_version', 'hardware_inventory') if k in prep}
+new_prep.update(candidate_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                prepared_at=datetime.now(timezone.utc).isoformat(),
+                parent_preparation_sha256=sha(parent / 'preparation.json'),
+                files={str(p.relative_to(root)).replace('\\', '/'): sha(p) for p in root.rglob('*') if p.is_file() and '__pycache__' not in p.parts})
+(root / 'preparation.json').write_text(json.dumps(new_prep, indent=2) + '\n')
+guards = []
+for args in ([], ['wrong-digest']):
+    result = subprocess.run([sys.executable, str(root / 'runner.py'), *args], capture_output=True, text=True)
+    assert result.returncode != 0 and 'externally supplied matching preparation digest' in result.stderr
+    assert not (root / 'status.json').exists()
+    guards.append({'arguments': args, 'exit_code': result.returncode})
+(root / 'launch-guard-checks.json').write_text(json.dumps(guards, indent=2) + '\n')
+out = repo / 'docs/validation/2026-09-21/source-role-binding-preparation-v13'
+out.mkdir(exist_ok=False)
+for src in root.rglob('*'):
+    if src.is_file() and '__pycache__' not in src.parts:
+        dst = out / src.relative_to(root)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(src, dst)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'README.md').write_text('''# Source-role-bound classification preparation v13
+
+All 46 original v9 cases retain their prompts, model settings and rubrics.
+Offline paired calls verify prompt equality and source-role-specific schema
+branches. Both missing and incorrect preparation digests reject launch.
+No model calls have run. This is a development comparison, not fresh acceptance.
+The runner verifies the installed model digest before and after execution.
+The model identity in preparation is inherited from the v9 comparison and must
+pass that live check; it is not a new hardware or server-version observation.
+''')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    str(p.relative_to(out)).replace('\\', '/'): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+    for p in out.rglob('*') if p.is_file()}}, indent=2) + '\n')
+print(json.dumps({'root': str(root), 'preparation_sha256': sha(root / 'preparation.json'), 'offline_cases': 46, 'model_calls': 0}))

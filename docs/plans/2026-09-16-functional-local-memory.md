@@ -777,8 +777,12 @@ produce attributed history or discard classifications; runtime authority and
 mutation guards remain active even when a provider ignores the schema. The
 prompt and rendered output are compared directly with the original classifier.
 The combined selector/classifier/role-binding suite passes 66 tests. This is a
-mechanical constraint, not evidence of correct durability judgments. Real-model
-comparison and production integration remain unexecuted for this candidate.
+mechanical constraint, not evidence of correct durability judgments. The
+[v13 preparation](../validation/2026-09-21/source-role-binding-preparation-v13/README.md)
+freezes the same 46 v9 cases, model settings and rubrics. Offline paired calls
+confirm unchanged prompts and source-specific schema branches; two launch
+guards reject missing or incorrect preparation digests. Real-model comparison
+and production integration remain unexecuted for this candidate.
 
 ### T19 - Reconcile release, documentation, and research claims
 
