@@ -655,10 +655,9 @@ is implied. No production default changed.
 
 Latest fully verified source [995d9c2](../validation/2026-09-20/spreading-budget-source-checkpoint-v1/README.md)
 passes 2,158 tests with four skips and all six source/package checks. It includes
-the support-version and standalone graph-budget repairs. Its changed wheel is
-undergoing fresh isolated installed verification.
-The [installed check](../validation/2026-09-20/support-revision-installed-checkpoint-v1/README.md)
-for preceding source 2996d54 passes 868 cases with four matching skips and the replay probe. It includes
+the support-version and standalone graph-budget repairs. Its changed wheel passes
+the [fresh installed check](../validation/2026-09-20/spreading-budget-installed-checkpoint-v1/README.md):
+893 selected cases with four matching skips and the replay probe. It includes
 lease renewal, cancellation fencing, project identity and inherited Git
 environment isolation. The previous installed failure is preserved alongside
 its repair. Earlier verified d937892 and Hermes v35 evidence remain bound to

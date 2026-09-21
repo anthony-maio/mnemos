@@ -14,7 +14,9 @@ unchanged. All four new cases pass inside a 54-test graph selection; formatting
 and Python 3.10 mypy pass. A separate source-association selection passes 73
 tests. The [full source checkpoint](spreading-budget-source-checkpoint-v1/README.md)
 passes 2,158 tests with four skips and all six source/package checks. Its changed
-wheel is undergoing fresh installed-package verification.
+wheel passes [fresh installed-package verification](spreading-budget-installed-checkpoint-v1/README.md):
+893 selected tests pass with four matching skips, including installed-origin,
+source parity and restart/replay checks.
 
 The engine already passes its configured max_visited explicitly. This repair
 does not explain or supersede the existing production retrieval failures.

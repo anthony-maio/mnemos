@@ -1,0 +1,100 @@
+{
+  "assertions": {
+    "first_stop_captured_two": true,
+    "first_stop_ok": true,
+    "first_store_has_two_events": true,
+    "one_native_assistant": true,
+    "replay_captured_zero": true,
+    "replay_explicitly_degraded_without_turn_id": true,
+    "restarted_store_has_same_two_events": true
+  },
+  "finished_at": "2026-09-21T02:02:50.036808+00:00",
+  "fixture_directory": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-replay-spreading-budget-v1",
+  "fixture_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-replay-spreading-budget-v1",
+  "import_mode": "installed_wheel",
+  "imported_mnemos": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-env-spreading-budget-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+  "package_binding": {
+    "exact_wheel_members": 62,
+    "source_files_normalized_lf": 59
+  },
+  "probe": "claude_stop_replay_positive_assertions",
+  "providers": {
+    "cognition": "unavailable",
+    "embedding": "constant"
+  },
+  "reproducer_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-spreading-budget-v1\\docs\\validation\\2026-09-16\\claude-stop-replay\\runner.py.txt",
+  "reproducer_sha256": "63c44dad666bd4764184c77ff2a8b7438a7386031d7cc16291989a9a1cd5d342",
+  "reproduction": {
+    "assistant_source_refs_after_restart": [
+      "native-assistant-uuid"
+    ],
+    "checkpoint": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-replay-spreading-budget-v1\\checkpoints\\f7227a518809b770bf4c01918ffd5f5b2982fe0737b7dac9b2aa0c8109c06144.json",
+    "checkpoint_offset": 364,
+    "events_after_first_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "9df38f501c636295446d46e2a5e36048b086a18b0c4e0a026812d5948bfd5704",
+        "role": "user",
+        "source_event_id": "claude:v2:6f10c6021c0b728b6d6e0376c502d49baff10deb6b9f7f2eebb2adba3af35be5",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "1fd33d03ad30c15b56654546618cb0b108a8b1784a88deda3c6d4208500799af",
+        "role": "assistant",
+        "source_event_id": "claude:v2:66cd9ec72e393c83412862d3e94555681e8a4fc01f2ca2395c3b633e08bf8d41",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "events_after_second_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "9df38f501c636295446d46e2a5e36048b086a18b0c4e0a026812d5948bfd5704",
+        "role": "user",
+        "source_event_id": "claude:v2:6f10c6021c0b728b6d6e0376c502d49baff10deb6b9f7f2eebb2adba3af35be5",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "1fd33d03ad30c15b56654546618cb0b108a8b1784a88deda3c6d4208500799af",
+        "role": "assistant",
+        "source_event_id": "claude:v2:66cd9ec72e393c83412862d3e94555681e8a4fc01f2ca2395c3b633e08bf8d41",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "expected_behavior": "The first Stop consumes transcript deltas; an identical Stop after restart must not capture a fallback assistant event.",
+    "first_stop": {
+      "captured": 2,
+      "committed": true,
+      "error": null,
+      "queued": false,
+      "status": "ok"
+    },
+    "minimal_fix_principle": "Persist the last captured assistant source reference, content fingerprint, and native turn identity in the v2 checkpoint. Suppress a fallback only when those durable fields identify the same turn. If no native turn identity is available, return a degraded result and wait for a transcript delta rather than synthesizing last_assistant_message as a new event. This avoids duplicate replay while leaving same-text responses from later turns eligible when their turn identity differs.",
+    "project_id": "b6d537c4-792a-42b9-9d23-5064e471229b",
+    "second_stop_after_restart": {
+      "captured": 0,
+      "committed": false,
+      "error": "identity_reference_unavailable",
+      "queued": false,
+      "status": "degraded"
+    },
+    "status": "not_reproduced",
+    "transcript": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-replay-spreading-budget-v1\\transcript.jsonl"
+  },
+  "runner_sha256": "49175f0b6f9f17b94358767da79857f23fd9d64b6d60d3e46fbbffbb1c7f34cd",
+  "schema_version": 1,
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-spreading-budget-v1",
+  "source_commit_actual": "995d9c27ca71d30e2a55f548f2541d87614f0c08",
+  "source_commit_expected": "995d9c27ca71d30e2a55f548f2541d87614f0c08",
+  "started_at": "2026-09-21T02:02:48.975527+00:00",
+  "status": "passed",
+  "wheel": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-spreading-budget-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "sha256": "ab04113f7fe6a69d45c88d99e33ee8bd31245a596720a7ecbc38ab23cf336a30"
+  }
+}
