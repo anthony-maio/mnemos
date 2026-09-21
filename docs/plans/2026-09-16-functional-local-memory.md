@@ -762,6 +762,13 @@ retained and mixed-message/range failures remain. Candidate not adopted. A full
 isolated source/package checkpoint on f5c58f1 is running to include the newer
 experimental classifier and coverage tests.
 
+The [Gemma 27B comparison v12](../validation/2026-09-21/source-classification-preparation-v12/README.md)
+uses the same v9 classifier, prompt, schema, settings and 46 original cases.
+Only the requested model changes to the installed digest bound in preparation.
+All offline paired checks pass; execution is running. The loading log reports
+45 of 63 layers offloaded to the GPU, so this is not an all-GPU configuration
+or an isolated latency benchmark. No quality result or adoption is claimed.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Recovery follow-up: the [preserved failure diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1/README.md)
