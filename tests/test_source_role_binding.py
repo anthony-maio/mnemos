@@ -40,6 +40,7 @@ def selection(source_id: str, kind: str) -> dict[str, object]:
         "first_unit": 0,
         "last_unit": 0,
         "kind": kind,
+        "revises_existing_requirement": False,
     }
 
 
@@ -103,6 +104,12 @@ def test_schema_binds_user_and_nonuser_kinds_per_source() -> None:
     assert assistant_validator.is_valid(selection("assistant", "question"))
     assert not assistant_validator.is_valid(selection("assistant", "asserted_fact"))
     assert not assistant_validator.is_valid(selection("assistant", "user_preference"))
+    missing_intent = selection("user", "continuing_requirement")
+    del missing_intent["revises_existing_requirement"]
+    assert not user_validator.is_valid(missing_intent)
+    assert not assistant_validator.is_valid(
+        {**selection("assistant", "attributed_history"), "revises_existing_requirement": True}
+    )
 
 
 def test_schema_rejects_unavailable_source_and_keeps_same_scope_roles_distinct() -> None:
