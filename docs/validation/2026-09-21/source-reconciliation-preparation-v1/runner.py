@@ -62,7 +62,7 @@ async def main():
         try:
             candidates, events, targets = materialize(case)
             staged = await reconcile_source_candidates(candidates, events, targets, provider)
-            row.update(status="runtime_valid", staged=[asdict(a) for a in staged])
+            row.update(status="runtime_valid", staged=[a.model_dump(mode="json") for a in staged])
         except Exception as exc:
             row.update(status="error", error_type=type(exc).__name__, error=str(exc))
             state["errors"] += 1
