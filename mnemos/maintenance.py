@@ -6,18 +6,48 @@ import asyncio
 import math
 from collections.abc import Awaitable, Callable
 from datetime import datetime, timedelta, timezone
+from typing import Literal
 from uuid import uuid4
 
+from .errors import MnemosRejection
 from .jobs import DurableJob
+from .utils.reliability import (
+    MnemosConfigurationError,
+    MnemosExternalServiceError,
+    MnemosTransientError,
+)
 from .utils.storage import (
     ConflictCanonicalCollisionError,
     CorrectionCanonicalCollisionError,
     MemoryStore,
 )
 
+_PROVIDER_FAILURES = (
+    MnemosTransientError,
+    MnemosConfigurationError,
+    MnemosExternalServiceError,
+    ConnectionError,
+    TimeoutError,
+    asyncio.TimeoutError,
+)
+_EXPLICIT_JOB_KINDS = frozenset({"remember", "correct", "capture_only"})
+
 
 class JobLeaseLostError(RuntimeError):
     """Active processing no longer owns a renewable job lease."""
+
+
+def _failure_class(job: DurableJob, exc: BaseException) -> Literal["retry", "provider", "terminal"]:
+    """Decide how a failed job waits: spend an attempt, wait for a provider, or stop.
+
+    A rejection stops an explicit request, whose input cannot change. Automatic
+    extraction retries instead, because re-extraction reads fresh fact state.
+    """
+    if isinstance(exc, MnemosRejection) and job.kind in _EXPLICIT_JOB_KINDS:
+        return "terminal"
+    if isinstance(exc, _PROVIDER_FAILURES):
+        return "provider"
+    return "retry"
 
 
 class MaintenanceScheduler:
@@ -172,7 +202,9 @@ class MaintenanceScheduler:
                         else (
                             "correction_canonical_collision"
                             if isinstance(exc, CorrectionCanonicalCollisionError)
-                            else type(exc).__name__
+                            else (
+                                exc.code if isinstance(exc, MnemosRejection) else type(exc).__name__
+                            )
                         )
                     )
                     self.failed_count += 1
@@ -184,6 +216,7 @@ class MaintenanceScheduler:
                             lease_token=job.lease_token,
                             error=self.last_error,
                             now=self.clock(),
+                            failure_class=_failure_class(job, exc),
                         )
                 await asyncio.sleep(0)
             prune = getattr(self.store, "prune_processed_evidence", None)

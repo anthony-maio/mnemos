@@ -164,7 +164,7 @@ async def test_failure_after_renewal_stops_heartbeat_and_retries_once(tmp_path, 
         assert await asyncio.wait_for(scheduler.run_once(force=True), 5) == 0
         saved = store.get_job(job.id)
         assert saved.status == "pending"
-        assert saved.attempt_count == 1
+        assert saved.attempt_count == 0  # an unavailable provider does not spend an attempt
         assert saved.last_error == "ConnectionError"
         assert len(calls) == 1
         assert not original(

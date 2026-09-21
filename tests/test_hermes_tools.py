@@ -312,10 +312,10 @@ def test_real_service_lifecycle_is_scoped_and_version_checked(tmp_path: Path):
                 "request_id": "correct-2",
             },
         )
-        assert stale["status"] == "degraded"
-        assert stale["error"]
+        # A lost race is a definite rejection, distinguishable from an outage.
+        assert (stale["status"], stale["error"]) == ("rejected", "version_conflict")
         stale_forget = call("mnemos_forget", {"fact_id": fact_id, "expected_version": 1})
-        assert stale_forget["status"] == "degraded"
+        assert (stale_forget["status"], stale_forget["error"]) == ("rejected", "version_conflict")
 
         foreign_remember = asyncio.run(
             client.request(
@@ -431,7 +431,7 @@ def test_remember_retry_reuses_event_identity_after_lost_response(tmp_path: Path
                 )
             )
         )
-        assert changed["status"] == "degraded"
+        assert (changed["status"], changed["error"]) == ("rejected", "event_identity_conflict")
         asyncio.run(real_client.request("maintenance", queue_on_failure=False))
         facts = json.loads(
             asyncio.run(

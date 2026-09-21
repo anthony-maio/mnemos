@@ -20,7 +20,7 @@ from uuid import uuid4
 import httpx
 
 from .memory_safety import MemoryWriteFirewall
-from .errors import RELATED_FORGET_REJECTIONS
+from .errors import RELATED_FORGET_REJECTIONS, REQUEST_REJECTIONS, SERVICE_ERROR_CODES
 from .service import (
     SCHEMA_VERSION,
     _protect_private_path,
@@ -438,7 +438,28 @@ class MnemosClient:
                 return dict(result)
             raise ServiceClientError("Mnemos service returned HTTP 409")
         if response.status_code >= 400:
-            raise ServiceClientError(f"Mnemos service returned HTTP {response.status_code}")
+            try:
+                reply = response.json()
+            except ValueError:
+                reply = None
+            code = reply.get("error") if isinstance(reply, dict) else None
+            if (
+                response.status_code in {409, 422}
+                and isinstance(reply, dict)
+                and set(reply) == {"schema_version", "status", "committed", "error", "message"}
+                and type(reply.get("schema_version")) is int
+                and reply.get("schema_version") == SCHEMA_VERSION
+                and reply.get("status") == "rejected"
+                and reply.get("committed") is False
+                and isinstance(code, str)
+                and REQUEST_REJECTIONS.get(code) == reply.get("message")
+            ):
+                # A definitive refusal is a result, not an outage: callers must
+                # not queue or resend it. Only known codes with their fixed
+                # message are relayed, since replies reach model context.
+                return dict(reply)
+            detail = f" ({code})" if code in SERVICE_ERROR_CODES else ""
+            raise ServiceClientError(f"Mnemos service returned HTTP {response.status_code}{detail}")
         try:
             result = response.json()
         except ValueError as exc:
@@ -573,7 +594,9 @@ class MnemosClient:
             except Exception:
                 failed += 1
                 continue
-            if self._committed(result):
+            # Match the direct path: a committed or explicitly rejected reply
+            # removes the entry; anything ambiguous keeps it for another replay.
+            if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
                 if self.outbox.acknowledge(event_id):
                     acknowledged += 1
             else:

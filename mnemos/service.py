@@ -38,10 +38,16 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
 
+from pydantic import ValidationError
+
 from .jobs import FactNotFoundError, JobNotFoundError
 from .errors import (
     RELATED_FORGET_REJECTIONS,
+    EventIdentityConflict,
+    MnemosRejection,
     RelatedForgetRejection,
+    ScopeUnavailable,
+    VersionConflict,
 )
 from .observability import (
     ServiceLogBinding,
@@ -507,6 +513,34 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     "committed": False,
                     "error": exc.code,
                     "message": safe_message,
+                },
+            )
+            return
+        except ScopeUnavailable as exc:
+            # Configuration can change; queued captures wait instead of dropping.
+            self._write_json(
+                503,
+                {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "unavailable",
+                    "committed": False,
+                    "error": exc.code,
+                },
+            )
+            return
+        except (MnemosRejection, ValidationError) as exc:
+            # A request the service will never accept must not look like an
+            # outage, or clients queue and replay it forever. Only the fixed
+            # message for a known code is sent, never exception text.
+            rejection = exc if isinstance(exc, MnemosRejection) else MnemosRejection()
+            self._write_json(
+                409 if isinstance(rejection, (VersionConflict, EventIdentityConflict)) else 422,
+                {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "rejected",
+                    "committed": False,
+                    "error": rejection.code,
+                    "message": rejection.safe_message,
                 },
             )
             return

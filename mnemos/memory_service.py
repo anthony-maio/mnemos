@@ -25,6 +25,7 @@ from .hermes_identity import (
     scoped_event_id as hermes_scoped_event_id,
 )
 from .engine import MnemosEngine
+from .errors import EventIdentityConflict, VersionConflict
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
@@ -365,7 +366,7 @@ class LocalMemoryService:
                     "reason": "Existing legacy capture cannot be reclassified as provisional",
                 }
             if existing_job.kind != job.kind or not (same_payload or is_legacy_payload):
-                raise ValueError("Source event identity already has a different payload")
+                raise EventIdentityConflict("Source event identity already has a different payload")
             if existing_job.status == "completed":
                 return {
                     "schema_version": 1,
@@ -386,7 +387,7 @@ class LocalMemoryService:
             # after that job (or a later correction) has advanced the fact.
             previous = self.engine.store.get(correction["target_fact_id"])
             if previous is None or previous.version != correction["expected_version"]:
-                raise ValueError("Correction version conflict")
+                raise VersionConflict("Correction version conflict")
         stored = self.engine.store.capture_event_and_job(
             record, job, suppression_source_ids=suppression_source_ids
         )
@@ -669,7 +670,7 @@ class LocalMemoryService:
                 if previous is None or not scope_allows(previous.metadata, context, (scope,)):
                     raise ValueError("Correction target is unavailable in this scope")
                 if previous.version != proposal.expected_version:
-                    raise ValueError("Correction version conflict")
+                    raise VersionConflict("Correction version conflict")
                 if previous.id in expected_versions:
                     raise ValueError("A single extraction cannot correct a fact twice")
                 expected_versions[previous.id] = previous.version

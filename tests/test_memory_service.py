@@ -490,8 +490,9 @@ async def test_retry_of_conflicting_pending_correction_does_not_report_completio
         assert memory.engine.store.get(fact.id).content == "Use Svelte"
         assert memory.engine.store.get(fact.id).version == 2
         conflicted_job = memory.engine.store.get_job(accepted["job_id"])
-        assert conflicted_job.status == "pending"
-        assert conflicted_job.last_error == "ValueError"
+        # A stale explicit correction cannot succeed on retry; it stops at once.
+        assert conflicted_job.status == "exhausted"
+        assert conflicted_job.last_error == "version_conflict"
         assert conflicted_job.attempt_count == 1
         retry = await memory.dispatch("correct", second_payload)
         assert retry["status"] == "committed"
@@ -503,8 +504,8 @@ async def test_retry_of_conflicting_pending_correction_does_not_report_completio
         status = await memory.dispatch(
             "job", {"context": context.model_dump(), "job_id": accepted["job_id"]}
         )
-        assert status["job"]["status"] == "pending"
-        assert status["job"]["last_error"] == "ValueError"
+        assert status["job"]["status"] == "exhausted"
+        assert status["job"]["last_error"] == "version_conflict"
     finally:
         memory.engine.store.close()
 

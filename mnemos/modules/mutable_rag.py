@@ -32,6 +32,7 @@ from typing import Any
 
 from ..config import MutableRAGConfig
 from ..contracts import FactProposal
+from ..errors import VersionConflict
 from ..jobs import DurableJob, FactEvidence, FactRevision
 from ..memory_safety import MemoryWriteFirewall
 from ..types import EpisodicEvent, MemoryChunk
@@ -198,7 +199,7 @@ class MutableRAG:
         if proposal.expected_version is None:
             raise ValueError("Correction proposal requires an expected version")
         if target.version != proposal.expected_version:
-            raise ValueError("Correction version conflict")
+            raise VersionConflict("Correction version conflict")
         return target, self._validate_evidence(target, refs)
 
     async def review(
@@ -330,7 +331,7 @@ class MutableRAG:
         else:
             current = self._store.get(target.id)
             if current is None or current.version != target.version:
-                raise ValueError("Correction version conflict")
+                raise VersionConflict("Correction version conflict")
             self._store.update(target.id, updated)
 
         self._total_reconsolidated += 1

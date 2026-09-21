@@ -52,12 +52,13 @@ async def test_processor_failure_remains_durable_and_visible(tmp_path):
     scheduler = MaintenanceScheduler(store, unavailable)
     assert await scheduler.run_once(force=True) == 0
     assert scheduler.health()["last_error"] == "ConnectionError"
+    assert scheduler.health()["waiting_for_provider"] == 1
     store.close()
     reopened = SQLiteStore(path)
     try:
         job = reopened.list_jobs()[0]
         assert job.status == "pending"
-        assert job.attempt_count == 1
+        assert job.attempt_count == 0  # an unavailable provider does not spend an attempt
         assert job.last_error == "ConnectionError"
     finally:
         reopened.close()

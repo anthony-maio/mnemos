@@ -11,6 +11,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
 
+from .errors import ScopeUnavailable
+
 
 def default_registry_path() -> Path:
     from .settings import default_global_config_path
@@ -186,7 +188,7 @@ class ScopeRegistry(BaseModel):
             | {item.user_profile_id for item in self.workspaces.values()}
         )
         if context.user_profile_id not in known_profiles:
-            raise ValueError("User profile is not registered")
+            raise ScopeUnavailable("User profile is not registered")
         if context.project_id is not None:
             project = self.projects.get(context.project_id)
             if (
@@ -194,16 +196,16 @@ class ScopeRegistry(BaseModel):
                 or not project.enabled
                 or project.user_profile_id != context.user_profile_id
             ):
-                raise ValueError("Project is not enabled for this user profile")
+                raise ScopeUnavailable("Project is not enabled for this user profile")
             if (
                 context.workspace_id is not None
                 and context.workspace_id not in project.workspace_ids
             ):
-                raise ValueError("Workspace membership is required")
+                raise ScopeUnavailable("Workspace membership is required")
         if context.workspace_id is not None:
             workspace = self.workspaces.get(context.workspace_id)
             if workspace is None or workspace.user_profile_id != context.user_profile_id:
-                raise ValueError("Workspace membership is invalid for this profile")
+                raise ScopeUnavailable("Workspace membership is invalid for this profile")
         return context
 
     def resolve(
@@ -230,7 +232,7 @@ class ScopeRegistry(BaseModel):
                         host=host,
                     )
                 )
-        raise ValueError("Project is not enabled; assign its identity before capture")
+        raise ScopeUnavailable("Project is not enabled; assign its identity before capture")
 
     def save(self, path: str | Path) -> None:
         from .service import _write_private_json

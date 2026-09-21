@@ -32,7 +32,7 @@ from uuid import uuid4
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterable
 from datetime import datetime, timedelta, timezone
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from ..types import (
     CognitiveState,
@@ -45,6 +45,8 @@ from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from ..source_review import ReviewResolutionReference, SourceReviewReference
 from ..memory_safety import MemoryWriteFirewall
 from ..errors import (
+    EventIdentityConflict,
+    VersionConflict,
     RelatedForgetPreviewIncomplete,
     RelatedForgetPreviewStale,
     RelatedForgetSelectionConflict,
@@ -493,6 +495,7 @@ class MemoryStore(ABC):
         lease_token: str | None = None,
         error: str,
         now: datetime | None = None,
+        failure_class: Literal["retry", "provider", "terminal"] = "retry",
     ) -> bool:
         raise NotImplementedError("This storage backend does not support durable jobs.")
 
@@ -972,7 +975,9 @@ class InMemoryStore(MemoryStore):
                         or existing_by_source.scope != event.scope
                         or existing_by_source.scope_id != event.scope_id
                     ):
-                        raise ValueError("Source event identity already has a different payload")
+                        raise EventIdentityConflict(
+                            "Source event identity already has a different payload"
+                        )
                     return existing_by_source
             existing = self._episodic_events.get(event.event_fingerprint)
             if existing is not None:
@@ -1634,6 +1639,7 @@ class SQLiteStore(MemoryStore):
         )
         self._conn.execute(self._CREATE_DURABLE_JOBS_SQL)
         self._ensure_column("memory_jobs", "lease_token", "TEXT")
+        self._ensure_column("memory_jobs", "provider_failures", "INTEGER NOT NULL DEFAULT 0")
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
@@ -2679,6 +2685,7 @@ class SQLiteStore(MemoryStore):
                 self._conn.execute(
                     """UPDATE memory_jobs SET
                        status=CASE WHEN attempt_count >= max_attempts THEN 'exhausted' ELSE 'pending' END,
+                       last_error='lease_expired',
                        lease_owner=NULL, lease_token=NULL, lease_until=NULL,
                        updated_at=? WHERE status='leased' AND lease_until <= ?""",
                     (claimed_at.isoformat(), claimed_at.isoformat()),
@@ -2792,13 +2799,22 @@ class SQLiteStore(MemoryStore):
         lease_token: str | None = None,
         error: str,
         now: datetime | None = None,
+        failure_class: Literal["retry", "provider", "terminal"] = "retry",
     ) -> bool:
+        """Release a failed lease according to what kind of failure it was.
+
+        ``retry`` spends one of the job's attempts with a short backoff.
+        ``provider`` means the model or service was unavailable, which is not
+        the job's fault: the attempt is refunded and the wait doubles from 15
+        seconds up to 15 minutes, so an outage never exhausts queued work.
+        ``terminal`` means the same input can never succeed, so the job stops.
+        """
         failed_at = now or datetime.now(timezone.utc)
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
                 row = self._conn.execute(
-                    """SELECT attempt_count, max_attempts FROM memory_jobs
+                    """SELECT attempt_count, max_attempts, provider_failures FROM memory_jobs
                      WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
                        AND lease_until > ?""",
                     (job_id, owner, lease_token, failed_at.isoformat()),
@@ -2808,14 +2824,31 @@ class SQLiteStore(MemoryStore):
                     return False
                 attempts = int(row[0])
                 max_attempts = int(row[1])
-                status = "exhausted" if attempts >= max_attempts else "pending"
-                backoff = min(3600, 2 ** min(attempts, 10))
-                available_at = failed_at + timedelta(seconds=backoff)
+                provider_failures = int(row[2])
+                if failure_class == "terminal":
+                    status, delay = "exhausted", 0
+                elif failure_class == "provider":
+                    status = "pending"
+                    delay = min(900, 15 * 2 ** min(provider_failures, 6))
+                    attempts = max(0, attempts - 1)
+                    provider_failures += 1
+                else:
+                    status = "exhausted" if attempts >= max_attempts else "pending"
+                    delay = min(3600, 2 ** min(attempts, 10))
+                available_at = failed_at + timedelta(seconds=delay)
                 self._conn.execute(
-                    """UPDATE memory_jobs SET status=?, available_at=?,
-                       lease_owner=NULL, lease_token=NULL, lease_until=NULL,
-                       last_error=?, updated_at=? WHERE id=?""",
-                    (status, available_at.isoformat(), error, failed_at.isoformat(), job_id),
+                    """UPDATE memory_jobs SET status=?, available_at=?, attempt_count=?,
+                       provider_failures=?, lease_owner=NULL, lease_token=NULL,
+                       lease_until=NULL, last_error=?, updated_at=? WHERE id=?""",
+                    (
+                        status,
+                        available_at.isoformat(),
+                        attempts,
+                        provider_failures,
+                        error,
+                        failed_at.isoformat(),
+                        job_id,
+                    ),
                 )
                 self._conn.commit()
                 return True
@@ -3323,7 +3356,7 @@ class SQLiteStore(MemoryStore):
                             or stored_event.scope != event.scope
                             or stored_event.scope_id != event.scope_id
                         ):
-                            raise ValueError(
+                            raise EventIdentityConflict(
                                 "Source event identity already has a different payload"
                             )
 
@@ -3423,7 +3456,8 @@ class SQLiteStore(MemoryStore):
         with self._lock:
             rows = self._conn.execute(
                 "SELECT status, COUNT(*), MIN(created_at), "
-                "COALESCE(SUM(MAX(attempt_count-1, 0)), 0) FROM memory_jobs"
+                "COALESCE(SUM(MAX(attempt_count-1, 0)), 0), "
+                "COALESCE(SUM(provider_failures > 0), 0) FROM memory_jobs"
                 + where
                 + " GROUP BY status",
                 parameters,
@@ -3431,10 +3465,17 @@ class SQLiteStore(MemoryStore):
         result: dict[str, Any] = {
             status: 0 for status in ("pending", "leased", "exhausted", "completed")
         }
-        result.update(retry_count=0, oldest_unfinished_seconds=0, oldest_pending_seconds=0)
-        for status, count, oldest, retries in rows:
+        result.update(
+            retry_count=0,
+            waiting_for_provider=0,
+            oldest_unfinished_seconds=0,
+            oldest_pending_seconds=0,
+        )
+        for status, count, oldest, retries, provider_waits in rows:
             result[status] = count
             result["retry_count"] += retries
+            if status == "pending":
+                result["waiting_for_provider"] = provider_waits
             age = max(0, (now - datetime.fromisoformat(oldest)).total_seconds())
             if status != "completed":
                 result["oldest_unfinished_seconds"] = max(result["oldest_unfinished_seconds"], age)
@@ -4001,7 +4042,7 @@ class SQLiteStore(MemoryStore):
         if chunk is None:
             return False
         if chunk.version != expected_version:
-            raise ValueError("Forget version conflict")
+            raise VersionConflict("Forget version conflict")
         evidence = self.list_fact_evidence(fact_id)
         event_ids = {item.source_event_id for item in evidence if item.source_event_id}
         event_ids.update(
@@ -5190,7 +5231,9 @@ class SQLiteStore(MemoryStore):
                         or str(existing_row[5]) != event.scope
                         or existing_row[6] != event.scope_id
                     ):
-                        raise ValueError("Source event identity already has a different payload")
+                        raise EventIdentityConflict(
+                            "Source event identity already has a different payload"
+                        )
                 return self._row_to_episodic_event(existing_row)
 
             self._conn.execute(

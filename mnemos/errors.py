@@ -20,6 +20,61 @@ RELATED_FORGET_SELECTION_CONFLICT = "related_forget_selection_conflict"
 RELATED_FORGET_SELECTION_CONFLICT_MESSAGE = "The reviewed selection conflicts with source dependencies. Request a fresh preview and review the linked facts and sources."
 
 
+class MnemosRejection(ValueError):
+    """A request the service will not accept as sent; resending it cannot succeed.
+
+    Clients relay only a known code with its fixed message, never exception
+    text, because replies reach model context through MCP.
+    """
+
+    code = "invalid_request"
+    safe_message = "The request does not match the Mnemos service contract."
+
+
+class VersionConflict(MnemosRejection):
+    """The caller's expected version no longer matches the stored fact."""
+
+    code = "version_conflict"
+    safe_message = "The memory changed after it was read. Read its current version before retrying."
+
+
+class EventIdentityConflict(MnemosRejection):
+    """A stable event identity was reused for different content."""
+
+    code = "event_identity_conflict"
+    safe_message = "This event identity was already recorded with different content."
+
+
+REQUEST_REJECTIONS = {
+    rejection.code: rejection.safe_message
+    for rejection in (MnemosRejection, VersionConflict, EventIdentityConflict)
+}
+
+
+class ScopeUnavailable(ValueError):
+    """The request's scope is not enabled now; the same request may succeed later.
+
+    Registry state such as a paused project or missing workspace membership is
+    configuration, not a defect in the request, so queued captures should wait
+    for it instead of being dropped.
+    """
+
+    code = "scope_unavailable"
+
+
+# Error codes a client may name in its own degraded message. Anything else a
+# server sends is treated as opaque.
+SERVICE_ERROR_CODES = frozenset(
+    {
+        ScopeUnavailable.code,
+        "dispatch_failed",
+        "dispatch_timeout",
+        "job_not_found",
+        "fact_not_found",
+    }
+)
+
+
 class RelatedForgetRejection(ValueError):
     """A bounded, caller-correctable related-forget rejection."""
 
