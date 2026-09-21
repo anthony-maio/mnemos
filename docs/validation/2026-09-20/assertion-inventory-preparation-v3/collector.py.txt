@@ -1,0 +1,59 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+
+repo = Path.cwd()
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assertion-inventory-development-v3')
+assert not (root / 'status.json').exists()
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+prep = json.loads((root / 'preparation.json').read_bytes())
+for name, digest in prep['files'].items():
+    assert sha(root / name) == digest
+preflight = json.loads((root / 'offline-preflight.json').read_bytes())
+assert preflight['status'] == 'passed' and preflight['cases'] == 46 and preflight['model_generation_calls'] == 0
+assert preflight['preparation_sha256'] == sha(root / 'preparation.json')
+launch_checks = []
+for args in ([], ['wrong-digest']):
+    result = subprocess.run([sys.executable, str(root / 'runner.py'), *args], capture_output=True, text=True)
+    assert result.returncode != 0 and 'externally supplied matching preparation digest' in result.stderr
+    assert not (root / 'status.json').exists()
+    launch_checks.append({'arguments': args, 'exit_code': result.returncode, 'generation_calls': 0})
+(root / 'launch-binding-preflight.json').write_text(json.dumps(launch_checks, indent=2) + '\n')
+out = repo / 'docs/validation/2026-09-20/assertion-inventory-preparation-v3'
+out.mkdir(exist_ok=False)
+for path in root.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(__file__, out / 'collector.py.txt')
+shutil.copyfile(repo / '.venv/preflight_assertion_inventory_v3.py', out / 'preflight.py.txt')
+shutil.copyfile(repo / 'tests/test_qualified_inventory_v3.py', out / 'tests.py.txt')
+(out / 'README.md').write_text('''# Qwen3.5 qualified inventory v3 preparation
+
+This freezes 46 unchanged reused development cases for local Qwen3.5:9b,
+thinking enabled, temperature 1.0, 8192 output tokens and a 180-second timeout.
+Exact model digest, local RTX 4080 inventory, Ollama version and candidate/provider
+source hashes are in preparation.json. Provider/runtime code remains cc940ac;
+the candidate adds a separate v3 contract without changing production defaults.
+
+All 51 v1/v2/v3 candidate tests, formatting and Python 3.10 mypy pass. Offline
+preflight validates all 46 source schemas, prompt isolation and source-ID
+bindings with zero generation calls. Missing/wrong external preparation digests
+fail before generation. Live launch must use this archived preparation digest.
+
+Compare semantics with the v2 experiment and its separately recorded offline
+v3 replay. Model, thinking mode and prompt differ, so this cannot isolate model
+weights. Literal quotes are not semantic proof or evidence of retention intent.
+Keep original rubrics, ambiguity notes and failures. No fresh evaluation corpus
+is exposed, and no target reconciliation or durable writes are attempted.
+
+At this preparation checkpoint the model run is NOT STARTED. Consult a later
+terminal record for results. No quality acceptance or adoption is claimed.
+''')
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'preparation_sha256': sha(root / 'preparation.json')}))
