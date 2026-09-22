@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added an optional typed judgment layer. `judgment.provider` (`MNEMOS_JUDGMENT_PROVIDER`) selects TypeSafe's hosted Jev model or a local Ollama model to answer closed questions with probabilities instead of generating text: `extraction_mode = "judged"` classifies source spans and reconciles them against existing facts through the judge, `surprisal_mode = "novelty"` replaces next-turn prediction with one yes/no question, and the affective router and reconsolidation use the judge when one is configured. The default is `none`; nothing is sent anywhere unless chosen, the write firewall runs before every judge request, and a hosted judge is never used as a fallback. The held-out harness accepts `--judge` and records per-call tokens, latency, and cost. Measured in docs/validation/2026-09-22/typesafe-spike-v1 and -v2.
+
 - Compatible Hermes hosts can supply a separate durable evidence snapshot for ordinary turns and session end. An explicitly empty snapshot never falls back to model-facing text. The adapter validates native identity and summary classification before enqueueing; complete host compaction integration remains under validation.
 
 - The Python affective classifier now honors an explicit model selection on supported providers without changing the shared provider's model. Omitted selection inherits the shared model; unsupported overrides and blank names fail visibly. Saved configurations containing the formerly ignored `llama3` value now request that model; omit it to inherit. See docs/configuration/affective-classifier-model.md.

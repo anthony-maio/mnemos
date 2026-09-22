@@ -195,6 +195,8 @@ A fast LLM continuously predicts the user's next intent. When a new input arrive
 
 This eliminates context bloat at the ingestion layer. A routine "sounds good" never touches long-term memory. "My production database just corrupted" gets maximum salience.
 
+With a judgment provider configured (see "Typed judgment" under Configuration), `SurprisalConfig(mode="novelty")` replaces the prediction with one direct question: does this turn add information not already in recent history or the retrieved facts? The judge's probability is the surprisal score, so the same threshold applies. The default stays `prediction`.
+
 ```python
 from mnemos import MnemosEngine, MnemosConfig, SurprisalConfig, Interaction
 
@@ -710,6 +712,39 @@ engine = MnemosEngine(config=config)
 | `SpreadingConfig` | `activation_threshold` | `0.3` | Minimum energy for a node to be included in results. |
 | `SpreadingConfig` | `max_hops` | `3` | Maximum graph traversal depth. |
 | `SpreadingConfig` | `auto_connect_threshold` | `0.6` | Minimum cosine similarity for auto-connecting new nodes. |
+| `SurprisalConfig` | `mode` | `prediction` | `novelty` asks the configured judge whether the turn is new instead of predicting the next turn. |
+| `SleepConfig` | `extraction_mode` | `generated` | `generated` (model writes facts), `source_bound` (model selects source spans), or `judged` (the judge classifies spans and relations; needs a judgment provider). |
+| `RetrievalConfig` | `query_state_source` | `classify` | Where the biomimetic profile gets the query's cognitive state: `classify` (a model call per query), `recent_state` (the partition's last encoded state, no call; chosen automatically for a hosted judge), or `none`. |
+| `JudgmentConfig` | `kind_min_probability` | `0.5` | Retain a judged span only when the judge's probability for its kind reaches this. Other thresholds: `continuation_min_probability`, `support_min_probability`, `conflict_min_probability`, `outdated_min_probability`. |
+
+### Typed judgment (optional)
+
+Most of what mnemos asks a model to do on the capture path is a decision, not a paragraph: which spans of a message are durable, which kind each one is, whether a new statement repeats, changes, or contradicts an existing fact, how urgent a turn is. A judgment provider answers exactly those questions with typed answers (yes/no, one of N options, a position on a scale) and calibrated probabilities, and never generates text. The retained memory is always a verbatim slice of what was said.
+
+Two backends:
+
+- `typesafe`: TypeSafe's Jev, a hosted model built for this. Firewall-filtered transcript spans and existing fact text leave the machine; the write firewall runs before every request and a cloud judge cannot be constructed without it. It is an explicit opt-in, never a fallback, and never chosen by setup on its own.
+- `ollama`: the same questions answered by a local model through structured output. Probabilities are mostly one option at 1.0, so confidence-based routing carries less information, but it runs offline and lets the two be compared on identical questions.
+
+```toml
+# ~/.config/Mnemos/mnemos.toml (global config; provider keys are global-only)
+[judgment]
+provider = "typesafe"        # none (default), typesafe, or ollama
+model = "jev-latest"
+
+[providers.typesafe]
+api_key = "..."              # or MNEMOS_TYPESAFE_API_KEY
+
+[sleep]
+extraction_mode = "judged"   # classification and reconciliation through the judge
+
+[runtime]
+surprisal_mode = "novelty"   # one yes/no question instead of next-turn prediction
+```
+
+With `judgment.provider` set, the affective router and mutable-RAG reconsolidation also use the judge, and a judged capture judges affect alongside classification so it makes no second call. `mnemos health --probe` sends one tiny question and records the model version the service answers with. The generated and source-bound extraction modes, next-turn prediction, and every other local path are unchanged and remain the defaults.
+
+The spike that motivated this is recorded under `docs/validation/2026-09-22/typesafe-spike-v1` and `-v2`: on the 46-case classification fixture, Jev matched the earlier local run's presence agreement with a 390 ms median per request and about $0.004 for the whole fixture.
 
 ### MCP Server Environment Variables
 
