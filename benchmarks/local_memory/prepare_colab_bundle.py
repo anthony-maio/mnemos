@@ -54,7 +54,13 @@ def build_bundle(
     max_tokens: int,
     timeout_seconds: float,
     run_namespace: str | None,
+    extraction_mode: str = "source_bound",
+    judge_provider: str = "none",
+    typesafe_model: str = "jev-latest",
+    surprisal_mode: str = "prediction",
 ) -> dict[str, object]:
+    if judge_provider == "none" and (extraction_mode == "judged" or surprisal_mode == "novelty"):
+        raise ValueError("judged extraction and novelty surprisal need --judge")
     if _git(repo, "status", "--porcelain", "--untracked-files=no", "--", *ARCHIVED_PATHS):
         raise RuntimeError("commit the source first; the bundle archives HEAD only")
     commit = _git(repo, "rev-parse", "HEAD")
@@ -99,7 +105,10 @@ def build_bundle(
             "temperature": 0.0,
             "max_tokens": max_tokens,
             "timeout_seconds": timeout_seconds,
-            "extraction_mode": "source_bound",
+            "extraction_mode": extraction_mode,
+            "judge_provider": judge_provider,
+            "typesafe_model": typesafe_model,
+            "surprisal_mode": surprisal_mode,
         },
         "run_namespace": run_namespace or f"colab-{commit[:12]}",
         "python_dependencies": list(pyproject["project"]["dependencies"]),
@@ -124,6 +133,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-tokens", type=int, default=8192)
     parser.add_argument("--timeout-seconds", type=float, default=180.0)
     parser.add_argument("--run-namespace")
+    parser.add_argument(
+        "--extraction-mode", choices=("generated", "source_bound", "judged"), default="source_bound"
+    )
+    parser.add_argument("--judge", choices=("none", "typesafe", "ollama"), default="none")
+    parser.add_argument("--typesafe-model", default="jev-latest")
+    parser.add_argument("--surprisal-mode", choices=("prediction", "novelty"), default="prediction")
     args = parser.parse_args(argv)
     repo = Path(__file__).resolve().parents[2]
     preparation = build_bundle(
@@ -138,6 +153,10 @@ def main(argv: list[str] | None = None) -> int:
         max_tokens=args.max_tokens,
         timeout_seconds=args.timeout_seconds,
         run_namespace=args.run_namespace,
+        extraction_mode=args.extraction_mode,
+        judge_provider=args.judge,
+        typesafe_model=args.typesafe_model,
+        surprisal_mode=args.surprisal_mode,
     )
     print(
         json.dumps(

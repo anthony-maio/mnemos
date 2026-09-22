@@ -226,6 +226,10 @@ def _run_locked(
             extraction_mode=options["extraction_mode"],
             run_namespace=preparation["run_namespace"],
             experiment_binding=binding,
+            judge_provider=options.get("judge_provider", "none"),
+            typesafe_api_key=os.environ.get("MNEMOS_TYPESAFE_API_KEY"),
+            typesafe_model=options.get("typesafe_model", "jev-latest"),
+            surprisal_mode=options.get("surprisal_mode", "prediction"),
         )
         status["status"] = reports[profile].get("status", "incomplete")
     except BaseException as exc:
