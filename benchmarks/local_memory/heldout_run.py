@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 from uuid import uuid4
 from pathlib import Path
@@ -45,6 +46,46 @@ from .module_challenge import load_module_challenge_dataset
 # that is otherwise the same experiment. Anything that can change outputs,
 # such as the GPU model, belongs in experiment_binding instead.
 _HOST_DETAILS = ("platform", "processor")
+
+
+def _live_typesafe_model(base_url: str, api_key: str, model: str) -> dict[str, Any]:
+    """Identity for a hosted judge, labeled for what it is.
+
+    There is no weights digest for a hosted model. The record carries the
+    version string the API reports and a digest of that string, so the
+    provenance check has something exact to bind to and every manifest says
+    which kind of identity it is.
+    """
+    body = {
+        "model": model,
+        "state": "ping",
+        "questions": {
+            "ready": {
+                "type": "noul",
+                "instructions": "Is the state exactly the word ping?",
+                "criteria": {"true": "it is", "false": "it is not"},
+            }
+        },
+    }
+    request = Request(
+        base_url.rstrip("/") + "/systemone",
+        data=json.dumps(body).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with urlopen(request, timeout=30.0) as response:  # noqa: S310 - explicit CLI endpoint
+        payload = json.loads(response.read().decode("utf-8"))
+    observed = payload.get("model") if isinstance(payload, dict) else None
+    if not isinstance(observed, str) or not observed:
+        raise RuntimeError("TypeSafe did not report a model identity")
+    return {
+        "name": observed,
+        "model": observed,
+        "requested": model,
+        "digest": hashlib.sha256(f"typesafe:{observed}".encode("utf-8")).hexdigest(),
+        "identity_kind": "vendor_version_string",
+        "note": "hosted model; digest is of the reported version string, not of weights",
+    }
 
 
 def _live_model_metadata(endpoint: str, names: tuple[str, ...]) -> dict[str, dict[str, Any]]:
@@ -128,7 +169,7 @@ def run_heldout(
     module_challenge_path: Path | None = None,
     root: Path | None = None,
     think: OllamaThink = None,
-    extraction_mode: Literal["generated", "source_bound"] = "generated",
+    extraction_mode: Literal["generated", "source_bound", "judged"] = "generated",
     temperature: float = 0.0,
     max_tokens: int = 512,
     timeout_seconds: float = 120.0,
@@ -138,8 +179,19 @@ def run_heldout(
     adapter_type: type[OllamaEvaluatorAdapter] = OllamaEvaluatorAdapter,
     run_namespace: str = "t18-heldout",
     experiment_binding: Mapping[str, Any] | None = None,
+    judge_provider: Literal["none", "typesafe", "ollama"] = "none",
+    typesafe_api_key: str | None = None,
+    typesafe_model: str = "jev-latest",
+    typesafe_base_url: str = "https://api.typesafe.ai/v1",
+    surprisal_mode: Literal["prediction", "novelty"] = "prediction",
 ) -> dict[str, dict[str, Any]]:
     selected_extraction = SleepConfig(extraction_mode=extraction_mode).extraction_mode
+    if judge_provider == "typesafe" and not typesafe_api_key:
+        raise ValueError("typesafe_api_key is required for judge_provider=typesafe")
+    if judge_provider == "none" and (
+        selected_extraction == "judged" or surprisal_mode == "novelty"
+    ):
+        raise ValueError("judged extraction and novelty surprisal need a judge_provider")
     generation = OllamaProviderSettings(
         temperature=temperature, max_tokens=max_tokens, timeout=timeout_seconds
     )
@@ -168,6 +220,21 @@ def run_heldout(
     model_records = _live_model_metadata(endpoint, (model, embedding_model))
     model_metadata = model_records[model]
     embedding_metadata = model_records[embedding_model]
+    judge_metadata: dict[str, Any] | None = None
+    if judge_provider == "typesafe":
+        assert typesafe_api_key is not None
+        judge_metadata = _live_typesafe_model(typesafe_base_url, typesafe_api_key, typesafe_model)
+        # In a judged run the judge is the cognition being measured. Its
+        # identity replaces the generative model's in the run binding.
+        cognition_metadata = judge_metadata
+        cognition_name = judge_metadata["name"]
+    elif judge_provider == "ollama":
+        judge_metadata = dict(model_metadata, identity_kind="ollama_digest", judge=True)
+        cognition_metadata = model_metadata
+        cognition_name = model
+    else:
+        cognition_metadata = model_metadata
+        cognition_name = model
     runtime = environment_metadata()
     options: dict[str, Any] = {
         "extraction_mode": selected_extraction,
@@ -178,6 +245,13 @@ def run_heldout(
         "max_context_tokens": 1200,
         "runtime": {key: value for key, value in runtime.items() if key not in _HOST_DETAILS},
     }
+    if judge_provider != "none":
+        options["judge_provider"] = judge_provider
+        options["surprisal_mode"] = surprisal_mode
+        options["judge_model"] = typesafe_model if judge_provider == "typesafe" else model
+        if judge_provider == "typesafe":
+            options["judge_endpoint"] = typesafe_base_url.rstrip("/")
+            options["typesafe_price_usd_per_million_input_tokens"] = 0.042
     add_ollama_think(options, think)
     task_contract = embedding_task_contract(
         query_prefix=query_prefix,
@@ -202,7 +276,7 @@ def run_heldout(
             repetitions=repetitions,
             top_k=int(options["top_k"]),
             max_context_tokens=int(options["max_context_tokens"]),
-            model_sha256=str(model_metadata["digest"]),
+            model_sha256=str(cognition_metadata["digest"]),
             embedding_sha256=str(embedding_metadata["digest"]),
             options_sha256=options_sha256,
             code_sha256=code_sha256,
@@ -229,6 +303,7 @@ def run_heldout(
                 "endpoint": endpoint,
                 "model": model_metadata,
                 "embedding_model": embedding_metadata,
+                "judge": judge_metadata,
                 "options": options,
             },
             "options_sha256": options_sha256,
@@ -272,20 +347,25 @@ def run_heldout(
             query_prefix=query_prefix,
             document_prefix=document_prefix,
             symmetric_prefix=symmetric_prefix,
+            judge_provider=judge_provider,
+            typesafe_api_key=typesafe_api_key,
+            typesafe_model=typesafe_model,
+            typesafe_base_url=typesafe_base_url,
+            surprisal_mode=surprisal_mode,
         )
         adapter = adapter_type(
             factory,
             base_url=endpoint,
-            model=model,
+            model=cognition_name,
             embedding_model=embedding_model,
             real_model=True,
-            model_revision=str(model_metadata["digest"]),
+            model_revision=str(cognition_metadata["digest"]),
             embedding_revision=str(embedding_metadata["digest"]),
-            model_sha256=str(model_metadata["digest"]),
+            model_sha256=str(cognition_metadata["digest"]),
             embedding_sha256=str(embedding_metadata["digest"]),
             options_sha256=options_sha256,
             code_sha256=code_sha256,
-            model_provenance=model_metadata,
+            model_provenance=cognition_metadata,
             embedding_provenance=embedding_metadata,
         )
         try:
@@ -341,8 +421,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="append", dest="profiles")
     parser.add_argument(
-        "--extraction-mode", choices=("generated", "source_bound"), default="generated"
+        "--extraction-mode", choices=("generated", "source_bound", "judged"), default="generated"
     )
+    parser.add_argument("--judge", choices=("none", "typesafe", "ollama"), default="none")
+    parser.add_argument("--typesafe-model", default="jev-latest")
+    parser.add_argument("--typesafe-url", default="https://api.typesafe.ai/v1")
+    parser.add_argument("--surprisal-mode", choices=("prediction", "novelty"), default="prediction")
     parser.add_argument("--think", type=parse_ollama_think, default=None)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=512)
@@ -369,6 +453,11 @@ def main(argv: list[str] | None = None) -> int:
         query_prefix=args.query_prefix,
         document_prefix=args.document_prefix,
         symmetric_prefix=args.symmetric_prefix,
+        judge_provider=args.judge,
+        typesafe_api_key=os.environ.get("MNEMOS_TYPESAFE_API_KEY"),
+        typesafe_model=args.typesafe_model,
+        typesafe_base_url=args.typesafe_url,
+        surprisal_mode=args.surprisal_mode,
     )
     print(json.dumps({name: report["status"] for name, report in reports.items()}, sort_keys=True))
     return 0

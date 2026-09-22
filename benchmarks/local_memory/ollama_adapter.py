@@ -38,6 +38,7 @@ from mnemos.runtime import embedding_task_contract
 from mnemos.utils.embeddings import EmbeddingProvider, PrefixEmbeddingProvider
 from mnemos.utils.embeddings import embed_text_async
 from mnemos.utils.llm import LLMProvider, _validate_ollama_think
+from mnemos.judgment import Judge, Judgment, JudgmentState, Question
 
 ServiceFactory = Callable[..., Any]
 OllamaThink = bool | Literal["low", "medium", "high", "max"] | None
@@ -399,6 +400,7 @@ class OllamaEvaluatorAdapter:
             retrieved_fact_count=retrieved_count,
             latency_ms=(time.perf_counter() - started) * 1000,
             cold_latency_ms=cold_latency_ms,
+            token_cost=self._judge_cost(service),
             bytes_before=bytes_before,
             bytes_after=bytes_after,
             provider=self.provider,
@@ -920,7 +922,17 @@ class OllamaEvaluatorAdapter:
 
     def _trace_has_cognition_calls(self, service: Any | None) -> bool:
         trace = self._provider_trace(service)
-        return bool(trace.get("predict_calls") or trace.get("classify_calls"))
+        return bool(
+            trace.get("predict_calls") or trace.get("classify_calls") or trace.get("judge_calls")
+        )
+
+    def _judge_cost(self, service: Any | None) -> float | None:
+        """Input tokens times the published TypeSafe price; None without a judge."""
+        trace = self._provider_trace(service)
+        calls = trace.get("judge_calls")
+        if not isinstance(calls, list) or not calls:
+            return None
+        return float(sum(float(call.get("cost_usd") or 0.0) for call in calls))
 
     def _trace_has_embedding_calls(self, service: Any | None) -> bool:
         trace = self._provider_trace(service)
@@ -1638,22 +1650,42 @@ def make_ollama_service_factory(
     temperature: float = 0.0,
     max_tokens: int = 512,
     think: OllamaThink = None,
-    extraction_mode: Literal["generated", "source_bound"] = "generated",
+    extraction_mode: Literal["generated", "source_bound", "judged"] = "generated",
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
     service_type: type[LocalMemoryService] = LocalMemoryService,
+    judge_provider: Literal["none", "typesafe", "ollama"] = "none",
+    typesafe_api_key: str | None = None,
+    typesafe_model: str = "jev-latest",
+    typesafe_base_url: str = "https://api.typesafe.ai/v1",
+    surprisal_mode: Literal["prediction", "novelty"] = "prediction",
+    judgment_config: Any | None = None,
 ) -> ServiceFactory:
     """Build a profile-aware Ollama service factory over one SQLite file.
 
     The registry must already contain an enabled project matching dataset
     contexts. Parent integration can replace this helper when its service
     constructor grows new module settings.
+
+    ``judge_provider`` adds a typed judgment backend: the judged extraction
+    mode, novelty surprisal, judged affect, and judged reconsolidation then
+    run through it, and every judge call is recorded in ``judge_calls``.
     """
 
-    from mnemos.config import SleepConfig
+    from mnemos.config import JudgmentConfig, SleepConfig, SurprisalConfig
 
     selected_extraction = SleepConfig(extraction_mode=extraction_mode).extraction_mode
+    selected_surprisal_mode = SurprisalConfig(mode=surprisal_mode).mode
+    if judge_provider == "none" and (
+        selected_extraction == "judged" or selected_surprisal_mode == "novelty"
+    ):
+        raise ValueError("judged extraction and novelty surprisal need a judge_provider")
+    if judge_provider == "typesafe" and not typesafe_api_key:
+        raise ValueError("typesafe_api_key is required for judge_provider=typesafe")
+    selected_judgment = (
+        judgment_config if isinstance(judgment_config, JudgmentConfig) else JudgmentConfig()
+    )
     selected_think = _validate_ollama_think(think)
     task_contract = embedding_task_contract(
         query_prefix=query_prefix,
@@ -1671,6 +1703,11 @@ def make_ollama_service_factory(
 
         config = MnemosConfig()
         config.sleep.extraction_mode = selected_extraction
+        config.surprisal.mode = selected_surprisal_mode
+        config.judgment = selected_judgment.model_copy(deep=True)
+        if judge_provider == "typesafe":
+            # No round trip inside recall; see RetrievalConfig.query_state_source.
+            config.retrieval.query_state_source = "recent_state"
         enabled = set(profile.enabled_modules)
         # Keep both the current per-module switches and the parent integration
         # switch object aligned when either API is present.
@@ -1716,10 +1753,18 @@ def make_ollama_service_factory(
                 "service_instances": 0,
                 "predict_calls": [],
                 "classify_calls": [],
+                "judge_calls": [],
                 "embed_calls": [],
                 "response_metadata": [],
             }
             add_ollama_think(trace["config"], selected_think)
+            if judge_provider != "none":
+                trace["config"]["judge_provider"] = judge_provider
+                trace["config"]["surprisal_mode"] = selected_surprisal_mode
+                trace["config"]["judgment"] = selected_judgment.model_dump()
+                if judge_provider == "typesafe":
+                    trace["config"]["judge_model"] = typesafe_model
+                    trace["config"]["judge_endpoint"] = typesafe_base_url.rstrip("/")
             if task_contract is not None:
                 trace["config"]["embedding_task_contract"] = task_contract
             traces[trace_key] = trace
@@ -1788,6 +1833,42 @@ def make_ollama_service_factory(
         if run_key:
             safe_key = re.sub(r"[^A-Za-z0-9_.-]+", "_", run_key)
             store_path = store_path.with_name(store_path.stem + "-" + safe_key + store_path.suffix)
+        judge: Judge | None = None
+        if judge_provider != "none":
+            from mnemos.memory_safety import MemoryWriteFirewall
+
+            firewall = MemoryWriteFirewall(config.safety)
+            if judge_provider == "typesafe":
+                from mnemos.utils.typesafe import TypeSafeJudge
+
+                assert typesafe_api_key is not None
+                judge = _TracingJudge(
+                    TypeSafeJudge(
+                        typesafe_api_key,
+                        firewall=firewall,
+                        model=typesafe_model,
+                        base_url=typesafe_base_url,
+                    ),
+                    trace,
+                )
+            else:
+                from mnemos.utils.ollama_judge import OllamaJudge
+
+                judge = _TracingJudge(
+                    OllamaJudge(
+                        OllamaProvider(
+                            model=model,
+                            base_url=base_url,
+                            timeout=timeout,
+                            temperature=0.0,
+                            max_tokens=max_tokens,
+                            response_observer=observe_llm,
+                            think=selected_think,
+                        ),
+                        firewall=firewall,
+                    ),
+                    trace,
+                )
         engine = MnemosEngine(
             config=config,
             llm=llm,
@@ -1795,6 +1876,7 @@ def make_ollama_service_factory(
             store=SQLiteStore(str(store_path)),
             scope_registry=registry,
             require_scope_context=True,
+            judge=judge,
         )
         service = service_type(engine, registry)
         processor = service.maintenance.processor
@@ -1885,6 +1967,46 @@ class _TracingLLM(LLMProvider):
             }
         )
         return result
+
+
+class _TracingJudge:
+    """Record every judgment call: purpose, questions, usage, latency, cost."""
+
+    def __init__(self, judge: Judge, trace: dict[str, Any]) -> None:
+        self._judge = judge
+        self._trace = trace
+        self.provider = judge.provider
+        self.model = judge.model
+
+    async def ask(
+        self,
+        state: JudgmentState,
+        questions: Mapping[str, Question],
+        *,
+        purpose: str,
+        model: str | None = None,
+    ) -> Judgment:
+        started = time.perf_counter()
+        judgment = await self._judge.ask(state, questions, purpose=purpose, model=model)
+        cost = judgment.usage.input_tokens * 0.042 / 1e6 if self.provider == "typesafe" else None
+        self._trace["judge_calls"].append(
+            {
+                "provider": self.provider,
+                "purpose": purpose,
+                "model": judgment.model,
+                "question_count": len(questions),
+                "input_tokens": judgment.usage.input_tokens,
+                "output_tokens": judgment.usage.output_tokens,
+                "latency_ms": (time.perf_counter() - started) * 1000,
+                "cost_usd": cost,
+            }
+        )
+        return judgment
+
+    async def aclose(self) -> None:
+        closer = getattr(self._judge, "aclose", None)
+        if closer is not None:
+            await closer()
 
 
 class _TracingEmbedder(EmbeddingProvider):
