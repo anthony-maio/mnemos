@@ -545,14 +545,14 @@ class LocalMemoryService:
                     top_k=5,
                     filter_fn=same_partition,
                 )
-            rejected, diagnostics = await self._automatic_encoding_gate(
-                interaction,
-                (
-                    None
-                    if existing_for_gate is None
-                    else [chunk.content for chunk in existing_for_gate]
-                ),
-            )
+            if existing_for_gate is None:
+                # The one-argument form is the override point for benchmark
+                # comparison policies; keep it intact outside novelty mode.
+                rejected, diagnostics = await self._automatic_encoding_gate(interaction)
+            else:
+                rejected, diagnostics = await self._automatic_encoding_gate(
+                    interaction, [chunk.content for chunk in existing_for_gate]
+                )
             if rejected is not None:
                 proposals = []
                 decision = rejected
