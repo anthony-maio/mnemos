@@ -1,0 +1,66 @@
+{
+  "started_at": "2026-09-22T15:27:55.451362+00:00",
+  "finished_at": "2026-09-22T15:32:29.884933+00:00",
+  "fixture": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-21\\source-classification-terminal-v12",
+  "judgment_config": {
+    "continuation_min_probability": 0.5,
+    "kind_min_probability": 0.5,
+    "support_min_probability": 0.6,
+    "conflict_min_probability": 0.6,
+    "outdated_min_probability": 0.7,
+    "max_units_per_request": 40,
+    "max_ranges_per_request": 15,
+    "max_request_tokens": 60000
+  },
+  "typesafe_price_usd_per_million_input_tokens": 0.042,
+  "backends": [
+    {
+      "backend": "baseline:gemma3:27b",
+      "ok": 43,
+      "cases": 46,
+      "presence_agreement": 0.8604651162790697,
+      "presence_total": 43
+    },
+    {
+      "backend": "typesafe",
+      "cases": 46,
+      "ok": 46,
+      "contract_errors": 0,
+      "errors": 0,
+      "presence_agreement": 0.8913043478260869,
+      "presence_total": 46,
+      "twin_pair_agreement": 0.8461538461538461,
+      "twin_pairs": 13,
+      "calls": 84,
+      "latency_ms_median": 387.61475001228973,
+      "latency_ms_p95": 467.98760001547635,
+      "latency_ms_max": 619.9838000466116,
+      "input_tokens": 95505,
+      "cost_usd": 0.00401121,
+      "models": [
+        "jev-1.13.0"
+      ]
+    },
+    {
+      "backend": "ollama",
+      "cases": 46,
+      "ok": 46,
+      "contract_errors": 0,
+      "errors": 0,
+      "presence_agreement": 0.8478260869565217,
+      "presence_total": 46,
+      "twin_pair_agreement": 0.6153846153846154,
+      "twin_pairs": 13,
+      "calls": 84,
+      "latency_ms_median": 1399.3941499793436,
+      "latency_ms_p95": 3614.135499985423,
+      "latency_ms_max": 122091.19549999014,
+      "input_tokens": 83874,
+      "cost_usd": null,
+      "models": [
+        "qwen3.5:9b"
+      ]
+    }
+  ],
+  "note": "presence_agreement and twin_pair_agreement are mechanical proxies for whether anything durable was retained; they say nothing about whether the right meaning was retained. Read spike-review.json for that."
+}
