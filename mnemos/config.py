@@ -32,7 +32,18 @@ class SurprisalConfig(BaseModel):
         description=(
             "Cosine distance threshold for encoding. Interactions with surprisal "
             "score above this are stored. Cosine distance ranges from 0 to 2; "
-            "0.3 corresponds to approximately 45.6 degrees."
+            "0.3 corresponds to approximately 45.6 degrees. In novelty mode the "
+            "score is the judge's probability that the turn is new, so 0.3 means "
+            "reject when the judge is at least 70 percent sure nothing is new."
+        ),
+    )
+    mode: Literal["prediction", "novelty"] = Field(
+        default="prediction",
+        description=(
+            "prediction: a local model guesses the next turn and surprisal is the "
+            "cosine distance to what was said. novelty: the configured judge answers "
+            "whether the turn adds information not already in recent history or the "
+            "retrieved facts. novelty needs a judgment provider."
         ),
     )
     prediction_model: str = Field(

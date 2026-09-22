@@ -732,6 +732,7 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_STORE_TYPE` | `memory` | `memory` or `sqlite` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity |
+| `MNEMOS_SURPRISAL_MODE` | `prediction` | `prediction` (local model guesses the next turn) or `novelty` (the judge says whether the turn is new; needs `MNEMOS_JUDGMENT_PROVIDER`) |
 | `MNEMOS_DEBUG` | `false` | Enable verbose debug logging |
 
 Backward-compatible aliases are supported for migration:

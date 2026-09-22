@@ -425,7 +425,7 @@ class LocalMemoryService:
         }
 
     async def _automatic_encoding_gate(
-        self, interaction: Interaction
+        self, interaction: Interaction, existing_facts: list[str] | None = None
     ) -> tuple[str | None, dict[str, Any]]:
         """Return an automatic encoding rejection and its durable diagnostics.
 
@@ -434,7 +434,7 @@ class LocalMemoryService:
         while retaining the same extraction and transactional commit path.
         """
         surprise, status, prediction, mode = (
-            await self.engine.surprisal_gate._compute_surprisal(interaction)
+            await self.engine.surprisal_gate._compute_surprisal(interaction, existing_facts)
             if self.engine.config.modules.surprisal
             else (None, "disabled", None, "disabled")
         )
@@ -528,15 +528,35 @@ class LocalMemoryService:
                 )
             ]
         elif job.kind == "extract":
-            rejected, diagnostics = await self._automatic_encoding_gate(interaction)
+
+            def same_partition(chunk: MemoryChunk) -> bool:
+                return scope_allows(chunk.metadata, context, (scope,))
+
+            existing_for_gate: list[MemoryChunk] | None = None
+            if (
+                self.engine.config.modules.surprisal
+                and self.engine.config.surprisal.mode == "novelty"
+                and self.engine.config.modules.sleep
+            ):
+                # Novelty is judged against the same facts reconciliation will
+                # see, from one embedding lookup.
+                existing_for_gate = self.engine.store.retrieve(
+                    await embed_text_async(self.engine.embedder, event.content, role="query"),
+                    top_k=5,
+                    filter_fn=same_partition,
+                )
+            rejected, diagnostics = await self._automatic_encoding_gate(
+                interaction,
+                (
+                    None
+                    if existing_for_gate is None
+                    else [chunk.content for chunk in existing_for_gate]
+                ),
+            )
             if rejected is not None:
                 proposals = []
                 decision = rejected
             else:
-
-                def same_partition(chunk: MemoryChunk) -> bool:
-                    return scope_allows(chunk.metadata, context, (scope,))
-
                 setattr(
                     same_partition,
                     "_mnemos_scope_filter",
@@ -547,15 +567,16 @@ class LocalMemoryService:
                         "allowed_scopes": [scope],
                     },
                 )
-                existing = (
-                    self.engine.store.retrieve(
+                if existing_for_gate is not None:
+                    existing = existing_for_gate
+                elif self.engine.config.modules.sleep:
+                    existing = self.engine.store.retrieve(
                         await embed_text_async(self.engine.embedder, event.content, role="query"),
                         top_k=5,
                         filter_fn=same_partition,
                     )
-                    if self.engine.config.modules.sleep
-                    else []
-                )
+                else:
+                    existing = []
                 extraction_mode = self.engine.config.sleep.extraction_mode
                 if self.engine.config.modules.sleep and extraction_mode in {
                     "source_bound",

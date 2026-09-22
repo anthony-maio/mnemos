@@ -301,10 +301,17 @@ def build_judge_from_settings(
 
 
 def _require_judge_for_judged_extraction(settings: AppSettings) -> None:
-    if settings.sleep.extraction_mode == "judged" and settings.judgment.provider == "none":
+    if settings.judgment.provider != "none":
+        return
+    if settings.sleep.extraction_mode == "judged":
         raise ValueError(
             "extraction_mode=judged needs a judgment provider; set judgment.provider "
             "(MNEMOS_JUDGMENT_PROVIDER) to typesafe or ollama, or use source_bound"
+        )
+    if settings.runtime.surprisal_mode == "novelty":
+        raise ValueError(
+            "surprisal_mode=novelty needs a judgment provider; set judgment.provider "
+            "(MNEMOS_JUDGMENT_PROVIDER) to typesafe or ollama, or use prediction"
         )
 
 
@@ -312,7 +319,11 @@ def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
     return MnemosConfig(
         modules=settings.modules.model_copy(deep=True),
         retrieval=settings.retrieval.model_copy(deep=True),
-        surprisal=SurprisalConfig(threshold=settings.runtime.surprisal_threshold),
+        surprisal=SurprisalConfig(
+            threshold=settings.runtime.surprisal_threshold,
+            mode=settings.runtime.surprisal_mode,
+        ),
+        judgment=settings.judgment_config(),
         sleep=SleepConfig(
             extraction_mode=settings.sleep.extraction_mode,
             recall_gated_plasticity_enabled=settings.sleep.recall_gated_plasticity_enabled,

@@ -14,7 +14,7 @@ from typing import Any, Literal, Mapping, cast
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
-from .config import MemoryGovernanceConfig, MemorySafetyConfig, ModuleConfig
+from .config import JudgmentConfig, MemoryGovernanceConfig, MemorySafetyConfig, ModuleConfig
 from .retrieval import RetrievalConfig
 
 if sys.version_info >= (3, 11):
@@ -321,6 +321,10 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     if surprisal_threshold is not None:
         _set_nested(overrides, ("runtime", "surprisal_threshold"), surprisal_threshold)
 
+    surprisal_mode = _env_value(env, "MNEMOS_SURPRISAL_MODE")
+    if surprisal_mode is not None:
+        _set_nested(overrides, ("runtime", "surprisal_mode"), surprisal_mode.lower())
+
     debug = _env_bool(env, "MNEMOS_DEBUG")
     if debug is not None:
         _set_nested(overrides, ("runtime", "debug"), debug)
@@ -436,6 +440,7 @@ class JudgmentSettings(BaseModel):
 
     provider: Literal["none", "typesafe", "ollama"] = "none"
     model: str | None = None
+    thresholds: JudgmentConfig = Field(default_factory=JudgmentConfig)
 
 
 class EmbeddingSettings(BaseModel):
@@ -465,6 +470,7 @@ class RuntimeSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     surprisal_threshold: float = 0.3
+    surprisal_mode: Literal["prediction", "novelty"] = "prediction"
     debug: bool = False
 
 
@@ -524,6 +530,9 @@ class AppSettings(BaseModel):
                 self.judgment.model = self.judgment.model or _default_llm_model("ollama")
 
         return self
+
+    def judgment_config(self) -> JudgmentConfig:
+        return self.judgment.thresholds.model_copy(deep=True)
 
     def api_key_for(self, provider: str) -> str | None:
         if provider == "typesafe":

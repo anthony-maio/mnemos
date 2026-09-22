@@ -148,3 +148,29 @@ def test_health_reports_judgment_state(tmp_path: Path, monkeypatch: pytest.Monke
     assert state["status"] == "ready" and state["observed_model"] == "jev-1.13.0"
     (check,) = [c for c in probed["checks"] if c["name"] == "judgment.typesafe"]
     assert check["status"] == "pass" and "leave the machine" in check["message"]
+
+
+def test_novelty_surprisal_needs_a_judge_and_flows_into_config(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="surprisal_mode=novelty needs a judgment provider"):
+        build_configured_engine(env=_env(tmp_path, MNEMOS_SURPRISAL_MODE="novelty"), cwd=tmp_path)
+
+    config = tmp_path / "mnemos.toml"
+    config.write_text(
+        '[judgment]\nprovider = "ollama"\n[judgment.thresholds]\nkind_min_probability = 0.7\n',
+        encoding="utf-8",
+    )
+    engine = build_configured_engine(
+        env={
+            "MNEMOS_CONFIG_PATH": str(config),
+            "MNEMOS_SQLITE_PATH": str(tmp_path / "m.db"),
+            "MNEMOS_LLM_PROVIDER": "ollama",
+            "MNEMOS_SURPRISAL_MODE": "novelty",
+        },
+        cwd=tmp_path,
+    )
+    try:
+        assert engine.config.surprisal.mode == "novelty"
+        assert engine.config.judgment.kind_min_probability == 0.7
+        assert isinstance(engine.judge, OllamaJudge)
+    finally:
+        asyncio.run(engine.aclose())

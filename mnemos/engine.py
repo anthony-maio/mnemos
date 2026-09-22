@@ -246,6 +246,7 @@ class MnemosEngine:
             store=self._store,
             config=self.config.surprisal,
             write_firewall=self._write_firewall,
+            judge=self._judge,
         )
 
         self.mutable_rag = MutableRAG(

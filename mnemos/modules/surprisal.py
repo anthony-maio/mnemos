@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ..config import SurprisalConfig
+from ..judgment import Criteria, Judge, Noul, NoulAnswer, UnavailableJudge
 from ..memory_safety import MemoryWriteFirewall
 from ..scopes import interaction_partition
 from ..types import Interaction, MemoryChunk, ProcessResult
@@ -63,8 +64,10 @@ class SurprisalGate:
         store: MemoryStore,
         config: SurprisalConfig | None = None,
         write_firewall: MemoryWriteFirewall | None = None,
+        judge: Judge | None = None,
     ) -> None:
         self._llm = llm
+        self._judge: Judge = judge if judge is not None else UnavailableJudge()
         self._embedder = embedder
         self._store = store
         self._config = config or SurprisalConfig()
@@ -178,24 +181,34 @@ class SurprisalGate:
         return True
 
     async def _compute_surprisal(
-        self, interaction: Interaction
+        self,
+        interaction: Interaction,
+        existing_facts: list[str] | None = None,
     ) -> tuple[float | None, str, str | None, str]:
         """
         Compute the surprisal score for an interaction.
 
-        Steps:
+        Prediction mode:
         1. Ask the LLM to predict the next user input from history
         2. Embed both the prediction and the actual input
         3. Return cosine distance between the two embeddings
 
+        Novelty mode asks the judge one yes/no question instead: does the
+        newest turn add information not already in recent history or the
+        listed existing facts. The score is that probability.
+
         Args:
             interaction: The interaction to score.
+            existing_facts: Fact text already retrieved for this turn, used by
+                novelty mode so the judge and the reconciler see the same set.
 
         Returns:
             Surprisal score in [0, 2], typically [0, 1] for text embeddings.
             Higher = more surprising = higher salience.
         """
         history = self._prediction_history(interaction)
+        if self._config.mode == "novelty":
+            return await self._judge_novelty(interaction, history, existing_facts or [])
         cached = self._predictions.pop(interaction_partition(interaction.metadata), None)
         mode = "on_demand"
 
@@ -223,6 +236,46 @@ class SurprisalGate:
 
         # Step 3: Cosine distance = semantic divergence = surprisal score
         return cosine_distance(prediction_embedding, actual_embedding), "measured", prediction, mode
+
+    async def _judge_novelty(
+        self,
+        interaction: Interaction,
+        history: list[Interaction],
+        existing_facts: list[str],
+    ) -> tuple[float | None, str, str | None, str]:
+        mode = "novelty_judgment"
+        state = {
+            "recent_history": [{"role": turn.role, "text": turn.content[:600]} for turn in history],
+            "existing_facts": [
+                {"id": f"f{index}", "text": text} for index, text in enumerate(existing_facts)
+            ],
+            "newest_turn": {"role": interaction.role, "text": interaction.content},
+        }
+        question = Noul(
+            (
+                "Does newest_turn contain information about the user, the project, its rules, "
+                "preferences, decisions, or observed results that is not already present in "
+                "recent_history or existing_facts?"
+            ),
+            Criteria(
+                true=(
+                    "it states a new or changed fact, preference, requirement, decision, "
+                    "correction, rejection, or dated report, even a small one, or explicitly "
+                    "asks to remember something"
+                ),
+                false=(
+                    "it only repeats or acknowledges listed content, asks a question, gives a "
+                    "one-turn reply or formatting instruction, or is small talk"
+                ),
+            ),
+        )
+        try:
+            judgment = await self._judge.ask(state, {"novel": question}, purpose="judge_novelty")
+        except Exception:
+            return None, "provider_unavailable", None, mode
+        answer = judgment.answers["novel"]
+        assert isinstance(answer, NoulAnswer)
+        return answer.probability, "measured", None, mode
 
     def _salience_from_surprisal(self, surprisal: float) -> float:
         """
