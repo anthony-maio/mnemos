@@ -71,6 +71,10 @@ Colab: upload a bundle folder as-is (keep `source.zip` zipped) to `MyDrive/mnemo
 - The partial ~10 GB backups need an integrity check and an OK before anything is deleted.
 - T17 native hosts, the pilot, and the T19 claims remain open from the earlier handoff.
 
+## Commit hashes on this branch versus the local worktree
+
+Pushing required moving three `docs/validation/**/raw-evidence.zip` files (one is 145.7 MB, over GitHub's limit) into Git LFS, which rewrote every commit since `origin/master` on this branch. The local `wt/functional-local-memory` branch keeps the original hashes and the trees are otherwise identical. [2026-09-22-lfs-rewrite-hash-map.txt](2026-09-22-lfs-rewrite-hash-map.txt) maps all 609 old hashes to new ones. The ones cited above: `32192e7 -> 6ffd45e`, `0ad22bc -> 0f30512`, `3b3d19d -> 5eda261` (the Colab bundles and manifests bind `source_commit` to the old hash), `e884507 -> 2510443`, `ad5da63 -> 6dc614b`, `e6887de -> 082661e`, `ac66088 -> 36a9838`. Validation READMEs written before this push cite the old hashes throughout; resolve them locally or through the map.
+
 ## Rules that applied to this work
 
 Commit on the branch, never push or merge without asking (this push was asked for). No AI attribution in commits. Cloud judgment is an explicit opt-in, never a silent fallback when local fails. Retained memory text is always a verbatim slice, so the worst judged-mode failure is a wrong label or a dropped fact, never invented content.

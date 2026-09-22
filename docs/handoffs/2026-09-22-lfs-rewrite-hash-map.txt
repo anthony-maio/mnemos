@@ -1,0 +1,613 @@
+# Commit hash map for the 2026-09-22 Git LFS rewrite that produced feat/typed-judgment-layer
+# old (wt/functional-local-memory, tag backup/pre-lfs-rewrite-2026-09-22) -> new (feat/typed-judgment-layer)
+# Only docs/validation/**/raw-evidence.zip became LFS pointers and .gitattributes gained one line; trees are otherwise identical.
+
+c910c0dd7eb2 -> 7a27e3c01d62  Record the judged held-out run and write the handoff
+ad5da630074a -> 6dc614b734e3  Default mnemos_capture and the Hermes memory mirror to the assistant role
+e884507f9d51 -> 2510443ab2d8  Explain a missing bundle in the notebook instead of a traceback
+3b3d19d9aa49 -> 5eda261a2b17  Keep the one-argument encoding gate override working
+3d6834d76372 -> 95b640fb2d98  Document the optional typed judgment layer
+31ea9de7ec8e -> 8b11e62f3a2a  Carry judge settings through the Colab bundle and notebook
+96ab273313eb -> 63bea892c043  Run the held-out harness with a judge
+91a8b5cc6a8d -> cd58768516de  Reconsolidate through the judge without a rewrite
+926a4c30a38b -> aadd21714cad  Judge affect through the judge and keep recall off the round trip
+e6ad7d752505 -> 1ade0c141cb6  Add a novelty mode to the surprisal gate
+0ad22bc08aa1 -> 0f30512379b3  Quote the judged text inside each question
+64b6aa086807 -> 0475ff1ce46b  Add judged extraction as an opt-in extraction mode
+ff485be007a8 -> c04b17fcc3d6  Make the judgment backend a configured, opt-in provider
+0f95fd61388b -> ac5ffe1f8989  Record the TypeSafe judgment spike: 0.891 presence agreement, 468 ms p95
+32192e7e2238 -> 6ffd45eba3ee  Add typed judgments with TypeSafe and local Ollama backends
+ac6608857a7e -> 36a983854f39  Prune finished Hermes threads when spawning, not only on flush
+4c2819fef927 -> 9976fd8f15b4  Keep one runner per profile on Colab and install zstd for Ollama
+68ee04f7a079 -> 267495d1f500  Document the Colab held-out flow in the benchmark README
+353215623be9 -> 52b57a85b5a2  Refuse host channels as a tool-supplied capture source
+24b8d0dd1236 -> eaba282b2fbc  Run the held-out evaluation on a Colab GPU
+a292236f7f23 -> f3815fad1c81  Send each Hermes row once and resolve the profile on every initialize
+af0f8378716e -> a603cb5418b8  Edit only memory.provider when setting up Hermes
+33f6ca425d0f -> 6b2c7bbbe5ca  Give each event loop its own client connection pool
+4c0a38411d31 -> 5c68e2512802  Keep Claude plugin hooks from blocking or installing
+d0f8c2960d95 -> 1074a13b4303  Save Claude capture progress through backlogs and rewrites
+11120f6b6c0f -> 87934d68238b  Keep injected transcript records out of Claude user evidence
+97e2dd67def5 -> 39860421ac18  Stop one refused record from stalling Claude transcript capture
+93174a765e0a -> ac1fe5b9ec0b  Let the configured retrieval profile reach host recall
+55fb71a12995 -> f9899e5ec194  Edit only Mnemos entries when setting up Codex
+9084d770fd7a -> 4efc16994a76  Keep closed reviews closed when retention prunes their sources
+b75929927f41 -> aced533a87e1  Keep one unusable extraction candidate from sinking the whole message
+adfa4cec948a -> 258eccf4cd6f  Tell rejections, unavailable scopes and outages apart
+513748c20322 -> a02808703897  Order forgetting against earlier writes and let re-teaching supersede it
+9d875003e236 -> 812eb5f1ccc1  Add review resolution request path and repair its storage reads
+b2d62a71fa93 -> 2fc6950cec80  Isolate tests from the live Mnemos profile
+7e441c3c708b -> 4f9ad811700e  Preserve development matrix and freeze fresh heldout run
+a6b0bf38fd21 -> 40b8c66917e6  Bind extraction mode into real-model evaluation runs
+d5563072c33f -> fe3a0232cec3  Bind recovery archive to closed SQLite backup
+9ac7d96c99db -> f64c50e4fcc2  Record passing source-bound local recovery lifecycle
+11a97e34214a -> c06637b308d5  Add scoped review inspection and durable discard controls
+069df7dcaeef -> a8a7cbaef4ba  Preserve the tested source-bound candidate wheel
+9280f618ccad -> 6e2ea3fc3ac5  Record source-bound service evidence and remaining acceptance gates
+de77de05684f -> d1f520c8f93e  Integrate source-bound extraction with durable service jobs
+33ef85ce8dc4 -> 549614d5fd53  Archive full source suite for durable review storage
+8374eb5ac4ff -> 44c57a5399d1  Archive atomic review lifecycle validation
+bbabf67b8cf0 -> d2ef44df510e  Persist source reviews atomically with memory jobs
+c708bbe4df19 -> d922b628f2e2  Record review lifecycle requirements and contract validation
+dd728c49c147 -> 4ee1d5e21f50  Bind pending review references to current source provenance
+9705580029d2 -> 76ed8952d3bf  Preserve prospective-rule results and missed revision-intent limitation
+f11125f8fcf3 -> 5eb18cf3d751  Repair isolated experiment package initializer before model calls
+f81b4b02cde8 -> 5b3c260da67d  Freeze prospective-rule pipeline and revision development comparisons
+50200c0aa283 -> f1231568aff6  Verify explicit revision decisions in role-bound decoding
+eaa820c2c321 -> e1c867d735ff  Separate prospective requirement content from explicit revision intent
+012ba9f5034a -> c61ed2af7c1c  Preserve raw-source relationship results and remaining retention gap
+97204bf87ee0 -> 9b2568fe7c65  Preserve guarded relationship results with unresolved limits
+34f96471c2ca -> 3d7033f0e011  Freeze guarded relationship and raw-source pipeline comparisons
+e449bcc27864 -> d82a673e9707  Keep ambiguous corrections unresolved across conflict decisions
+1b5ac19bf075 -> d630752c3570  Preserve relationship-label repair and ambiguous conflict failure
+0282775933a8 -> 881bf666f95e  Freeze relationship-label development comparison
+eade965a7660 -> c2e6fc3de64e  Test relationship vocabulary through existing reconciliation guards
+71103155e5c8 -> d30818f47f18  Reconcile task and writing handoff with raw-source pipeline evidence
+ef4ab4657d61 -> 19b50688b55a  Preserve first raw-source pipeline outcomes and semantic failures
+742459417963 -> aea77bb853f6  Update evidence ledger for combined pipeline development
+06a91a1009fb -> 2dd8a36bc8d7  Freeze raw-source classification and reconciliation development run
+05600278e585 -> 9f4a3df02618  Compose guarded source pipeline and preserve rejected decoding diagnostic
+75400cfbf167 -> e932254d17f6  Freeze reconciliation decoding-schema diagnostic
+3dbe4e6348ab -> d447dfb4d62a  Distinguish standalone negative rules and preserve model comparison
+6a5c3c603b31 -> b73ad9d31925  Preserve example comparison and freeze installed model comparison
+f2ce1c8ea1f7 -> 5fbad5027ca2  Freeze example-only reconciliation comparison
+5cda323ecde2 -> c3721200555f  Add bounded instructional examples for independent memory additions
+c5b8154f8a26 -> 06970d2652aa  Define production reconciliation integration and unresolved outcome handling
+1906a1af27b5 -> 104fed65f5ee  Record instruction-placement comparison and remaining semantic gaps
+891291353485 -> 36c74317991b  Freeze reconciliation instruction-placement comparison
+ec79d6c6cd8c -> 13d910638771  Separate reconciliation instructions from source data
+1aa5001b07dd -> 936b60115214  Preserve reconciliation support repair and remaining omissions
+f56413a1c42d -> e3a455f84ae5  Freeze revised reconciliation comparison with unchanged criteria
+3dac242bef10 -> 18bafc80cfd4  Bind support to unique existing facts and prevent duplicate adds
+6ec2bd4e116b -> 34d78f186250  Preserve real-model reconciliation failures and acceptance limits
+f64e32d54428 -> 9d5b80aa0564  Correct staged result serialization before model execution
+e2390b25bf44 -> ad2d08880f72  Freeze reconciliation development inputs and provider run
+fb88796053a5 -> c21025e5366e  Preserve prompt ablation results and reject ambiguous correction targets
+7f1eb8d0fde8 -> 6860ce819733  Freeze uncertainty example ablation before model evaluation
+ce0b8dc73f28 -> 72e8a1692972  Isolate uncertainty example in controlled prompt ablation
+24af47d0ac0d -> 798532e4a0de  Record mixed retention results from instructional examples
+115843c7e0d8 -> 07bed2680afd  Track running prompt-only comparison and validation scope
+3c1fedb54b42 -> 4842f5f85344  Freeze prompt-only extraction comparison against original cases
+179b1897438f -> 1173b08ff3be  Add controlled instructional examples to experimental extraction
+5998792732d4 -> a575e47bb73c  Separate experimental source candidates from target reconciliation
+d3a75916635b -> f1acd9d6f791  Verify installed source mutation guard and replay contract
+d8a0a71d9c97 -> 678c7a9e101d  Verify source evidence snapshot repair across full source and package checks
+a1ec278482fe -> 775888fee417  Verify source authority schema improvement and preserve semantic limits
+6f2504fd37bf -> 05c609f9cea8  Record Gemma 27B extraction comparison and remaining failures
+2c9ec0d98a88 -> 750ad8b644b8  Preserve focused source mutation regression evidence
+56687e069286 -> ba3cf5373a02  Fence extraction authority against source mutation during prediction
+0431451fda86 -> fc82ee60e8c3  Freeze source authority schema comparison and original rubrics
+486b135c539c -> bb2496520df2  Constrain experimental classifications by source authority
+91fc99eadba3 -> c87412c118e1  Archive passing classifier source checkpoint and unchanged wheel
+c5700f1fee42 -> 4a51f875fca0  Record larger-model control and partial GPU offload
+1a4dab427a3f -> d0f92e7dd509  Freeze Gemma 27B fixed-contract comparison
+a83bc6dd534c -> 9a846a49f422  Preserve Gemma classifier comparison and semantic failures
+cfa3d945b035 -> a76d25028883  Track fixed-contract model comparison and next source checkpoint
+f5c58f166816 -> 6d4dfbd8fa9f  Freeze unchanged-classifier Gemma comparison
+ee426a85b1be -> 7ab8690fd6dc  Preserve completed recovery jobs and failed marker extraction
+1a3206884442 -> d46f88de60f8  Preserve valid recovery control responses and freeze lifecycle follow-up
+080f6419ce06 -> a1ac0cff78b1  Track isolated recovery control without implying lifecycle acceptance
+462ee39ba1f1 -> 7be2e425fccd  Freeze provider-only recovery extraction control
+9a1576ebb2da -> 1488ac66d895  Preserve coverage regressions and diagnose empty recovery responses
+8391e46777b1 -> 83b17d98d074  Record complete source-accounting experiment and acceptance limits
+2ac9bb8aaaed -> 63b3e551225d  Freeze complete-coverage development comparison
+94c76d7c7ce7 -> 89c0f6c79fc3  Require complete source accounting in experimental classifier
+8b863bd21436 -> 7476e05b7eb7  Preserve explicit-discard results and remaining selection failures
+07a6eb15ef81 -> bf7a76ec1e7b  Document classifier limits and test event replacement guards
+27fde1f39bb4 -> 89a76109a5ff  Record explicit-discard candidate checks and pending evaluation
+b8dab6caff0d -> 367dddda5217  Verify classification failures and scope isolation before model calls
+82e7616d1159 -> 4174876ebb15  Freeze explicit-discard development comparison before execution
+a35b949fe849 -> e327bccdd996  Add experimental source classifications for discarded material
+b9a73496e50f -> 85aaaeac499c  Preserve selector temperature control and verified source checkpoint
+5f64782226b6 -> 1c8f3081ac55  Freeze temperature-only control for extractive source selection
+f48a3c248dbf -> 1b41fe58f835  Record selector model comparison without hiding retention regressions
+6e8456b3c5a8 -> 04da323f2928  Freeze unchanged source selector with local Qwen 14B model
+7378d6bfdfa7 -> 6c231fdc148c  Record extractive selection guarantees and remaining retention failures
+738794dceb91 -> 5860d7f60b9f  Freeze extractive selection comparison on original development cases
+598c38d44dfc -> 69e3e075f350  Add provenance-bound extractive source selection candidate
+3a0d2d372153 -> 29b24743e516  Preserve failed review-stage acceptance and additional inference cost
+c951943b7f47 -> 79b43ce51572  Track active review-stage experiment and acceptance limits
+7235e4d5653c -> 3d1a234573a2  Freeze full development replay for source-grounded review
+6f41eeca462a -> 75a1964be532  Add experimental source-grounded assertion revision pass
+202cb98a7d73 -> de2ececd27a8  Record paired extraction outcomes and remaining semantic defects
+a489a7ce5285 -> 2708794e905e  Preserve complete Qwen inventory results and semantic failures
+e7a5da53d237 -> 8444ee25fbd8  Reconcile current claim ledger and local paper errata
+67314ec4fe4b -> d816fc647d1b  Verify trimmed source package fixtures and wheel equivalence
+232d0da00457 -> 7df09637e30c  Exclude bulky validation payloads from source distributions
+3bf55930c989 -> c66e30f03cdf  Record full precision-report validation and unchanged wheel bytes
+e587ab37e306 -> d1b4f7266f58  Freeze controlled inventory thinking configuration comparison
+a128ef7b58a9 -> 21cbc7bf08d3  Make compaction evidence database self-contained
+12212151ad3e -> 426298ca90f9  Verify current Hermes lifecycle and compaction provenance
+c38ee4a45f73 -> 30de365e5d1d  Label exact-match precision proxies in evaluation reports
+62b3bff50a2a -> a38adf90b5a6  Record installed verification of spreading visit budget
+9ca5229f0923 -> 603eb186de25  Preserve full verification of spreading visit budgets
+995d9c27ca71 -> 58e75e66b458  Honor configured visit budgets in standalone spreading calls
+9c8bc5a9eced -> 0325e00ea1ec  Verify installed support repair and update research evidence
+f37c108b998d -> 09df607d87bb  Freeze Qwen3.5 source-only inventory comparison
+6e11ba6ab8a9 -> c5d8baeec7d8  Preserve offline retention contract replay and remaining failures
+5134557ad585 -> fdc9955b60ff  Preserve support checkpoint and add optional retention evidence experiment
+2996d54db348 -> 64511055517d  Bind support evidence to the observed fact revision
+3d4ffa7fc636 -> d56f1056284d  Record qualified inventory semantic failures and review
+8fb43d8a625d -> 3e10089e156e  Update validation status and research handoff checkpoint
+ff51675f13aa -> 82f680f92b5a  Preserve qualified extraction outcomes and source checkpoint
+b984411e7652 -> 983601612dcc  Track qualified inventory experiment and independent findings
+ddb82aeb860e -> e8a389b51e58  Freeze qualification attachment diagnostic before inference
+1975f5edfc4d -> ee5f88b16ec0  Attach source qualifications to extraction candidates
+aa7937de4348 -> 8fcbcf9a1948  Record assertion inventory semantic review and open gaps
+4a855dd791f8 -> b4000290d184  Archive source-only assertion inventory outcomes
+176400a24333 -> ad4dcfe7768a  Prune excluded directories before evaluation provenance scans
+09525d7f2b70 -> 5991fc983517  Reject contradictory identities in assertion inventory
+1f187d2ca516 -> b043a3ed98ec  Track source-only extraction experiment and its limits
+c039fcc7d7bd -> 02d2773de749  Freeze source-only extraction diagnostic before inference
+60f79cacbe57 -> 28277ccc93d7  Add source-only assertion inventory experiment
+86273be705d5 -> c653268771ee  Bind configurable generation settings to heldout evaluations
+279ada95c3ec -> e96a0f67610a  Preserve 14B extraction outcomes and semantic failures
+7fca99d437b0 -> b564d5d26d11  Refresh task and research handoff with completed validation
+c8fbe3e077e0 -> 379476ec853b  Archive completed extraction comparison and replay source checks
+94adcda840f1 -> d7f432a10078  Prepare fixed-case comparison with installed Qwen2.5 14B
+583afce129eb -> 4b5b6764fba2  Record reviewed corpus preparation and original replay coverage
+c1e221734108 -> aca4ec7d6064  Add versioned original-source replay to memory evaluations
+bdbe5493d8a8 -> a46d646fd4ed  Preserve corpus revisions before semantic acceptance
+397e8289cd5c -> 9c7a48b5935c  Preserve v3 durability subset and missing marker result
+7a73ee09484d -> 14dcdf9f8089  Track corpus review and evidence scoring repair
+e206dfc7899c -> 8e165ec0ec56  Archive extraction evidence resolution checks
+e082790164c3 -> 6b7ea84e5877  Reject unresolved sources in extraction evidence judgments
+69d206e1192a -> b208e43ef377  Record fresh corpus correction and retrieval coverage defects
+3c10605c68a4 -> 547f26a71df1  Preserve revised corpus and bounded lexical overlap audit
+01b4ef765cee -> f43aeb6fe5fd  Bind current documentation to verified identical-wheel checkpoint
+4da41330a910 -> 20e2c5fbdc10  Archive full evaluation contract source and package verification
+4f7dc614843c -> 3b9c23674a28  Preserve fresh corpus draft and reject unsupported coverage labels
+6ec82597214e -> e8660ea26a89  Add versioned evaluation contract with global source identities
+fe0afaec22bf -> cb42e1f82ae2  Archive evaluation identity checks and fresh corpus requirements
+1b3e227be6d1 -> adaeebffc781  Reject conflicting evaluation scope identities before provider setup
+13f58a16591c -> 23328f9fc87d  Refresh Substack research brief with verified checkpoints and open findings
+4997dad7e033 -> d17257bc8b35  Track terminal extraction review and running combined regression
+cba6e7881c60 -> b09a4deeb5f6  Record complete durability semantic review and retained failures
+1cf013ad0c5d -> b5083dff7ef4  Preserve durability failures and freeze assertion-level follow-up
+48298cb06c80 -> c27119b78b3c  Freeze combined durability and history development comparison
+cdfd844ed40f -> ac64cb5c2025  Reconcile current validation and native lifecycle documentation
+12eb0f68df55 -> a46576858a78  Archive verified project identity installed checkpoint
+636dbebf903e -> 7dc845e0bf8b  Verify project identity repair through full source and package checks
+3b9eee30b45c -> 76ad8c2a91ce  Prepare daily-use pilot protocol and empty evidence record
+0bc2231f29eb -> 3458706c1161  Connect ablation failures to pending extraction durability validation
+f4334e7250ff -> 5d395037f25c  Trace incomplete ablations to abstention before explicit correction
+cc940ac5bb88 -> 22cdc814be2c  Keep project identity stable across Git failures and inherited overrides
+b6d27527e82b -> 091939958aa2  Preserve installed MCP failure and reproduce project identity drift
+3cbe2ffd86d3 -> 13dbbca332a0  Freeze paired durability extraction experiment before model execution
+20d90cf79576 -> 15044648e3f5  Record completed lease source verification and pending installed check
+1dd8f31daf74 -> fd68aadc7f8d  Verify lease renewal through full source and package checks
+cec573099516 -> 3f24a82b38e8  Track transient-instruction retention as an open extraction gap
+7fb755c9a664 -> bc2f85cbea26  Preserve recovery failure from retaining a transient instruction
+c75723294c1c -> b270a616e1e4  Diagnose empty extraction responses in failed recovery
+399c54c6ef47 -> f1d3068a3a68  Freeze temperature-only follow-up of failed provider recovery
+106953ce6691 -> e30f4d3bef55  Index closed recovery database without transient SQLite sidecars
+9276d0aaff82 -> 89824902aa56  Preserve failed all-module provider recovery and terminal database
+ad04df4c2627 -> 13d4d57f3b7d  Record negative extraction cases without conflating validity and accuracy
+bee8357fed29 -> d5084f1b234b  Preserve terminal temperature comparison and lease validation status
+bfb4a3216fdc -> 91a8df34ca19  Renew active maintenance leases and fence cancelled processors
+a9fc849beb9b -> de14b011f996  Reproduce active maintenance work losing its fixed lease
+82214aa97ebc -> 561271747103  Require successful prerequisite exit before queued recovery
+1bbdb3803008 -> 4ff970e30446  Keep semantic review scope focused on evidence and independence
+fdf3119b2724 -> 50200cf8c14a  Review completed temperature diagnostic positives against frozen meanings
+dbddcdfd7bf7 -> 254fd25a5db7  Queue guarded installed recovery after the frozen extraction comparison
+41812a3bf4f7 -> b99fd989b093  Validate installed recovery inputs and preserved SQLite state offline
+b839b062ecf3 -> f11390b98626  Freeze installed real-provider recovery from preserved outage state
+33feb590c862 -> 55d53fe0bf41  Verify installed provider-outage persistence and preserve initial probe failure
+57641ad6cb3a -> cf6717bd8d2a  Refresh portable research handoff and verify all direct evidence links
+60d572cadb8e -> 07d5438e1f0d  Verify expanded installed regression coverage and update current checkpoint
+3ddc12c98be4 -> da04d911e2cb  Preserve rejected missing-target extraction diagnostic
+487b016988c4 -> fa3b870c7ce9  Clarify installed regression coverage and pending quality diagnostics
+96bc3315a850 -> 81ee1d61874b  Preserve installed checkpoint and identify omitted regression coverage
+393a341d1bf1 -> bc490238ab29  Freeze temperature-only extraction diagnostic protocol
+9ed9e6f5c9bb -> d563e8de4dda  Record reconsolidation return package checks and reconcile checkpoints
+faa65078261b -> 6a9f6313d16d  Bound graph score tuning against preserved candidate pools
+d93789250ed1 -> 17f3345642a0  Return committed metadata from direct reconsolidation review
+7d074b6b146a -> ead988c0bec7  Bound alternative graph seed coverage using preserved development traces
+b42c7f3e747a -> df4f40d02d89  Verify installed correction-merge package and refresh current checkpoint
+5373437b6c21 -> 50324541b872  Archive full source and package verification for captured correction merge
+a6eca6a8d5ea -> 3e63c968885d  Verify rebuilt wheel through Hermes correction and forgetting lifecycle
+c8bbebb4930a -> 97b06a6c222c  Refresh article handoff with correction repair and budget result
+35b29272e92a -> f2ba2eb1bf17  Preserve unchanged extraction outcomes at larger reasoning budget
+26c9ddbb218d -> daedf4f21569  Preserve correction identity when absorbing captured duplicate evidence
+5c36934d90fc -> 75e25993e6d4  Expose versioned correction collisions without losing rollback
+4c0c4cb090bf -> 4ee69eddba5c  Preserve correction collision in Hermes revision lifecycle
+5b16193d488f -> e2b9faf6559a  Verify compressed and edited source identities through service delivery
+62a5b8b1409f -> 26fb1e5e23fb  Record semantic review and reject unreliable thinking-disabled extraction
+131331fce6e0 -> bdc36dc3bffa  Preserve complete authored extraction comparison including failure
+e95a746a4ef8 -> 31fef476a1e8  Refresh status and writing handoff with current verification limits
+5b2d6d2176e6 -> 264996aa0a2e  Verify Hermes outbox delivery and restart deduplication
+d23ce25d077f -> bf719da3d2ab  Verify current package at the repaired Hermes boundary
+4fc5df1787ed -> 547470981900  Preserve Hermes provenance fixes and regression evidence
+4f54ed10fcfc -> 75ad6cf6e173  Preserve Hermes source snapshot repairs and broad test result
+c7b29778a6ea -> 082bf6ebff2d  Preserve extraction comparison and service lifecycle evidence
+1e90b303d678 -> e93cb40121a5  Update remaining integration gates and verified package reference
+651537746727 -> acc8319f7697  Record verified generation package and remaining Hermes failures
+640c87db92ea -> 0002c165accc  Reconcile current boundary and extraction verification status
+1d24f7794574 -> ce330adc446c  Preserve extraction comparison and boundary regression evidence
+c2aaab7c1f2e -> e3439c4fab15  Preserve structured reasoning and generation settings regression evidence
+05c71d2b00f1 -> cd5d36004fae  Expose local generation budgets through managed configuration
+8e0e4c87bac3 -> 8dff6a5fc374  Close backup handles before indexing Hermes boundary evidence
+d6bef6c326df -> fc210835c22f  Preserve actual Hermes session boundary failure and projection checks
+e28a84697bbf -> 8850c2a3840b  Use chat final responses for explicit structured reasoning
+7a56e90bc7d6 -> 47ab1d0218af  Record reasoning channel failures and API budget diagnostics
+626c301100ec -> 4108edea996d  Preserve extraction context sensitivity and eligibility regressions
+abb3420b15ea -> 92ea2e9c6736  Record real-service extraction failures and bounded Hermes repairs
+4211ccf5e439 -> b174ad8fe332  Record Hermes hybrid copy identity regression
+2809882d7b96 -> b5e693c5ebfb  Preserve Hermes candidate write-path regressions
+be2d7f401b12 -> 6f4ddf439509  Record verified Hermes evidence callback package and extraction limits
+21859ce898cd -> 04dbb143fbb6  Record model-dependent historical claim extraction results
+244613aeda44 -> 689ce9bb23d2  Accept separate durable evidence in Hermes lifecycle callbacks
+8b2703d5d6c9 -> 808d9d5a6643  Record verified classifier model selection package
+e92d878b75cb -> 1fb94da3ea54  Preserve incomplete real-model matrix and token observations
+ac1a83854dc6 -> c1d2b8410269  Honor explicit affective classifier model selections
+0e05b22c2be6 -> 876564ea982b  Record verified compaction provenance package and open host gates
+99effd4d66e1 -> 1b01455588e0  Record the unused affective classifier model setting
+4acbf996cf21 -> 33c37e939852  Record compaction provenance work and its remaining host boundary
+b28778ad1d91 -> 0f1e92a45f95  Preserve Hermes source identities and isolate derived summaries
+e0b8b5e39ab2 -> 01e74a290d55  Record the sixth active model comparison profile
+5b468cce2d3c -> fcaa58642ac2  Verify Hermes rewind identity through queued capture
+3359155d7090 -> 83dad04da236  Define the Hermes rewind capture boundary probe
+e3a2067a6c5a -> 50031b069733  Bring the current task table up to the verified checkpoint
+0b1f9c1aa2b1 -> 7d7395cb1e9d  Preserve native embedding outage results and reconcile task status
+c58c5d4a656e -> 0976d875f9c4  Align successor outage verifier with the existing MCP fact schema
+897247be7026 -> 236a50de2ce9  Freeze native Claude embedding outage recall experiment
+d8a3e0a1141e -> 2494f5cea37f  Record verified outage retrieval package and update writing handoff
+4bbab4f01fd6 -> 98ebaf65275b  Keep scoped SQLite recall available during embedding outages
+91db768ee972 -> 4dde39da46a2  Record verified Codex outage recovery and update research handoff
+fb25094f9ba5 -> d5f1e03235ad  Freeze bounded Codex outage recovery protocol
+9722d92a5003 -> 31885a764792  Pin explicit Codex runtime and storage settings
+cdfa597180fd -> 3263b0b0371d  Record verified package and native Claude outage recovery
+69183056457b -> 7ac2f7029f63  Freeze isolated Claude outage recovery successor
+624e99e15a7f -> 126d4e89502b  Check native outage evidence against actual service contracts
+c9ae8269c323 -> 204030aeec10  Preserve raw outage evidence bytes across checkouts
+a64afb73d1b9 -> f77ffd8f1bd4  Honor client autostart opt-out and isolate native test storage
+fc5ed255c271 -> 1ce5f45bd19e  Prepare native Claude capture recovery check during service outage
+babb8af269e9 -> 583ecf924188  Verify native text coverage without counting duplicate arrivals
+13a2004662ab -> 6d132283d33b  Record frozen v4 evaluation startup and update research handoff
+3d0965805622 -> 151957252205  Freeze disclosed v4 memory evaluation contract repair
+3b9bd8553e8c -> 4674d155c178  Audit frozen retrieval fixtures without changing recorded grades
+a75d77b54ccf -> 61445fa6f762  Record bounded three-host lifecycle and refresh writing handoff
+ff8041187736 -> 5057ade6e7d9  Bind three-host continuity to verified forget preconditions
+772450ff9b46 -> a0308bf6ad96  Record native lifecycle pass and retain both failed attempts
+871b329c224e -> 71c38ab5b534  Verify forget preview package and freeze native successor
+d06bbea35042 -> 5c6be230507a  Retain checkout failure evidence and verify graph seed audit
+e6887deb8960 -> 082661ed7361  Preserve frozen dataset bytes across Windows checkouts
+c7b2e65dda39 -> 87d8e8a86cec  Preserve LF endings in forget preview changes
+76a79a99f1e6 -> 082dd70f04ae  Expose exact forget apply preconditions and correct preview description
+e324133eb18b -> 21f4f5c48fde  Distinguish current writing packet from historical export
+781807ad2582 -> 087f9faac482  Record role-aware graph results and refresh writing handoff
+366039681ba9 -> 4103fad9093b  Bind role-specific vectors through graph and lifecycle measurements
+1849942f83da -> 887051f25418  Freeze role-aware graph and lifecycle development protocol
+7e2c7bb99f61 -> dee6a6eb06f9  Preserve native lifecycle failures and paired prefix measurements
+c31e9710aa7c -> 37db62832e48  Freeze paired embedding prefix development diagnostic
+dfb08d568767 -> c8c080c781b5  Freeze native Hermes cohort for review-rejection package
+47111076050b -> afa6a046cb67  Record reviewed-forget package checks and refresh writing handoff
+db217509477d -> b04283de444c  Preserve pending captures on reviewed forget rejection
+b4909f461016 -> 7142caeadfd1  Freeze native lifecycle evaluation for selection rejection package
+88d0aa01350c -> 9370dba2a798  Archive association repeat results and refresh writing handoff
+d5b8577389d2 -> 6937db52d48b  Match supplemental graph observation to configured visit budget
+89cd6217ebf9 -> a3aa05d0bfc0  Preserve failed source association development observations
+f163db1aa155 -> c783f17a4c8b  Add controlled three-arm source association measurement
+e212f0160f66 -> a0c3692fe16a  Archive frozen local Nomic vectors for source association evaluation
+326322f02fc3 -> 5cb2afa96922  Freeze source association cases and local vector preparation contract
+ddb0d0e3fd87 -> 5ede11dc0ed0  Refresh writing handoff through verified selection rejection repair
+6d1a0553e9d6 -> 4ed65aec4fb1  Record verified selection-rejection package and reconcile task status
+9eef381caaca -> 8bf66e86c233  Record selection-rejection checks and pending package validation
+5155ebddd8e8 -> ec643951e11d  Return a clear rejection for out-of-preview forget selections
+920c79434c04 -> ff0d1450b2b3  Inspect scoped source associations without changing retrieval
+beee27f7913f -> 6467b2cd0f42  Preserve three native forgetting failures and update writing handoff
+b5db19aa233f -> a1be2c1edd6a  Preserve verified shared-guidance package and refresh status
+bf85eb86f212 -> b874c9a22f9c  Bind unchanged Hermes lifecycle checks to the shared-guidance package
+c400cd6b55ed -> 3785db44e496  Record guidance validation in progress and graph diagnostic draft
+697b6720b201 -> 23fbea9bb2bd  Make shared memory guidance follow each host's tool schema
+4692cb9504c0 -> 853afc23a643  Preserve native scope-guidance conflict and worker startup evidence
+3c3849fccbc1 -> a869b08b2910  Start native benchmark maintenance through the service owner lifecycle
+99bd18150d6a -> fdc861cc6357  Preserve three-host partial result and refresh writing handoff
+f561f5ce10e5 -> 168cd448e979  Preserve model-substitution failure and isolate migration notice
+3f77cbbfa5f7 -> be4248c176b3  Pin Codex model and verify native turn observations
+b1fa1924ab98 -> 38557573943d  Preserve three-host correlation failure and refresh writing handoff
+6e6513c42c7c -> 7b21b9b424b2  Verify native Hermes import origins through process exit
+37139c41a8ce -> cfd3c4de78df  Bind three-host validation to the verified package and native evidence
+eeae784b35b5 -> 0b3428493497  Record first complete Hermes lifecycle and refresh writing handoff
+11756832908a -> 67c843781317  Archive stale-preview native discovery preflight
+9f5e9c45f9b4 -> bb157b3fbf4e  Freeze native lifecycle validation for stale-preview repair
+f52123ecd3bc -> 8d767a1a5ff3  Archive stale-preview package checks and refresh writing handoff
+f2f741443e60 -> ebc9f5792382  Return an actionable rejection for stale forget previews
+f4d34a8680f5 -> 16a81d7754ec  Preserve context-verified native failures and update writer evidence
+c9c61d4cde08 -> f7e85ea7249b  Archive context-bound Hermes discovery preflight
+7b3941d276be -> adac5093b4ee  Bind live interpreter independently from isolated Hermes source
+f9f6d74fa31b -> e8a61824418f  Pin native serving context and verify each response
+1e716770ce57 -> c7e4b90511f1  Fix context probe logging before first HTTP request
+df940cbef3c2 -> 4dc53ca95e82  Freeze endpoint context diagnostic with separate pinned alias
+40a76c9ad482 -> fe70ec344436  Record native request boundary evidence and refresh writing handoff
+5d130c36c574 -> 36349e4ab574  Record request-observation preflight and offline checks
+4274a9041158 -> 3491e29be950  Add isolated native request observation and verify saved previews
+e9bc8e7d649a -> c4014bb15392  Preserve failed Hermes v8 cohort and reconcile research handoff
+6b20d36739f0 -> 27dd2c9be7da  Record Hermes retrieval-view discovery preflight
+b395a8da8f12 -> 2054ff58c67d  Freeze Hermes lifecycle v8 against verified retrieval views
+0de7f9e74af7 -> 2f4e6d582b22  Record retrieval-view validation and refresh the Substack handoff
+e419c2aa615e -> 40596ba147bf  Bind subprocess checks to the tested package and update comparator API
+034cbd935532 -> 0a1ef023ce34  Preserve retrieval compatibility and evidence inspection traces
+f49c86c26b8f -> 9561c149b0f8  Separate captured evidence from ordinary memory recall
+27cc99a2b912 -> e2379929ffb3  Preserve native v7 failures and identify retrieval contract gap
+0751727f6398 -> b2be1d329199  Record receipt-package native discovery and offline checks
+02a3f0c3bcfb -> 5319111697cb  Freeze native receipt lifecycle protocol and recorded model readiness
+57dc6bd10175 -> 03569f90579e  Record deletion coverage verification and refresh writing handoff
+1a110583a184 -> 480d1b00b5e9  Exclude immutable validation archives from source tooling
+2c0f77754edf -> 55c10fc92ca6  Report bounded coverage in deletion receipts
+6d82285674c8 -> 899c8879e9d4  Archive all local model outcomes and refresh writing handoff
+db376f8994cd -> 06e7da4eb731  Add bounded local model comparison for reviewed forgetting
+8bdf569cd341 -> 571548520be7  Preserve local model readiness and prospective development profiles
+e6b852996cbd -> 7cb17cb51cf1  Record the source-selection repair checkpoint and refresh the writer handoff
+e454a85f7b4f -> 3cd1673499d9  Return actionable source-selection rejections without replaying captures
+064d0c449456 -> 8ad625d8dc7b  Reconcile the writing handoff with native v6 failures
+496584496b38 -> 1fe9ac583af8  Preserve all three failed native Hermes v6 attempts
+d0b3649789e1 -> 7aa713b0093c  Validate native reviewed-copy forgetting with a fixed Hermes cohort
+8067125f294f -> 80bac75a82a9  Record reviewed-copy package checks and refresh writing evidence
+db932befcd4d -> d76858ddf3ce  Expose reviewed copy deletion through scoped Hermes tools
+6cb241466358 -> 9178ee8f66ab  Preserve all three native Hermes v5 lifecycle failures
+b6e7c47afc23 -> c7a91804c589  Bind native lifecycle validation to the repaired package
+a8b03f198162 -> 3c454587c105  Record native repairs and refresh Substack research handoff
+fd83fb27042c -> 1d2a21da1d34  Fix bridge encoding and forgotten fact handling
+18192278aee7 -> b96a9e873eac  Preserve native Hermes v4 lifecycle failures
+53c038a7b61a -> f1cccdfee9f2  Bind native guidance cohort to verified parsing repair package
+8f8f63f32508 -> e1792ffb47d1  Parse affective triplets faithfully and clarify native write completion
+45f1b012e9aa -> cfed03504b95  Retain fixed Hermes cohort failures and refresh writer evidence
+899490a19698 -> e1b9c4430600  Bind native lifecycle validation to a fixed three-attempt cohort
+62ea8054b97d -> bab10ab105c9  Bind research handoff to verified package and retained native failures
+68693f83b589 -> fb9c20ea5eb5  Return private not-found responses for unavailable jobs
+1418038bc91c -> 05ae77bd4793  Preserve terminal retrieval results and native Hermes failure
+294154c6a41e -> cc5c4b127759  Bind native Hermes successor to explicit content and title settings
+bc91bb03c503 -> 1d6beea14c79  Assemble bounded three-host lifecycle validation driver
+88840262d939 -> 25cb60ffd56f  Prepare isolated native host execution and trace validation
+35705f0a7eaf -> b08c3701aefc  Prepare verified Hermes resume identity patch and three-host continuity protocol
+a2c09b6f8d38 -> 0970bcd06b62  Reconcile current acceptance tables with verified package and evaluation results
+54c95e890a68 -> eb456cb0f438  Include terminal encoding manifest excluded by global filename rule
+6a14994e1077 -> f8fa87c28233  Preserve incomplete encoding comparison and new wheel discovery evidence
+bdf56a31adab -> 94ca99d78185  Record verified Hermes identity repair and update research handoff
+3730fd96c3c5 -> af5ae6948f70  Reject native Hermes row payload changes under stable capture identity
+30113a6bceb3 -> 628a611fe5e4  Preserve native Hermes message identity across rewind and truncated views
+c6db377c8abd -> 481e26551f33  Record Hermes rewind collision and reconcile validation commands
+f5ed4e2ed6ff -> aec86cef4873  Record native Hermes plugin discovery and replay-home preflight
+f10bf6cc2be7 -> 66ec5f40d0f0  Use native Hermes discovery and preserve replay identity home
+d420fabfff73 -> 6c35e38f8d04  Keep preflight captures byte-identical through Git checkout
+476c0f84e7f4 -> 1fcc46ecf7b4  Preserve native preflight artifact bytes and hash manifest
+76d11a6f237d -> 7465e2b8edcd  Record isolated Hermes lifecycle preflight and remaining acceptance gates
+773738fac688 -> 0075203c70fb  Prepare native Hermes lifecycle probe with verified runtime bindings
+b7ebef34858d -> a77d7502a8c6  Record correction retry validation and refresh research evidence
+ea88dd48e503 -> df116d310160  Recover durable correction acknowledgements on retry
+e747d12c7eb3 -> d445b98428cb  Measure development graph degree limits without changing defaults
+3775b033c3f5 -> 80cf52c19411  Freeze development graph degree diagnostic
+726021913212 -> 02e830b984c3  Verify installed Hermes outage replay and forget recovery
+632a78019e8d -> a737de8a57db  Diagnose graph coverage and define Hermes recovery validation
+363183e9877c -> 7e7648bae468  Record Hermes lifecycle evidence and refresh research handoff
+5e4b057b1690 -> 51421165212f  Validate provisional Hermes receipts and require write request identities
+b7d75000e453 -> 30872d5033f4  Preserve Hermes transcript identity and expose scoped lifecycle tools
+b87280383df2 -> 3cf3bc143558  Record Hermes continuity evidence and prepare Substack research handoff
+78c63ed36942 -> ab4f707d23c4  Preserve Hermes replay payloads and refresh recalled facts
+51904d3abdf5 -> a1ec1b01ecb2  Preserve raw native probe line endings in evidence archive
+0c687b000338 -> f1b437fda806  Fix Hermes lifecycle mirroring and reject unresolved session scope
+df2193c75f42 -> 6a13ef2fd2a1  docs: distinguish historical-claim extraction from transport failure
+a15ef6c38fd1 -> 51780de25743  docs: record recovery and SSD gates with lifecycle failure evidence
+de6cdcf1c05f -> f706ae3276e4  fix: retry atomic descriptor publication during Windows read contention
+a6c275bc052a -> d7f139111e8f  docs: add Substack research and writing handoff deliverable
+93a109a3a27c -> dc328ea62450  fix: preserve loopback owner recovery within startup deadline
+d0a344056dc9 -> 8e1f90519b54  perf: reuse default trust context for Ollama cognition
+709bb03c05c9 -> 1507e4f129ef  docs: verify retrieval parity repair and preserve negative gates
+8fc79f01ab68 -> 4d1ce4be2c70  fix: align in-memory retrieval ties and empty request behavior
+8d11111e9577 -> ca74bfe9dbed  docs: preserve storage placement and controlled retrieval evidence
+7bcabde63ba0 -> aa1f45020d69  test: bind performance measurements to explicit storage locations
+f976c7c295bf -> 6aeae1d239ce  docs: record client reuse verification and negative comparison results
+39b9c799020a -> 56978d5257f5  fix: reuse Ollama embedding clients and drain owned resources on shutdown
+9d0f1c42638f -> 0d8626c490d2  docs: preserve local latency failures and queue remaining comparisons
+eeaacd308230 -> d7a8ac5afa77  docs: preserve interrupted evaluation and record local GPU launch
+2441ba9e94e5 -> 99bceafb226d  docs: reconcile native host evidence and remaining gates
+f32603c3aea2 -> 9c29a29fbeb8  Verify concurrent native cross-host replay and durable restart
+a1b8b575ff2d -> 3d778cde7098  Record partial native cross-host outage recovery and failed concurrency gate
+b7b36841e715 -> ce6a62d16faf  Record source and installed retrieval comparison validation
+fc72cc251aea -> 1c00ab791083  Add isolated vector, lexical, hybrid, and full retrieval comparisons
+a1723e15d4b5 -> d784559f5f30  Record source and installed encoding comparison validation
+aefc338c159c -> 240b8152270b  Add an applied encoding policy comparison with durable decisions
+3a08b6194280 -> 4489394b36b9  Correct T18 benchmark guidance and document remaining comparisons
+a4e0776e7e23 -> 702868b3defe  Record source and installed worker crash validation
+76940d206903 -> 0d29aca7f228  Verify capture and forget recovery across worker termination
+550ee0472389 -> 751ad396d902  Verify packaged capture and forget transaction recovery
+983920afce2f -> fd35ac4485fe  Check forget suppression inside the capture transaction
+b2c8928ebb5f -> 4641d98d65d1  Verify concurrent native Codex outage recovery
+a3e09e9f6499 -> b459e194ce11  Verify packaged competing-service recovery and update task evidence
+a5a91013f7b5 -> f32c72eacecd  Verify competing service owners before accepting their descriptors
+8407fbc37a84 -> 6b8e5a12c871  Verify packaged stale-descriptor recovery and update task status
+37e446f0cfc5 -> 686a689594e1  Wait for a ready owner when recovering stale service descriptors
+fb2271a5a940 -> d66bdcc88469  Verify native capture recovery after forced service termination
+153d24e942a1 -> 037542bdca42  Verify automatic outage replay in a fresh native Codex session
+29d22aac58ee -> 8e4014e6449e  Verify native capture through startup failure and replay
+fc56fe4364c2 -> 5ff7443a4d2c  Record repeated native Codex shutdown capture
+624197ee0344 -> 1f34a77f37f2  Verify packaged outbox selection and update task status
+c25ed98d9dae -> 2bc4a3414ea6  Preserve explicitly supplied capture outboxes
+7ab66e540c59 -> 1a82e461c1ad  Verify installed Windows permissions and native Stop capture
+5d8cacf437e3 -> 332e710e63fb  Protect Windows runtime permissions and avoid redundant ACL writes
+e7319e055257 -> 9cdb4b9e8a5f  Verify native correction and reviewed forget across restarts
+5a4c915389d0 -> 16e6a1db0afe  Verify installed assistant suppression and replay contracts
+5af3d15b8898 -> ad805fb621d8  Suppress forgotten assertions before source-role attribution
+0d1de4591b51 -> d471ebf5726a  Preserve incomplete native review and recall attempts
+1d37931bd9a0 -> ef6206dfb81d  Verify installed related-copy review and deletion
+ac139dd5f4e3 -> 778b0cedbb75  Review paraphrased captured copies before forgetting
+e1ffc65c78d5 -> 251fc9d77213  Verify installed UUID and host-context repairs
+86169017b3e6 -> 1c27cad81537  Preserve UUID identities through memory safety checks
+3a5962454482 -> 26cf075b49a5  Preserve recall authority across host adapters
+7443582b2346 -> 8b36624578eb  Record native forget failures and retrieval commit timing
+b752ffbe07e2 -> baa0e39e5e8c  Expose safe Claude hook reason codes and record combined control
+09ce0b3f0458 -> ec9964b5cf19  Record bidirectional native continuity and shutdown controls
+796a502b4023 -> fcbe851f3bbe  Record source and installed lazy import verification
+ebe1b0ddf973 -> 462531d1fbe7  Use the standard evidence index filename
+883fae8efb77 -> 803158918f7d  Defer inference imports until public API use
+f2016533832a -> cfe7c5300fc9  Verify capture interruption package and child import origins
+b7b4d6bdca19 -> 6a4438a8ac6a  Persist automatic capture before service waits
+8d79dd0f82d3 -> 070913878ced  Preserve native captured-context evidence and shutdown failures
+065664487daa -> 4cd3b5f04c1b  Verify captured assertion source and installed package checkpoint
+6442044750d4 -> cd32442e77dd  Distinguish captured conversation evidence from accepted assertions
+ad3fdd11f0c3 -> c2a8bb249f2d  Verify native Codex to Claude continuity and preserve stale recall failure
+d95d94c812e2 -> 832bb939afdd  Clarify the separate native capture repairs
+3d0b40fee71d -> 0e5da5dcf024  Verify native Codex Unicode capture after decoder repair
+e7807773f48e -> 8cf1e678413b  Verify UTF-8 hook capture in source and installed wheel
+c7bb52b1e4fc -> e326b8ca319e  Preserve native Stop encoding failure evidence
+1068a629887e -> 19e68506d0f3  Decode native hook input as UTF-8 before capture
+2a87c400b5b3 -> 39f22529cedb  Verify Codex capture reporting in source and installed wheel
+4fac529cfa9a -> e248b7823f05  Report missing Codex hook text as degraded capture
+58218f06ee60 -> 39ff2ebcdf3b  Record native Codex scoped retrieval and shutdown limits
+8faa3c4ad495 -> 78e8e914d562  Verify scope argument repair in source and installed wheel
+30eaf4209bc6 -> 3aaeff476f45  Preserve native scope failure and isolate archived test sources
+d58e082f9a2c -> b25364ebe7b1  Accept structured scope lists in MCP retrieval
+0b5de1a42229 -> 8467047d3dcb  Localize access metadata latency to durable commits
+d91f0f6e906f -> 2df765809c00  Record unexpected Ollama placement and native approval investigation
+c89de9452f72 -> 21802444e7f8  Verify startup diagnostics in source and installed package
+a607a5a6b0a8 -> 05ff5ebcbe44  Report service exits during client startup
+df52200783cb -> b69c7ad1f1a0  Verify lost acknowledgement recovery in the installed package
+ab5e20e54016 -> 291e7d36224f  Preserve lost acknowledgement recovery and startup failure evidence
+6cde46561c0c -> 101c6217ef8d  Queue captures after a lost service acknowledgement
+b346f9318e3a -> 607178d92018  Verify native Claude lifecycle with per-server startup waiting
+41733671a934 -> c8f01fff50e4  Verify Claude startup changes in source and installed package
+37ce957f830b -> 0c1b791b0c3e  Record pending verification of the Claude startup default
+dedfcfde0804 -> a8643a21b11e  Make Mnemos tools available at Claude startup
+68ed4015f164 -> 2cce88a8e20a  Verify the retrieval revision repair in the installed package
+3326e0004abe -> 73ec5b42abbb  Preserve concurrent retrieval regression evidence
+62fe16419d10 -> bb656ffc9a19  Refresh retrieval candidates after asynchronous state classification
+07745b8e2650 -> 1047a65d05b7  Record host provenance package checks and native Claude lifecycle
+8d865a5206aa -> ea3bc7c03a12  Bind MCP memory provenance to the actual host
+a0e44f4bd1c4 -> 696d7a737ee0  Record native Claude correction with startup waiting
+9b3d56e6445b -> 8da4949c5aec  Reconcile package evidence and preserve Claude readiness failure
+a90d960046c0 -> f9dfed40282e  Verify service runtime wheel and record native Codex cancellation
+5f39ccd2e92b -> 464f2cc883db  Preserve isolated PowerShell bootstrap diagnostic
+f65a928ecc50 -> 04a93c992ab3  Record native Claude prompt identity timing
+56182d97c580 -> 518125da5628  Isolate dashboard clients and preserve the bootstrap timeout
+33c6dd90128d -> e3d8cd2f302b  Expose degraded list responses in continuity assertions
+64be1d55dc73 -> 8f2b1a41e89c  Preserve isolated continuity and capture association diagnoses
+a24584ed3633 -> a449d0782f76  Separate recovered Claude payloads from open lifecycle and suite failures
+e1fd56e36c17 -> 9bf4ce87ffdd  Add private service logs and preserve startup without configured cognition
+df27c0e02dc5 -> 83b1c4860e67  Record installed doctor readiness checks and their limits
+0133ec0a148a -> b9463953011c  Keep exception messages out of provider failure logs
+9aa1655d413e -> d7944a63a4e3  Record native Claude reads and resume interrupted evaluation
+5f2d3ffa9609 -> a3569a01cfb3  Record graph ranking sensitivity without changing defaults
+5024db917d5e -> 1b993b31e467  Record native Claude plugin execution and remaining capture limits
+99b03e560b21 -> 390650b887a9  Record passing source and installed package checks on SSD fixtures
+6600dc262927 -> 92e87d058db3  Allow explicit website input for isolated documentation checks
+d5c0c418ba09 -> 2021f1a4d780  Preserve durable SQLite drive comparison and validation status
+82b71162212f -> 7fe12d5ebe6d  Reject failed maintenance in the continuity acceptance test
+9593678902b7 -> dd3fe4912313  Record installed timeouts and retrieval metadata stalls
+e41e1bb7888b -> 7ca89f9c430a  Require successful retrieval responses in continuity assertions
+bcb9e340bf4f -> fdaa813092ab  Preserve the full package pass and installed continuity failures
+ec0f95e3e747 -> 13224907341b  Share the managed runtime across Claude plugin hooks and MCP
+312b8d6eff4a -> 0876337eca81  Preserve combined verification failure and native loader evidence
+17c55efbb168 -> db0c8d6d67e7  Preserve legacy embedding support in performance measurements
+9aba20959e5a -> 52f32152eb8f  Verify cross-client continuity and bidirectional project isolation
+e4724ac547ae -> b261c1c9edf3  Verify backup consistency during concurrent writes
+bdc49a587a11 -> ce906742467d  Record metadata comparison and remaining claim evidence gaps
+7d77e2524170 -> cf1f295df0c4  Preserve negative graph capacity diagnostic results
+46cc1011ee2b -> 5631977d58b3  Reject conflict proposals that relabel canonical assertions
+c789fd500fa3 -> 34fdf25b6ca4  Distinguish query and document embedding contracts
+d49cdca54e23 -> 92d48ac6ee58  Record verified access-metadata package checkpoint
+5476d43cd21a -> 99c46d5d4b54  Record access-metadata validation and open performance gates
+2494e31b339b -> 398f8939634b  Keep retrieval access metadata in a narrow SQLite table
+38b1f12cdd16 -> 4c56b7796157  Verify conflict-display package and record remaining embedding task gap
+8c89689863d7 -> 5e6275e81f15  Document missing embedding task roles and a source-bound validation plan
+c955dfc7d26a -> 7a8fd4c3c7d6  Preserve storage-width diagnostic and its measurement limits
+c35f9f0ba95d -> be73d5bac0cf  Record conflict persistence, native cancellation, and corrected latency evidence
+6ba17f5616bc -> c6433c35312c  Expose unresolved conflicts in retrieved facts and host context
+f991ed9ca3db -> b0482f1b7bb5  Record verified thinking package and preference extraction limits
+d94ded67a6b3 -> 3d4afd845457  Add explicit Ollama thinking control and bind evaluation settings
+e54d2e2c1d68 -> ec8f90a882f3  Record verified extraction package and Ollama thinking diagnostics
+64471f5b1210 -> d78f8fefd8eb  Include indexed development manifests under archive-safe filenames
+57f82f387d7b -> 66270f157c65  Preserve extraction contract diagnostics and model decision failures
+34170950911b -> aa91bc8fc5d4  fix: bind extraction schemas to request evidence
+cbcda1f51757 -> a3a97d6b842b  Quote Codex hook interpreter paths for the selected shell
+df44e01fa9c5 -> ce1941768867  Record installed Codex MCP health and launcher resolution evidence
+354bbb9bea35 -> c1d8e927afb5  Bind generated MCP commands to the selected Python installation
+cba4d255c649 -> 61ec645f29ac  Record verified provisional capture package checkpoint
+a38ee70d19f2 -> a89d127eec54  docs: record extraction failure diagnosis and preserve validation artifacts
+89fb44e03a05 -> a9b0e19a9fb3  docs: preserve failed lifecycle run and completed baseline evidence
+7dd30713ea99 -> ff16422abe4b  fix: keep unresolved Claude captures out of fact extraction
+f3da6487c74b -> 0678e869da7d  fix: persist model validation failures in benchmark checkpoints
+5ba10835c48a -> 6ad9b5750682  docs: describe exact-match extraction metric without semantic claims
+4cc22f7c8eaf -> a2b99bd6e2b1  docs: preserve pinned graph development coverage failure
+b17986526e86 -> aa87ece083aa  fix: declare MCP tool effects for host approval decisions
+4935abe38693 -> ff9e686cfbf0  docs: preserve native dispatch diagnosis and baseline failures
+40f7ae31b5ac -> acc4804118be  docs: record full package and installed transport verification
+fbddbb85681e -> eaee63d6e600  Document related-forget checks and remaining validation
+c805cc25bce3 -> 8ab3ea888367  Add reviewed removal of captured memory copies
+9153c9d429e8 -> bbd10164d11a  docs: include completed mechanism provenance manifest
+5d749c0eceed -> a737ea83e280  docs: preserve held-out mechanism results and coverage failure
+7c329a8a56ed -> 98e815119911  docs: preserve atomic startup verification and captured-copy gap
+a04604598daa -> 12247c44c4e3  docs: preserve schema startup failure and repair evidence
+9e253390c583 -> 69210c2d6cf4  fix: initialize SQLite schema in one atomic transaction
+c5846be24760 -> 2f59a22059c4  docs: preserve Hermes discovery repair and startup failure
+2360891b23f6 -> a7c0ee20495d  fix: honor configured registry during Hermes registration
+7c4051482163 -> 91413312c675  docs: record full and installed replay verification
+d4ac17072ba0 -> 76af45200e3a  docs: preserve replay repair and checkpoint diagnostic evidence
+554a2517dc85 -> 5b100949ab42  fix: measure retrieval without duplicate diagnostic writes
+8d8589470c09 -> e3ea2d402ece  fix: bind Claude transcript replay to durable identity
+e8c60ec429ed -> 492688247298  docs: record Claude Stop replay duplication after restart
+8cdc152c70ce -> a681911009fc  docs: retain incomplete native Claude persistent transcript attempt
+ac42a68f0bdc -> 4620c18ef279  docs: preserve stable verification and native Claude scoped capture
+1bbb2dbeae85 -> 4fee9a59e403  docs: refresh unreleased host and validation boundaries
+e7ee328c88c1 -> 02be64a2ef91  docs: verify native Codex generated hooks with a memory canary
+0d427ef9ef61 -> 3b516af8e40d  docs: preserve scoped capture verification and environment audit
+8e1d5ffb75ec -> a5bad0437cc5  Document scoped capture upgrade boundaries and current validation state
+bd06121eabf8 -> 4ec057e6c2ec  Record native Codex capture and seeded recall success with bounded hook timing
+20f271d93bbf -> 2a5eea6f1a60  Bind Claude capture identities to scope and preserve legacy forget suppression
+f8fd70fc814d -> 7894e8960efc  Record full verification and partial native Codex capture evidence
+6074454be3e2 -> f72aa709ee04  Fix Codex hook invocation under Windows PowerShell
+e4085dd49fa4 -> 8989e42b997a  Preserve direct native Codex failure and startup fixture evidence
+5ab0854a75ee -> 5a015e4243be  Record host repair suite startup timeout and unchanged isolated pass
+dad61562f0df -> d971eb6b9718  Preserve indexed validation artifact bytes across Git checkouts
+7935088cce43 -> 1aa714838564  Verify repaired native Claude capture and isolated Codex shell transport
+d17dd249424f -> 5e27cdc8d033  Preserve Claude assistant capture when transcripts are unavailable
+6d62e1940dc4 -> 3407b1a99853  Preserve limited native Codex hook dispatch evidence
+211cf1ede04c -> 02a24c6bd679  Preserve native Claude prompt capture and missing transcript failure
+af523377c810 -> c058b5ef5335  Document bounded investigation of durable metadata latency
+3e001563089b -> cb0e937fb5ab  Record integrated lifecycle success and remaining recall latency failure
+c64126b45e68 -> 4e898ef0f011  Preserve real development observations and start frozen evaluation queue
+ed31cb071975 -> 3395a9efa89d  Record full graph v4 and installed package verification
+b7a9d9d4d9d6 -> 4acc56c618b7  Persist deterministic mutual graph links and bounded recovery
+996e9ab0f2f0 -> 233ecd266fde  Record passing lifecycle preflight and trace actual retrieval stages
+b5a283414750 -> a7e4daef7c4c  Make extraction schema alternatives independently complete
+634b460f9999 -> 171d3bedc8dc  Repair lifecycle targets and preserve evaluator failure boundaries
+e9d8ca224d50 -> 690c2b550905  Add persistent module experiments and preserve invalid lifecycle evidence
+8fb29726caf7 -> 4c232faca8ce  Narrow the review fixture to its SQLite store
+4f0ec79e0469 -> bd8fea201591  Preserve local ownership and expose legacy and routing review
+a9521ee215bb -> 9bd8010e98b5  Expose retained local source availability without probing host transcripts
+f22e64171480 -> 99f9382c0c1a  Record verified recovery build and corrected evaluation status
+ab3026ac9e60 -> 662ad57055af  Expose scoped job recovery and nonblocking hook diagnostics
+c524acb67089 -> 59a98860d4c9  Record frozen build checks and evaluation launch
+5e852e736289 -> d6f51f31221c  Bind evaluation provenance to checkout-relative source paths
+9836bf2514bd -> 2c800448de8a  Build persistent scoped local memory and validation harness
+5fcc925d5a90 -> 2135acdd9413  repair durable memory pipeline for 0.7.0
+79b18820c4e0 -> 2b0e18a3b09f  chore: ignore benchmark sqlite artifacts with run suffixes
+cf7f891c20b6 -> 9e11bfbb8419  chore(release): bump to 0.7.0 with auto-priming and fastembed notes
+3e11a350dfea -> 9bba7d3f6b90  feat(embeddings): default to fastembed for zero-config installs
+2463d0c1d92b -> df6d53eab6e1  feat(embeddings): add FastembedProvider for local ONNX embeddings
+c93e879e84b5 -> 43b41d339a34  feat(hooks): wire SessionStart and UserPromptSubmit auto-priming
+7c1b78ce6dfd -> 152bae5ba498  feat(cli): add retrieve-hook subcommand for auto-priming
+e814bfc7473f -> fd59d819a20f  docs: add first-run and consolidation demos, refresh launch materials
+8ccda65c7721 -> 3d5475fd3d99  test: cover next_actions, control plane expansion, and updated docs
+ae1b8e7bef40 -> 178456b51f1b  feat(ui): first-run setup UX with next_actions and expanded control plane
+02a3439cb9e8 -> 34a57c1a74b1  feat(sleep): wire recall-gated plasticity settings into runtime
