@@ -373,6 +373,48 @@ class MemoryGovernanceConfig(BaseModel):
     )
 
 
+class JudgmentConfig(BaseModel):
+    """Thresholds and batch sizes for the typed judgment paths.
+
+    Every threshold is a probability the judge reported. They are part of a
+    run's options hash, since changing one changes what gets remembered.
+    """
+
+    continuation_min_probability: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Join a unit to the previous one when p(continues) reaches this.",
+    )
+    kind_min_probability: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Retain a classified range only when p(kind) reaches this.",
+    )
+    support_min_probability: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Treat a candidate as the same information as a target above this.",
+    )
+    conflict_min_probability: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Treat a candidate as changing a target's subject above this.",
+    )
+    outdated_min_probability: float = Field(
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Reconsolidate a stored fact only when p(outdated) reaches this.",
+    )
+    max_units_per_request: int = Field(default=40, ge=2, le=200)
+    max_ranges_per_request: int = Field(default=15, ge=1, le=100)
+    max_request_tokens: int = Field(default=60_000, ge=1_000, le=64_000)
+
+
 class ModuleConfig(BaseModel):
     """Independent experimental switches; explicit lifecycle commands stay available."""
 
@@ -427,6 +469,10 @@ class MnemosConfig(BaseModel):
     governance: MemoryGovernanceConfig = Field(
         default_factory=MemoryGovernanceConfig,
         description="Memory governance controls for capture, retention, and growth limits.",
+    )
+    judgment: JudgmentConfig = Field(
+        default_factory=JudgmentConfig,
+        description="Thresholds for the typed judgment paths (judged extraction, novelty).",
     )
     debug: bool = Field(
         default=False,
