@@ -164,16 +164,23 @@ class AffectiveRouter:
         except Exception:
             state = None
 
-        # Update state history (deque handles maxlen automatically)
         if state is not None:
-            self._state_history.append(state)
-            partition = interaction_partition(interaction.metadata)
-            self._states.setdefault(partition, deque(maxlen=10)).append(state)
-            self._states.move_to_end(partition)
-            while len(self._states) > 256:
-                self._states.popitem(last=False)
-
+            self._remember_state(interaction, state)
         return state
+
+    def record_state(self, interaction: Interaction, state: CognitiveState) -> None:
+        """Adopt a state judged elsewhere (for example alongside classification)."""
+        self._total_classified += 1
+        self._remember_state(interaction, state)
+
+    def _remember_state(self, interaction: Interaction, state: CognitiveState) -> None:
+        # Update state history (deque handles maxlen automatically)
+        self._state_history.append(state)
+        partition = interaction_partition(interaction.metadata)
+        self._states.setdefault(partition, deque(maxlen=10)).append(state)
+        self._states.move_to_end(partition)
+        while len(self._states) > 256:
+            self._states.popitem(last=False)
 
     def tag_chunk(self, chunk: MemoryChunk, state: CognitiveState | None) -> MemoryChunk:
         """

@@ -7,7 +7,7 @@ reconciliation chooses guarded operations against an observed target snapshot.
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -15,9 +15,11 @@ from .source_classification import ClassifiedInventory
 from .source_instruction_ablation import classify_source_memories_without_uncertainty_example
 from .source_reconciliation import StagedReconciliation, reconcile_source_candidates
 from .source_selection import ExtractiveMemory, Kind
+from mnemos.config import JudgmentConfig
 from mnemos.contracts import FACT_CONTENT_LIMIT, FactProposal
+from mnemos.judgment import Judge
 from mnemos.source_review import SourceReviewReference
-from mnemos.types import EpisodicEvent, MemoryChunk
+from mnemos.types import CognitiveState, EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider
 
 
@@ -46,6 +48,10 @@ class SourcePipelineResult(BaseModel):
     reviews: list[ReviewOutcome]
     review_references: list[SourceReviewReference] = Field(default_factory=list)
     oversized_candidates: int = Field(default=0, ge=0)
+    # Judged path only: per-call accounting and the affective state judged
+    # alongside classification, so the service need not ask again.
+    judgment_calls: list[dict[str, Any]] = Field(default_factory=list)
+    cognitive_state: CognitiveState | None = None
 
 
 def _snapshot_events(events: list[EpisodicEvent]) -> list[EpisodicEvent]:
@@ -112,19 +118,42 @@ async def run_source_pipeline(
     events: list[EpisodicEvent],
     targets: list[MemoryChunk],
     *,
-    selection_provider: LLMProvider,
-    reconciliation_provider: LLMProvider,
+    selection_provider: LLMProvider | None = None,
+    reconciliation_provider: LLMProvider | None = None,
+    judge: Judge | None = None,
+    judgment_config: JudgmentConfig | None = None,
 ) -> SourcePipelineResult:
-    """Run classification then reconciliation without writing any state."""
+    """Run classification then reconciliation without writing any state.
 
+    With ``judge`` set, both stages ask typed questions instead of prompting a
+    generative model; the providers are then unused. Either way the same
+    renderer and the same decision validator sit between the model and any
+    proposal.
+    """
+
+    if judge is None and (selection_provider is None or reconciliation_provider is None):
+        raise ValueError("run_source_pipeline needs a judge or both providers")
     original_events = _snapshot_events(events)
     original_targets = _snapshot_targets(targets)
     _validate_targets(original_events, original_targets)
 
     classified_events = _snapshot_events(original_events)
-    inventory, candidates = await classify_source_memories_without_uncertainty_example(
-        classified_events, selection_provider
-    )
+    judgment_calls: list[dict[str, Any]] = []
+    cognitive_state: CognitiveState | None = None
+    if judge is not None:
+        from .judged_classification import classify_source_memories_with_judge
+
+        judged = await classify_source_memories_with_judge(
+            classified_events, judge, config=judgment_config, include_affective=True
+        )
+        inventory, candidates = judged.inventory, judged.memories
+        judgment_calls.extend(judged.trace.calls)
+        cognitive_state = judged.cognitive_state
+    else:
+        assert selection_provider is not None
+        inventory, candidates = await classify_source_memories_without_uncertainty_example(
+            classified_events, selection_provider
+        )
     if events != original_events or targets != original_targets:
         raise ValueError("Pipeline inputs changed during classification")
     # A slice longer than any fact can hold can never become one. Leave it out
@@ -143,16 +172,28 @@ async def run_source_pipeline(
             proposals=[],
             reviews=[],
             oversized_candidates=oversized,
+            judgment_calls=judgment_calls,
+            cognitive_state=cognitive_state,
         )
 
     reconciliation_events = _snapshot_events(original_events)
     reconciliation_targets = _snapshot_targets(original_targets)
-    staged = await reconcile_source_candidates(
-        candidates,
-        reconciliation_events,
-        reconciliation_targets,
-        reconciliation_provider,
-    )
+    if judge is not None:
+        from .judged_reconciliation import reconcile_source_candidates_with_judge
+
+        judged_reconciliation = await reconcile_source_candidates_with_judge(
+            candidates, reconciliation_events, reconciliation_targets, judge, config=judgment_config
+        )
+        staged = judged_reconciliation.staged
+        judgment_calls.extend(judged_reconciliation.trace.calls)
+    else:
+        assert reconciliation_provider is not None
+        staged = await reconcile_source_candidates(
+            candidates,
+            reconciliation_events,
+            reconciliation_targets,
+            reconciliation_provider,
+        )
     if events != original_events or targets != original_targets:
         raise ValueError("Pipeline inputs changed during reconciliation")
 
@@ -202,6 +243,8 @@ async def run_source_pipeline(
         reviews=reviews,
         review_references=references,
         oversized_candidates=oversized,
+        judgment_calls=judgment_calls,
+        cognitive_state=cognitive_state,
     )
 
 

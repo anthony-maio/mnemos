@@ -33,7 +33,13 @@ from .memory_safety import MemoryWriteFirewall
 from .source_review import SourceReviewReference, ReviewResolutionReference
 from .retrieval import RetrievedChunks, assertion_status, render_context_chunk
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
-from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
+from .types import (
+    CognitiveState,
+    EpisodicEvent,
+    Interaction,
+    MemoryChunk,
+    RetrievalFeedbackEvent,
+)
 from .utils.embeddings import embed_text_async
 from .utils.storage import SQLiteStore, compute_canonical_key, normalize_memory_text
 
@@ -504,6 +510,7 @@ class LocalMemoryService:
         )
         diagnostics: dict[str, Any] = {}
         review_references: list[SourceReviewReference] = []
+        judged_state: CognitiveState | None = None
         decision = "facts"
         captured_passthrough = job.kind == "extract" and not self.engine.config.modules.sleep
         rejected_candidates: list[dict[str, Any]] = []
@@ -549,25 +556,35 @@ class LocalMemoryService:
                     if self.engine.config.modules.sleep
                     else []
                 )
-                if (
-                    self.engine.config.modules.sleep
-                    and self.engine.config.sleep.extraction_mode == "source_bound"
-                ):
+                extraction_mode = self.engine.config.sleep.extraction_mode
+                if self.engine.config.modules.sleep and extraction_mode in {
+                    "source_bound",
+                    "judged",
+                }:
                     from .extraction.service import extract_source_bound
 
+                    judged = extraction_mode == "judged"
                     extracted = await extract_source_bound(
                         [event],
                         existing,
-                        self.engine.llm,
+                        None if judged else self.engine.llm,
                         allow_corrections=self.engine.config.modules.mutable_rag,
                         firewall=self.firewall,
+                        judge=self.engine.judge if judged else None,
+                        judgment_config=self.engine.config.judgment,
                     )
                     proposals = extracted.proposals
                     review_references = extracted.reviews
-                    diagnostics["extraction_mode"] = "source_bound"
+                    diagnostics["extraction_mode"] = extraction_mode
                     diagnostics["deferred_corrections"] = extracted.deferred_corrections
                     if extracted.oversized_candidates:
                         diagnostics["oversized_candidates"] = extracted.oversized_candidates
+                    if judged:
+                        judged_state = extracted.cognitive_state
+                        diagnostics["judgment_calls"] = len(extracted.judgment_calls)
+                        diagnostics["judgment_input_tokens"] = sum(
+                            int(call["input_tokens"]) for call in extracted.judgment_calls
+                        )
                 elif self.engine.config.modules.sleep:
                     proposals = await self.engine.sleep_daemon.propose_facts(
                         [event], self.engine.llm, existing_facts=existing
@@ -587,11 +604,14 @@ class LocalMemoryService:
                     decision = "review_pending" if review_references else "no_durable_facts"
         else:
             raise ValueError("Unsupported maintenance job kind")
-        state = (
-            await self.engine.affective_router.classify_state(interaction)
-            if proposals and self.engine.config.modules.affective
-            else None
-        )
+        if not proposals or not self.engine.config.modules.affective:
+            state = None
+        elif judged_state is not None:
+            # Judged alongside classification; no second call.
+            state = judged_state
+            self.engine.affective_router.record_state(interaction, state)
+        else:
+            state = await self.engine.affective_router.classify_state(interaction)
         chunks: list[MemoryChunk] = []
         evidence: list[FactEvidence] = []
         revisions: list[FactRevision] = []
@@ -1033,7 +1053,17 @@ class LocalMemoryService:
                 ScopeContext.model_validate(payload["context"])
             )
             self._cognition_probe = {"status": "failed", "input_specific_extraction": False}
-            if isinstance(self.engine.llm, (MockLLMProvider, UnavailableLLMProvider)):
+            judged_mode = self.engine.config.sleep.extraction_mode == "judged"
+            if judged_mode:
+                from .judgment import MockJudge, UnavailableJudge
+
+                no_judge = isinstance(self.engine.judge, (MockJudge, UnavailableJudge))
+            else:
+                no_judge = False
+            if no_judge or (
+                not judged_mode
+                and isinstance(self.engine.llm, (MockLLMProvider, UnavailableLLMProvider))
+            ):
                 return {
                     "schema_version": 1,
                     **self._cognition_probe,
@@ -1052,11 +1082,16 @@ class LocalMemoryService:
                 metadata=context_metadata(context, "project"),
             )
             try:
-                if self.engine.config.sleep.extraction_mode == "source_bound":
+                if self.engine.config.sleep.extraction_mode in {"source_bound", "judged"}:
                     from .extraction.service import extract_source_bound
 
                     extracted = await extract_source_bound(
-                        [probe_event], [], self.engine.llm, allow_corrections=False
+                        [probe_event],
+                        [],
+                        None if judged_mode else self.engine.llm,
+                        allow_corrections=False,
+                        judge=self.engine.judge if judged_mode else None,
+                        judgment_config=self.engine.config.judgment,
                     )
                     proposals = extracted.proposals
                 else:
@@ -1071,7 +1106,9 @@ class LocalMemoryService:
                     "status": "observed" if passed else "failed",
                     "input_specific_extraction": passed,
                     "observed_at": datetime.now(timezone.utc).isoformat(),
-                    "provider": type(self.engine.llm).__name__,
+                    "provider": type(
+                        self.engine.judge if judged_mode else self.engine.llm
+                    ).__name__,
                     "extraction_mode": self.engine.config.sleep.extraction_mode,
                 }
             except Exception as exc:

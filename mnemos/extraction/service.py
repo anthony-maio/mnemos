@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Literal, cast
+from dataclasses import dataclass, field
+from typing import Any, Literal, cast
 
+from ..config import JudgmentConfig
 from ..contracts import FactProposal
+from ..judgment import Judge
 from ..memory_safety import MemoryWriteFirewall, bound_source_firewall
 from ..source_review import SourceReviewReference
-from ..types import EpisodicEvent, MemoryChunk
+from ..types import CognitiveState, EpisodicEvent, MemoryChunk
 from ..utils.llm import LLMProvider
 from .source_pipeline import run_source_pipeline
 from .source_relationship import RelationshipProvider
@@ -20,37 +22,56 @@ class SourceExtractionResult:
     reviews: list[SourceReviewReference]
     deferred_corrections: int
     oversized_candidates: int = 0
+    judgment_calls: list[dict[str, Any]] = field(default_factory=list)
+    cognitive_state: CognitiveState | None = None
 
 
 async def extract_source_bound(
     events: list[EpisodicEvent],
     targets: list[MemoryChunk],
-    provider: LLMProvider,
+    provider: LLMProvider | None,
     *,
     allow_corrections: bool,
     firewall: MemoryWriteFirewall | None = None,
+    judge: Judge | None = None,
+    judgment_config: JudgmentConfig | None = None,
 ) -> SourceExtractionResult:
+    """Extract provenance-bound proposals with a generative provider or a judge."""
     # Source checks must apply the policy capture used, or content stored
     # under a non-default policy can never pass validation.
     with bound_source_firewall(firewall or MemoryWriteFirewall()):
         return await _extract_source_bound(
-            events, targets, provider, allow_corrections=allow_corrections
+            events,
+            targets,
+            provider,
+            allow_corrections=allow_corrections,
+            judge=judge,
+            judgment_config=judgment_config,
         )
 
 
 async def _extract_source_bound(
     events: list[EpisodicEvent],
     targets: list[MemoryChunk],
-    provider: LLMProvider,
+    provider: LLMProvider | None,
     *,
     allow_corrections: bool,
+    judge: Judge | None,
+    judgment_config: JudgmentConfig | None,
 ) -> SourceExtractionResult:
-    result = await run_source_pipeline(
-        events,
-        targets,
-        selection_provider=provider,
-        reconciliation_provider=RelationshipProvider(provider),
-    )
+    if judge is not None:
+        result = await run_source_pipeline(
+            events, targets, judge=judge, judgment_config=judgment_config
+        )
+    else:
+        if provider is None:
+            raise ValueError("extract_source_bound needs a provider or a judge")
+        result = await run_source_pipeline(
+            events,
+            targets,
+            selection_provider=provider,
+            reconciliation_provider=RelationshipProvider(provider),
+        )
     proposals = []
     reviews = list(result.review_references)
     accepted = [
@@ -96,4 +117,6 @@ async def _extract_source_bound(
         reviews=reviews,
         deferred_corrections=deferred,
         oversized_candidates=result.oversized_candidates,
+        judgment_calls=list(result.judgment_calls),
+        cognitive_state=result.cognitive_state,
     )

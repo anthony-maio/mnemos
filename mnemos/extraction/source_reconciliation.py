@@ -94,6 +94,8 @@ class StagedReconciliation(BaseModel):
     expected_version: int | None = Field(default=None, ge=1, strict=True)
     reason: str | None = None
     revises_existing_requirement: bool = Field(default=False, strict=True)
+    # Set by the judged path: a fixed code behind a fixed reason sentence.
+    reason_code: str | None = None
 
 
 def _is_user_revision(candidate: ExtractiveMemory) -> bool:
@@ -341,7 +343,15 @@ def _validate_decisions(
     decisions: list[ReconciliationDecision],
     candidates: list[ExtractiveMemory],
     targets: list[MemoryChunk],
+    *,
+    approved_paraphrase_support: frozenset[tuple[int, str]] = frozenset(),
 ) -> list[StagedReconciliation]:
+    """Re-check every decision against the authority rules.
+
+    ``approved_paraphrase_support`` names (candidate index, target id) pairs a
+    judge found to carry the same information, so support no longer needs
+    the exact normalized text. Every other rule is unchanged.
+    """
     if len(decisions) != len(candidates):
         raise ValueError("Every source candidate must receive exactly one decision")
     by_id = {target.id: target for target in targets}
@@ -387,8 +397,9 @@ def _validate_decisions(
         if decision.operation == "support":
             if candidate.source_role != "user" or candidate.kind == "correction_or_rejection":
                 raise ValueError("Only direct user candidates may support a target")
-            if target is None or normalize_memory_text(candidate.content) != normalize_memory_text(
-                target.content
+            if target is None or (
+                normalize_memory_text(candidate.content) != normalize_memory_text(target.content)
+                and (index, target.id) not in approved_paraphrase_support
             ):
                 raise ValueError("Support requires exact normalized target content")
             if decision.target_fact_id in ambiguous_target_ids:
