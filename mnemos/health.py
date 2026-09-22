@@ -67,6 +67,40 @@ def _probe_http_provider(
         return "unreachable", "unknown"
 
 
+def _probe_typesafe(base_url: str, api_key: str, model: str) -> tuple[str, str, str | None]:
+    """One tiny judgment against the hosted service. Returns the model it reports."""
+    body = {
+        "model": model,
+        "state": "ping",
+        "questions": {
+            "ready": {
+                "type": "noul",
+                "instructions": "Is the state exactly the word ping?",
+                "criteria": {"true": "it is", "false": "it is not"},
+            }
+        },
+    }
+    try:
+        response = httpx.post(
+            f"{base_url.rstrip('/')}/systemone",
+            headers={"Authorization": f"Bearer {api_key}"},
+            json=body,
+            timeout=3.0,
+        )
+    except Exception:
+        return "unreachable", "unknown", None
+    if response.status_code in {401, 403}:
+        return "reachable", "unauthorized", None
+    if response.status_code >= 400:
+        return "reachable", "not_checked", None
+    try:
+        payload = response.json()
+    except ValueError:
+        return "reachable", "not_checked", None
+    observed = payload.get("model") if isinstance(payload, dict) else None
+    return "reachable", "ready", observed if isinstance(observed, str) else None
+
+
 def _provider_state(
     provider: str,
     *,
@@ -373,6 +407,73 @@ def run_health_checks(
     else:
         add_check("llm.provider", "fail", f"Unsupported MNEMOS_LLM_PROVIDER: {llm_provider!r}")
         provider_state["llm"] = _provider_state(llm_provider, configured=False, probe=probe)
+
+    judgment_provider = settings.judgment.provider
+    if judgment_provider == "none":
+        provider_state["judgment"] = {
+            "provider": "none",
+            "configured": False,
+            "reachable": "not_applicable",
+            "model_ready": "not_applicable",
+            "status": "off",
+        }
+        if settings.sleep.extraction_mode == "judged":
+            add_check(
+                "judgment.provider",
+                "fail",
+                "extraction_mode=judged needs MNEMOS_JUDGMENT_PROVIDER set to typesafe or ollama.",
+            )
+    elif judgment_provider == "typesafe":
+        api_key = settings.api_key_for("typesafe")
+        if api_key:
+            add_check(
+                "judgment.typesafe",
+                "pass",
+                "TypeSafe judgment configured (hosted; transcript spans leave the machine).",
+            )
+            state = _provider_state("typesafe", configured=True, probe=False)
+            if probe:
+                reachable, model_ready, observed = _probe_typesafe(
+                    settings.base_url_for("typesafe") or "https://api.typesafe.ai/v1",
+                    api_key,
+                    settings.judgment.model or "jev-latest",
+                )
+                state.update(reachable=reachable, model_ready=model_ready)
+                state["observed_model"] = observed
+                if reachable == "reachable" and model_ready == "ready":
+                    state["status"] = "ready"
+                elif reachable == "unreachable":
+                    state["status"] = "unreachable"
+                elif model_ready == "unauthorized":
+                    state["status"] = "unauthorized"
+                    add_check("judgment.typesafe", "fail", "TypeSafe rejected the API key.")
+            provider_state["judgment"] = state
+        else:
+            add_check(
+                "judgment.typesafe",
+                "fail",
+                "MNEMOS_TYPESAFE_API_KEY is required for typesafe judgment.",
+            )
+            provider_state["judgment"] = _provider_state("typesafe", configured=False, probe=probe)
+    elif judgment_provider == "ollama":
+        ollama_url = settings.base_url_for("ollama") or "http://localhost:11434"
+        add_check("judgment.ollama", "pass", f"Local judgment configured at {ollama_url}.")
+        provider_state["judgment"] = _provider_state(
+            "ollama",
+            configured=True,
+            probe=probe,
+            base_url=ollama_url,
+            model=settings.judgment.model,
+        )
+    else:
+        add_check(
+            "judgment.provider",
+            "fail",
+            f"Unsupported MNEMOS_JUDGMENT_PROVIDER: {judgment_provider!r}",
+        )
+        provider_state["judgment"] = _provider_state(
+            judgment_provider, configured=False, probe=probe
+        )
 
     if embedding_provider == "simple":
         add_check(

@@ -722,6 +722,10 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
 | `MNEMOS_OPENCLAW_API_KEY` | — | OpenClaw API key (or fallback to `MNEMOS_OPENAI_API_KEY`) |
 | `MNEMOS_OPENCLAW_URL` | — | OpenClaw API base URL (or fallback to `MNEMOS_OPENAI_URL`) |
+| `MNEMOS_JUDGMENT_PROVIDER` | `none` | Optional typed-judgment backend: `none`, `typesafe`, or `ollama`. `none` keeps every judged path off. |
+| `MNEMOS_JUDGMENT_MODEL` | provider-dependent | Judgment model (`jev-latest` for TypeSafe; the LLM model for local Ollama) |
+| `MNEMOS_TYPESAFE_API_KEY` | — | Required when `MNEMOS_JUDGMENT_PROVIDER=typesafe`. Hosted service: firewall-filtered transcript spans leave the machine. |
+| `MNEMOS_TYPESAFE_URL` | `https://api.typesafe.ai/v1` | TypeSafe API base URL |
 | `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |

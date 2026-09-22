@@ -34,6 +34,7 @@ from typing import Any, Literal
 
 from .config import MnemosConfig
 from .curation import durable_memory_skip_reason
+from .judgment import Judge
 from .memory_safety import MemoryWriteFirewall
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .modules.affective import AffectiveRouter
@@ -206,8 +207,10 @@ class MnemosEngine:
         scope_registry: ScopeRegistry | None = None,
         require_scope_context: bool = False,
         *,
+        judge: Judge | None = None,
         owns_providers: bool = False,
     ) -> None:
+        from .judgment import UnavailableJudge
         from .utils.llm import UnavailableLLMProvider
         from .utils.embeddings import SimpleEmbeddingProvider
         from .utils.storage import InMemoryStore
@@ -225,8 +228,12 @@ class MnemosEngine:
             else SimpleEmbeddingProvider(dim=self.config.surprisal.embedding_dim)
         )
         self._store = store or InMemoryStore()
+        # Typed judgments are optional. Without a configured judge every
+        # judged path is off and the generative paths are the only ones.
+        self._judge: Judge = judge if judge is not None else UnavailableJudge()
         self._owns_llm = owns_providers or llm is None
         self._owns_embedder = owns_providers or embedder is None
+        self._owns_judge = owns_providers or judge is None
         self._close_lock = asyncio.Lock()
         self._close_task: asyncio.Task[None] | None = None
         self._closed_resources: set[str] = set()
@@ -312,6 +319,7 @@ class MnemosEngine:
             for name, provider, owned in (
                 ("embedding", self._embedder, self._owns_embedder),
                 ("llm", self._llm, self._owns_llm),
+                ("judge", self._judge, self._owns_judge),
             ):
                 if not owned or name in self._closed_resources:
                     continue
@@ -1294,6 +1302,11 @@ class MnemosEngine:
     def llm(self) -> LLMProvider:
         """Direct access to the LLM provider."""
         return self._llm
+
+    @property
+    def judge(self) -> Judge:
+        """The typed judgment backend, or an UnavailableJudge when none is configured."""
+        return self._judge
 
     @property
     def embedder(self) -> EmbeddingProvider:

@@ -171,7 +171,7 @@ class SleepConfig(BaseModel):
       formation from declarative experiences)
     """
 
-    extraction_mode: Literal["generated", "source_bound"] = "generated"
+    extraction_mode: Literal["generated", "source_bound", "judged"] = "generated"
 
     consolidation_interval_seconds: int = Field(
         default=3600,

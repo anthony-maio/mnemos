@@ -22,6 +22,8 @@ from .config import (
     SleepConfig,
     SurprisalConfig,
 )
+from .judgment import Judge, UnavailableJudge
+from .memory_safety import MemoryWriteFirewall
 from .settings import AppSettings, ResolvedSettings, _persistent_env_value, load_settings
 from .utils.embeddings import (
     EmbeddingProvider,
@@ -38,7 +40,10 @@ from .utils.llm import (
     OpenAIProvider,
     UnavailableLLMProvider,
 )
+from .utils.ollama_judge import OllamaJudge
+from .utils.reliability import RetryPolicy
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
+from .utils.typesafe import TypeSafeJudge
 
 
 def _infer_sqlite_embedding_dim(sqlite_path: str | None) -> int | None:
@@ -122,6 +127,8 @@ def _persistent_provider_api_key(provider: str) -> str | None:
         )
     if provider == "openrouter":
         return _persistent_env_value("MNEMOS_OPENROUTER_API_KEY")
+    if provider == "typesafe":
+        return _persistent_env_value("MNEMOS_TYPESAFE_API_KEY")
     return None
 
 
@@ -247,6 +254,60 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
     )
 
 
+def build_judge_from_settings(
+    settings: AppSettings,
+    *,
+    firewall: MemoryWriteFirewall,
+    llm: LLMProvider | None = None,
+) -> Judge:
+    """Build the optional typed judgment backend.
+
+    ``none`` yields an :class:`UnavailableJudge`, so no judged path can run
+    and nothing is sent anywhere. TypeSafe is a hosted service and is only
+    built when explicitly selected with a key; it is never a fallback.
+    """
+    provider = settings.judgment.provider
+    if provider == "none":
+        return UnavailableJudge("MNEMOS_JUDGMENT_PROVIDER is not set; judged paths are off")
+    if provider == "typesafe":
+        api_key = settings.api_key_for("typesafe") or _persistent_provider_api_key("typesafe")
+        if not api_key:
+            raise ValueError("MNEMOS_TYPESAFE_API_KEY must be set when using typesafe judgment")
+        return TypeSafeJudge(
+            api_key,
+            firewall=firewall,
+            model=settings.judgment.model or "jev-latest",
+            base_url=settings.base_url_for("typesafe") or "https://api.typesafe.ai/v1",
+            timeout=settings.providers.typesafe.timeout,
+            retry_policy=RetryPolicy(
+                max_attempts=settings.providers.typesafe.max_attempts,
+                initial_backoff_seconds=0.5,
+                max_backoff_seconds=8.0,
+            ),
+        )
+    if provider == "ollama":
+        local = OllamaProvider(
+            base_url=settings.base_url_for("ollama") or "http://localhost:11434",
+            model=settings.judgment.model or settings.llm.model or "llama3",
+            think=settings.providers.ollama.think,
+            max_tokens=settings.providers.ollama.max_tokens,
+            timeout=settings.providers.ollama.timeout,
+            temperature=0.0,
+        )
+        return OllamaJudge(local, firewall=firewall)
+    raise ValueError(
+        f"Unknown judgment provider: {provider!r}. Use 'none', 'typesafe', or 'ollama'."
+    )
+
+
+def _require_judge_for_judged_extraction(settings: AppSettings) -> None:
+    if settings.sleep.extraction_mode == "judged" and settings.judgment.provider == "none":
+        raise ValueError(
+            "extraction_mode=judged needs a judgment provider; set judgment.provider "
+            "(MNEMOS_JUDGMENT_PROVIDER) to typesafe or ollama, or use source_bound"
+        )
+
+
 def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
     return MnemosConfig(
         modules=settings.modules.model_copy(deep=True),
@@ -327,11 +388,16 @@ def build_configured_engine_from_settings(
     else:
         llm = build_llm_from_settings(settings)
 
+    _require_judge_for_judged_extraction(settings)
+    config = build_mnemos_config_from_settings(settings)
     return MnemosEngine(
-        config=build_mnemos_config_from_settings(settings),
+        config=config,
         llm=llm,
         embedder=build_embedder_from_settings(settings),
         store=_configured_store(settings),
+        judge=build_judge_from_settings(
+            settings, firewall=MemoryWriteFirewall(config.safety), llm=llm
+        ),
         owns_providers=True,
     )
 
@@ -363,11 +429,14 @@ def build_configured_engine(
             )
         from .engine import MnemosEngine
 
+        _require_judge_for_judged_extraction(settings)
+        config = build_mnemos_config_from_settings(settings)
         return MnemosEngine(
-            config=build_mnemos_config_from_settings(settings),
+            config=config,
             llm=UnavailableLLMProvider(),
             embedder=build_embedder_from_settings(settings),
             store=_configured_store(settings),
+            judge=build_judge_from_settings(settings, firewall=MemoryWriteFirewall(config.safety)),
             owns_providers=True,
         )
     return build_configured_engine_from_settings(settings, allow_mock=allow_mock)

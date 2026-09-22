@@ -176,6 +176,7 @@ def _apply_persistent_env_fallbacks(raw: dict[str, Any]) -> dict[str, Any]:
         (("providers", "openai", "api_key"), ("MNEMOS_OPENAI_API_KEY",)),
         (("providers", "openclaw", "api_key"), ("MNEMOS_OPENCLAW_API_KEY",)),
         (("providers", "openrouter", "api_key"), ("MNEMOS_OPENROUTER_API_KEY",)),
+        (("providers", "typesafe", "api_key"), ("MNEMOS_TYPESAFE_API_KEY",)),
     )
     merged = dict(raw)
     for path, names in fallback_specs:
@@ -243,6 +244,22 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     llm_model = _env_value(env, "MNEMOS_LLM_MODEL")
     if llm_model is not None:
         _set_nested(overrides, ("llm", "model"), llm_model)
+
+    judgment_provider = _env_value(env, "MNEMOS_JUDGMENT_PROVIDER")
+    if judgment_provider is not None:
+        _set_nested(overrides, ("judgment", "provider"), judgment_provider.lower())
+
+    judgment_model = _env_value(env, "MNEMOS_JUDGMENT_MODEL")
+    if judgment_model is not None:
+        _set_nested(overrides, ("judgment", "model"), judgment_model)
+
+    typesafe_api_key = _env_value(env, "MNEMOS_TYPESAFE_API_KEY")
+    if typesafe_api_key is not None:
+        _set_nested(overrides, ("providers", "typesafe", "api_key"), typesafe_api_key)
+
+    typesafe_url = _env_value(env, "MNEMOS_TYPESAFE_URL")
+    if typesafe_url is not None:
+        _set_nested(overrides, ("providers", "typesafe", "base_url"), typesafe_url)
 
     embedding_provider = _env_value(env, "MNEMOS_EMBEDDING_PROVIDER")
     if embedding_provider is not None:
@@ -372,9 +389,21 @@ class OllamaProviderSettings(BaseModel):
     temperature: float = Field(default=0.1, strict=True, ge=0, allow_inf_nan=False)
 
 
+class TypeSafeProviderSettings(BaseModel):
+    """The hosted judgment provider. Cloud, opt-in, never a fallback."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    api_key: str | None = None
+    base_url: str = "https://api.typesafe.ai/v1"
+    timeout: float = Field(default=30.0, strict=True, gt=0, allow_inf_nan=False)
+    max_attempts: int = Field(default=4, strict=True, ge=1, le=10)
+
+
 class ProvidersSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
+    typesafe: TypeSafeProviderSettings = Field(default_factory=TypeSafeProviderSettings)
     openai: OpenAICompatibleProviderSettings = Field(
         default_factory=lambda: OpenAICompatibleProviderSettings(
             base_url="https://api.openai.com/v1"
@@ -397,6 +426,15 @@ class LLMSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     provider: Literal["mock", "ollama", "openai", "openclaw", "openrouter"] = "mock"
+    model: str | None = None
+
+
+class JudgmentSettings(BaseModel):
+    """Which backend answers typed judgments. ``none`` keeps every judged path off."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    provider: Literal["none", "typesafe", "ollama"] = "none"
     model: str | None = None
 
 
@@ -433,7 +471,7 @@ class RuntimeSettings(BaseModel):
 class SleepSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    extraction_mode: Literal["generated", "source_bound"] = "generated"
+    extraction_mode: Literal["generated", "source_bound", "judged"] = "generated"
     recall_gated_plasticity_enabled: bool = False
     recall_min_supporting_episodes: int = 2
     recall_similarity_threshold: float = 0.82
@@ -451,6 +489,7 @@ class AppSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     llm: LLMSettings = Field(default_factory=LLMSettings)
+    judgment: JudgmentSettings = Field(default_factory=JudgmentSettings)
     embedding: EmbeddingSettings = Field(default_factory=EmbeddingSettings)
     storage: StorageSettings = Field(default_factory=StorageSettings)
     providers: ProvidersSettings = Field(default_factory=ProvidersSettings)
@@ -477,9 +516,18 @@ class AppSettings(BaseModel):
             provider = self.embedding.provider or "simple"
             self.embedding.model = _default_embedding_model(provider)
 
+        if not self.judgment.model:
+            if self.judgment.provider == "typesafe":
+                self.judgment.model = "jev-latest"
+            elif self.judgment.provider == "ollama":
+                self.judgment.model = self.llm.model if self.llm.provider == "ollama" else None
+                self.judgment.model = self.judgment.model or _default_llm_model("ollama")
+
         return self
 
     def api_key_for(self, provider: str) -> str | None:
+        if provider == "typesafe":
+            return self.providers.typesafe.api_key
         if provider == "openai":
             return self.providers.openai.api_key
         if provider == "openclaw":
@@ -489,6 +537,8 @@ class AppSettings(BaseModel):
         return None
 
     def base_url_for(self, provider: str) -> str | None:
+        if provider == "typesafe":
+            return self.providers.typesafe.base_url
         if provider == "openai":
             return self.providers.openai.base_url
         if provider == "openclaw":
