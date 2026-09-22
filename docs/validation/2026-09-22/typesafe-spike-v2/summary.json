@@ -1,0 +1,46 @@
+{
+  "started_at": "2026-09-22T15:48:23.084964+00:00",
+  "finished_at": "2026-09-22T15:48:56.946759+00:00",
+  "fixture": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-21\\source-classification-terminal-v12",
+  "judgment_config": {
+    "continuation_min_probability": 0.5,
+    "kind_min_probability": 0.5,
+    "support_min_probability": 0.6,
+    "conflict_min_probability": 0.6,
+    "outdated_min_probability": 0.7,
+    "max_units_per_request": 40,
+    "max_ranges_per_request": 15,
+    "max_request_tokens": 60000
+  },
+  "typesafe_price_usd_per_million_input_tokens": 0.042,
+  "backends": [
+    {
+      "backend": "baseline:gemma3:27b",
+      "ok": 43,
+      "cases": 46,
+      "presence_agreement": 0.8604651162790697,
+      "presence_total": 43
+    },
+    {
+      "backend": "typesafe",
+      "cases": 46,
+      "ok": 46,
+      "contract_errors": 0,
+      "errors": 0,
+      "presence_agreement": 0.8695652173913043,
+      "presence_total": 46,
+      "twin_pair_agreement": 0.7692307692307693,
+      "twin_pairs": 13,
+      "calls": 84,
+      "latency_ms_median": 392.79959999839775,
+      "latency_ms_p95": 462.57240005070344,
+      "latency_ms_max": 645.4720000037923,
+      "input_tokens": 103272,
+      "cost_usd": 0.004337424,
+      "models": [
+        "jev-1.13.0"
+      ]
+    }
+  ],
+  "note": "presence_agreement and twin_pair_agreement are mechanical proxies for whether anything durable was retained; they say nothing about whether the right meaning was retained. Read spike-review.json for that."
+}

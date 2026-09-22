@@ -153,8 +153,14 @@ async def reconcile_source_candidates_with_judge(
                     for position, target in enumerate(targets):
                         if target.id in exact_matches[index]:
                             continue  # exact text needs no judgment
+                        # Quote both texts in the question: judged from the shared
+                        # state alone, neighbouring pairs blur into each other.
                         questions[f"relation:c{index}:t{position}"] = Choice(
-                            f"How does candidate c{index} relate to existing fact t{position}?",
+                            {
+                                "candidate": candidate.content.strip(),
+                                "existing_fact": target.content,
+                                "question": "How does candidate relate to existing_fact?",
+                            },
                             RELATION_OPTIONS,
                         )
                 if _is_user_revision(candidate):
@@ -171,7 +177,13 @@ async def reconcile_source_candidates_with_judge(
                     )
                     if len(referent_options) > 1:
                         questions[f"referent:c{index}"] = Choice(
-                            f"Which existing fact does candidate c{index} correct, replace, or reject?",
+                            {
+                                "candidate": candidate.content.strip(),
+                                "question": (
+                                    "Which existing fact does candidate correct, replace, "
+                                    "or reject?"
+                                ),
+                            },
                             tuple(referent_options),
                         )
             if not questions:

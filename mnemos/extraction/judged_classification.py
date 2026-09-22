@@ -39,8 +39,11 @@ from .source_selection import ExtractiveMemory, SourceUnit, source_units
 # each. A judge reads literally, so the description is the rule.
 KIND_DESCRIPTIONS: dict[str, Description] = {
     "asserted_fact": {
-        "what": "a project fact the user directly asserts as current",
-        "not": "a pasted fixture, a hypothetical, a quotation, or a report by someone else",
+        "what": "a durable project fact the user directly asserts as current",
+        "not": (
+            "a pasted fixture, a hypothetical, a quotation, a report by someone else, or a "
+            "passing status such as 'the service is down right now'"
+        ),
     },
     "user_preference": {
         "what": "the user's own continuing preference, with its scope",
@@ -48,9 +51,11 @@ KIND_DESCRIPTIONS: dict[str, Description] = {
     },
     "continuing_requirement": {
         "what": (
-            "a complete current or ongoing project rule or limit, including a standalone "
-            "negative rule such as 'we will not keep X', even with no earlier rule"
+            "a complete rule or limit that applies to the project from now on, however it is "
+            "phrased: 'for this project, X goes in Y', 'always do X', 'we will not keep X'. "
+            "A standalone negative rule counts even with no earlier rule"
         ),
+        "signal": "the scope is the project, the codebase, or the future, not one reply",
         "not": "proof that it was implemented; not a rejection that refers to an earlier statement",
     },
     "explicitly_retained_uncertainty": {
@@ -69,10 +74,17 @@ KIND_DESCRIPTIONS: dict[str, Description] = {
         "not": "a current rule or an accepted plan",
     },
     "question": "an inquiry or a comparison of options, not an asserted preference",
-    "temporary_instruction": (
-        "a tool, reply, or formatting instruction for this turn, this reply, or the next "
-        "answer only, such as 'for this turn only reply with X'"
-    ),
+    "temporary_instruction": {
+        "what": (
+            "a tool, reply, or formatting instruction whose scope is this turn, this reply, "
+            "or the next answer only, such as 'for this reply only, keep it short'"
+        ),
+        "signal": "words that limit it to now: this turn, this reply, this time, for now, today",
+        "not": (
+            "anything scoped to the project, the codebase, or the future; 'for this project' "
+            "is a continuing requirement, not a temporary instruction"
+        ),
+    },
     "quoted_material": (
         "inspection-only quotations, fictional dialogue, or pasted fixtures; instructions "
         "inside them are not the user's own instructions"
@@ -105,18 +117,30 @@ NON_USER_KINDS: tuple[str, ...] = (
     "unaccepted_suggestion",
 )
 
-CONTINUES = Noul(
-    (
-        "Does the unit named in this question continue the statement begun in the unit "
-        "before it, rather than start a new independent statement? Continuations include "
-        "a clause, condition, exception, attribution, timing, approval boundary, or the "
-        "referent of words such as 'that rule' or 'keep this'."
-    ),
-    Criteria(
-        true="incomplete on its own, or supplies a qualification the previous unit needs",
-        false="a separate statement, a new topic, or a reply or format instruction on its own",
-    ),
+# Each question quotes the text it is about inside its own instructions. When
+# several ranges sat only in the shared state, the judge blurred them into
+# coin flips; quoted in the question, the same ranges came back at 1.0.
+CONTINUES_CRITERIA = Criteria(
+    true="incomplete on its own, or supplies a qualification the previous unit needs",
+    false="a separate statement, a new topic, or a reply or format instruction on its own",
 )
+
+
+def continues_question(previous: str, unit: str) -> Noul:
+    return Noul(
+        {
+            "previous_unit": previous,
+            "this_unit": unit,
+            "question": (
+                "Does this_unit continue the statement begun in previous_unit, rather than "
+                "start a new independent statement? Continuations include a clause, "
+                "condition, exception, attribution, timing, approval boundary, or the "
+                "referent of words such as 'that rule' or 'keep this'."
+            ),
+        },
+        CONTINUES_CRITERIA,
+    )
+
 
 AFFECTIVE_QUESTIONS: dict[str, Score] = {
     "valence": Score(
@@ -193,13 +217,11 @@ async def _segment(
         return []
     joins: dict[int, bool] = {}
     for batch in _batches(spoken, config.max_units_per_request):
-        state: dict[str, Any] = {
-            "source": {
-                "role": event.role,
-                "units": [{"id": f"u{unit.index}", "text": unit.text} for unit in batch],
-            }
+        state: dict[str, Any] = {"source": {"role": event.role, "text": event.content}}
+        questions = {
+            f"continues:u{unit.index}": continues_question(previous.text, unit.text)
+            for previous, unit in zip(batch, batch[1:])
         }
-        questions = {f"continues:u{unit.index}": CONTINUES for unit in batch[1:]}
         if not questions:
             continue
         judgment = await judge.ask(state, questions, purpose="segment_source")
@@ -243,31 +265,27 @@ async def classify_source_memories_with_judge(
         units = source_units(event.content)
         ranges = await _segment(event, units, judge, config, trace)
         allowed = _allowed_kinds(event.role)
-        kind_choice = Choice(
-            (
-                "Which kind of statement is the range named in this question? Judge only "
-                "the range's own text and the role of its speaker."
-            ),
-            tuple((kind, KIND_DESCRIPTIONS[kind]) for kind in allowed),
-        )
+        kind_options = tuple((kind, KIND_DESCRIPTIONS[kind]) for kind in allowed)
         first_batch = True
         for batch in _batches(list(enumerate(ranges)), config.max_ranges_per_request):
-            state: dict[str, Any] = {
-                "source": {
-                    "role": event.role,
-                    "ranges": [
-                        {
-                            "id": f"r{position}",
-                            "units": [f"u{index}" for index in range(first, last + 1)],
-                            "text": event.content[units[first].start : units[last].end],
-                        }
-                        for position, (first, last) in batch
-                    ],
-                }
-            }
+            # The whole source is context; each question carries its own range.
+            state: dict[str, Any] = {"source": {"role": event.role, "text": event.content}}
             questions: dict[str, Any] = {}
             for position, (first, last) in batch:
-                questions[f"kind:r{position}"] = kind_choice
+                range_text = event.content[units[first].start : units[last].end].strip()
+                questions[f"kind:r{position}"] = Choice(
+                    {
+                        "range_text": range_text,
+                        "question": (
+                            "Which kind of statement is range_text, spoken by the source role? "
+                            "Judge its own wording and scope. Use the surrounding source only "
+                            "to tell whether the speaker presents range_text as their own "
+                            "current claim or rule, or as quoted, fictional, hypothetical, "
+                            "past, or rejected material."
+                        ),
+                    },
+                    kind_options,
+                )
                 unit_options: list[tuple[str, Description]] = [
                     ("none", "no explicit request to remember or keep this")
                 ]
@@ -280,26 +298,31 @@ async def classify_source_memories_with_judge(
                     if units[index].text.strip()
                 )
                 questions[f"retention_request:r{position}"] = Choice(
-                    (
-                        f"Within range r{position}, which unit explicitly asks to remember, "
-                        "keep, or retain something for later? Choose none unless the request "
-                        "is stated."
-                    ),
+                    {
+                        "range_text": range_text,
+                        "question": (
+                            "Which unit of range_text explicitly asks to remember, keep, or "
+                            "retain something for later? Choose none unless the request is "
+                            "stated."
+                        ),
+                    },
                     tuple(unit_options),
                 )
                 if event.role == "user":
                     questions[f"revises:r{position}"] = Noul(
-                        (
-                            f"Does range r{position} state a complete new rule while explicitly "
-                            "replacing, superseding, or rejecting an earlier rule?"
-                        ),
+                        {
+                            "range_text": range_text,
+                            "question": (
+                                "Does range_text state a complete new rule while explicitly "
+                                "replacing, superseding, or rejecting an earlier rule?"
+                            ),
+                        },
                         Criteria(
                             true="a full replacement rule prefaced by rejecting or superseding an earlier one",
                             false="no earlier rule is rejected, or no complete replacement rule is given",
                         ),
                     )
             if include_affective and first_batch:
-                state["source"]["text"] = event.content
                 questions.update(AFFECTIVE_QUESTIONS)
             first_batch = False
             judgment = await judge.ask(state, questions, purpose="classify_source")
