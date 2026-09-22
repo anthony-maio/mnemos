@@ -30,10 +30,20 @@ from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
-from ..config import MutableRAGConfig
+from ..config import JudgmentConfig, MutableRAGConfig
 from ..contracts import FactProposal
 from ..errors import VersionConflict
 from ..jobs import DurableJob, FactEvidence, FactRevision
+from ..judgment import (
+    Choice,
+    ChoiceAnswer,
+    Criteria,
+    Description,
+    Judge,
+    Noul,
+    NoulAnswer,
+    UnavailableJudge,
+)
 from ..memory_safety import MemoryWriteFirewall
 from ..types import EpisodicEvent, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, embed_text_async
@@ -64,8 +74,12 @@ class MutableRAG:
         store: MemoryStore,
         config: MutableRAGConfig | None = None,
         write_firewall: MemoryWriteFirewall | None = None,
+        judge: Judge | None = None,
+        judgment_config: JudgmentConfig | None = None,
     ) -> None:
         self._llm = llm
+        self._judge: Judge = judge if judge is not None else UnavailableJudge()
+        self._judgment_config = judgment_config or JudgmentConfig()
         self._embedder = embedder
         self._store = store
         self._config = config or MutableRAGConfig()
@@ -390,6 +404,11 @@ class MutableRAG:
             if raise_on_error:
                 raise
             return chunk, False
+        if self._judge.provider != "unavailable":
+            return await self._reconsolidate_with_judge(
+                chunk, evidence, refs, raise_on_error=raise_on_error
+            )
+
         # The review prompt receives source events, never the retrieval query.
         prompt = self._build_reconsolidation_prompt(
             chunk, "\n".join(event.content for event in evidence)
@@ -453,6 +472,104 @@ class MutableRAG:
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
             return stable_chunk, False
+
+    async def _reconsolidate_with_judge(
+        self,
+        chunk: MemoryChunk,
+        evidence: Sequence[EpisodicEvent],
+        refs: list[str],
+        *,
+        raise_on_error: bool,
+    ) -> tuple[MemoryChunk, bool]:
+        """Source-bound reconsolidation: the judge picks the replacing span.
+
+        No rewrite is generated. If the evidence shows the fact is outdated
+        and one user-spoken unit states the current replacement, that unit's
+        exact text becomes the correction; otherwise the fact stands.
+        """
+        from ..extraction.source_selection import source_units
+
+        units: list[tuple[str, str, str]] = []  # (id, role, text)
+        for position, event in enumerate(evidence):
+            for unit in source_units(event.content):
+                if unit.text.strip():
+                    units.append((f"e{position}-u{unit.index}", event.role, unit.text.strip()))
+        units = units[: self._judgment_config.max_units_per_request]
+        state = {
+            "stored_fact": {"text": chunk.content},
+            "evidence": [{"id": uid, "role": role, "text": text} for uid, role, text in units],
+        }
+        replacement_options: list[tuple[str, Description]] = [
+            ("none", "no evidence unit states a complete current replacement")
+        ]
+        replacement_options.extend(
+            (uid, {"text": text}) for uid, role, text in units if role == "user"
+        )
+        questions: dict[str, Noul | Choice] = {
+            "outdated": Noul(
+                {
+                    "stored_fact": chunk.content,
+                    "question": (
+                        "Does the evidence show stored_fact is no longer accurate, has been "
+                        "replaced, or was explicitly withdrawn?"
+                    ),
+                },
+                Criteria(
+                    true=(
+                        "evidence states a different current value or rule for the same "
+                        "subject, or explicitly withdraws it"
+                    ),
+                    false=(
+                        "evidence is unrelated, repeats the fact, asks a question, or is "
+                        "hypothetical or quoted"
+                    ),
+                ),
+            )
+        }
+        if len(replacement_options) > 1:
+            questions["replacement"] = Choice(
+                {
+                    "stored_fact": chunk.content,
+                    "question": (
+                        "Which evidence unit states the complete current replacement for "
+                        "stored_fact, spoken by the user?"
+                    ),
+                },
+                tuple(replacement_options),
+            )
+        try:
+            judgment = await self._judge.ask(state, questions, purpose="reconsolidate")
+        except Exception:
+            if raise_on_error:
+                raise
+            return chunk, False
+        outdated = judgment.answers["outdated"]
+        assert isinstance(outdated, NoulAnswer)
+        replacement = judgment.answers.get("replacement")
+        chosen = replacement.choice if isinstance(replacement, ChoiceAnswer) else "none"
+        if (
+            outdated.probability < self._judgment_config.outdated_min_probability
+            or chosen == "none"
+        ):
+            self._total_unchanged += 1
+            self._mark_reconsolidated_now(chunk.id)
+            if outdated.probability >= self._judgment_config.outdated_min_probability:
+                chunk.metadata["reconsolidation_status"] = "outdated_without_replacement"
+            return chunk, False
+        new_content = next(text for uid, _, text in units if uid == chosen)
+        safety = self._write_firewall.apply(new_content)
+        if not safety.allowed or safety.content != new_content:
+            self._total_unchanged += 1
+            self._mark_reconsolidated_now(chunk.id)
+            return chunk, False
+        proposal = FactProposal(
+            content=new_content,
+            evidence_ids=refs,
+            operation="correct",
+            target_fact_id=chunk.id,
+            expected_version=chunk.version,
+        )
+        return await self.review(proposal, evidence_refs=refs)
 
     async def process_labile_chunks(
         self, max_chunks: int | None = None

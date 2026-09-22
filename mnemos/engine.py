@@ -255,6 +255,8 @@ class MnemosEngine:
             store=self._store,
             config=self.config.mutable_rag,
             write_firewall=self._write_firewall,
+            judge=self._judge,
+            judgment_config=self.config.judgment,
         )
 
         self.affective_router = AffectiveRouter(

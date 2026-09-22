@@ -261,3 +261,50 @@ async def test_claimed_review_job_can_resume_after_store_reopen(tmp_path: Path) 
         assert reopened.list_jobs(status="completed")[0].id == job.id
     finally:
         reopened.close()
+
+
+@pytest.mark.asyncio
+async def test_judged_reconsolidation_corrects_with_the_chosen_source_span(tmp_path: Path) -> None:
+    from mnemos.judgment import MockJudge
+
+    embedder = SimpleEmbeddingProvider(dim=32)
+    store = SQLiteStore(str(tmp_path / "judged.sqlite"))
+    try:
+        fact = _fact(embedder)
+        source = _event("source-rust", "Heads up. The project now uses Rust for the CLI.")
+        store.store(fact)
+        store.append_episodic_event(source)
+        judge = MockJudge({"outdated": 0.92, "replacement": "e0-u1"})
+        rag = MutableRAG(MockLLMProvider(), embedder, store, judge=judge)
+
+        result, changed = await rag.reconsolidate(fact, "ignored", evidence_refs=[source.id])
+
+        assert changed is True
+        # The correction is the user's own sentence, not a rewrite.
+        assert result.content == "The project now uses Rust for the CLI."
+        assert result.version == 2
+        state, questions, purpose = judge.calls[0]
+        assert purpose == "reconsolidate"
+        assert questions["replacement"].keys == ("none", "e0-u0", "e0-u1")  # type: ignore[union-attr]
+
+        # Outdated but with no replacement spoken: the fact stands and says why.
+        fact2 = store.get(result.id)
+        assert fact2 is not None
+        source2 = _event("source-withdrawn", "Forget what I said about the CLI language.")
+        store.append_episodic_event(source2)
+        rag2 = MutableRAG(
+            MockLLMProvider(),
+            embedder,
+            store,
+            judge=MockJudge({"outdated": 0.9, "replacement": "none"}),
+        )
+        stood, changed = await rag2.reconsolidate(fact2, "ignored", evidence_refs=[source2.id])
+        assert changed is False
+        assert stood.metadata["reconsolidation_status"] == "outdated_without_replacement"
+
+        # Not outdated: nothing happens.
+        rag3 = MutableRAG(MockLLMProvider(), embedder, store, judge=MockJudge({"outdated": 0.1}))
+        same, changed = await rag3.reconsolidate(fact2, "ignored", evidence_refs=[source2.id])
+        assert changed is False and same.content == fact2.content
+    finally:
+        store.close()
