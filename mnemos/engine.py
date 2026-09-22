@@ -261,6 +261,7 @@ class MnemosEngine:
             llm=self._llm,
             embedder=self._embedder,
             config=self.config.affective,
+            judge=self._judge,
         )
 
         self.sleep_daemon = SleepDaemon(
@@ -979,7 +980,16 @@ class MnemosEngine:
             and self.config.modules.affective
         )
         current_state = None
-        if use_affective and candidates:
+        state_source = self.config.retrieval.query_state_source
+        if use_affective and candidates and state_source == "recent_state":
+            query_metadata = identity_metadata or {
+                "scope": normalized_current_scope,
+                "scope_id": normalized_scope_id,
+            }
+            # No model call on the recall path: the partition's last encoded
+            # state stands in for the query's.
+            current_state = self.affective_router.get_current_state(query_metadata)
+        elif use_affective and candidates and state_source == "classify":
             query_metadata = identity_metadata or {
                 "scope": normalized_current_scope,
                 "scope_id": normalized_scope_id,
@@ -1147,6 +1157,7 @@ class MnemosEngine:
                     )
                 ),
                 "candidate_backend": retrieval_backend,
+                "state_source": state_source if use_affective else "not_used",
                 "lexical_candidate": chunk.id in lexical_ids,
                 "lexical_status": (
                     "fallback"

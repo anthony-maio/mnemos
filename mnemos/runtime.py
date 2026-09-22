@@ -316,9 +316,13 @@ def _require_judge_for_judged_extraction(settings: AppSettings) -> None:
 
 
 def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
+    retrieval = settings.retrieval.model_copy(deep=True)
+    if settings.judgment.provider == "typesafe" and retrieval.query_state_source == "classify":
+        # A hosted judge would put a round trip inside every biomimetic recall.
+        retrieval.query_state_source = "recent_state"
     return MnemosConfig(
         modules=settings.modules.model_copy(deep=True),
-        retrieval=settings.retrieval.model_copy(deep=True),
+        retrieval=retrieval,
         surprisal=SurprisalConfig(
             threshold=settings.runtime.surprisal_threshold,
             mode=settings.runtime.surprisal_mode,

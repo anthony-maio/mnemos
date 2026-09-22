@@ -40,12 +40,46 @@ from collections.abc import Callable
 from typing import Any
 
 from ..config import AffectiveConfig
+from ..judgment import Judge, Score, ScoreAnswer, UnavailableJudge
 from ..scopes import interaction_partition
 from ..types import CognitiveState, Interaction, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.reliability import MnemosConfigurationError
 from ..utils.storage import MemoryStore
+
+AFFECTIVE_SCORES: dict[str, Score] = {
+    "valence": Score(
+        "How does the speaker feel in text, from negative to positive?",
+        (
+            "very negative: frustration, anger, distress",
+            "somewhat negative",
+            "neutral or purely technical",
+            "somewhat positive",
+            "very positive: delight, gratitude, relief",
+        ),
+    ),
+    "arousal": Score(
+        "How urgent or intense is text?",
+        (
+            "calm, routine",
+            "mild",
+            "moderate",
+            "pressing",
+            "urgent: an outage, a deadline, a blocking failure",
+        ),
+    ),
+    "complexity": Score(
+        "How much reasoning does text involve?",
+        (
+            "trivial",
+            "simple",
+            "moderate",
+            "involved",
+            "highly complex, multi-part reasoning",
+        ),
+    ),
+}
 
 
 class AffectiveRouter:
@@ -67,8 +101,10 @@ class AffectiveRouter:
         llm: LLMProvider,
         embedder: EmbeddingProvider,
         config: AffectiveConfig | None = None,
+        judge: Judge | None = None,
     ) -> None:
         self._llm = llm
+        self._judge: Judge = judge if judge is not None else UnavailableJudge()
         self._embedder = embedder
         self._config = config or AffectiveConfig()
         self._classifier_options()
@@ -156,17 +192,44 @@ class AffectiveRouter:
             A CognitiveState representing the emotional/cognitive context.
         """
         self._total_classified += 1
-        prompt = self._build_classifier_prompt(interaction.content)
-
-        try:
-            response = await self._llm.predict(prompt, **self._classifier_options())
-            state = self._parse_state_response(response)
-        except Exception:
-            state = None
+        if self._judge.provider != "unavailable":
+            state = await self._judge_state(interaction)
+        else:
+            prompt = self._build_classifier_prompt(interaction.content)
+            try:
+                response = await self._llm.predict(prompt, **self._classifier_options())
+                state = self._parse_state_response(response)
+            except Exception:
+                state = None
 
         if state is not None:
             self._remember_state(interaction, state)
         return state
+
+    async def _judge_state(self, interaction: Interaction) -> CognitiveState | None:
+        """Three Score questions; the answer is already a weighted position."""
+        try:
+            judgment = await self._judge.ask(
+                {"text": interaction.content, "role": interaction.role},
+                AFFECTIVE_SCORES,
+                purpose="classify_state",
+                model=self._config.classifier_model,
+            )
+        except Exception:
+            return None
+        valence = judgment.answers["valence"]
+        arousal = judgment.answers["arousal"]
+        complexity = judgment.answers["complexity"]
+        if not all(isinstance(a, ScoreAnswer) for a in (valence, arousal, complexity)):
+            return None
+        assert isinstance(valence, ScoreAnswer)
+        assert isinstance(arousal, ScoreAnswer)
+        assert isinstance(complexity, ScoreAnswer)
+        return CognitiveState(
+            valence=valence.scaled(-1.0, 1.0, 5),
+            arousal=arousal.scaled(0.0, 1.0, 5),
+            complexity=complexity.scaled(0.0, 1.0, 5),
+        )
 
     def record_state(self, interaction: Interaction, state: CognitiveState) -> None:
         """Adopt a state judged elsewhere (for example alongside classification)."""

@@ -25,6 +25,7 @@ from ..judgment import (
     Score,
     ScoreAnswer,
 )
+from ..modules.affective import AFFECTIVE_SCORES
 from ..types import CognitiveState, EpisodicEvent
 from .assertion_inventory import RETAINED_KINDS
 from .source_classification import (
@@ -142,38 +143,9 @@ def continues_question(previous: str, unit: str) -> Noul:
     )
 
 
-AFFECTIVE_QUESTIONS: dict[str, Score] = {
-    "valence": Score(
-        "How does the user feel in this source, from negative to positive?",
-        (
-            "very negative: frustration, anger, distress",
-            "somewhat negative",
-            "neutral or purely technical",
-            "somewhat positive",
-            "very positive: delight, gratitude, relief",
-        ),
-    ),
-    "arousal": Score(
-        "How urgent or intense is this source?",
-        (
-            "calm, routine",
-            "mild",
-            "moderate",
-            "pressing",
-            "urgent: an outage, a deadline, a blocking failure",
-        ),
-    ),
-    "complexity": Score(
-        "How much reasoning does this source involve?",
-        (
-            "trivial",
-            "simple",
-            "moderate",
-            "involved",
-            "highly complex, multi-part reasoning",
-        ),
-    ),
-}
+# The same three questions the router asks on its own; judged here once
+# per event so a judged capture makes no separate affective call.
+AFFECTIVE_QUESTIONS: dict[str, Score] = AFFECTIVE_SCORES
 
 
 @dataclass(frozen=True)
