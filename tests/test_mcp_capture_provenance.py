@@ -55,6 +55,12 @@ async def test_reserved_source_kinds_are_refused_at_the_tool_boundary(tmp_path: 
 
                 refused, text = await capture("meeting-notes")
                 assert not refused, text
-                assert json.loads(text)["event_committed"] is True
+                response = json.loads(text)
+                assert response["event_committed"] is True
+                # A capture that names no role is the model's own report, so it
+                # lands attributed to the assistant rather than as a user claim.
+                store = service._dispatcher.engine.store
+                captured = store.get_episodic_event(response["event_id"])
+                assert captured is not None and captured.role == "assistant"
     finally:
         service.stop()

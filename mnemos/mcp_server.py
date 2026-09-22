@@ -7,8 +7,8 @@ MCP-compatible agent (Claude Code, Cursor, Windsurf, etc.) can
 discover and call natively.
 
 MCP Tools provided:
-  - mnemos_store:       Process and store a memory through the full pipeline
-  - mnemos_capture:     Accept evidence for service-owned processing
+  - mnemos_store:       Remember an explicit user assertion (role defaults to user)
+  - mnemos_capture:     Accept attributed evidence for processing (role defaults to assistant)
   - mnemos_retrieve:    Retrieve memories with affective + spreading activation
   - mnemos_feedback:    Record whether a retrieval was helpful, wrong, or missing
   - mnemos_consolidate: Trigger sleep consolidation (episodic → semantic)
@@ -456,6 +456,13 @@ def _register_service_tools(mcp: Any) -> None:
         scope_id: str = "",
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
+        """Remember one explicitly supplied fact.
+
+        This is the explicit remember path, so ``role`` defaults to ``user`` and
+        the content is stored as the user's own assertion. Use it only for
+        something the user asked to keep. Evidence you noticed on your own
+        belongs in ``mnemos_capture``.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_store")
         checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
         try:
@@ -492,14 +499,20 @@ def _register_service_tools(mcp: Any) -> None:
     @mcp.tool(annotations=durable_write)
     async def mnemos_capture(
         content: str,
-        role: str = "user",
+        role: str = "assistant",
         source_kind: str = "mcp_capture",
         source_ref: str | None = None,
         scope: str = "project",
         scope_id: str = "",
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Accept scoped evidence for later service-owned processing."""
+        """Accept scoped evidence for later service-owned processing.
+
+        ``role`` defaults to ``assistant``: evidence a model supplies on its own
+        is stored as what the assistant reported, not as the user's words, and
+        extraction can keep it only as attributed history. Pass ``role="user"``
+        only for text the user actually said.
+        """
         if source_kind.strip().casefold() in _RESERVED_SOURCE_KINDS:
             raise ValueError("source_kind names a host or service channel a tool cannot claim")
         service_context = _service_context_from_ctx(ctx, "mnemos_capture")

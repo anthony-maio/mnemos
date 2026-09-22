@@ -320,6 +320,9 @@ def test_memory_write_mirroring_deduplicates_repeated_callbacks(tmp_path: Path) 
     instance.shutdown()
     assert len(client.captures) == 1
     assert client.captures[0]["source_kind"] == "hermes_memory_provider"
+    # The agent wrote this memory itself, so the mirror is attributed to the
+    # assistant rather than presented as something the user said.
+    assert client.captures[0]["role"] == "assistant"
 
 
 def test_repeated_same_event_reuses_occurrence_and_changed_content_gets_new_identity(

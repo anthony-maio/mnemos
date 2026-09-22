@@ -138,9 +138,14 @@ prove that retained copies count as one original observation across every
 compression path. No live history or identity-format migration has been
 performed.
 
-Built-in memory `add` notifications can be mirrored. `remove` and `replace`
-notifications do not contain verified Mnemos fact IDs and versions, so the
-provider does not turn them into new captures or guess a mutation target.
+Built-in memory `add` notifications can be mirrored. The mirror is attributed
+to the assistant, since the agent wrote that memory itself; only
+`mnemos_remember` stores content as the user's own assertion. The role is part
+of the mirrored event's identity, so a memory write already mirrored under the
+older `user` attribution is mirrored once more, as a new event, after this
+change. `remove` and `replace` notifications do not contain verified Mnemos
+fact IDs and versions, so the provider does not turn them into new captures
+or guess a mutation target.
 `get_lifecycle_diagnostics()` exposes up to 32 content-free notifications for
 unresolved actions and capture failures. These diagnostics are in-memory only.
 `_flush()` reports pending capture failures; a repeated failed add can retry.

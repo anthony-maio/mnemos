@@ -48,7 +48,7 @@ The host-facing MCP contract uses standard stdio. The MCP process is a client of
 
 ## Durable operation responses
 
-Tools return JSON-encoded strings with schema_version. Store and capture acknowledge an event and processing job; processing_status and mnemos_job_status describe fact completion. A queued outbox write is not a committed event. Retrieval returns versioned scoped facts, sources, and measured score traces; baseline is the default.
+Tools return JSON-encoded strings with schema_version. Store and capture acknowledge an event and processing job; processing_status and mnemos_job_status describe fact completion. Store defaults its role to `user` and capture defaults to `assistant`, so evidence a model supplies on its own is attributed to the model unless the caller says otherwise. A queued outbox write is not a committed event. Retrieval returns versioned scoped facts, sources, and measured score traces; baseline is the default.
 
 `mnemos_retrieve.allowed_scopes` accepts a list such as `["project"]` or a
 comma-separated string such as `"project,global"`. An explicit empty list or

@@ -46,7 +46,7 @@ mnemos-cli antigravity codex --target codex-agents
 
 Review older instruction packs before applying them. Scoped requests use the registry's stable project identity; omit scope_id when the client resolves it. Do not substitute the repository basename.
 
-Use mnemos_retrieve to recall supported facts, mnemos_store for an explicit durable assertion, and mnemos_inspect to review evidence and revision history. Use mnemos_correct with the current expected_version to revise the same fact, and mnemos_forget with the current expected_version to suppress replay. mnemos_consolidate requests maintenance; mnemos_job_status distinguishes pending processing from completed facts.
+Use mnemos_retrieve to recall supported facts, mnemos_store for an explicit durable assertion the user made, mnemos_capture for evidence you noticed yourself (it is attributed to the assistant unless you pass a role), and mnemos_inspect to review evidence and revision history. Use mnemos_correct with the current expected_version to revise the same fact, and mnemos_forget with the current expected_version to suppress replay. mnemos_consolidate requests maintenance; mnemos_job_status distinguishes pending processing from completed facts.
 
 Retrieval updates access metadata, so its MCP annotation correctly reports a
 write effect. Codex supports server and per-tool approval policies, including

@@ -138,7 +138,8 @@ The agent will automatically discover these tools:
 
 | Tool | What it does |
 |------|-------------|
-| `mnemos_store` | Commit an explicit remember event and processing job; bypass automatic surprisal while enforcing scope and safety |
+| `mnemos_store` | Commit an explicit remember event and processing job; bypass automatic surprisal while enforcing scope and safety. The role defaults to `user`, so call it only for something the user asked to keep |
+| `mnemos_capture` | Accept attributed evidence for later processing. The role defaults to `assistant`; pass `role="user"` only for text the user actually said |
 | `mnemos_retrieve` | Retrieve scoped facts with source and score traces; baseline is default, biomimetic ranking is experimental; recall does not rewrite content |
 | `mnemos_consolidate` | Trigger sleep consolidation (episodic → semantic compression) |
 | `mnemos_forget` | Delete a specific memory |

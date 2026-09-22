@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `mnemos_capture` and the Hermes built-in memory-write mirror now default the event role to `assistant`, so evidence a model files on its own is stored as the model's report rather than as a user statement; `mnemos_store` keeps its `user` default for explicit remember requests. The role is part of the mirrored event's identity, so a Hermes memory write already mirrored under `user` is mirrored once more, as a new event, after upgrading.
+
 - Added an optional typed judgment layer. `judgment.provider` (`MNEMOS_JUDGMENT_PROVIDER`) selects TypeSafe's hosted Jev model or a local Ollama model to answer closed questions with probabilities instead of generating text: `extraction_mode = "judged"` classifies source spans and reconciles them against existing facts through the judge, `surprisal_mode = "novelty"` replaces next-turn prediction with one yes/no question, and the affective router and reconsolidation use the judge when one is configured. The default is `none`; nothing is sent anywhere unless chosen, the write firewall runs before every judge request, and a hosted judge is never used as a fallback. The held-out harness accepts `--judge` and records per-call tokens, latency, and cost. Measured in docs/validation/2026-09-22/typesafe-spike-v1 and -v2.
 
 - Compatible Hermes hosts can supply a separate durable evidence snapshot for ordinary turns and session end. An explicitly empty snapshot never falls back to model-facing text. The adapter validates native identity and summary classification before enqueueing; complete host compaction integration remains under validation.

@@ -423,11 +423,12 @@ The plugin uses the same configuration and persistent SQLite location as the man
 
 If you apply Claude host integration from the control plane, Mnemos also installs user-level agent files under `~/.claude/agents/` so these recall and curator workflows are available immediately in Claude Code.
 
-The managed service exposes eleven tools:
+The managed service exposes these tools:
 
 | Tool | Description |
 |------|-------------|
-| `mnemos_store` | Accept a sanitized, scoped memory event and return its durable event or processing-job status |
+| `mnemos_store` | Remember an explicit user assertion (role defaults to `user`) and return its durable event or processing-job status |
+| `mnemos_capture` | Accept attributed evidence for service-owned processing; role defaults to `assistant`, so a model's own report is never stored as the user's words |
 | `mnemos_retrieve` | Retrieve versioned facts from the scoped baseline candidate set (`current_scope`, `scope_id`, `allowed_scopes`) |
 | `mnemos_feedback` | Record a scoped helpful, not-helpful, or missed-memory outcome |
 | `mnemos_consolidate` | Trigger sleep consolidation: episodic buffer → semantic long-term memory |
