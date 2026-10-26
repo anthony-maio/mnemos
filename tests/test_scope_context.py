@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import subprocess
 
@@ -163,16 +164,27 @@ async def test_other_sessions_do_not_evict_prediction_history() -> None:
         llm, SimpleEmbeddingProvider(), InMemoryStore(), SurprisalConfig(history_window=2)
     )
     own = {"scope": "project", "scope_id": "a", "session_id": "s"}
-    gate.add_to_history(Interaction(role="user", content="OWN_HISTORY_CANARY", metadata=own))
+    started_at = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    gate.add_to_history(
+        Interaction(role="user", content="OWN_HISTORY_CANARY", metadata=own, timestamp=started_at)
+    )
     for i in range(5):
         gate.add_to_history(
             Interaction(
                 role="user",
                 content="OTHER_HISTORY_CANARY",
                 metadata={**own, "session_id": f"other-{i}"},
+                timestamp=started_at + timedelta(seconds=i + 1),
             )
         )
-    await gate.process(Interaction(role="user", content="What should we do next?", metadata=own))
+    await gate.process(
+        Interaction(
+            role="user",
+            content="What should we do next?",
+            metadata=own,
+            timestamp=started_at + timedelta(seconds=6),
+        )
+    )
     prompt = next(p for p in llm.calls if "predict what" in p.lower())
     assert "OWN_HISTORY_CANARY" in prompt
     assert "OTHER_HISTORY_CANARY" not in prompt

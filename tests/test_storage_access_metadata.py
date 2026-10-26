@@ -206,7 +206,7 @@ def test_mark_retrieved_many_rolls_back_side_insert_on_mid_operation_failure(
         store._conn.set_authorizer(deny_access_update)
         with pytest.raises(sqlite3.DatabaseError):
             store.mark_retrieved_many(["fact"], retrieved_at=STAMP)
-        store._conn.set_authorizer(None)
+        store._conn.set_authorizer(lambda *args: sqlite3.SQLITE_OK)
         assert (
             store._conn.execute(
                 "SELECT 1 FROM memory_chunk_access WHERE chunk_id='fact'"
@@ -273,7 +273,7 @@ def test_failed_nested_access_update_preserves_outer_transaction(tmp_path: Path)
         store._conn.set_authorizer(deny_access_update)
         with pytest.raises(sqlite3.DatabaseError):
             store.mark_retrieved_many(["fact"], retrieved_at=STAMP)
-        store._conn.set_authorizer(None)
+        store._conn.set_authorizer(lambda *args: sqlite3.SQLITE_OK)
         assert store._conn.execute(
             "SELECT value FROM mnemos_meta WHERE key='outer'"
         ).fetchone() == ("kept",)

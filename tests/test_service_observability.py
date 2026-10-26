@@ -361,7 +361,9 @@ async def test_autostarted_service_logs_real_retrieval_without_console(
             spawned = client._child
             await client.close()
             if spawned is not None:
-                for _ in range(100):
+                # The service allows 30 seconds to drain its owner thread.
+                shutdown_deadline = time.monotonic() + 35
+                while time.monotonic() < shutdown_deadline:
                     if spawned.poll() is not None:
                         break
                     await asyncio.sleep(0.05)
