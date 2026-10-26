@@ -1,6 +1,7 @@
 """The native lifecycle runner must not overlap a still-active model queue."""
 
 import json
+from importlib import import_module
 
 import pytest
 
@@ -9,6 +10,23 @@ from benchmarks.native_hosts.hermes_lifecycle_run import (
     require_prior_queue_terminal,
     verify_committed_inputs,
 )
+
+
+@pytest.mark.parametrize(
+    "module_name",
+    ["hermes_lifecycle_run", "hermes_lifecycle_observation_v1"]
+    + [f"hermes_lifecycle_run_v{version}" for version in range(2, 15)],
+)
+def test_native_process_probe_rejects_non_windows_before_loading_dll(monkeypatch, module_name):
+    runner = import_module(f"benchmarks.native_hosts.{module_name}")
+    monkeypatch.setattr(runner.sys, "platform", "linux")
+
+    def unexpected_dll(*args, **kwargs):
+        pytest.fail("A non-Windows process probe must not load Windows libraries")
+
+    monkeypatch.setattr(runner.ctypes, "WinDLL", unexpected_dll, raising=False)
+    with pytest.raises(OSError, match="requires Windows"):
+        runner.process_exists(1)
 
 
 @pytest.mark.parametrize("status", ["finished", "finished_with_incomplete", "failed"])

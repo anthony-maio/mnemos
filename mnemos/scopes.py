@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 from typing import Any, Literal, Mapping, Sequence
 from uuid import uuid4
 
@@ -88,6 +89,9 @@ def canonical_project_root(path: str | Path) -> str:
         }
     }
     git_env["LC_ALL"] = "C"
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = subprocess.CREATE_NO_WINDOW
     error = "Git did not return a valid common directory"
     for _ in range(2):
         try:
@@ -97,7 +101,7 @@ def canonical_project_root(path: str | Path) -> str:
                 text=True,
                 timeout=5,
                 env=git_env,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                creationflags=creationflags,
                 check=False,
             )
             if result.returncode == 0 and result.stdout.strip():

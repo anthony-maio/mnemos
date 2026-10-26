@@ -71,6 +71,9 @@ def installed_capabilities() -> dict[str, Any]:
     executable = shutil.which("codex")
     version = None
     if executable:
+        creationflags = 0
+        if sys.platform == "win32":
+            creationflags = subprocess.CREATE_NO_WINDOW
         try:
             completed = subprocess.run(
                 [executable, "--version"],
@@ -78,7 +81,7 @@ def installed_capabilities() -> dict[str, Any]:
                 text=True,
                 timeout=3,
                 check=False,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                creationflags=creationflags,
             )
             version = (completed.stdout or completed.stderr).strip() or None
         except (OSError, subprocess.TimeoutExpired):

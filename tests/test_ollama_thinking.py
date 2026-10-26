@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
-import tomllib
+
+try:
+    import tomllib
+except ImportError:  # Python 3.10
+    import tomli as tomllib
 from pathlib import Path
 from typing import Any
 

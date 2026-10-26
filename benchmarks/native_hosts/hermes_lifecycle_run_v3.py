@@ -61,6 +61,8 @@ def api(route: str, payload: Any = None) -> Any:
 
 
 def process_exists(pid: int) -> bool:
+    if sys.platform != "win32":
+        raise OSError("This native Hermes lifecycle process probe requires Windows")
     kernel = ctypes.WinDLL("kernel32", use_last_error=True)
     kernel.OpenProcess.restype = ctypes.c_void_p
     kernel.OpenProcess.argtypes = (ctypes.c_ulong, ctypes.c_int, ctypes.c_ulong)

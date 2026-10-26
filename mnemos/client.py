@@ -268,7 +268,7 @@ class MnemosClient:
             "stderr": subprocess.DEVNULL,
             "close_fds": True,
         }
-        if os.name == "nt":
+        if sys.platform == "win32":
             kwargs["creationflags"] = subprocess.CREATE_NO_WINDOW
         else:
             kwargs["start_new_session"] = True

@@ -134,7 +134,7 @@ def _windows_dacl_matches(path: Path, desired: Any, advapi32: Any, kernel32: Any
 
 def _protect_private_path(path: Path) -> None:
     """Apply owner-only ACLs where POSIX mode bits are not sufficient."""
-    if os.name != "nt":
+    if sys.platform != "win32":
         try:
             os.chmod(path, 0o700 if path.is_dir() else 0o600)
         except OSError as exc:
