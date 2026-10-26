@@ -1,0 +1,597 @@
+{
+  "schema_version": 1,
+  "review_date": "2026-10-26",
+  "activity": "read_only_analysis_and_exact_source_recovery",
+  "new_provider_calls": 0,
+  "thresholds_changed": false,
+  "frozen_results_changed": false,
+  "base_commit": "b44ee7626ccbb32d3ba4358b65ad10b9f353d977",
+  "recovered_source": {
+    "bundle": "mnemos-heldout-abce821-v7-judged-typesafe-full",
+    "declared_commit": "abce821116bf615d0a0f6a67ded772ae0114109d",
+    "commit_present_in_available_refs": false,
+    "commit_present_in_lfs_hash_map": false,
+    "source_zip_sha256": "4ec4a93b3012589410210d14ec601d2023076a7e280f651eb365556a4cea7dd0",
+    "preparation_sha256": "90a989cde0b73b828cad0ad6d8bc4214316cdb2fabf7b4f2beb942564f7a7dd5",
+    "files": {
+      "mnemos/extraction/judged_classification.py": "4e1a5152edc9793a7940a1b3d1e7a39a7df45a7ee5799c9bd0de99cf43b30f3c",
+      "benchmarks/local_memory/colab_heldout.py": "ea383d282ff7b919269f7df90afc50ccf31f0b6f52df76e0b5ac5053d003bd96",
+      "benchmarks/local_memory/heldout_run.py": "bde810ff27393be4de54052085dba728ea4a1d8ce0c7cd00a3e02a76c1874a98",
+      "benchmarks/local_memory/typesafe_spike.py": "5780470b7174d19814eaec4455a8563082586cd989e1975fcd86f8e69ea0048a"
+    },
+    "all_recovered_files_match_preparation": true
+  },
+  "corpus": {
+    "declared_version": "local-memory-heldout-v6",
+    "sha256": "b129004eacc1364dce6b8ab069a0b2b9cdf5604543aae003b8ea9f1e42a74fec",
+    "development_sessions": 20,
+    "heldout_sessions": 200,
+    "repetitions": 3,
+    "source": "synthetic_seed",
+    "human_acceptance": "not_run",
+    "latest_run_reused_previously_inspected_corpus": true
+  },
+  "measurement_limits": [
+    "supported_precision is an exact text, scope and evidence proxy; semantic factual precision is not measured",
+    "quality_complete excludes incomplete observations; lifecycle counts include all attempts",
+    "latest judged run is full-only; no simultaneous new baseline or ablation matrix",
+    "retrieval view excludes baseline passthrough captures but includes extracted full-profile memories"
+  ],
+  "runs": [
+    {
+      "bundle": "mnemos-heldout-3b3d19d-v7-judged-typesafe",
+      "profile": "baseline",
+      "source_commit": "3b3d19d9aa49944bfa65d4a4c50a7be86f3aef93",
+      "source_code_sha256": "8b8e800a6d44d965c789546be53b3caac88b687aaaeebcda0c418b015fb108d5",
+      "manifest_sha256": "d16568480e28b06a71a4c00a3bf6682d1577f3db508d8d2ea31336b746e58ee8",
+      "raw_outputs_sha256": "d496f22433db24d19a97659c876ccd5021f50ad47d628282951298f1dfb680fe",
+      "attempted": 600,
+      "complete": 600,
+      "partial": 0,
+      "quality_complete": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 3900,
+          "estimate": 0.2846153846153846
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 240,
+          "denominator": 660,
+          "estimate": 0.36363636363636365
+        }
+      },
+      "quality_all_attempts_diagnostic": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 3900,
+          "estimate": 0.2846153846153846
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 240,
+          "denominator": 660,
+          "estimate": 0.36363636363636365
+        }
+      },
+      "lifecycle_all_attempts": {
+        "correct": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "error_counts": [],
+      "model": {
+        "name": "qwen3.5:9b",
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+      },
+      "embedding": {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "judge": {
+        "digest": "4555ad0094bd894a71f90337ca50dd5bbb7a91dc8dbc54ff542865e936485367",
+        "identity_kind": "vendor_version_string",
+        "model": "jev-1.13.0",
+        "name": "jev-1.13.0",
+        "note": "hosted model; digest is of the reported version string, not of weights",
+        "requested": "jev-latest"
+      },
+      "options": {
+        "extraction_mode": "judged",
+        "judge_model": "jev-latest",
+        "judge_provider": "typesafe",
+        "max_context_tokens": 1200,
+        "max_tokens": 8192,
+        "surprisal_mode": "novelty",
+        "temperature": 0.0,
+        "think": false,
+        "timeout_seconds": 180.0,
+        "top_k": 5,
+        "typesafe_price_usd_per_million_input_tokens": 0.042
+      },
+      "hardware": "NVIDIA A100-SXM4-80GB"
+    },
+    {
+      "bundle": "mnemos-heldout-3b3d19d-v7-judged-typesafe",
+      "profile": "full",
+      "source_commit": "3b3d19d9aa49944bfa65d4a4c50a7be86f3aef93",
+      "source_code_sha256": "8b8e800a6d44d965c789546be53b3caac88b687aaaeebcda0c418b015fb108d5",
+      "manifest_sha256": "e83bcef153ce20aaa133d61a0efd78541171cffe4f5fc447326a2dea1bae9f24",
+      "raw_outputs_sha256": "676111e7d994ab138f8ad200c1b66864a94dd7767fee10bf7a6e899bf482361f",
+      "attempted": 600,
+      "complete": 540,
+      "partial": 60,
+      "quality_complete": {
+        "supported_precision": {
+          "numerator": 990,
+          "denominator": 1792,
+          "estimate": 0.5524553571428571
+        },
+        "critical_retention": {
+          "numerator": 990,
+          "denominator": 1890,
+          "estimate": 0.5238095238095238
+        },
+        "answerable_hits": {
+          "numerator": 201,
+          "denominator": 540,
+          "estimate": 0.37222222222222223
+        },
+        "no_answer_correct": {
+          "numerator": 201,
+          "denominator": 600,
+          "estimate": 0.335
+        }
+      },
+      "quality_all_attempts_diagnostic": {
+        "supported_precision": {
+          "numerator": 1050,
+          "denominator": 1942,
+          "estimate": 0.5406797116374872
+        },
+        "critical_retention": {
+          "numerator": 1050,
+          "denominator": 2100,
+          "estimate": 0.5
+        },
+        "answerable_hits": {
+          "numerator": 201,
+          "denominator": 600,
+          "estimate": 0.335
+        },
+        "no_answer_correct": {
+          "numerator": 231,
+          "denominator": 660,
+          "estimate": 0.35
+        }
+      },
+      "lifecycle_all_attempts": {
+        "correct": {
+          "attempted": 60,
+          "committed": 0,
+          "mapping_invalid": 0,
+          "missing_target": 60,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "error_counts": [
+        {
+          "operation": "correct",
+          "error": "missing_accepted_target",
+          "count": 60
+        }
+      ],
+      "model": {
+        "name": "qwen3.5:9b",
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+      },
+      "embedding": {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "judge": {
+        "digest": "4555ad0094bd894a71f90337ca50dd5bbb7a91dc8dbc54ff542865e936485367",
+        "identity_kind": "vendor_version_string",
+        "model": "jev-1.13.0",
+        "name": "jev-1.13.0",
+        "note": "hosted model; digest is of the reported version string, not of weights",
+        "requested": "jev-latest"
+      },
+      "options": {
+        "extraction_mode": "judged",
+        "judge_model": "jev-latest",
+        "judge_provider": "typesafe",
+        "max_context_tokens": 1200,
+        "max_tokens": 8192,
+        "surprisal_mode": "novelty",
+        "temperature": 0.0,
+        "think": false,
+        "timeout_seconds": 180.0,
+        "top_k": 5,
+        "typesafe_price_usd_per_million_input_tokens": 0.042
+      },
+      "hardware": "NVIDIA A100-SXM4-80GB",
+      "paired_no_answer_complete_diagnostic": {
+        "cluster_count": 180,
+        "confidence": 0.95,
+        "eligible_count": 540,
+        "estimate": -0.041666666666666664,
+        "excluded_count": 60,
+        "excluded_reasons": {
+          "incomplete_execution": 60,
+          "missing_components": 0,
+          "no_applicable_observations": 0
+        },
+        "lower": -0.07314814814814814,
+        "method": "paired_bootstrap",
+        "sample_count": 540,
+        "total_count": 600,
+        "upper": -0.01574074074074074
+      }
+    },
+    {
+      "bundle": "mnemos-heldout-3b3d19d-v7-source-bound",
+      "profile": "baseline",
+      "source_commit": "3b3d19d9aa49944bfa65d4a4c50a7be86f3aef93",
+      "source_code_sha256": "8b8e800a6d44d965c789546be53b3caac88b687aaaeebcda0c418b015fb108d5",
+      "manifest_sha256": "5197655f77684f8a411ce91fc225a3c3218dfc3cf128657557543923614e3142",
+      "raw_outputs_sha256": "de306f772600d7480ff6e427e861df1c15986dcd10199d927b6b74e97eec1cc6",
+      "attempted": 600,
+      "complete": 600,
+      "partial": 0,
+      "quality_complete": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 3900,
+          "estimate": 0.2846153846153846
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 240,
+          "denominator": 660,
+          "estimate": 0.36363636363636365
+        }
+      },
+      "quality_all_attempts_diagnostic": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 3900,
+          "estimate": 0.2846153846153846
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 240,
+          "denominator": 660,
+          "estimate": 0.36363636363636365
+        }
+      },
+      "lifecycle_all_attempts": {
+        "correct": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "error_counts": [],
+      "model": {
+        "name": "qwen3.5:9b",
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+      },
+      "embedding": {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "judge": null,
+      "options": {
+        "extraction_mode": "source_bound",
+        "max_context_tokens": 1200,
+        "max_tokens": 8192,
+        "temperature": 0.0,
+        "think": false,
+        "timeout_seconds": 180.0,
+        "top_k": 5
+      },
+      "hardware": "NVIDIA A100-SXM4-80GB"
+    },
+    {
+      "bundle": "mnemos-heldout-3b3d19d-v7-source-bound",
+      "profile": "full",
+      "source_commit": "3b3d19d9aa49944bfa65d4a4c50a7be86f3aef93",
+      "source_code_sha256": "8b8e800a6d44d965c789546be53b3caac88b687aaaeebcda0c418b015fb108d5",
+      "manifest_sha256": "0ac5df196afba69275390a4112fef39bdbf93d00ad5a576d45487bb607190ef6",
+      "raw_outputs_sha256": "6201fa34dd0a91eb96a43974b451057db4c875feb3fd5294f5130a4d4eb52542",
+      "attempted": 600,
+      "complete": 531,
+      "partial": 69,
+      "quality_complete": {
+        "supported_precision": {
+          "numerator": 1033,
+          "denominator": 2312,
+          "estimate": 0.4467993079584775
+        },
+        "critical_retention": {
+          "numerator": 1033,
+          "denominator": 1841,
+          "estimate": 0.561108093427485
+        },
+        "answerable_hits": {
+          "numerator": 230,
+          "denominator": 531,
+          "estimate": 0.4331450094161959
+        },
+        "no_answer_correct": {
+          "numerator": 135,
+          "denominator": 531,
+          "estimate": 0.2542372881355932
+        }
+      },
+      "quality_all_attempts_diagnostic": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 2567,
+          "estimate": 0.4324113751460849
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 150,
+          "denominator": 660,
+          "estimate": 0.22727272727272727
+        }
+      },
+      "lifecycle_all_attempts": {
+        "correct": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 0,
+          "mapping_invalid": 0,
+          "missing_target": 60,
+          "rejected": 0
+        }
+      },
+      "error_counts": [
+        {
+          "operation": "forget",
+          "error": "missing_accepted_target",
+          "count": 60
+        },
+        {
+          "operation": "maintenance",
+          "error": "jobs_not_completed",
+          "count": 10
+        }
+      ],
+      "model": {
+        "name": "qwen3.5:9b",
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+      },
+      "embedding": {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "judge": null,
+      "options": {
+        "extraction_mode": "source_bound",
+        "max_context_tokens": 1200,
+        "max_tokens": 8192,
+        "temperature": 0.0,
+        "think": false,
+        "timeout_seconds": 180.0,
+        "top_k": 5
+      },
+      "hardware": "NVIDIA A100-SXM4-80GB",
+      "paired_no_answer_complete_diagnostic": {
+        "cluster_count": 180,
+        "confidence": 0.95,
+        "eligible_count": 531,
+        "estimate": -0.0847457627118644,
+        "excluded_count": 69,
+        "excluded_reasons": {
+          "incomplete_execution": 69,
+          "missing_components": 0,
+          "no_applicable_observations": 0
+        },
+        "lower": -0.12921348314606743,
+        "method": "paired_bootstrap",
+        "sample_count": 531,
+        "total_count": 600,
+        "upper": -0.045283018867924525
+      }
+    },
+    {
+      "bundle": "mnemos-heldout-abce821-v7-judged-typesafe-full",
+      "profile": "full",
+      "source_commit": "abce821116bf615d0a0f6a67ded772ae0114109d",
+      "source_code_sha256": "54f22df47241d11460a5f26f0e2c58eb98761e4edfe1a015e286daf2fe1856da",
+      "manifest_sha256": "d765ee5405a7a0f8e5228272130208a3a2296e79a32aa844318a45f3c2ced8e7",
+      "raw_outputs_sha256": "0ce24680b798448a43a1a7dbcf3988333ef647bdb05c26bae56dbaec12873ae9",
+      "attempted": 600,
+      "complete": 600,
+      "partial": 0,
+      "quality_complete": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 2150,
+          "estimate": 0.5162790697674419
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 150,
+          "denominator": 660,
+          "estimate": 0.22727272727272727
+        }
+      },
+      "quality_all_attempts_diagnostic": {
+        "supported_precision": {
+          "numerator": 1110,
+          "denominator": 2150,
+          "estimate": 0.5162790697674419
+        },
+        "critical_retention": {
+          "numerator": 1110,
+          "denominator": 2100,
+          "estimate": 0.5285714285714286
+        },
+        "answerable_hits": {
+          "numerator": 231,
+          "denominator": 600,
+          "estimate": 0.385
+        },
+        "no_answer_correct": {
+          "numerator": 150,
+          "denominator": 660,
+          "estimate": 0.22727272727272727
+        }
+      },
+      "lifecycle_all_attempts": {
+        "correct": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "error_counts": [],
+      "model": {
+        "name": "qwen3.5:9b",
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+      },
+      "embedding": {
+        "name": "nomic-embed-text:latest",
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "judge": {
+        "digest": "4555ad0094bd894a71f90337ca50dd5bbb7a91dc8dbc54ff542865e936485367",
+        "identity_kind": "vendor_version_string",
+        "model": "jev-1.13.0",
+        "name": "jev-1.13.0",
+        "note": "hosted model; digest is of the reported version string, not of weights",
+        "requested": "jev-latest"
+      },
+      "options": {
+        "extraction_mode": "judged",
+        "judge_model": "jev-latest",
+        "judge_provider": "typesafe",
+        "max_context_tokens": 1200,
+        "max_tokens": 8192,
+        "surprisal_mode": "novelty",
+        "temperature": 0.0,
+        "think": false,
+        "timeout_seconds": 180.0,
+        "top_k": 5,
+        "typesafe_price_usd_per_million_input_tokens": 0.042
+      },
+      "hardware": "NVIDIA A100-SXM4-40GB"
+    }
+  ],
+  "answer_span_diagnostic": {
+    "run": "mnemos-heldout-abce821-v7-judged-typesafe-full",
+    "method": "literal substring presence in returned texts; no labels, scores, gates or thresholds changed",
+    "semantic_accuracy_measured": false,
+    "answerable_retrievals": 600,
+    "exact_gold_present": 231,
+    "entire_literal_gold_within_returned_text": 586,
+    "additional_prefix_or_suffix_matches": 355
+  },
+  "original_ordinary_no_answer_diagnostic": {
+    "matched_complete_observations": 540,
+    "method": "compare empty versus nonempty returned facts for query ids ending in unknown",
+    "regressions": 22,
+    "regressions_returning_transient_check_status": 15,
+    "improvements": 0
+  }
+}

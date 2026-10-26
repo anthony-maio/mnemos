@@ -7,6 +7,7 @@ from mnemos.contracts import CaptureEvent
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeRegistry
+from mnemos.types import Interaction
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import UnavailableLLMProvider
 from mnemos.utils.storage import SQLiteStore
@@ -41,6 +42,23 @@ def capture(memory, context, content, *, event_id="source", explicit=False):
         ),
         explicit=explicit,
     )
+
+
+@pytest.mark.asyncio
+async def test_length_policy_accepts_existing_facts_without_changing_its_rule(tmp_path):
+    from benchmarks.local_memory.encoding_comparator import LengthNoiseService
+
+    memory, _ = make_service(tmp_path, LengthNoiseService)
+    interaction = Interaction(
+        role="user", content="A sufficiently long source for the frozen encoding policy."
+    )
+    try:
+        without_facts = await memory._automatic_encoding_gate(interaction)
+        with_facts = await memory._automatic_encoding_gate(interaction, ["An existing fact."])
+        assert with_facts == without_facts
+        assert with_facts[0] is None
+    finally:
+        memory.engine.store.close()
 
 
 @pytest.mark.asyncio

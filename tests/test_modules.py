@@ -5,7 +5,7 @@ Uses MockLLMProvider and SimpleEmbeddingProvider for fully offline testing.
 """
 
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -694,8 +694,15 @@ class TestSleepDaemon:
             ),
         )
 
-        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
-        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
+        first_seen = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        for offset in (0, 1):
+            daemon.add_episode(
+                Interaction(
+                    role="user",
+                    content="Team uses uv for Python tooling.",
+                    timestamp=first_seen + timedelta(seconds=offset),
+                )
+            )
         daemon.add_episode(make_interaction("We reviewed release notes today."))
 
         result = await daemon.consolidate(llm, embedder)

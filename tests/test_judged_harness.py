@@ -84,20 +84,20 @@ def test_judge_calls_count_as_cognition_and_carry_cost() -> None:
 
 def test_hosted_model_identity_is_a_labeled_version_digest(monkeypatch: pytest.MonkeyPatch) -> None:
     class Response:
-        def __enter__(self) -> "Response":
-            return self
-
-        def __exit__(self, *args: object) -> None:
+        def raise_for_status(self) -> None:
             return None
 
-        def read(self) -> bytes:
-            return json.dumps(
-                {"model": "jev-1.13.0", "answers": {"ready": {"type": "noul", "noul": 0.9}}}
-            ).encode("utf-8")
+        def json(self) -> dict[str, Any]:
+            return {"model": "jev-1.13.0", "answers": {"ready": {"type": "noul", "noul": 0.9}}}
 
-    monkeypatch.setattr(
-        "benchmarks.local_memory.heldout_run.urlopen", lambda request, timeout: Response()
-    )
+    def post(url: str, **kwargs: Any) -> Response:
+        assert url == "https://api.typesafe.ai/v1/systemone"
+        assert kwargs["headers"]["Authorization"] == "Bearer k"
+        assert kwargs["json"]["model"] == "jev-latest"
+        assert kwargs["timeout"] == 30.0
+        return Response()
+
+    monkeypatch.setattr("benchmarks.local_memory.heldout_run.httpx.post", post)
     record = _live_typesafe_model("https://api.typesafe.ai/v1", "k", "jev-latest")
     assert record["name"] == "jev-1.13.0" and record["requested"] == "jev-latest"
     assert record["identity_kind"] == "vendor_version_string"

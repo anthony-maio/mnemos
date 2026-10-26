@@ -506,6 +506,10 @@ def build_embedder_from_env(
         and resolved.project_config_path is None
     ):
         settings.embedding.provider = default_provider
+        # This compatibility override runs after settings have inferred a model.
+        # Re-resolve that default for the new provider, keeping an explicit model.
+        settings.embedding.model = resolve_env_value("MNEMOS_EMBEDDING_MODEL", env=env)
+        settings = AppSettings.model_validate(settings.model_dump(mode="python"))
     return build_embedder_from_settings(settings)
 
 

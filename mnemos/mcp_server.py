@@ -35,7 +35,7 @@ Configuration via environment variables:
   MNEMOS_CONFIG_PATH    — Canonical global config path (optional; host configs should prefer this)
   MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", "openai", "openclaw", or "openrouter"
   MNEMOS_LLM_MODEL      — Model name for LLM provider (default: "llama3")
-  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", "openai", "openclaw", or "openrouter"
+  MNEMOS_EMBEDDING_PROVIDER -- "fastembed" (default), "simple", "ollama", "openai", "openclaw", or "openrouter"
   MNEMOS_EMBEDDING_MODEL — Embedding model name (provider-specific default if unset)
   MNEMOS_EMBEDDING_DIM  — Embedding dimension for simple provider (default: 384)
   MNEMOS_OLLAMA_URL     — Ollama API base URL (default: "http://localhost:11434")
@@ -244,7 +244,7 @@ def _build_store() -> MemoryStore:
 
 def _build_embedder() -> EmbeddingProvider:
     """Build embedding provider from environment variables."""
-    return build_embedder_from_env(default_provider="simple")
+    return build_embedder_from_env()
 
 
 def _build_config() -> MnemosConfig:

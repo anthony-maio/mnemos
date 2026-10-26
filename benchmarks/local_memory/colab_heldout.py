@@ -243,27 +243,65 @@ def _run_locked(
     return status
 
 
+def _profile_metrics(report: dict[str, Any]) -> dict[str, Any]:
+    """Summarize complete extraction observations and all correction attempts."""
+    observations = report.get("raw_outputs", [])
+    complete = [row for row in observations if row.get("execution_status") == "complete"]
+    precision = [
+        value
+        for row in complete
+        for value in row.get("supported_precision", [])
+        if isinstance(value, bool)
+    ]
+    correction_attempts = correction_commits = 0
+    for row in observations:
+        lifecycle = row.get("raw_output", {}).get("lifecycle_summary", {})
+        correction = lifecycle.get("correct", {})
+        correction_attempts += int(correction.get("attempted", 0))
+        correction_commits += int(correction.get("committed", 0))
+    return {
+        "supported_precision": {
+            "estimate": sum(precision) / len(precision) if precision else None,
+            "sample_count": len(precision),
+            "complete_observations": len(complete),
+            "excluded_incomplete_observations": len(observations) - len(complete),
+        },
+        "correction_commit_rate": {
+            "estimate": correction_commits / correction_attempts if correction_attempts else None,
+            "committed": correction_commits,
+            "attempted": correction_attempts,
+        },
+    }
+
+
 def aggregate(*, mirror: Path, repetitions: int) -> dict[str, Any]:
-    """Pair every finished profile with the baseline, as run_heldout does in one process."""
+    """Summarize present profiles and pair them when a baseline is available."""
     reports = mirror / "reports"
     baseline_path = reports / "baseline.json"
-    baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+    baseline = (
+        json.loads(baseline_path.read_text(encoding="utf-8")) if baseline_path.is_file() else None
+    )
     config = ExperimentConfig(repetitions=repetitions)
     comparisons: dict[str, Any] = {}
-    statuses = {"baseline": baseline.get("status")}
+    statuses: dict[str, Any] = {}
+    profile_metrics: dict[str, Any] = {}
     for name in PROFILE_NAMES:
         path = reports / f"{name}.json"
-        if name == "baseline" or not path.is_file():
+        if not path.is_file():
             continue
         report = json.loads(path.read_text(encoding="utf-8"))
         statuses[name] = report.get("status")
-        comparisons[name] = compare_observation_metrics(baseline, report, config=config)
-    baseline["paired_comparisons"] = comparisons
-    ArtifactRecorder(baseline_path).write(baseline)
+        profile_metrics[name] = _profile_metrics(report)
+        if baseline is not None and name != "baseline":
+            comparisons[name] = compare_observation_metrics(baseline, report, config=config)
+    if baseline is not None:
+        baseline["paired_comparisons"] = comparisons
+        ArtifactRecorder(baseline_path).write(baseline)
     summary = {
         "written_at": _now(),
         "statuses": statuses,
         "missing_profiles": [name for name in PROFILE_NAMES if name not in statuses],
+        "profile_metrics": profile_metrics,
         "paired_comparisons": comparisons,
     }
     _write_json(mirror / "summary.json", summary)

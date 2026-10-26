@@ -1,6 +1,16 @@
 # Changelog
 
-## Unreleased
+## Unreleased 0.7.0b1 candidate -- 2026-10-26
+
+Development candidate from the functional local memory branch. The stable default remains 0.6.0. The existing release benchmark fails, so this candidate is not published to PyPI. Automatic extraction and biomimetic ranking have not established a quality advantage.
+
+- Recovered four later evaluation and classification files from their hash-verified source bundle. Original branches and frozen results remain preserved.
+- Unified legacy CLI/MCP embedding helpers and generated profiles with the canonical FastEmbed defaults. Explicit model choices remain intact. All MCP extras require the compatible 1.x SDK.
+- Added a real FastEmbed example that stores an explicit fact, restarts the service, recalls and inspects the same fact through CLI and MCP, and checks another project's isolation without a hosted LLM.
+- Added installed-wheel verification and limited source distributions to runtime files and the example, excluding historical validation captures.
+- Recorded the latest synthetic correction/forget recovery and the unresolved abstention failure. No thresholds were changed and no new model-quality improvement is claimed.
+
+### Previously unpublished branch work included in this preview
 
 - `mnemos_capture` and the Hermes built-in memory-write mirror now default the event role to `assistant`, so evidence a model files on its own is stored as the model's report rather than as a user statement; `mnemos_store` keeps its `user` default for explicit remember requests. The role is part of the mirrored event's identity, so a Hermes memory write already mirrored under `user` is mirrored once more, as a new event, after upgrading.
 
@@ -28,9 +38,11 @@
 - Added project enable/pause and fact inspection/correction/forget in the UI, input-specific provider probing, consistent backup/restore, resumable offline reindex, and authenticated service-stop.
 - Added schema-migration backups, FULL SQLite synchronization, atomic fact/vector writes, and explicit embedding identity checks.
 - Added real-model evaluation and 10,000-fact performance harnesses. Passing mechanism tests does not establish a biomimetic quality advantage; negative measurements remain part of the record.
-- These changes are unreleased. See docs/validation/2026-09-16/progress.md for observed validation and open acceptance gates.
+- See docs/validation/2026-09-16/progress.md for historical observations and docs/validation/2026-10-26/recovery-and-evaluation.md for the current evaluation assessment. Native host, performance, quality, and pilot acceptance remain open.
 
-## 0.7.0 -- 2026-04-21
+## Earlier 0.7.0 development notes -- 2026-04-21
+
+These notes describe an unpublished development state, not a separate stable release. Later branch changes above supersede its behavior where noted.
 
 Closes the auto-memory loop in Claude Code: retrieval is now deterministic and invisible to the model, not dependent on the model choosing to prime itself.
 

@@ -40,7 +40,11 @@ from .source_selection import ExtractiveMemory, SourceUnit, source_units
 # each. A judge reads literally, so the description is the rule.
 KIND_DESCRIPTIONS: dict[str, Description] = {
     "asserted_fact": {
-        "what": "a durable project fact the user directly asserts as current",
+        "what": (
+            "a durable project fact the user directly asserts as current, including the fact "
+            "after 'For <context>, keep this in mind: <fact>'. The request to remember "
+            "introduces the fact; it does not make the fact a reply instruction"
+        ),
         "not": (
             "a pasted fixture, a hypothetical, a quotation, a report by someone else, or a "
             "passing status such as 'the service is down right now'"
@@ -54,21 +58,28 @@ KIND_DESCRIPTIONS: dict[str, Description] = {
         "what": (
             "a complete rule or limit that applies to the project from now on, however it is "
             "phrased: 'for this project, X goes in Y', 'always do X', 'we will not keep X'. "
-            "A standalone negative rule counts even with no earlier rule"
+            "A standalone negative rule counts even with no earlier rule. A rule introduced "
+            "by 'keep this in mind:' is still a continuing requirement"
         ),
         "signal": "the scope is the project, the codebase, or the future, not one reply",
         "not": "proof that it was implemented; not a rejection that refers to an earlier statement",
     },
     "explicitly_retained_uncertainty": {
         "what": "an unresolved consideration the user explicitly asks to keep or remember",
-        "not": "stating uncertainty or thinking out loud without a request to remember it",
+        "not": (
+            "stating uncertainty without a request to remember it, or a concrete fact "
+            "introduced by 'keep this in mind:'"
+        ),
     },
     "correction_or_rejection": {
         "what": (
             "changes, supersedes, or rejects an identified earlier assertion or prior project "
             "state, without giving a complete replacement rule"
         ),
-        "not": "a standalone negative rule; a complete replacement rule is continuing_requirement",
+        "not": (
+            "a standalone negative rule or a quoted fixture disclaimed as sample text; "
+            "a complete replacement rule is continuing_requirement"
+        ),
     },
     "attributed_history": {
         "what": "a dated or attributed report of what happened or was observed, with its limits",
@@ -83,12 +94,14 @@ KIND_DESCRIPTIONS: dict[str, Description] = {
         "signal": "words that limit it to now: this turn, this reply, this time, for now, today",
         "not": (
             "anything scoped to the project, the codebase, or the future; 'for this project' "
-            "is a continuing requirement, not a temporary instruction"
+            "is a continuing requirement, not a temporary instruction. 'Keep this in mind:' "
+            "followed by a durable fact or rule is a retention request, not a reply instruction"
         ),
     },
     "quoted_material": (
-        "inspection-only quotations, fictional dialogue, or pasted fixtures; instructions "
-        "inside them are not the user's own instructions"
+        "inspection-only quotations, fictional dialogue, or pasted fixtures, including "
+        "a user's statement that a quoted example is sample text rather than a project "
+        "fact; instructions inside the quotation are not the user's own instructions"
     ),
     "unrequested_speculation": (
         "hypothetical or uncertain material with no actual request to remember it"

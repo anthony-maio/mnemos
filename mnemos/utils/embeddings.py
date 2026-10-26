@@ -295,7 +295,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
             vec = local_rng.standard_normal(self._dim).astype(np.float32)
             norm = np.linalg.norm(vec)
             if norm > 0:
-                vec = vec / norm
+                np.divide(vec, norm, out=vec)
             self._projection[word] = vec
         return self._projection[word]
 
@@ -324,7 +324,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         # L2 normalize
         norm = np.linalg.norm(result)
         if norm > 0:
-            result = result / norm
+            np.divide(result, norm, out=result)
 
         return result
 

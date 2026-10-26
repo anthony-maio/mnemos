@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="docs/assets/readme-hero.svg" alt="Mnemos - reliable scoped memory for coding agents" width="100%">
+  <img src="docs/assets/readme-hero.svg" alt="Mnemos - scoped memory for coding agents" width="100%">
 </p>
 
 <h1 align="center">mnemos</h1>
 
 <p align="center">
   <strong>Local-first memory for coding agents that keeps project, workspace, and global context separate.</strong><br />
-  Mnemos plugs into Claude Code and other MCP hosts, rewrites stale facts instead of appending forever, and compacts raw agent history into durable memory.
+  Store an explicit project fact, restart the local service, and inspect the same record through the CLI or MCP. Automatic enrichment remains experimental.
 </p>
 
 <p align="center">
@@ -28,10 +28,10 @@
 
 Mnemos is a local-first memory layer for coding agents. The v1 target is straightforward:
 
-- safe scoped memory for solo agent workflows
+- scoped memory for solo agent workflows
 - persistent local storage that survives restarts
 - MCP compatibility for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup
-- biomimetic memory modules under the hood so retrieval stays compact and adaptive instead of append-only
+- optional biomimetic memory modules for research comparisons
 
 This is not a hosted memory platform, team memory system, or remote sync product in v1.
 
@@ -39,11 +39,17 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ## Current release posture
 
-Mnemos is an active public beta for local evaluation by solo coding-agent workflows. The implementation now has a local service, scoped registry, durable jobs, and a SQLite-first path. The complete real-host, real-model, long-running acceptance gates remain open. Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
+Version `0.7.0b1` is an unpublished development candidate from the functional local memory branch. It includes a local service, scoped registry, durable jobs, and SQLite persistence. The October 26 release benchmark failed all six store/dataset comparisons, so this candidate is not published to PyPI. The complete real-host, retrieval-quality, performance, and long-running acceptance gates remain open. The default PyPI package remains `0.6.0` and does not contain this workflow.
+
+The latest recovered judged evaluation completed all 600 observations, including 60 corrections and 60 forget operations. Exact answerable recall was 38.5%; no-answer accuracy was 22.73%. The baseline's no-answer accuracy was 36.36%. The arms expose different candidate facts, so this comparison does not isolate ranking. It does not establish a benefit from the biomimetic modules. Read [the evaluation and recovery report](docs/validation/2026-10-26/recovery-and-evaluation.md) for the frozen scores, exclusions, and a separately labeled answer-span diagnostic.
+
+Start with the explicit-memory example below. It uses real local embeddings, disables experimental enrichment, and needs no hosted LLM. Native Hermes acceptance remains open; loading its Python provider entrypoint is only an installation check. The longer-term integration should keep this explicit memory capability optional and independently useful.
+
+Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
 
 The intended setup path is:
 
-1. `pip install "mnemos-memory[mcp]"`
+1. Install the development checkout using the Quick Start below.
 2. `mnemos ui`
 3. Start on the **Starter SQLite** preset and review the local SQLite path
 4. Enable each project with a stable profile identity
@@ -73,8 +79,23 @@ Manual env-var setup is still supported for advanced users, but it is no longer 
 
 ## Quick Start
 
+Use Python 3.10 or newer and Git. Start in a fresh virtual environment. Clone the development branch without downloading historical LFS captures, then install the checkout:
+
 ```bash
-pip install "mnemos-memory[mcp]"
+git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false clone --depth 1 --branch fix/mnemos-delivery-20261026 https://github.com/anthony-maio/mnemos.git mnemos-preview
+python -m pip install "./mnemos-preview[mcp]"
+python mnemos-preview/examples/restart_recall.py --output restart-recall.json
+```
+
+The example creates two disposable Git repositories and an isolated config, scope registry, database, and service. It stores a synthetic project convention, waits for the durable job, stops the service, starts a new process, and recalls and inspects the same fact through both CLI and real MCP stdio. It also verifies that the second project sees no fact. It stops its service and removes its temporary state on exit.
+
+The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) records the tested commit and captured result. This is a development install, not a release recommendation.
+
+FastEmbed downloads `BAAI/bge-small-en-v1.5` on first use (about 100 MB). Subsequent embeddings run locally. This verifies explicit persistence and scope isolation; it does not measure retrieval quality, automatic extraction, or native host behavior.
+
+For a persistent setup, review the **Starter SQLite** profile and provider choices in the local UI:
+
+```bash
 mnemos ui
 ```
 
@@ -149,16 +170,16 @@ For the 0.7.0 product shell, see [docs/demos/first-run-setup.md](docs/demos/firs
 
 ## Why The Architecture Is Different
 
-Most agent memory tools either keep too much raw transcript or append contradictory facts forever. Mnemos uses a different design:
+The research modules explore the following mechanisms. These are design hypotheses, not established quality improvements:
 
-- **Reconstructive, not reproductive** — every recall rewrites the trace with current context
-- **Recall-gated plasticity** — long-term consolidation prefers facts that can be re-instated from multiple episodic traces
-- **Surprisal-gated** — the brain only encodes events that violate predictions
-- **State-dependent** — fear retrieves fear, urgency retrieves crisis solutions
-- **Lossy by design** — sleep compresses episodic logs into semantic abstractions and discards the rest
-- **Associative** — remembering "server" pre-activates "AWS," "downtime," and "nginx" before you ask
+- **Reconsolidation**: proposed revisions can be evaluated against existing facts. The managed service does not silently rewrite a fact on every recall.
+- **Recall-gated plasticity**: optional consolidation checks whether facts can be reinstated from episodic traces.
+- **Surprisal gating**: an optional encoding policy scores novelty.
+- **State-dependent scoring**: an optional router incorporates measured cognitive-state similarity.
+- **Consolidation**: experimental extraction proposes durable facts from captured evidence.
+- **Associative retrieval**: optional graph traversal supplies related candidates.
 
-mnemos implements these mechanisms as composable Python modules. They can be used independently or composed through `MnemosEngine`, but the product promise is narrower than the research inspiration: reliable scoped memory for agent workflows.
+The direct Python examples below illustrate individual mechanisms. Their development fixtures do not establish managed-service behavior or a biomimetic quality advantage. The verified preview workflow is explicit scoped memory with these modules disabled.
 
 ---
 
@@ -193,7 +214,7 @@ mnemos implements these mechanisms as composable Python modules. They can be use
 
 A fast LLM continuously predicts the user's next intent. When a new input arrives, mnemos computes the cosine distance between the prediction embedding and the actual input embedding. Low divergence is discarded. High divergence is stored with a salience weight proportional to the prediction error. A cosine distance of 0.3 corresponds to about 45.6 degrees.
 
-This eliminates context bloat at the ingestion layer. A routine "sounds good" never touches long-term memory. "My production database just corrupted" gets maximum salience.
+This module is intended to filter low-information inputs. The actual decision depends on the configured model and threshold; the current evaluations do not justify a general noise-reduction claim.
 
 With a judgment provider configured (see "Typed judgment" under Configuration), `SurprisalConfig(mode="novelty")` replaces the prediction with one direct question: does this turn add information not already in recent history or the retrieved facts? The judge's probability is the surprisal score, so the same threshold applies. The default stays `prediction`.
 
@@ -363,7 +384,7 @@ mnemos-cli consolidate
 mnemos-cli stats
 ```
 
-**With Ollama (recommended for local production use):**
+**With Ollama (experimental local cognition):**
 
 ```bash
 pip install 'mnemos-memory[ollama]'
@@ -850,13 +871,14 @@ You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and
 mnemos-benchmark --stores sqlite --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
 ```
 
-Replacement-claim gate run:
+Historical deterministic mechanism gate (not evidence of real-model quality):
 
 ```bash
 mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack claim-driving --top-k 1 --enforce-production-gate
 ```
 
 Gate output fields live under `gates.production_replacement.*`.
+That historical field name does not change the current negative evaluation or the open quality acceptance gates. The small named dataset packs ship with the package; the larger research harness and frozen archives remain in the source repository.
 
 The current isolated 10,000-fact validation is recorded in
 [performance-10k.md](docs/validation/2026-09-16/performance-10k.md). With

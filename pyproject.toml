@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mnemos-memory"
-version = "0.7.0"
-description = "Biomimetic memory architectures for LLMs — surprisal-gated encoding, mutable RAG, affective routing, sleep consolidation, and spreading activation."
+version = "0.7.0b1"
+description = "Scoped local memory for coding agents, with SQLite persistence, MCP tools, and experimental memory enrichment."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [
@@ -56,6 +56,7 @@ all = [
     "mcp>=1.0.0,<2.0.0",
 ]
 dev = [
+    "packaging>=23.0.0",
     "jsonschema>=4.0.0",
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
@@ -83,18 +84,21 @@ Documentation = "https://github.com/anthony-maio/mnemos#readme"
 packages = ["mnemos"]
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-    "/.playwright-cli",
-    "/tmp_cp_check",
-    "/output",
-    "/docs/validation/**/*.zip",
-    "/docs/validation/**/*.sqlite",
-    "/docs/validation/**/*.sqlite-*",
-    "/docs/validation/**/*.raw-outputs.jsonl",
+include = [
+    "/mnemos",
+    "/agents",
+    "/README.md",
+    "/CHANGELOG.md",
+    "/LICENSE",
+    "/pyproject.toml",
+    "/examples/restart_recall.py",
+    "/scripts/smoke-installed.py",
+    "/benchmarks/datasets/*.jsonl",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
 "agents" = "mnemos/resources/agents"
+"benchmarks/datasets" = "mnemos/resources/benchmark-datasets"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

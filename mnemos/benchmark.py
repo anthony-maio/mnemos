@@ -29,7 +29,12 @@ from .utils.embeddings import embed_batch_for_role, embed_text_for_role
 from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
-BENCHMARK_DATASET_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
+_PACKAGE_DATASET_DIR = Path(__file__).resolve().parent / "resources" / "benchmark-datasets"
+BENCHMARK_DATASET_DIR = (
+    _PACKAGE_DATASET_DIR
+    if _PACKAGE_DATASET_DIR.is_dir()
+    else Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
+)
 DATASET_PACKS: dict[str, tuple[str, ...]] = {
     "claim-driving": (
         "contradiction-update-v1.jsonl",

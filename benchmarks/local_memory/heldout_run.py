@@ -17,6 +17,8 @@ from pathlib import Path
 from typing import Any, Literal, Mapping
 from urllib.request import Request, urlopen
 
+import httpx
+
 from mnemos.settings import OllamaProviderSettings
 from mnemos.config import SleepConfig
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
@@ -67,14 +69,16 @@ def _live_typesafe_model(base_url: str, api_key: str, model: str) -> dict[str, A
             }
         },
     }
-    request = Request(
+    # Use the same HTTP client family as the judgment provider. The hosted
+    # endpoint can reject urllib's default client while accepting httpx.
+    response = httpx.post(
         base_url.rstrip("/") + "/systemone",
-        data=json.dumps(body).encode("utf-8"),
+        json=body,
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-        method="POST",
+        timeout=30.0,
     )
-    with urlopen(request, timeout=30.0) as response:  # noqa: S310 - explicit CLI endpoint
-        payload = json.loads(response.read().decode("utf-8"))
+    response.raise_for_status()
+    payload = response.json()
     observed = payload.get("model") if isinstance(payload, dict) else None
     if not isinstance(observed, str) or not observed:
         raise RuntimeError("TypeSafe did not report a model identity")

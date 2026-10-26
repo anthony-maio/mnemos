@@ -1,14 +1,14 @@
-"""Phase 0 spike: judged source classification on the 46-case development fixture.
+"""Judged source classification spike on a development fixture.
 
 Runs ``classify_source_memories_with_judge`` through one or two backends
-(TypeSafe Jev, local Ollama) over the same cases the prompt-driven classifier
-was measured on, and reports mechanical agreement proxies, latency, tokens,
-and cost next to that earlier run. It claims no semantic score: the rubrics
-give expected meanings, and ``spike-review.json`` lays retained slices beside
-them for a person to read.
+(TypeSafe Jev, local Ollama) on a supplied fixture, and reports mechanical
+agreement proxies, latency, tokens, and cost. A prompt-driven baseline is
+reported when the fixture includes one. It claims no semantic score: the
+rubrics give expected meanings, and ``spike-review.json`` lays retained slices
+beside them for a person to read.
 
-Go/no-go for the judged pipeline: TypeSafe presence agreement at or above the
-earlier local run, zero contract errors, and p95 latency per call under 2 s.
+The original phase-0 go/no-go compared TypeSafe presence agreement with the
+earlier local run, required zero contract errors, and p95 latency under 2 s.
 """
 
 from __future__ import annotations
@@ -224,7 +224,7 @@ async def main_async(args: argparse.Namespace) -> int:
     backends = ["typesafe", "ollama"] if args.judge == "both" else [args.judge]
     config = JudgmentConfig()
     all_rows: list[dict[str, Any]] = []
-    summaries: list[dict[str, Any]] = [baseline_summary(fixture)]
+    summaries: list[dict[str, Any]] = [baseline_summary(fixture)] if fixture["baseline"] else []
     started_at = datetime.now(timezone.utc).isoformat()
     for name in backends:
         judge = build_judge(name, args)

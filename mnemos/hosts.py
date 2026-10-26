@@ -361,7 +361,7 @@ def _load_toml(text: str) -> dict[str, Any]:
         return {}
     if sys.version_info >= (3, 11):
         return tomllib.loads(text)
-    return tomli.loads(text)  # pragma: no cover - exercised on Python 3.10
+    return dict(tomli.loads(text))  # pragma: no cover - exercised on Python 3.10
 
 
 def _merge_codex_config(

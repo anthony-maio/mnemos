@@ -9,6 +9,8 @@ import os
 from pathlib import Path
 import sys
 
+from packaging.version import Version
+
 try:
     import tomllib
 except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
@@ -64,15 +66,16 @@ def test_marketplace_manifest_matches_plugin_name() -> None:
 
 def test_plugin_manifest_versions_match_package_version() -> None:
     project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
-    expected_version = project["project"]["version"]
+    expected_version = Version(project["project"]["version"])
 
     plugin_manifest = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
     marketplace_manifest = json.loads(
         Path(".claude-plugin/marketplace.json").read_text(encoding="utf-8")
     )
 
-    assert plugin_manifest["version"] == expected_version
-    assert marketplace_manifest["plugins"][0]["version"] == expected_version
+    assert Version(plugin_manifest["version"]) == expected_version
+    assert Version(marketplace_manifest["metadata"]["version"]) == expected_version
+    assert Version(marketplace_manifest["plugins"][0]["version"]) == expected_version
 
 
 def test_plugin_manifest_does_not_force_sqlite_env() -> None:

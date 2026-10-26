@@ -139,7 +139,7 @@ def __dir__() -> list[str]:
     return sorted(set(globals()) | set(__all__))
 
 
-__version__ = "0.7.0"
+__version__ = "0.7.0b1"
 __author__ = "Anthony Maio"
 __license__ = "MIT"
 

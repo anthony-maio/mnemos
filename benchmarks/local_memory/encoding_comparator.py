@@ -51,7 +51,7 @@ class LengthNoiseService(LocalMemoryService):
         super().__init__(engine, registry)
 
     async def _automatic_encoding_gate(
-        self, interaction: Interaction
+        self, interaction: Interaction, existing_facts: list[str] | None = None
     ) -> tuple[str | None, dict[str, Any]]:
         text = interaction.content.strip()
         noise = text.casefold() in SHADOW_NOISE_TEXT

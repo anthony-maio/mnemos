@@ -4,6 +4,9 @@ on:
   release:
     types: [published]
 
+env:
+  MNEMOS_AUTO_START: "0"
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -19,7 +22,20 @@ jobs:
         with:
           python-version: "3.12"
 
-      - run: python -m pip install --upgrade build
+      - run: python -m pip install -e '.[dev]' build twine
+      - run: black --check .
+      - run: mypy .
+      - run: pytest -q
+      - run: python -m mnemos.benchmark --stores memory,sqlite --retrievers baseline,engine --dataset-pack claim-driving --top-k 1 --repetitions 2 --enforce-production-gate
       - run: python -m build
+      - run: python -m twine check dist/*
+      - name: Verify installed release artifact
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: python scripts/smoke-installed.py --wheel dist/*.whl --release-tag "$RELEASE_TAG" --output installed-artifact.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-verification
+          path: installed-artifact.json
 
       - uses: pypa/gh-action-pypi-publish@release/v1

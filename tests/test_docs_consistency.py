@@ -9,6 +9,8 @@ import os
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 MCP_SERVER_PATH = ROOT / "mnemos" / "mcp_server.py"
 RUNTIME_PATH = ROOT / "mnemos" / "runtime.py"
@@ -226,16 +228,22 @@ def test_codex_skill_covers_install_and_honest_positioning() -> None:
     assert "mnemos-codex" in mcp_guide
 
 
-def test_quick_start_surfaces_are_sqlite_first() -> None:
+def test_readme_quick_start_is_sqlite_first() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
-    website = WEBSITE_INDEX_PATH.read_text(encoding="utf-8")
 
     assert "Starter SQLite" in readme
-    assert "Starter SQLite" in website
     assert "mnemos ui" in readme
+    assert "Qdrant" not in readme
+
+
+def test_website_quick_start_is_sqlite_first_when_available() -> None:
+    if not WEBSITE_INDEX_PATH.is_file() and not os.environ.get("MNEMOS_WEBSITE_INDEX"):
+        pytest.skip("The separately maintained website is not present in this checkout")
+    website = WEBSITE_INDEX_PATH.read_text(encoding="utf-8")
+
+    assert "Starter SQLite" in website
     assert "mnemos ui" in website
     assert "Move to Qdrant only when" not in website
-    assert "Qdrant" not in readme
 
 
 def test_proof_demo_docs_exist_for_first_run_and_inspectability() -> None:

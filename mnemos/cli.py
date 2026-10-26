@@ -52,6 +52,7 @@ from .runtime import (
     build_mnemos_config_from_env,
     build_store_from_env,
 )
+from .settings import AppSettings
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import (
@@ -93,10 +94,8 @@ def _capture_mode_from_env(name: str, default: CaptureMode) -> CaptureMode:
 
 
 def _infer_embedding_provider(llm_provider: str) -> str:
-    provider = llm_provider.lower()
-    if provider in {"openai", "openclaw", "ollama"}:
-        return provider
-    return "simple"
+    settings = AppSettings.model_validate({"llm": {"provider": llm_provider.lower()}})
+    return settings.embedding.provider or "fastembed"
 
 
 def _build_profile_env(
@@ -466,7 +465,7 @@ def _build_engine() -> MnemosEngine:
         engine = MnemosEngine(
             config=config,
             llm=llm,
-            embedder=build_embedder_from_env(default_provider="fastembed"),
+            embedder=build_embedder_from_env(),
             store=build_store_from_env(default_store_type="sqlite"),
         )
     except ValueError as exc:
@@ -506,7 +505,7 @@ def _build_hook_engine() -> MnemosEngine:
         engine = MnemosEngine(
             config=build_mnemos_config_from_env(default_store_type="sqlite"),
             llm=MockLLMProvider(),
-            embedder=build_embedder_from_env(default_provider="fastembed"),
+            embedder=build_embedder_from_env(),
             store=build_store_from_env(default_store_type="sqlite"),
         )
     except ValueError as exc:
