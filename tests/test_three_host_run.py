@@ -153,6 +153,8 @@ def test_hermes_preflight_requires_discovery_without_inference_or_writes(
 
     monkeypatch.setattr(runner, "api", api)
     monkeypatch.setattr(runner, "host_environment", lambda path: {})
+    # The process is a fixture; no Windows-to-WSL filesystem boundary is crossed.
+    monkeypatch.setattr(runner, "wsl", lambda path: path.as_posix())
     monkeypatch.setattr(runner.subprocess, "Popen", Process)
     monkeypatch.setattr(runner, "terminate_owned_process", lambda process: None)
     bindings = {"wheel": str(tmp_path / "fixture.whl"), "wheel_sha256": "f" * 64}

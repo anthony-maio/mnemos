@@ -331,7 +331,12 @@ command = "echo existing"
     assert "additionalContextLimit" not in post_compact["hooks"][0]
 
 
-def test_codex_hook_command_quotes_installed_python_path(tmp_path: Path, monkeypatch) -> None:
+@pytest.mark.parametrize("powershell", [None, "powershell.exe"])
+def test_codex_hook_command_quotes_installed_python_path(
+    tmp_path: Path, monkeypatch, powershell: str | None
+) -> None:
+    monkeypatch.setattr(hosts.sys, "platform", "win32")
+    monkeypatch.setattr(hosts, "_powershell_executable", lambda: powershell)
     python_path = "C:\\Program Files\\Mnemos`$bin\\py'thon.exe"
     monkeypatch.setattr(hosts.sys, "executable", python_path)
     preview = preview_host_integration(
@@ -412,6 +417,7 @@ def test_codex_posix_hook_command_executes_quoted_interpreter_path(
         capture_output=True,
         text=True,
         env=child_env,
+        cwd=tmp_path,
         check=False,
         timeout=10,
     )
@@ -433,6 +439,7 @@ def test_codex_hook_command_rejects_nul_and_newline_paths(monkeypatch, python_pa
 def test_codex_hook_command_uses_cmd_fallback_when_powershell_missing(
     monkeypatch, tmp_path: Path
 ) -> None:
+    monkeypatch.setattr(hosts.sys, "platform", "win32")
     monkeypatch.setattr(hosts, "_powershell_executable", lambda: None)
     python_path = r"C:\Program Files\Mnemos\python.exe"
     monkeypatch.setattr(hosts.sys, "executable", python_path)
