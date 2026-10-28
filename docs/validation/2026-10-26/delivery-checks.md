@@ -32,4 +32,8 @@ These are reasons to design a fairer prospective experiment, not reasons to rela
 
 The work is on a separate delivery branch based on `feat/typed-judgment-layer`. Original master commits, untracked plans, the active development worktree, website edits, and evaluation archives were preserved. Live host configurations and the user's memory database were not used by the example.
 
-For a future Hermes suite, keep explicit memory optional and independently useful. The immediate research priority is answer support and abstention over the same accepted candidate facts. Automatic extraction, native host behavior, broader performance, and a daily-use pilot remain open.
+## Product decision: deferred on 2026-10-28
+
+Further mnemos development and Hermes integration are on hold while Cartograph becomes the first usable Hermes plugin. The explicit restart-and-recall example remains available, and the unpublished implementation and evaluation evidence remain preserved. This decision does not change the failed release gate or authorize a package release.
+
+Reconsider automatic enrichment only after a prospective experiment measures answer support and abstention over the same accepted candidate facts. That experiment is deferred too. Automatic extraction, native host behavior, broader performance, and a daily-use pilot remain open.
