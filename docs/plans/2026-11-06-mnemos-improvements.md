@@ -9,10 +9,10 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Existing snapshot harness identified; new development protocol written; fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; first local comparison failed; semantic repair and fresh evaluation open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Historical evidence exists; current validation and pilot open |
-| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Open |
+| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
@@ -61,5 +61,30 @@ No historical archive is removed or rewritten.
   Python 3.10, so validation moved to a private environment. No repository
   dependency constraint or shared environment was changed.
 - The [answer-support protocol](2026-11-06-answer-support-protocol.md) defines
-  the next development experiment and evaluation boundaries. Its implementation,
-  new corpus and model runs remain open.
+  the development experiment and evaluation boundaries.
+- An experimental checker now selects retained source evidence for current,
+  scoped accepted facts. Provider failure is separate from abstention, and
+  corrections, forgetting, scope changes or evidence changes during judgment
+  invalidate the result. It is not enabled in production retrieval.
+- The first local comparison and a corrected-scope run each completed 80
+  observations. The original fixture folders inherited one enclosing Git
+  identity; an independent-repository fixture and regression test fixed it.
+  Both runs and their negative results are retained in the
+  [development report](../validation/2026-11-06/answer-support-development.md).
+  Corrected hybrid support retained 3/10 answerable results, abstained correctly
+  on 1/10 no-answer queries and failed response validation on 11/20 queries.
+  No historical scores changed. The private local model server was unloaded
+  and stopped after the comparison.
+- [Host tokenizer support](../context-tokenizers.md) accepts an explicitly
+  identified Python counter, measures concatenated qualified context, and
+  restarts packing with bytes if that counter fails. New boundary tests cover
+  nonadditive counts, Unicode, oversized records and invalid counters. A
+  synthetic interleaving also reproduced a correction after budget selection;
+  retrieval now omits that changed revision.
+- Context verification: 43 focused tests passed, followed by 136 broader tests
+  across the engine, service, host context/view adapters, retrieval comparisons
+  and support checker. Black, strict mypy for the four affected source modules
+  and `git diff --check` passed. These checks do not establish native-host
+  tokenizer compatibility or context-efficiency gains. Both experiment archives
+  passed hash verification; all 20 archived databases passed integrity and fact
+  count checks.

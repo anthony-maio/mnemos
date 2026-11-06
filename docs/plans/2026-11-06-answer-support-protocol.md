@@ -1,7 +1,8 @@
 # Answer support and context efficiency
 
-Status: development protocol. No new model experiment has run under this
-protocol. Historical scores and release gates remain unchanged.
+Status: development protocol. The first local experiment failed; see the
+[November 6 results](../validation/2026-11-06/answer-support-development.md).
+Historical scores and release gates remain unchanged.
 
 ## Question
 
