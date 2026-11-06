@@ -467,6 +467,7 @@ def run_codex_exec_phase(
     disabled = (
         "code_mode_host",
         "shell_tool",
+        "shell_snapshot",
         "unified_exec",
         "apps",
         "multi_agent",
@@ -537,6 +538,7 @@ def run_codex_exec_phase(
                 cwd=config.project,
                 env=env,
                 shell=False,
+                stdin=subprocess.DEVNULL,
                 stdout=stdout,
                 stderr=stderr,
                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),

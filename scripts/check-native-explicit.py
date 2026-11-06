@@ -30,6 +30,8 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = "claude-sonnet-4-6"
 CODEX_MODEL = "gpt-6-astra"
+CODEX_VERSION = "codex-cli 0.164.0-alpha.11.1"
+CODEX_BINARY_SHA256 = "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098"
 PROFILE = "native-explicit-20261106"
 INPUTS = (
     "scripts/check-native-explicit.py",
@@ -235,7 +237,12 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
     inputs = INPUTS + (
-        ("docs/plans/2026-11-06-native-codex-explicit-v1.md",) if host == "codex" else ()
+        (
+            "docs/plans/2026-11-06-native-codex-explicit-v1.md",
+            "docs/plans/2026-11-06-native-codex-runtime-v2.md",
+        )
+        if host == "codex"
+        else ()
     )
     for relative in inputs:
         committed = subprocess.check_output(
@@ -247,9 +254,12 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Acceptance inputs must be committed before inference")
     executable = args.codex if host == "codex" else args.claude
     host_version = subprocess.check_output([str(executable), "--version"], text=True).strip()
-    expected_version = "codex-cli 0.146.0" if host == "codex" else "2.1.191 (Claude Code)"
+    expected_version = CODEX_VERSION if host == "codex" else "2.1.191 (Claude Code)"
     if host_version != expected_version:
         raise ValueError("Native host version differs from this protocol")
+    host_digest = sha(executable)
+    if host == "codex" and host_digest != CODEX_BINARY_SHA256:
+        raise ValueError("Native Codex binary differs from the frozen runtime")
     return {
         "source_commit": args.source_commit,
         "runner_commit": runner_commit,
@@ -258,6 +268,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "package_path": str(package),
         "python": sys.version,
         "host_version": host_version,
+        "host_executable_sha256": host_digest,
         "host": host,
         "model": CODEX_MODEL if host == "codex" else MODEL,
         "authentication_preflight": authentication,

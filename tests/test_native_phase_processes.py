@@ -62,6 +62,7 @@ def test_codex_exec_requires_terminal_identity_and_removes_auth(
         def __init__(self, command, **kwargs):
             commands.append(command)
             assert kwargs["shell"] is False
+            assert kwargs["stdin"] == subprocess.DEVNULL
             assert "--json" in command and "--ask-for-approval" in command
             assert command[command.index("--ask-for-approval") + 1] == "never"
             for feature in ("code_mode_host", "shell_tool", "apps", "multi_agent", "memories"):
