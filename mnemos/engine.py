@@ -33,6 +33,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Literal
 
 from .config import MnemosConfig
+from .context_budget import HostTokenizer, pack_context
 from .curation import durable_memory_skip_reason
 from .judgment import Judge
 from .memory_safety import MemoryWriteFirewall
@@ -44,7 +45,12 @@ from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ActivationNode, ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
-from .retrieval import RetrievedChunks, score_candidate, context_token_upper_bound
+from .retrieval import (
+    RetrievedChunks,
+    score_candidate,
+    context_token_upper_bound,
+    render_context_chunk,
+)
 from .utils.embeddings import EmbeddingProvider, embed_text_async
 from .utils.llm import LLMProvider
 from .utils.reliability import MnemosTransientError
@@ -209,6 +215,7 @@ class MnemosEngine:
         *,
         judge: Judge | None = None,
         owns_providers: bool = False,
+        context_tokenizer: HostTokenizer | None = None,
     ) -> None:
         from .judgment import UnavailableJudge
         from .utils.llm import UnavailableLLMProvider
@@ -216,6 +223,7 @@ class MnemosEngine:
         from .utils.storage import InMemoryStore
 
         self.config = config or MnemosConfig()
+        self._context_tokenizer = context_tokenizer
         self._scope_registry = scope_registry
         self._require_scope_context = require_scope_context
         self._retrieval_traces: dict[tuple[Any, ...], dict[str, Any]] = {}
@@ -1111,8 +1119,7 @@ class MnemosEngine:
                     item[1].id,
                 )
             )
-        final_chunks = []
-        remaining_budget = max_context_tokens
+        ranked_chunks = []
         trace_key = (
             query.strip(),
             normalized_current_scope,
@@ -1140,8 +1147,6 @@ class MnemosEngine:
                 "retrieval_mode": "lexical_only" if diagnostics else "semantic_and_lexical"
             }
             cost = context_token_upper_bound(returned)
-            if cost > remaining_budget:
-                continue
             returned.metadata["retrieval_trace"] = {
                 **score_details,
                 **returned.metadata["retrieval_trace"],
@@ -1167,12 +1172,14 @@ class MnemosEngine:
                     else "candidate_union" if callable(lexical_search) else "unavailable"
                 ),
             }
-            final_chunks.append(returned)
-            trace_rows[chunk.id].update(returned.metadata["retrieval_trace"])
-            trace_rows[chunk.id]["selected"] = True
-            remaining_budget -= cost
-            if len(final_chunks) == top_k:
-                break
+            ranked_chunks.append(returned)
+        packed = pack_context(
+            ranked_chunks,
+            max_tokens=max_context_tokens,
+            top_k=top_k,
+            tokenizer=self._context_tokenizer,
+        )
+        final_chunks = list(packed.chunks)
         # Persist this retrieval as one durable metadata update. A top-five
         # result should not require five independent FULL-synchronous commits.
         self._store.mark_retrieved_many(
@@ -1184,8 +1191,24 @@ class MnemosEngine:
             if refreshed is not None:
                 refreshed = refreshed.model_copy(deep=True)
                 refreshed.metadata["retrieval_trace"] = returned.metadata["retrieval_trace"]
-                refreshed_chunks.append(refreshed)
+                # An external writer can revise a fact while access metadata is
+                # persisted. Only the scored, budgeted revision may be emitted.
+                if scope_filter(refreshed) and render_context_chunk(
+                    refreshed
+                ) == render_context_chunk(returned):
+                    refreshed_chunks.append(refreshed)
         final_chunks = refreshed_chunks
+        if len(final_chunks) != len(packed.chunks):
+            packed = pack_context(
+                final_chunks,
+                max_tokens=max_context_tokens,
+                top_k=top_k,
+                tokenizer=self._context_tokenizer,
+            )
+            final_chunks = list(packed.chunks)
+        for returned in final_chunks:
+            trace_rows[returned.id].update(returned.metadata["retrieval_trace"])
+            trace_rows[returned.id]["selected"] = True
         # Retained for call compatibility; review requires new evidence or a correction.
         _ = reconsolidate
         self._retrieval_traces[trace_key] = trace_rows
@@ -1213,8 +1236,8 @@ class MnemosEngine:
             store_backend=type(self._store).__name__,
         )
 
-        return (
-            RetrievedChunks(final_chunks, diagnostics=diagnostics) if diagnostics else final_chunks
+        return RetrievedChunks(
+            final_chunks, diagnostics=diagnostics, context_budget=packed.metadata()
         )
 
     async def consolidate(self) -> ConsolidationResult:

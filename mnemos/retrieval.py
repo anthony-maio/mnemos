@@ -13,9 +13,16 @@ from .types import CognitiveState, MemoryChunk
 class RetrievedChunks(list[MemoryChunk]):
     """List-compatible results with request-local diagnostics, even when empty."""
 
-    def __init__(self, chunks: Iterable[MemoryChunk], *, diagnostics: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        chunks: Iterable[MemoryChunk],
+        *,
+        diagnostics: dict[str, Any],
+        context_budget: dict[str, Any] | None = None,
+    ) -> None:
         super().__init__(chunks)
         self.diagnostics = dict(diagnostics)
+        self.context_budget = dict(context_budget or {})
 
 
 class RetrievalConfig(BaseModel):

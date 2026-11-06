@@ -933,7 +933,7 @@ class LocalMemoryService:
             "profile": request.profile or self.engine.config.retrieval.profile,
             **(
                 {"status": "degraded", "degraded": True, "retrieval": chunks.diagnostics}
-                if isinstance(chunks, RetrievedChunks)
+                if isinstance(chunks, RetrievedChunks) and chunks.diagnostics
                 else {}
             ),
             "view": request.view,
@@ -943,6 +943,7 @@ class LocalMemoryService:
             "evidence_context": rendered if reviewing_capture else "",
             "token_count_method": "utf8_bytes_upper_bound",
             "context_token_upper_bound": len(rendered.encode("utf-8")),
+            **(chunks.context_budget if isinstance(chunks, RetrievedChunks) else {}),
         }
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
