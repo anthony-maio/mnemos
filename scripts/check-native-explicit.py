@@ -1,0 +1,603 @@
+"""One bounded Claude Code lifecycle against a verified installed Mnemos wheel.
+
+Run with the isolated installation's Python and -I. Native authentication is
+copied only by the existing phase runner and removed after every phase. All
+memory, capture, config and trace writes belong to a new external output root.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import io
+import json
+import os
+from pathlib import Path
+import signal
+import sqlite3
+import subprocess
+import sys
+import tarfile
+import time
+from typing import Any
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+MODEL = "claude-sonnet-4-6"
+PROFILE = "native-explicit-20261106"
+INPUTS = (
+    "scripts/check-native-explicit.py",
+    "benchmarks/native_hosts/native_processes.py",
+    "benchmarks/native_hosts/shared_trace.py",
+    "benchmarks/native_hosts/three_host_contract.py",
+    "examples/restart_recall.py",
+    "docs/plans/2026-11-06-native-explicit-memory.md",
+)
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def save(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+
+
+def helper(relative: str) -> Any:
+    name = "native_checkpoint_" + Path(relative).stem.replace("-", "_")
+    spec = importlib.util.spec_from_file_location(name, ROOT / relative)
+    if spec is None or spec.loader is None:
+        raise ValueError("Cannot load frozen acceptance helper")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def verify_native_result(process: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
+    if process.get("status") != "completed" or process.get("auth_copy_removed") is not True:
+        raise ValueError("Native process or authentication cleanup failed")
+    session = process["session_id"]
+    if any(row.get("session_id", session) != session for row in rows):
+        raise ValueError("Native session identity changed")
+    terminal = [row for row in rows if row.get("type") == "result"]
+    if (
+        len(terminal) != 1
+        or terminal[0].get("is_error") is not False
+        or terminal[0].get("subtype") != "success"
+        or not isinstance(terminal[0].get("result"), str)
+        or not terminal[0]["result"].strip()
+    ):
+        raise ValueError("Native stream lacks a successful final result")
+    models = [row.get("message", {}).get("model") for row in rows if row.get("type") == "assistant"]
+    if not models or any(model != MODEL for model in models):
+        raise ValueError("Native model observation differs from the requested model")
+    return {"model": MODEL, "reported_cost_usd": terminal[0].get("total_cost_usd")}
+
+
+def original_replay_records(
+    records: list[dict[str, Any]], labels: tuple[str, ...]
+) -> list[dict[str, Any]]:
+    selected = [
+        row
+        for row in records
+        if row.get("operation") in {"remember", "capture"}
+        and row.get("result", {}).get("status") == "committed"
+        and any(label in row.get("payload", {}).get("content", "") for label in labels)
+    ]
+    if not selected:
+        raise ValueError("No committed original source identities were recorded")
+    return selected
+
+
+def state(database: Path) -> dict[str, Any]:
+    queries = {
+        "facts": "SELECT id,content,version,metadata FROM memory_chunks ORDER BY id",
+        "events": "SELECT id,role,content,source,scope_id,metadata,occurred_at FROM episodic_events ORDER BY id",
+        "jobs": "SELECT id,kind,status,payload,result,last_error FROM memory_jobs ORDER BY id",
+        "evidence": "SELECT fact_id,source_event_id,excerpt FROM fact_evidence ORDER BY fact_id,source_event_id",
+        "revisions": "SELECT fact_id,version,content FROM fact_revisions ORDER BY fact_id,version",
+        "suppressions": "SELECT fact_id,source_event_id,canonical_key FROM memory_suppressions ORDER BY suppression_id",
+        "edges": "SELECT source_id,target_id,edge_type,weight FROM memory_edges ORDER BY source_id,target_id,edge_type",
+    }
+    connection = sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)
+    try:
+        connection.row_factory = sqlite3.Row
+        if connection.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            raise ValueError("Database integrity check failed")
+        return {
+            name: [dict(row) for row in connection.execute(sql)] for name, sql in queries.items()
+        }
+    finally:
+        connection.close()
+
+
+def serve(root: Path) -> None:
+    """Preserve the installed default dispatcher and scheduler; record arrivals."""
+    from mnemos.service import MnemosService
+
+    class ObservedService(MnemosService):
+        def _make_default_dispatcher(self) -> Any:
+            dispatcher = super()._make_default_dispatcher()
+            original = dispatcher.dispatch
+
+            async def observed(operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+                result = await original(operation, payload)
+                if operation in {"capture", "remember", "correct"}:
+                    with (root / "arrivals.jsonl").open("a", encoding="utf-8") as stream:
+                        stream.write(
+                            json.dumps(
+                                {"operation": operation, "payload": payload, "result": result}
+                            )
+                            + "\n"
+                        )
+                return dict(result)
+
+            dispatcher.dispatch = observed
+            return dispatcher
+
+    service = ObservedService(startup_timeout=120, dispatch_timeout=60)
+    service.start()
+    if service._external:
+        raise ValueError("Fresh checkpoint unexpectedly reused an existing service")
+    signal.signal(signal.SIGINT, lambda *_: service.shutdown_requested.set())
+    signal.signal(signal.SIGTERM, lambda *_: service.shutdown_requested.set())
+    try:
+        while not service.shutdown_requested.wait(0.5):
+            pass
+    finally:
+        service.stop()
+
+
+def bindings(args: argparse.Namespace) -> dict[str, Any]:
+    import mnemos
+
+    package = Path(mnemos.__file__).resolve().parent
+    if not package.is_relative_to(Path(sys.prefix).resolve()) or package.is_relative_to(ROOT):
+        raise ValueError("Native verification requires an installed package outside the checkout")
+    smoke = json.loads(args.smoke.read_text(encoding="utf-8"))
+    if smoke.get("status") != "passed" or smoke.get("wheel_sha256") != sha(args.wheel):
+        raise ValueError("Installed smoke evidence does not bind this wheel")
+    archive_bytes = subprocess.check_output(
+        ["git", "archive", args.source_commit, "mnemos", "agents"], cwd=ROOT
+    )
+    with tarfile.open(fileobj=io.BytesIO(archive_bytes)) as archive:
+        source = {member.name: archive.extractfile(member).read() for member in archive.getmembers() if member.isfile()}  # type: ignore[union-attr]
+    with zipfile.ZipFile(args.wheel) as wheel:
+        for member in wheel.namelist():
+            if not member.startswith("mnemos/") or member.endswith("/"):
+                continue
+            raw = wheel.read(member)
+            if (package.parent / member).read_bytes() != raw:
+                raise ValueError("Installed package differs from the wheel: " + member)
+            source_name = member.replace("mnemos/resources/agents/", "agents/")
+            if source_name in source and source[source_name].replace(b"\r\n", b"\n") != raw.replace(
+                b"\r\n", b"\n"
+            ):
+                raise ValueError("Wheel differs from its declared source: " + member)
+    runner_commit = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
+    for relative in INPUTS:
+        committed = subprocess.check_output(
+            ["git", "show", f"{runner_commit}:{relative}"], cwd=ROOT
+        )
+        if committed.replace(b"\r\n", b"\n") != (ROOT / relative).read_bytes().replace(
+            b"\r\n", b"\n"
+        ):
+            raise ValueError("Acceptance inputs must be committed before inference")
+    host_version = subprocess.check_output([str(args.claude), "--version"], text=True).strip()
+    if host_version != "2.1.191 (Claude Code)":
+        raise ValueError("Native host version differs from this protocol")
+    return {
+        "source_commit": args.source_commit,
+        "runner_commit": runner_commit,
+        "wheel_sha256": sha(args.wheel),
+        "installed_smoke_sha256": sha(args.smoke),
+        "package_path": str(package),
+        "python": sys.version,
+        "host_version": host_version,
+        "model": MODEL,
+        "input_hashes": {relative: sha(ROOT / relative) for relative in INPUTS},
+    }
+
+
+def run(args: argparse.Namespace) -> dict[str, Any]:
+    root = args.output.resolve()
+    if root.is_relative_to(ROOT) or root.exists():
+        raise ValueError("Output must be a fresh directory outside the checkout")
+    bound = bindings(args)
+    root.mkdir(parents=True)
+    from mnemos.service import _protect_private_path
+
+    _protect_private_path(root)
+    example = helper("examples/restart_recall.py")
+    native = helper("benchmarks/native_hosts/native_processes.py")
+    trace = helper("benchmarks/native_hosts/shared_trace.py")
+    contract = helper("benchmarks/native_hosts/three_host_contract.py")
+    scenario = contract.Scenario()
+    report: dict[str, Any] = {
+        **bound,
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "phases": [],
+        "runtime_starts": [],
+        "live_configuration_changed": False,
+    }
+    save(root / "report.json", report)
+    settings = root / "settings.toml"
+    settings.write_text(
+        '[judgment]\nprovider="none"\n[modules]\nsurprisal=false\nmutable_rag=false\naffective=false\nsleep=false\nspreading=false\n'
+        '[retrieval]\nprofile="baseline"\naffective_enabled=false\nspreading_enabled=false\nquery_state_source="none"\n',
+        encoding="utf-8",
+    )
+    selectors = {
+        key: value for key, value in example.isolated_env(root).items() if key.startswith("MNEMOS_")
+    }
+    selectors.update(
+        MNEMOS_CONFIG_PATH=str(settings),
+        MNEMOS_RUNTIME_DIR=str(root),
+        MNEMOS_RUNTIME_DESCRIPTOR=str(root / "runtime.json"),
+        MNEMOS_USER_PROFILE_ID=PROFILE,
+    )
+    env = {
+        key: value
+        for key, value in native.clean_environment(selectors).items()
+        if not key.upper().startswith("GIT_")
+    }
+    project, foreign = root / "project", root / "foreign"
+    for path in (root, project, foreign):
+        path.mkdir(exist_ok=True)
+        (path / ".mnemos").mkdir()
+        (path / ".mnemos/mnemos.toml").write_text("", encoding="utf-8")
+    for path in (project, foreign):
+        example.run_process(["git", "init", "--quiet"], cwd=path, env=env)
+    plugin = root / "plugin-snapshot"
+    plugin_paths = subprocess.check_output(
+        [
+            "git",
+            "ls-tree",
+            "-r",
+            "--name-only",
+            args.source_commit,
+            "--",
+            ".claude-plugin",
+            "hooks",
+            "commands",
+            "agents",
+            "skills",
+        ],
+        cwd=ROOT,
+        text=True,
+    ).splitlines()
+    for relative in plugin_paths:
+        destination = plugin / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(
+            subprocess.check_output(["git", "show", f"{args.source_commit}:{relative}"], cwd=ROOT)
+        )
+    report["plugin_hashes"] = {name: sha(plugin / name) for name in plugin_paths}
+    example.run_process(
+        [
+            sys.executable,
+            "-I",
+            "-c",
+            "from mnemos.utils.embeddings import FastembedProvider; p=FastembedProvider(); assert len(p.embed('release label'))==384",
+        ],
+        cwd=root,
+        env=env,
+        timeout=900,
+    )
+    process: subprocess.Popen[bytes] | None = None
+    controls: dict[str, dict[str, Any]] = {}
+    with (root / "service.log").open("w+b") as log:
+
+        def cli(arguments: list[str], cwd: Path = project) -> dict[str, Any]:
+            return dict(example.cli(arguments, env=env, cwd=cwd))
+
+        def start() -> None:
+            nonlocal process
+            process = subprocess.Popen(
+                [sys.executable, "-I", str(Path(__file__).resolve()), "--serve", str(root)],
+                cwd=root,
+                env=env,
+                stdout=log,
+                stderr=log,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            deadline = time.monotonic() + 120
+            while not (root / "runtime.json").is_file():
+                if process.poll() is not None:
+                    raise RuntimeError("Isolated native service exited during startup")
+                if time.monotonic() >= deadline:
+                    raise TimeoutError("Isolated native service startup timed out")
+                time.sleep(0.1)
+            health = cli(["stats"])
+            if (
+                health["runtime"]["cognition_provider"] != "UnavailableLLMProvider"
+                or health["runtime"]["embedding_provider"] != "FastembedProvider"
+            ):
+                raise ValueError("Native runtime provider mismatch")
+            report["runtime_starts"].append({"pid": process.pid, "health": health})
+            save(root / "report.json", report)
+
+        def stop() -> None:
+            nonlocal process
+            if process is not None:
+                example.stop_service(process, env, project)
+                process = None
+
+        def maintain() -> dict[str, Any]:
+            cli(["consolidate"])
+            return state(root / "memory.sqlite")
+
+        def phase(name: str, prompt: str, allowed: set[str]) -> list[dict[str, Any]]:
+            row: dict[str, Any] = {"phase": name, "status": "running"}
+            report["phases"].append(row)
+            save(root / "report.json", report)
+            config = native.PhaseEnvironment(
+                root,
+                project,
+                root / "scopes.json",
+                root / "runtime.json",
+                settings,
+                PROFILE,
+                plugin,
+            )
+            result = native.run_claude_phase(
+                config,
+                phase=name,
+                prompt=prompt,
+                executable=args.claude,
+                auth_source=args.auth,
+                allowed_tools=[native.CLAUDE_PREFIX + tool for tool in sorted(allowed)],
+            )
+            directory = root / name
+            (directory / "prompt.txt").write_text(prompt, encoding="utf-8")
+            source = directory / "stdout.jsonl"
+            rows = [json.loads(line) for line in source.read_bytes().splitlines()]
+            row.update(verify_native_result(result, rows))
+            provenance = trace.TraceProvenance(
+                "claude-code", result["pid"], result["session_id"], str(source), sha(source)
+            )
+            calls = trace.parse_claude_tool_records(
+                trace.load_source_records(source, provenance=provenance), provenance=provenance
+            )
+            normalized = [
+                {
+                    "name": call.name,
+                    "args": dict(call.arguments),
+                    "result": dict(call.result),
+                    "model_call_correlated": call.model_call_correlated,
+                    "call_id": call.call_id,
+                    "line": call.line_number,
+                    "line_sha256": call.line_sha256,
+                }
+                for call in calls
+            ]
+            contract.require_native_calls(normalized, allowed)
+            if scenario.foreign in json.dumps(rows):
+                raise ValueError("Foreign-project content reached the native host")
+            current = maintain()
+            current_facts = {fact["id"]: fact for fact in current["facts"]}
+            if any(
+                current_facts.get(identity) != original for identity, original in controls.items()
+            ):
+                raise ValueError("Native phase changed a retained or foreign control")
+            save(directory / "state.json", current)
+            save(directory / "normalized-calls.json", normalized)
+            row.update(status="observed", tool_count=len(normalized), stdout_sha256=sha(source))
+            save(root / "report.json", report)
+            print(
+                json.dumps({"phase": name, "status": "observed", "tool_count": len(normalized)}),
+                flush=True,
+            )
+            return normalized
+
+        try:
+            start()
+            registered = cli(["enable-project", "--profile", PROFILE, "--path", str(project)])
+            scope_id = registered["project"]["id"]
+            other = cli(["enable-project", "--profile", PROFILE, "--path", str(foreign)], foreign)
+            if scope_id == other["project"]["id"]:
+                raise ValueError("Native fixture projects share an identity")
+            for content, path in (
+                (scenario.retained, project),
+                (scenario.unrelated, project),
+                (scenario.foreign, foreign),
+            ):
+                cli(["store", content, "--scope", "project"], path)
+            seeded = maintain()
+            controls = {fact["id"]: fact for fact in seeded["facts"]}
+            retained = contract.asserted_fact(seeded, scenario.retained, scope_id)["id"]
+            report.update(
+                project_id=scope_id, foreign_project_id=other["project"]["id"], retained_id=retained
+            )
+            base = "Use only the requested Mnemos tools in this project's scope. Do not store conversational text as a fact. "
+            calls = phase(
+                "teach",
+                base
+                + f"Explicitly remember exactly this user fact: {scenario.old} Call mnemos_store once, mnemos_consolidate, then mnemos_job_status for that returned job_id. Report completion only when the job is completed.",
+                {"mnemos_store", "mnemos_consolidate", "mnemos_job_status"},
+            )
+            contract.require_teach(calls, scenario.old)
+            target = contract.asserted_fact(state(root / "memory.sqlite"), scenario.old, scope_id)[
+                "id"
+            ]
+            report["target_id"] = target
+            report["phases"][-1]["status"] = "passed"
+            recall_prompt = (
+                base
+                + f'Call mnemos_retrieve with query exactly "{scenario.target_query}". Inspect the returned asserted release fact with mnemos_inspect and report its ID, version, content and retained source evidence. Do not change memory.'
+            )
+            for name, content, version in (
+                ("recall-v1", scenario.old, 1),
+                ("recall-v2", scenario.new, 2),
+            ):
+                stop()
+                start()
+                calls = phase(name, recall_prompt, {"mnemos_retrieve", "mnemos_inspect"})
+                contract.require_recalled(
+                    calls,
+                    fact_id=target,
+                    content=content,
+                    version=version,
+                    scope_id=scope_id,
+                    query=scenario.target_query,
+                )
+                if not any(
+                    call["name"] == "mnemos_inspect"
+                    and call["result"].get("fact", {}).get("id") == target
+                    and call["result"].get("evidence")
+                    for call in calls
+                ):
+                    raise ValueError("Native recall omitted source evidence inspection")
+                report["phases"][-1]["status"] = "passed"
+                if version == 1:
+                    calls = phase(
+                        "correct",
+                        base
+                        + f'First retrieve query "{scenario.target_query}" and inspect the asserted fact. Correct that same ID at its inspected version to exactly: {scenario.new} Call mnemos_consolidate, then mnemos_job_status for the correction job. Report completion only after that job is completed.',
+                        {
+                            "mnemos_retrieve",
+                            "mnemos_inspect",
+                            "mnemos_correct",
+                            "mnemos_consolidate",
+                            "mnemos_job_status",
+                        },
+                    )
+                    contract.require_correct(
+                        [call for call in calls if call["name"] != "mnemos_consolidate"],
+                        target,
+                        scenario.new,
+                    )
+                    corrected = contract.asserted_fact(
+                        state(root / "memory.sqlite"), scenario.new, scope_id
+                    )
+                    if corrected["id"] != target or corrected["version"] != 2:
+                        raise ValueError(
+                            "Correction changed fact identity or failed to advance version"
+                        )
+                    report["phases"][-1]["status"] = "passed"
+            originals = original_replay_records(
+                [json.loads(line) for line in (root / "arrivals.jsonl").read_text().splitlines()],
+                scenario.forgotten_labels,
+            )
+            calls = phase(
+                "forget",
+                base
+                + f'Retrieve query "{scenario.target_query}" and inspect the corrected release fact. Forget that release convention and its reviewed copies in this project. Use mnemos_forget_preview, inspect any additional selected facts, then mnemos_forget_related with the unchanged apply_preconditions and explicitly reviewed eligible source/fact IDs from that preview. Preserve the review convention and unrelated facts. Report the returned deletion coverage; do not repeat deleted labels in your final reply.',
+                {
+                    "mnemos_retrieve",
+                    "mnemos_inspect",
+                    "mnemos_forget_preview",
+                    "mnemos_forget_related",
+                },
+            )
+            contract.require_forget(calls, target)
+            contract.require_absent(
+                state(root / "memory.sqlite"), target, scenario.forgotten_labels
+            )
+            report["phases"][-1]["status"] = "passed"
+            stop()
+            start()
+            from mnemos.client import MnemosClient
+
+            async def replay() -> list[dict[str, Any]]:
+                client = MnemosClient(
+                    descriptor_path=root / "runtime.json",
+                    outbox_path=root / "replay-outbox.sqlite",
+                    auto_start=False,
+                )
+                results = []
+                for original in originals:
+                    result = await client.request(original["operation"], original["payload"])
+                    if result.get("processing_status") != "suppressed" or result.get(
+                        "event_id"
+                    ) != original["result"].get("event_id"):
+                        raise ValueError(
+                            "Original source replay was not suppressed at the original identity"
+                        )
+                    results.append(result)
+                return results
+
+            report["source_replay_count"] = len(asyncio.run(replay()))
+            contract.require_absent(maintain(), target, scenario.forgotten_labels)
+            stop()
+            start()
+            calls = phase(
+                "recall-forgotten",
+                base
+                + f'Call mnemos_retrieve separately with query "{scenario.target_query}" and query "{scenario.retained_query}". Report whether the release fact is absent and whether the review convention remains. Do not store or change memory.',
+                {"mnemos_retrieve"},
+            )
+            contract.require_recalled(
+                calls,
+                fact_id=retained,
+                content=scenario.retained,
+                version=1,
+                scope_id=scope_id,
+                query=scenario.retained_query,
+            )
+            if not any(call["args"].get("query") == scenario.target_query for call in calls):
+                raise ValueError("Native host did not query the forgotten topic")
+            contract.require_absent(
+                state(root / "memory.sqlite"), target, scenario.forgotten_labels
+            )
+            final_text = (root / "recall-forgotten/stdout.jsonl").read_text(encoding="utf-8")
+            if any(label in final_text for label in scenario.forgotten_labels):
+                raise ValueError("Forgotten labels reached the fresh native context")
+            report["phases"][-1]["status"] = "passed"
+            foreign_recall = cli(
+                ["retrieve", scenario.target_query, "--allowed-scopes", "project"], foreign
+            )
+            if not foreign_recall["facts"] or any(
+                fact["scope_id"] != other["project"]["id"] for fact in foreign_recall["facts"]
+            ):
+                raise ValueError("Foreign project control retrieval failed")
+            save(root / "foreign-control.json", foreign_recall)
+            report["status"] = "passed"
+        except BaseException as exc:
+            report.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+            raise
+        finally:
+            try:
+                stop()
+                if (root / "runtime.json").exists() or list(root.rglob(".credentials.json")):
+                    raise ValueError("Native service or copied authentication survived cleanup")
+                report["cleanup"] = "passed"
+            except BaseException as exc:
+                report.update(status="failed", cleanup=type(exc).__name__)
+                raise
+            finally:
+                report["finished_at"] = datetime.now(timezone.utc).isoformat()
+                save(root / "report.json", report)
+    return report
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--serve", type=Path)
+    parser.add_argument("--wheel", type=Path)
+    parser.add_argument("--smoke", type=Path)
+    parser.add_argument("--source-commit")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--claude", type=Path)
+    parser.add_argument("--auth", type=Path)
+    args = parser.parse_args()
+    if args.serve:
+        serve(args.serve.resolve())
+        return
+    if any(
+        getattr(args, name) is None
+        for name in ("wheel", "smoke", "source_commit", "output", "claude", "auth")
+    ):
+        parser.error("All checkpoint and native-host arguments are required")
+    print(json.dumps(run(args), indent=2))
+
+
+if __name__ == "__main__":
+    main()

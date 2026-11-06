@@ -542,7 +542,10 @@ def run_claude_phase(
                 stdout=stdout,
                 stderr=stderr,
                 shell=False,
-                creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+                creationflags=(
+                    getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+                    | getattr(subprocess, "CREATE_NO_WINDOW", 0)
+                ),
             )
             result["pid"] = process.pid
             _save_result(directory, result)

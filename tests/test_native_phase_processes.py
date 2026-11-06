@@ -409,6 +409,8 @@ def test_authentication_cleaned_on_process_failure_timeout_and_success(
         assert (home / source.name).read_text() == "synthetic credential"
         assert kwargs["shell"] is False
         assert kwargs["stdin"] == subprocess.DEVNULL
+        if phases.os.name == "nt":
+            assert kwargs["creationflags"] & subprocess.CREATE_NO_WINDOW
         assert command[command.index("--max-budget-usd") + 1] == "0.5"
         if failure == "spawn":
             raise OSError("synthetic launch failure")
