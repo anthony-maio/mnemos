@@ -1,0 +1,118 @@
+{
+  "source_commit": "24887ef3",
+  "runner_commit": "c3a14fd38409286619ccc0bfdc3793216749a478",
+  "wheel_sha256": "bdc64792d918293ca1e01c482531c518e02c1aca9c5ccf6603e035a067ac8273",
+  "installed_smoke_sha256": "a767dfad9f33af191b7b77eb1f3ef3292d8c510b93b5442ae42911e46bf69e12",
+  "host_version": "2.1.191 (Claude Code)",
+  "model": "claude-sonnet-4-6",
+  "input_hashes": {
+    "scripts/check-native-explicit.py": "72e994627e10f6016feef9728dd0271036dc05dcf120b6569e4c6ebe4aeccaae",
+    "benchmarks/native_hosts/native_processes.py": "9dde8f3a8402d633d9ecf55ea649f6b670e9456bdab92baf11cc3a658418911e",
+    "benchmarks/native_hosts/shared_trace.py": "e28c9e5899aa3ee765e4ae346d83794024b01f934ece35b20ecdf1bb50695e4b",
+    "benchmarks/native_hosts/three_host_contract.py": "bd7bea89b747e7b1e22f7e00a094ed60fc824b4216f5812e87ea0c71ab8ec7f0",
+    "examples/restart_recall.py": "e6fe872fb05b4381eefbe04ea8890ed3589b27c65464e4aca10f20b4ad3fc21e",
+    "docs/plans/2026-11-06-native-explicit-memory.md": "ca7aa6898cba2787f86837b4ca4a907b5252e42e7e669a344990473ab8b0d953"
+  },
+  "plugin_hashes": {
+    ".claude-plugin/marketplace.json": "4d2becf04a03e0306f49c3c5efa790937fb7999d45864efdac6f3ea4d70ff3d5",
+    ".claude-plugin/plugin.json": "3ecefd3f1f19fffa5767b6a21e322ebfa255f3e0ec53c728ab20f673b4f7cca4",
+    ".claude-plugin/run_mnemos_hook.py": "e87f2144ebe9ddc9f9b91bb52ea347dd85d53c93fae4a40f3a51a5714cf6929c",
+    ".claude-plugin/run_mnemos_mcp.py": "ff51150e6dc89fa360222739486861408228e2853e74f58429400d5a203fb749",
+    "agents/memory-orchestrator.md": "b484a0290b0f45eb649d155aab25a6ffe483d7d581c8a0565a490e4cc90fe0c7",
+    "agents/mnemos-curator.md": "96fbd87fb219df44131dedadc09f4cad9cfb171d9ea7b6420e40676f17295510",
+    "agents/mnemos-recall.md": "55658bbd4ef2d8c985a79a34632aa4167d97aa3d6a2efe0fd21049fe4765afae",
+    "commands/mnemos/consolidate.md": "be07c5e5e48134e1d97c4d41e431dcbf6f409458842d748c2a5ebc8061852c1c",
+    "commands/mnemos/prime.md": "44707019c32ac059d9e72e91cde6ffc043f600d547088676a70ba6b3e58a4db3",
+    "hooks/hooks.json": "8cc551fd65acb4a605d20d09acac3e4b12a0a6a229e3622176b1c202d9066873",
+    "skills/mnemos-codex/SKILL.md": "873f96ec47df79802b9d77834b8230de4f6e405bd3dd0447f1656c9d126a4e16",
+    "skills/mnemos-codex/references/install.md": "21779d53766ca1afe97820658374ee6fdab2eacc773b231aff72999f263d5871",
+    "skills/mnemos-codex/references/operations.md": "cb43f73de0dfe558d87d2ac4900b11231ab7e3a3ab597e5b4d52304db8f40a74",
+    "skills/mnemos-memory/SKILL.md": "8f6430f1d40bef55c24c4cc5c33815b816c89ecff85128742a3e3f436484d775",
+    "skills/mnemos-memory/references/hosts.md": "0025a938eda7ed62c93130ef75ae1c708d54c580913b2973407f63b00f73b93e",
+    "skills/mnemos-memory/references/operations.md": "903d45cc8d6b32bdfc1d9d0d995e3857b03c958ac52c034e3635770b6d5729cf"
+  },
+  "status": "failed",
+  "started_at": "2026-11-06T22:37:19.266569+00:00",
+  "finished_at": "2026-11-06T22:38:07.596800+00:00",
+  "cleanup": "passed",
+  "target_id": "c6b9f66c-0d74-4d58-af00-8955130b1ce7",
+  "phases": [
+    {
+      "phase": "teach",
+      "status": "passed",
+      "native_exit_code": 0,
+      "auth_copy_removed": true,
+      "timed_out": false,
+      "reported_cost_usd": 0.05187959999999999,
+      "inference_output_tokens": 665,
+      "failure": null,
+      "stdout_sha256": "dc70e77cbb96b888a25e83191e963d5cbba578d12b16ea6707faa0ef4aeca80e",
+      "prompt_sha256": "1dde20acb3904845974961db2c3b81ce1f919f2134d466a01df7fafe06c67109",
+      "hook_responses": [
+        {
+          "event": "SessionStart",
+          "exit_code": 0,
+          "outcome": "success"
+        },
+        {
+          "event": "UserPromptSubmit",
+          "exit_code": 0,
+          "outcome": "success"
+        },
+        {
+          "event": "Stop",
+          "exit_code": 0,
+          "outcome": "success"
+        }
+      ]
+    },
+    {
+      "phase": "recall-v1",
+      "status": "failed",
+      "native_exit_code": 1,
+      "auth_copy_removed": true,
+      "timed_out": false,
+      "reported_cost_usd": 0,
+      "inference_output_tokens": 0,
+      "failure": "authentication_failed",
+      "stdout_sha256": "26abaa09e7e8b202bf23a3d3a1e342cfcc0516683f87bdaf70384d80b322dc99",
+      "prompt_sha256": "eaa49a963b1b445d746b9a4439f7fac3c4e0197c4b0f72cb2e4efa77e1ab9bdd",
+      "hook_responses": [
+        {
+          "event": "SessionStart",
+          "exit_code": 0,
+          "outcome": "success"
+        },
+        {
+          "event": "UserPromptSubmit",
+          "exit_code": 0,
+          "outcome": "success"
+        }
+      ]
+    }
+  ],
+  "service_pids": [
+    76508,
+    58424
+  ],
+  "descriptor_removed": true,
+  "credential_copies_removed": true,
+  "private_archive_sha256": "fe0cca3d87948a6857c07169bdd61666ea4dd6c2fec78cf35eed52b38001cd4a",
+  "private_file_hashes": {
+    "report.json": "0d99feab5003d782119cafb25396e206aaaac94cb8710a4904174a87801ecd85",
+    "arrivals.jsonl": "6c3153326dce50e71db654e0f92be49675cbfa41673da6e4d3629c4041b33aa8",
+    "service.log": "e3e6dad338eb6cf6dcdeb6090a2164f80e022ec55a67b03d4330947efd53d2c1",
+    "memory.sqlite": "e2b64a7763dced897d7a22df29e7f5c366182cf33b1c97ac85b09579be360bdf",
+    "teach/normalized-calls.json": "cb5d487415c69584c2871d2fbc3e98cf0a52a092d500f4c0be5bdd8a758ce169",
+    "teach/process.json": "22a6b39c9c9fe2c17a5c75924d27b17c9174b97749c477432db25576d220a646",
+    "teach/prompt.txt": "1dde20acb3904845974961db2c3b81ce1f919f2134d466a01df7fafe06c67109",
+    "teach/state.json": "65dac078f3b2bf6ffacabda1fcf2a0c7470821e3d06870b4334eefc77db7888e",
+    "teach/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "teach/stdout.jsonl": "dc70e77cbb96b888a25e83191e963d5cbba578d12b16ea6707faa0ef4aeca80e",
+    "recall-v1/process.json": "f9fc1526ebcd22c60f8a4b2e2528bc02c28fe4e0d57c5a814a4ad324046c5c99",
+    "recall-v1/prompt.txt": "eaa49a963b1b445d746b9a4439f7fac3c4e0197c4b0f72cb2e4efa77e1ab9bdd",
+    "recall-v1/stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "recall-v1/stdout.jsonl": "26abaa09e7e8b202bf23a3d3a1e342cfcc0516683f87bdaf70384d80b322dc99"
+  },
+  "archived_input_hashes_verified": true
+}

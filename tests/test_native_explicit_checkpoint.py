@@ -1,6 +1,7 @@
 """Acceptance rejects unbound host output and preserves original replay identities."""
 
 from copy import deepcopy
+import json
 
 import pytest
 
@@ -77,3 +78,19 @@ def test_replay_uses_original_payload_and_only_committed_target_sources(runner):
     assert selected[0]["result"]["event_id"] == "stored-e1"
     with pytest.raises(ValueError):
         runner.original_replay_records(records, ("not-present",))
+
+
+def test_auth_preflight_rejects_expired_or_short_lived_login_without_copying_it(runner, tmp_path):
+    path = tmp_path / ".credentials.json"
+    for expiry in (0, 4_000_000, True, "later", None):
+        raw = json.dumps({"claudeAiOauth": {"accessToken": "test-token", "expiresAt": expiry}})
+        path.write_text(raw)
+        with pytest.raises(ValueError, match="fresh isolated Claude login"):
+            runner.auth_preflight(path, now=1000)
+        assert path.read_text() == raw
+    path.write_text(
+        json.dumps({"claudeAiOauth": {"accessToken": "test-token", "expiresAt": 5_000_000}})
+    )
+    result = runner.auth_preflight(path, now=1000)
+    assert result == {"expires_at_ms": 5_000_000, "minimum_remaining_seconds": 3600}
+    assert "test-token" not in json.dumps(result)

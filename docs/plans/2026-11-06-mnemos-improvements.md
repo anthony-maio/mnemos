@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; first local comparison failed; semantic repair and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Historical evidence exists; current validation and pilot open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Current installed CLI/MCP restart recall passed; native teaching passed, next session failed authentication; complete native lifecycle and pilot open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
 
@@ -88,3 +88,12 @@ No historical archive is removed or rewritten.
   tokenizer compatibility or context-efficiency gains. Both experiment archives
   passed hash verification; all 20 archived databases passed integrity and fact
   count checks.
+- Product `24887ef3` built wheel and source artifacts and passed Twine checks.
+  Its installed smoke check passed real-embedding CLI/MCP restart recall and
+  scope isolation outside the checkout. The native Claude attempt at runner
+  `c3a14fd3` passed teaching and completed-job observation, then failed login in
+  the first post-restart native session. Cleanup passed. The original evidence
+  is preserved; see the [installed/native report](../validation/2026-11-06/installed-native-checkpoint.md).
+  A separate validation login is requested for another attempt. The new guard
+  refuses expired copied credentials before inference. The pilot remains
+  NOT_STARTED; project selection is also pending.

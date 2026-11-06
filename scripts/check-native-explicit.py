@@ -35,6 +35,7 @@ INPUTS = (
     "benchmarks/native_hosts/three_host_contract.py",
     "examples/restart_recall.py",
     "docs/plans/2026-11-06-native-explicit-memory.md",
+    "docs/plans/2026-11-06-native-explicit-auth-v2.md",
 )
 
 
@@ -55,6 +56,28 @@ def helper(relative: str) -> Any:
     sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
+
+
+def auth_preflight(path: Path, *, now: float | None = None) -> dict[str, Any]:
+    """Do not ask a copied, expired login to rotate the live profile's tokens."""
+    now = time.time() if now is None else now
+    try:
+        credential = json.loads(path.read_text(encoding="utf-8")).get("claudeAiOauth", {})
+        expiry = credential.get("expiresAt")
+        access = credential.get("accessToken")
+        valid = (
+            type(expiry) is int
+            and expiry / 1000 - now >= 3600
+            and isinstance(access, str)
+            and bool(access)
+        )
+    except (OSError, ValueError, AttributeError):
+        valid = False
+    if not valid:
+        raise ValueError(
+            "A fresh isolated Claude login with at least one hour remaining is required"
+        )
+    return {"expires_at_ms": expiry, "minimum_remaining_seconds": 3600}
 
 
 def verify_native_result(process: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -155,6 +178,7 @@ def serve(root: Path) -> None:
 def bindings(args: argparse.Namespace) -> dict[str, Any]:
     import mnemos
 
+    authentication = auth_preflight(args.auth)
     package = Path(mnemos.__file__).resolve().parent
     if not package.is_relative_to(Path(sys.prefix).resolve()) or package.is_relative_to(ROOT):
         raise ValueError("Native verification requires an installed package outside the checkout")
@@ -201,6 +225,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "python": sys.version,
         "host_version": host_version,
         "model": MODEL,
+        "authentication_preflight": authentication,
         "input_hashes": {relative: sha(ROOT / relative) for relative in INPUTS},
     }
 
@@ -562,6 +587,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             report["status"] = "passed"
         except BaseException as exc:
             report.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+            if report["phases"] and report["phases"][-1]["status"] != "passed":
+                report["phases"][-1].update(status="failed", error_type=type(exc).__name__)
             raise
         finally:
             try:
