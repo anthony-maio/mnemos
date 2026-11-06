@@ -240,3 +240,135 @@ async def test_request_limits_fail_before_provider_call(memory):
     assert result.status == "unavailable"
     assert result.error_type == "JudgmentRequestTooLarge"
     assert not judge.calls
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "answer,source,expected",
+    [
+        ("answers", "entailed", "supported"),
+        ("related", "entailed", "related"),
+        ("answers", "unsupported", "unsupported"),
+        ("answers", "contradicted", "unresolved"),
+        ("answers", "unresolved", "unresolved"),
+    ],
+)
+async def test_separate_checks_require_both_answer_and_source_support(
+    memory, answer, source, expected
+):
+    fact(memory)
+    judge = MockJudge({"answer:0": answer, "source:0:0": source})
+    result = await assess(
+        memory, judge, config=AnswerSupportConfig(protocol="separate_v2", batching="candidate")
+    )
+    assert result.status == "assessed"
+    assert result.decisions[0].disposition == expected
+    assert bool(result.supported) == (expected == "supported")
+    if result.supported:
+        assert result.decisions[0].evidence_ids == ("release-evidence",)
+    assert set(judge.calls[0][1]) == {"answer:0", "source:0:0"}
+
+
+@pytest.mark.asyncio
+async def test_candidate_batching_keeps_facts_separate_and_rechecks_earlier_answers(memory):
+    fact(memory)
+    fact(memory, "other")
+
+    class ChangingSecondCall(MockJudge):
+        async def ask(self, *args, **kwargs):
+            if self.calls:
+                memory[0].delete("release")
+            return await super().ask(*args, **kwargs)
+
+    judge = ChangingSecondCall({"support:*": "evidence:0"})
+    result = await assess(
+        memory, judge, ids=("release", "other"), config=AnswerSupportConfig(batching="candidate")
+    )
+    assert len(judge.calls) == 2
+    assert all(len(questions) == 1 for _, questions, _ in judge.calls)
+    assert result.status == "partial"
+    assert [item.fact_id for item in result.supported] == ["other"]
+    assert result.decisions[0].disposition == "stale"
+    assert len(result.trace.calls) == 2
+
+
+@pytest.mark.asyncio
+async def test_changed_later_candidate_is_not_sent_to_another_call(memory):
+    fact(memory)
+    fact(memory, "other")
+
+    class ForgetNext(MockJudge):
+        async def ask(self, *args, **kwargs):
+            memory[0].delete("other")
+            return await super().ask(*args, **kwargs)
+
+    judge = ForgetNext({"support:*": "evidence:0"})
+    result = await assess(
+        memory, judge, ids=("release", "other"), config=AnswerSupportConfig(batching="candidate")
+    )
+    assert len(judge.calls) == 1
+    assert set(judge.calls[0][1]) == {"support:0"}
+    assert result.status == "partial"
+    assert result.decisions[1].disposition == "stale"
+
+
+@pytest.mark.asyncio
+async def test_later_provider_failure_does_not_return_partial_supported_context(memory):
+    fact(memory)
+    fact(memory, "other")
+
+    class FailSecond(MockJudge):
+        async def ask(self, *args, **kwargs):
+            if self.calls:
+                raise MnemosTransientError("second request unavailable")
+            return await super().ask(*args, **kwargs)
+
+    result = await assess(
+        memory,
+        FailSecond({"support:*": "evidence:0"}),
+        ids=("release", "other"),
+        config=AnswerSupportConfig(batching="candidate"),
+    )
+    assert result.status == "unavailable"
+    assert not result.supported
+    assert len(result.trace.calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_separate_check_cannot_resolve_disagreeing_sources_by_selecting_one(memory):
+    fact(memory)
+    memory[0]._conn.execute(
+        "INSERT INTO fact_evidence SELECT 'z-contradiction', fact_id, source_event_id, "
+        "'The release checklist does not live in docs/release.md.', source_ref, created_at "
+        "FROM fact_evidence"
+    )
+    memory[0]._conn.commit()
+    result = await assess(
+        memory,
+        MockJudge({"answer:0": "answers", "source:0:0": "entailed", "source:0:1": "contradicted"}),
+        config=AnswerSupportConfig(protocol="separate_v2"),
+    )
+    assert result.status == "assessed"
+    assert not result.supported
+    assert result.decisions[0].reason == "source_contradiction"
+
+
+@pytest.mark.asyncio
+async def test_candidate_requests_share_one_timeout_budget(memory):
+    fact(memory)
+    fact(memory, "other")
+
+    class SlowJudge(MockJudge):
+        async def ask(self, *args, **kwargs):
+            await asyncio.sleep(0.04)
+            return await super().ask(*args, **kwargs)
+
+    result = await assess(
+        memory,
+        SlowJudge({"support:*": "evidence:0"}),
+        ids=("release", "other"),
+        config=AnswerSupportConfig(batching="candidate", timeout_seconds=0.06),
+    )
+    assert result.status == "unavailable"
+    assert result.error_type == "TimeoutError"
+    assert not result.supported

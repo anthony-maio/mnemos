@@ -14,6 +14,69 @@ from mnemos.memory_safety import MemoryWriteFirewall
 from mnemos.utils.llm import LLMProvider
 from mnemos.utils.ollama_judge import OllamaJudge, questions_schema
 
+
+@pytest.mark.parametrize(
+    "distribution", [None, {"a": 1.0}, {"a": 0.9, "b": 0.9}, {"a": 0.2, "b": 0.8}]
+)
+def test_required_distribution_never_fills_or_normalizes_model_probabilities(distribution):
+    answer = {"choice": "a"}
+    if distribution is not None:
+        answer["probabilities"] = distribution
+    judge = OllamaJudge(
+        _Structured(json.dumps({"q": answer})),
+        firewall=MemoryWriteFirewall(MemorySafetyConfig()),
+        require_choice_probabilities=True,
+    )
+    with pytest.raises(JudgmentContractError):
+        asyncio.run(
+            judge.ask("fixture", {"q": Choice("Pick", (("a", None), ("b", None)))}, purpose="test")
+        )
+
+
+def test_required_distribution_requests_and_retains_every_probability():
+    llm = _Structured('{"q":{"choice":"a","probabilities":{"a":0.8,"b":0.2}}}')
+    judge = OllamaJudge(
+        llm, firewall=MemoryWriteFirewall(MemorySafetyConfig()), require_choice_probabilities=True
+    )
+    result = asyncio.run(
+        judge.ask("fixture", {"q": Choice("Pick", (("a", None), ("b", None)))}, purpose="test")
+    )
+    assert result.answers["q"].probabilities == {"a": 0.8, "b": 0.2}
+    schema = llm.calls[0]["format"]["properties"]["q"]
+    assert "probabilities" in schema["required"]
+    assert schema["properties"]["probabilities"]["required"] == ["a", "b"]
+    assert "sum to 1" in llm.calls[0]["prompt"]
+
+
+def test_rendered_prompt_limit_refuses_request_before_model_call():
+    llm = _Structured("{}")
+    judge = OllamaJudge(
+        llm, firewall=MemoryWriteFirewall(MemorySafetyConfig()), max_prompt_bytes=20
+    )
+    with pytest.raises(JudgmentContractError, match="byte limit"):
+        asyncio.run(
+            judge.ask("fixture", {"q": Noul("Enough?", Criteria("yes", "no"))}, purpose="t")
+        )
+    assert llm.calls == []
+
+
+def test_required_probabilities_preserve_noul_and_score_questions():
+    llm = _Structured('{"n":{"noul":0.5},"s":{"score":1}}')
+    judge = OllamaJudge(
+        llm, firewall=MemoryWriteFirewall(MemorySafetyConfig()), require_choice_probabilities=True
+    )
+    result = asyncio.run(
+        judge.ask(
+            "fixture",
+            {"n": Noul("N?", Criteria("yes", "no")), "s": Score("S?", ("a", "b"))},
+            purpose="t",
+        )
+    )
+    assert result.answers["n"].probability == 0.5
+    assert result.answers["s"].value == 1
+    assert llm.calls[0]["format"]["properties"]["n"]["required"] == ["noul"]
+
+
 QUESTIONS = {
     "novel": Noul("New information?", Criteria("yes", "no")),
     "kind:r0": Choice("Kind?", (("asserted_fact", None), ("question", None))),

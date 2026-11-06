@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from dataclasses import asdict
+from collections.abc import Mapping
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -26,7 +28,7 @@ from mnemos.answer_support import AnswerSupportConfig, assess_answer_support
 from mnemos.config import MnemosConfig
 from mnemos.contracts import RetrievalRequest
 from mnemos.engine import MnemosEngine
-from mnemos.judgment import Judge
+from mnemos.judgment import Judge, Judgment, JudgmentState, Question, serialize_question
 from mnemos.memory_safety import source_firewall
 from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeContext, ScopeRegistry, context_metadata
@@ -37,6 +39,56 @@ from mnemos.utils.ollama_judge import OllamaJudge
 from mnemos.utils.storage import SQLiteStore
 
 from .retrieval_comparison import STRATEGIES, comparison_snapshots
+
+
+@dataclass(frozen=True)
+class SupportTreatment:
+    name: str
+    judge: Judge
+    config: AnswerSupportConfig
+
+
+class ObservedJudge:
+    """Bind each synthetic request and raw provider response to its treatment."""
+
+    def __init__(self, name: str, judge: Judge, output: Path, active: ContextVar[dict[str, Any]]):
+        self.name, self.judge, self.output, self.active = name, judge, output, active
+        self.provider, self.model = judge.provider, judge.model
+        self.count = 0
+
+    async def ask(
+        self,
+        state: JudgmentState,
+        questions: Mapping[str, Question],
+        *,
+        purpose: str,
+        model: str | None = None,
+    ) -> Judgment:
+        self.count += 1
+        binding = {
+            "treatment": self.name,
+            "request_id": f"{self.name}:{self.count}",
+            "purpose": purpose,
+        }
+        with self.output.open("a", encoding="utf-8") as stream:
+            stream.write(
+                json.dumps(
+                    {
+                        **binding,
+                        "state": state,
+                        "questions": {
+                            key: serialize_question(value) for key, value in questions.items()
+                        },
+                    },
+                    ensure_ascii=True,
+                )
+                + "\n"
+            )
+        token = self.active.set(binding)
+        try:
+            return await self.judge.ask(state, questions, purpose=purpose, model=model)
+        finally:
+            self.active.reset(token)
 
 
 def grade_selection(expected: list[str], selected: list[str], status: str) -> dict[str, Any]:
@@ -62,7 +114,15 @@ async def compare_query(
     top_k: int = 5,
     max_context_tokens: int = 1200,
     order_seed: str = "development",
+    treatments: list[SupportTreatment] | None = None,
 ) -> list[dict[str, Any]]:
+    policies = (
+        treatments
+        if treatments is not None
+        else [SupportTreatment("support", judge, support_config)]
+    )
+    if not policies or len({item.name for item in policies}) != len(policies):
+        raise ValueError("Support treatments must have unique names and cannot be empty")
     rows = []
     with comparison_snapshots(service) as (digest, variants):
         order = list(STRATEGIES)
@@ -80,44 +140,59 @@ async def compare_query(
             )
             retrieval_ms = (time.perf_counter() - started) * 1000
             ids = [item["id"] for item in baseline["facts"]]
-            started = time.perf_counter()
-            support = await assess_answer_support(
-                query["query"],
-                ids,
-                store=variant.engine.store,
-                registry=variant.registry,
-                context=context,
-                judge=judge,
-                config=support_config,
-            )
-            selected = [item.fact_id for item in support.supported]
-            baseline_status = "unavailable" if baseline.get("degraded") else "assessed"
-            status = support.status if baseline_status == "assessed" else "unavailable"
-            rows.append(
-                {
-                    "query_id": query["id"],
-                    "query": query["query"],
-                    "category": query.get("category"),
-                    "strategy": strategy,
-                    "snapshot_sha256": digest,
-                    "expected_fact_ids": query["expected_fact_ids"],
-                    "baseline_ids": ids,
-                    "supported_ids": selected,
-                    "baseline_facts": baseline["facts"],
-                    "baseline_grade": grade_selection(
-                        query["expected_fact_ids"], ids, baseline_status
-                    ),
-                    "support_grade": grade_selection(query["expected_fact_ids"], selected, status),
-                    "support_status": status,
-                    "support_error_type": support.error_type,
-                    "support_decisions": [asdict(item) for item in support.decisions],
-                    "support_trace": support.trace.calls,
-                    "retrieval_ms": retrieval_ms,
-                    "support_ms": (time.perf_counter() - started) * 1000,
-                    "token_count_method": baseline["token_count_method"],
-                    "baseline_context_upper_bound": baseline["context_token_upper_bound"],
-                }
-            )
+            policy_order = list(policies)
+            random.Random(f"{order_seed}:{query['id']}:{strategy}:treatments").shuffle(policy_order)
+            for policy in policy_order:
+                prior_calls = policy.judge.count if isinstance(policy.judge, ObservedJudge) else 0
+                started = time.perf_counter()
+                support = await assess_answer_support(
+                    query["query"],
+                    ids,
+                    store=variant.engine.store,
+                    registry=variant.registry,
+                    context=context,
+                    judge=policy.judge,
+                    config=policy.config,
+                )
+                selected = [item.fact_id for item in support.supported]
+                baseline_status = "unavailable" if baseline.get("degraded") else "assessed"
+                status = support.status if baseline_status == "assessed" else "unavailable"
+                rows.append(
+                    {
+                        "treatment": policy.name,
+                        "judge_request_ids": (
+                            [
+                                f"{policy.name}:{i}"
+                                for i in range(prior_calls + 1, policy.judge.count + 1)
+                            ]
+                            if isinstance(policy.judge, ObservedJudge)
+                            else []
+                        ),
+                        "query_id": query["id"],
+                        "query": query["query"],
+                        "category": query.get("category"),
+                        "strategy": strategy,
+                        "snapshot_sha256": digest,
+                        "expected_fact_ids": query["expected_fact_ids"],
+                        "baseline_ids": ids,
+                        "supported_ids": selected,
+                        "baseline_facts": baseline["facts"],
+                        "baseline_grade": grade_selection(
+                            query["expected_fact_ids"], ids, baseline_status
+                        ),
+                        "support_grade": grade_selection(
+                            query["expected_fact_ids"], selected, status
+                        ),
+                        "support_status": status,
+                        "support_error_type": support.error_type,
+                        "support_decisions": [asdict(item) for item in support.decisions],
+                        "support_trace": support.trace.calls,
+                        "retrieval_ms": retrieval_ms,
+                        "support_ms": (time.perf_counter() - started) * 1000,
+                        "token_count_method": baseline["token_count_method"],
+                        "baseline_context_upper_bound": baseline["context_token_upper_bound"],
+                    }
+                )
     return rows
 
 
@@ -255,8 +330,29 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
     sources = sorted((project_root / "mnemos").rglob("*.py")) + sorted(
         Path(__file__).parent.glob("*.py")
     )
+    specs = (
+        [
+            ("legacy-batch", False, AnswerSupportConfig()),
+            ("normalized-batch", True, AnswerSupportConfig()),
+            ("normalized-candidate", True, AnswerSupportConfig(batching="candidate")),
+            (
+                "separate-candidate",
+                True,
+                AnswerSupportConfig(protocol="separate_v2", batching="candidate"),
+            ),
+        ]
+        if args.study == "format-batching-support-v2"
+        else [("support", False, AnswerSupportConfig())]
+    )
     manifest: dict[str, Any] = {
-        "namespace": "answer-support-development-v1",
+        "namespace": (
+            "answer-support-development-v2" if len(specs) > 1 else "answer-support-development-v1"
+        ),
+        "study": args.study,
+        "treatments": [
+            {"name": name, "require_choice_probabilities": required, "config": config.model_dump()}
+            for name, required, config in specs
+        ],
         "status": "prepared",
         "stage": "development",
         "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
@@ -275,6 +371,8 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
         "temperature": 0,
         "think": False,
         "max_output_tokens": 2048,
+        "judge_prompt_byte_limit": 12288 if args.study == "format-batching-support-v2" else None,
+        "judge_usage_method": "character estimate in trace; server counts retained in raw provider responses",
         "repetitions": args.repetitions,
         "top_k": 5,
         "context_budget": 1200,
@@ -300,10 +398,18 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
             response = await client.get(args.endpoint.rstrip("/") + "/api/version")
             response.raise_for_status()
             manifest["server_version"] = response.json()
+            response = await client.get(args.endpoint.rstrip("/") + "/api/ps")
+            response.raise_for_status()
+            manifest["active_models_before_run"] = response.json()
+
+        active: ContextVar[dict[str, Any]] = ContextVar("support_request", default={})
 
         def observe(payload: dict[str, Any]) -> None:
             with (output / "provider-responses.jsonl").open("a", encoding="utf-8") as stream:
-                stream.write(json.dumps(payload, ensure_ascii=True) + "\n")
+                stream.write(
+                    json.dumps({**payload, "support_request": active.get()}, ensure_ascii=True)
+                    + "\n"
+                )
 
         llm = OllamaProvider(
             model=args.model,
@@ -313,7 +419,25 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
             max_tokens=2048,
             response_observer=observe,
         )
-        judge = OllamaJudge(llm, firewall=source_firewall())
+        treatments = [
+            SupportTreatment(
+                name,
+                ObservedJudge(
+                    name,
+                    OllamaJudge(
+                        llm,
+                        firewall=source_firewall(),
+                        require_choice_probabilities=required,
+                        max_prompt_bytes=manifest["judge_prompt_byte_limit"],
+                    ),
+                    output / "judge-requests.jsonl",
+                    active,
+                ),
+                config,
+            )
+            for name, required, config in specs
+        ]
+        judge = treatments[0].judge
         embedder = FastembedProvider(model=args.embedding_model, cache_dir=args.embedding_cache)
         manifest["status"] = "running"
         save_manifest()
@@ -332,6 +456,7 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
                                 judge=judge,
                                 support_config=AnswerSupportConfig(),
                                 order_seed=f"{case['id']}:{repetition}",
+                                treatments=treatments,
                             )
                             for row in observations:
                                 row.update(case_id=case["id"], repetition=repetition)
@@ -350,7 +475,15 @@ async def run_development(args: argparse.Namespace) -> dict[str, Any]:
                             )
                     finally:
                         await service.engine.aclose()
-        report = {"stage": "development", "observations": len(rows), "results": summarize(rows)}
+        results = (
+            {
+                item.name: summarize([row for row in rows if row["treatment"] == item.name])
+                for item in treatments
+            }
+            if len(treatments) > 1
+            else summarize(rows)
+        )
+        report = {"stage": "development", "observations": len(rows), "results": results}
         (output / "summary.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
         manifest["status"] = "completed"
         manifest["observations_sha256"] = hashlib.sha256(
@@ -378,6 +511,9 @@ def main() -> None:
     parser.add_argument("--embedding-model", default="BAAI/bge-small-en-v1.5")
     parser.add_argument("--embedding-cache")
     parser.add_argument("--repetitions", type=int, default=1)
+    parser.add_argument(
+        "--study", choices=("legacy", "format-batching-support-v2"), default="legacy"
+    )
     args = parser.parse_args()
     if args.repetitions < 1:
         parser.error("repetitions must be positive")

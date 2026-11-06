@@ -9,6 +9,8 @@ from benchmarks.local_memory.answer_support_comparison import (
     _seed_case,
     compare_query,
     grade_selection,
+    SupportTreatment,
+    ObservedJudge,
 )
 from mnemos.answer_support import AnswerSupportConfig
 from mnemos.judgment import MockJudge
@@ -102,6 +104,63 @@ async def test_all_arms_share_snapshot_and_support_sees_only_baseline_results(tm
         assert store.get("release").model_dump() == before
     finally:
         store.close()
+
+
+@pytest.mark.asyncio
+async def test_treatments_share_one_baseline_and_bind_observed_requests(tmp_path):
+    from contextvars import ContextVar
+    import json
+
+    memory, context = _seed_case(
+        tmp_path / "run",
+        {"id": "release", "facts": [{"id": "path", "content": "Release notes are in RELEASE.md."}]},
+        FixedEmbedding(),
+    )
+    active = ContextVar("test_request", default={})
+    bindings = []
+
+    class BoundJudge(MockJudge):
+        async def ask(self, *args, **kwargs):
+            bindings.append(active.get())
+            return await super().ask(*args, **kwargs)
+
+    def observed(name, choice):
+        return ObservedJudge(
+            name, BoundJudge({"support:*": choice}), tmp_path / "requests.jsonl", active
+        )
+
+    treatments = [
+        SupportTreatment("select", observed("select", "evidence:0"), AnswerSupportConfig()),
+        SupportTreatment("decline", observed("decline", "related"), AnswerSupportConfig()),
+    ]
+    try:
+        before = memory.engine.store.get("path").model_dump()
+        rows = await compare_query(
+            memory,
+            context,
+            {"id": "q", "query": "release", "expected_fact_ids": ["path"]},
+            judge=MockJudge(),
+            support_config=AnswerSupportConfig(),
+            treatments=treatments,
+        )
+        assert len(rows) == 8
+        assert len({row["snapshot_sha256"] for row in rows}) == 1
+        assert all(row["baseline_ids"] == ["path"] for row in rows)
+        assert all(
+            row["supported_ids"] == (["path"] if row["treatment"] == "select" else [])
+            for row in rows
+        )
+        assert memory.engine.store.get("path").model_dump() == before
+        requests = [
+            json.loads(line) for line in (tmp_path / "requests.jsonl").read_text().splitlines()
+        ]
+        assert {r["request_id"] for r in requests} == {
+            key for row in rows for key in row["judge_request_ids"]
+        }
+        assert {r["request_id"] for r in bindings} == {r["request_id"] for r in requests}
+        assert active.get() == {}
+    finally:
+        await memory.engine.aclose()
 
 
 @pytest.mark.asyncio

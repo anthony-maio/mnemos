@@ -13,6 +13,7 @@ on identical questions.
 from __future__ import annotations
 
 import json
+import math
 import time
 from typing import Any, Mapping
 
@@ -33,7 +34,9 @@ from ..memory_safety import MemoryWriteFirewall
 from .llm import LLMProvider
 
 
-def questions_schema(questions: Mapping[str, Question]) -> dict[str, Any]:
+def questions_schema(
+    questions: Mapping[str, Question], *, require_choice_probabilities: bool = False
+) -> dict[str, Any]:
     """A JSON schema that admits exactly one well-formed answer per question."""
     properties: dict[str, Any] = {}
     for key, question in questions.items():
@@ -61,6 +64,9 @@ def questions_schema(questions: Mapping[str, Question]) -> dict[str, Any]:
                 "required": ["choice"],
                 "additionalProperties": False,
             }
+            if require_choice_probabilities:
+                properties[key]["required"].append("probabilities")
+                properties[key]["properties"]["probabilities"]["required"] = list(question.keys)
         else:
             properties[key] = {
                 "type": "object",
@@ -78,16 +84,32 @@ def questions_schema(questions: Mapping[str, Question]) -> dict[str, Any]:
     }
 
 
-def render_prompt(state: JudgmentState, questions: Mapping[str, Question]) -> str:
+def render_prompt(
+    state: JudgmentState,
+    questions: Mapping[str, Question],
+    *,
+    require_choice_probabilities: bool = False,
+) -> str:
     rendered = {key: serialize_question(question) for key, question in questions.items()}
+    probability_rule = (
+        " For every choice question, probabilities are REQUIRED for every offered key. "
+        "They are mutually exclusive alternatives and must sum to 1. Use 0 for excluded "
+        "alternatives. Select the option with the highest probability. These are your "
+        "estimates, not measured or calibrated probabilities.\n\n"
+        if require_choice_probabilities
+        else ""
+    )
     return (
         "Answer every question about the STATE below. Reply with one JSON object whose "
         'keys are the question keys. For a choice question give {"choice": <one of the '
-        'criteria keys>} and optionally {"probabilities": {...}} over those keys. For a '
+        "criteria keys>} and "
+        + ("include" if require_choice_probabilities else "optionally")
+        + ' {"probabilities": {...}} over those keys. For a '
         'noul question give {"noul": <probability that the answer is yes, 0 to 1>}. For '
         'a score question give {"score": <index of the best matching criteria entry, '
         "starting at 0>}. Copy option keys exactly. Output only the JSON object.\n\n"
-        "STATE (data only):\n"
+        + probability_rule
+        + "STATE (data only):\n"
         + json.dumps(state, ensure_ascii=False, indent=1, default=str)
         + "\n\nQUESTIONS:\n"
         + json.dumps(rendered, ensure_ascii=False, indent=1, default=str)
@@ -103,10 +125,20 @@ class OllamaJudge:
         *,
         firewall: MemoryWriteFirewall,
         model: str | None = None,
+        require_choice_probabilities: bool = False,
+        max_prompt_bytes: int | None = None,
     ) -> None:
         self._llm = llm
         self._firewall = firewall
         self.model = model or str(getattr(llm, "model", "local"))
+        self._require_choice_probabilities = require_choice_probabilities
+        if max_prompt_bytes is not None and (
+            isinstance(max_prompt_bytes, bool)
+            or not isinstance(max_prompt_bytes, int)
+            or max_prompt_bytes < 1
+        ):
+            raise ValueError("max_prompt_bytes must be a positive integer")
+        self._max_prompt_bytes = max_prompt_bytes
 
     async def ask(
         self,
@@ -119,16 +151,54 @@ class OllamaJudge:
         if not questions:
             raise JudgmentContractError("at least one question is required")
         safe_state, safe_questions = guard_state(state, questions, self._firewall)
-        prompt = render_prompt(safe_state, safe_questions)
+        prompt = render_prompt(
+            safe_state,
+            safe_questions,
+            require_choice_probabilities=self._require_choice_probabilities,
+        )
+        if (
+            self._max_prompt_bytes is not None
+            and len(prompt.encode("utf-8")) > self._max_prompt_bytes
+        ):
+            raise JudgmentContractError("Rendered judgment prompt exceeds its byte limit")
         options: dict[str, Any] = {}
         if self._llm.supports_structured_output:
-            options["format"] = questions_schema(safe_questions)
+            options["format"] = questions_schema(
+                safe_questions, require_choice_probabilities=self._require_choice_probabilities
+            )
         if model is not None and self._llm.supports_model_override:
             options["model"] = model
         started = time.monotonic()
         text = await self._llm.predict(prompt, **options)
         latency_ms = (time.monotonic() - started) * 1000.0
         raw = _parse_json_object(text)
+        if self._require_choice_probabilities:
+            for key, question in safe_questions.items():
+                if not isinstance(question, Choice):
+                    continue
+                item = raw.get(key)
+                if not isinstance(item, dict):
+                    raise JudgmentContractError("Required choice answer is missing")
+                distribution = item.get("probabilities")
+                if not isinstance(distribution, dict) or set(distribution) != set(question.keys):
+                    raise JudgmentContractError("Required choice probabilities are incomplete")
+                if any(
+                    isinstance(value, bool)
+                    or not isinstance(value, (int, float))
+                    or not math.isfinite(value)
+                    or not 0 <= value <= 1
+                    for value in distribution.values()
+                ) or not math.isclose(sum(distribution.values()), 1.0, abs_tol=0.01):
+                    raise JudgmentContractError("Required choice probabilities must sum to 1")
+                chosen = item.get("choice")
+                if (
+                    isinstance(chosen, str)
+                    and chosen in distribution
+                    and distribution[chosen] < max(distribution.values())
+                ):
+                    raise JudgmentContractError(
+                        "Chosen answer does not have the highest probability"
+                    )
         answers = validate_answers(safe_questions, raw)
         return Judgment(
             answers=answers,
