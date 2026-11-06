@@ -1,4 +1,4 @@
-"""One bounded Claude Code lifecycle against a verified installed Mnemos wheel.
+"""One bounded native lifecycle against a verified installed Mnemos wheel.
 
 Run with the isolated installation's Python and -I. Native authentication is
 copied only by the existing phase runner and removed after every phase. All
@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import base64
+import binascii
 from datetime import datetime, timezone
 import hashlib
 import importlib.util
@@ -27,6 +29,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL = "claude-sonnet-4-6"
+CODEX_MODEL = "gpt-6-astra"
 PROFILE = "native-explicit-20261106"
 INPUTS = (
     "scripts/check-native-explicit.py",
@@ -78,6 +81,29 @@ def auth_preflight(path: Path, *, now: float | None = None) -> dict[str, Any]:
             "A fresh isolated Claude login with at least one hour remaining is required"
         )
     return {"expires_at_ms": expiry, "minimum_remaining_seconds": 3600}
+
+
+def codex_auth_preflight(path: Path, *, now: float | None = None) -> dict[str, Any]:
+    """Inspect expiry metadata only; the native request must establish login."""
+    now = time.time() if now is None else now
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        access = value.get("tokens", {}).get("access_token", "")
+        parts = access.split(".")
+        payload = json.loads(base64.urlsafe_b64decode(parts[1] + "=" * (-len(parts[1]) % 4)))
+        expiry = payload.get("exp")
+        valid = (
+            value.get("auth_mode") == "chatgpt"
+            and not value.get("OPENAI_API_KEY")
+            and len(parts) == 3
+            and type(expiry) is int
+            and expiry - now >= 3600
+        )
+    except (OSError, ValueError, AttributeError, IndexError, TypeError, binascii.Error):
+        valid = False
+    if not valid:
+        raise ValueError("A fresh Codex login with at least one hour remaining is required")
+    return {"auth_mode": "chatgpt", "expires_at": expiry, "minimum_remaining_seconds": 3600}
 
 
 def verify_native_result(process: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
@@ -178,7 +204,10 @@ def serve(root: Path) -> None:
 def bindings(args: argparse.Namespace) -> dict[str, Any]:
     import mnemos
 
-    authentication = auth_preflight(args.auth)
+    host = getattr(args, "host", "claude-code")
+    authentication = (
+        codex_auth_preflight(args.auth) if host == "codex" else auth_preflight(args.auth)
+    )
     package = Path(mnemos.__file__).resolve().parent
     if not package.is_relative_to(Path(sys.prefix).resolve()) or package.is_relative_to(ROOT):
         raise ValueError("Native verification requires an installed package outside the checkout")
@@ -205,7 +234,10 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
     runner_commit = subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
     ).strip()
-    for relative in INPUTS:
+    inputs = INPUTS + (
+        ("docs/plans/2026-11-06-native-codex-explicit-v1.md",) if host == "codex" else ()
+    )
+    for relative in inputs:
         committed = subprocess.check_output(
             ["git", "show", f"{runner_commit}:{relative}"], cwd=ROOT
         )
@@ -213,8 +245,10 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             b"\r\n", b"\n"
         ):
             raise ValueError("Acceptance inputs must be committed before inference")
-    host_version = subprocess.check_output([str(args.claude), "--version"], text=True).strip()
-    if host_version != "2.1.191 (Claude Code)":
+    executable = args.codex if host == "codex" else args.claude
+    host_version = subprocess.check_output([str(executable), "--version"], text=True).strip()
+    expected_version = "codex-cli 0.146.0" if host == "codex" else "2.1.191 (Claude Code)"
+    if host_version != expected_version:
         raise ValueError("Native host version differs from this protocol")
     return {
         "source_commit": args.source_commit,
@@ -224,9 +258,10 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "package_path": str(package),
         "python": sys.version,
         "host_version": host_version,
-        "model": MODEL,
+        "host": host,
+        "model": CODEX_MODEL if host == "codex" else MODEL,
         "authentication_preflight": authentication,
-        "input_hashes": {relative: sha(ROOT / relative) for relative in INPUTS},
+        "input_hashes": {relative: sha(ROOT / relative) for relative in inputs},
     }
 
 
@@ -372,23 +407,57 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 PROFILE,
                 plugin,
             )
-            result = native.run_claude_phase(
-                config,
-                phase=name,
-                prompt=prompt,
-                executable=args.claude,
-                auth_source=args.auth,
-                allowed_tools=[native.CLAUDE_PREFIX + tool for tool in sorted(allowed)],
-            )
+            if bound["host"] == "codex":
+                codex_auth_preflight(args.auth)
+                result = native.run_codex_exec_phase(
+                    config,
+                    phase=name,
+                    prompt=prompt,
+                    executable=args.codex,
+                    auth_source=args.auth,
+                    model=CODEX_MODEL,
+                    allowed_tools=allowed,
+                )
+            else:
+                result = native.run_claude_phase(
+                    config,
+                    phase=name,
+                    prompt=prompt,
+                    executable=args.claude,
+                    auth_source=args.auth,
+                    allowed_tools=[native.CLAUDE_PREFIX + tool for tool in sorted(allowed)],
+                )
             directory = root / name
             (directory / "prompt.txt").write_text(prompt, encoding="utf-8")
-            source = directory / "stdout.jsonl"
-            rows = [json.loads(line) for line in source.read_bytes().splitlines()]
-            row.update(verify_native_result(result, rows))
-            provenance = trace.TraceProvenance(
-                "claude-code", result["pid"], result["session_id"], str(source), sha(source)
+            source = (
+                Path(result["session_file"])
+                if bound["host"] == "codex"
+                else directory / "stdout.jsonl"
             )
-            calls = trace.parse_claude_tool_records(
+            rows = [json.loads(line) for line in source.read_bytes().splitlines()]
+            if bound["host"] == "codex":
+                if (
+                    result.get("status") != "completed"
+                    or result.get("auth_copy_removed") is not True
+                ):
+                    raise ValueError("Native Codex process or authentication cleanup failed")
+                row.update(
+                    model=CODEX_MODEL,
+                    reported_usage=result.get("reported_usage"),
+                    session_file=str(source),
+                    session_sha256=sha(source),
+                )
+            else:
+                row.update(verify_native_result(result, rows))
+            provenance = trace.TraceProvenance(
+                bound["host"], result["pid"], result["session_id"], str(source), sha(source)
+            )
+            parse = (
+                trace.parse_codex_mcp_records
+                if bound["host"] == "codex"
+                else trace.parse_claude_tool_records
+            )
+            calls = parse(
                 trace.load_source_records(source, provenance=provenance), provenance=provenance
             )
             normalized = [
@@ -414,7 +483,13 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 raise ValueError("Native phase changed a retained or foreign control")
             save(directory / "state.json", current)
             save(directory / "normalized-calls.json", normalized)
-            row.update(status="observed", tool_count=len(normalized), stdout_sha256=sha(source))
+            row.update(
+                status="observed",
+                tool_count=len(normalized),
+                stdout_sha256=sha(directory / "stdout.jsonl"),
+                trace_file=str(source),
+                trace_sha256=sha(source),
+            )
             save(root / "report.json", report)
             print(
                 json.dumps({"phase": name, "status": "observed", "tool_count": len(normalized)}),
@@ -573,6 +648,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 state(root / "memory.sqlite"), target, scenario.forgotten_labels
             )
             final_text = (root / "recall-forgotten/stdout.jsonl").read_text(encoding="utf-8")
+            if bound["host"] == "codex":
+                final_text += Path(report["phases"][-1]["session_file"]).read_text(encoding="utf-8")
             if any(label in final_text for label in scenario.forgotten_labels):
                 raise ValueError("Forgotten labels reached the fresh native context")
             report["phases"][-1]["status"] = "passed"
@@ -593,7 +670,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
         finally:
             try:
                 stop()
-                if (root / "runtime.json").exists() or list(root.rglob(".credentials.json")):
+                if (
+                    (root / "runtime.json").exists()
+                    or list(root.rglob(".credentials.json"))
+                    or list(root.rglob("auth.json"))
+                ):
                     raise ValueError("Native service or copied authentication survived cleanup")
                 report["cleanup"] = "passed"
             except BaseException as exc:
@@ -613,6 +694,8 @@ def main() -> None:
     parser.add_argument("--source-commit")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--claude", type=Path)
+    parser.add_argument("--codex", type=Path)
+    parser.add_argument("--host", choices=("claude-code", "codex"), default="claude-code")
     parser.add_argument("--auth", type=Path)
     args = parser.parse_args()
     if args.serve:
@@ -620,7 +703,14 @@ def main() -> None:
         return
     if any(
         getattr(args, name) is None
-        for name in ("wheel", "smoke", "source_commit", "output", "claude", "auth")
+        for name in (
+            "wheel",
+            "smoke",
+            "source_commit",
+            "output",
+            "auth",
+            "codex" if args.host == "codex" else "claude",
+        )
     ):
         parser.error("All checkpoint and native-host arguments are required")
     print(json.dumps(run(args), indent=2))

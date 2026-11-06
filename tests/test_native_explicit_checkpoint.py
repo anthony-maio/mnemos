@@ -1,6 +1,7 @@
 """Acceptance rejects unbound host output and preserves original replay identities."""
 
 from copy import deepcopy
+import base64
 import json
 
 import pytest
@@ -11,6 +12,32 @@ from tests.test_installed_artifact import load_script
 @pytest.fixture
 def runner():
     return load_script("scripts/check-native-explicit.py")
+
+
+def test_codex_auth_preflight_rejects_expiring_credentials_without_exposing_them(runner, tmp_path):
+    path = tmp_path / "auth.json"
+
+    def credential(expiry):
+        payload = (
+            base64.urlsafe_b64encode(json.dumps({"exp": expiry}).encode()).decode().rstrip("=")
+        )
+        return {"auth_mode": "chatgpt", "tokens": {"access_token": "header." + payload + ".secret"}}
+
+    raw = json.dumps(credential(5000))
+    path.write_text(raw)
+    result = runner.codex_auth_preflight(path, now=1000)
+    assert result == {"auth_mode": "chatgpt", "expires_at": 5000, "minimum_remaining_seconds": 3600}
+    assert path.read_text() == raw
+    for value in (
+        credential(4599),
+        credential(True),
+        {"auth_mode": "apikey", "OPENAI_API_KEY": "private"},
+        {},
+    ):
+        path.write_text(json.dumps(value))
+        with pytest.raises(ValueError, match="fresh Codex") as failure:
+            runner.codex_auth_preflight(path, now=1000)
+        assert "secret" not in str(failure.value) and "private" not in str(failure.value)
 
 
 def completed():

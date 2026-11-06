@@ -34,6 +34,115 @@ def config(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "outcome",
+    [
+        "success",
+        "wrong-model",
+        "failed-turn",
+        "timeout",
+        "session-mismatch",
+        "extra-prompt",
+        "missing-final",
+    ],
+)
+def test_codex_exec_requires_terminal_identity_and_removes_auth(
+    config, tmp_path, monkeypatch, outcome
+):
+    source = tmp_path / "auth.json"
+    source.write_text("synthetic credential")
+    home = config.root / "codex-home"
+    home.mkdir()
+    monkeypatch.setattr(phases, "_prepare_codex", lambda *a: (home, {"CODEX_HOME": str(home)}))
+    commands = []
+
+    class Process:
+        pid = 456
+        returncode = None
+
+        def __init__(self, command, **kwargs):
+            commands.append(command)
+            assert kwargs["shell"] is False
+            assert "--json" in command and "--ask-for-approval" in command
+            assert command[command.index("--ask-for-approval") + 1] == "never"
+            for feature in ("code_mode_host", "shell_tool", "apps", "multi_agent", "memories"):
+                assert command[command.index(feature) - 1] == "--disable"
+            assert 'mcp_servers.mnemos.enabled_tools=["mnemos_retrieve"]' in command
+            assert 'cli_auth_credentials_store="file"' in command
+            assert (home / "auth.json").read_text() == "synthetic credential"
+            session = home / "sessions" / "one.jsonl"
+            session.parent.mkdir()
+            records = [
+                {
+                    "type": "session_meta",
+                    "payload": {"id": "thread-2" if outcome == "session-mismatch" else "thread-1"},
+                },
+                {
+                    "type": "turn_context",
+                    "payload": {"model": "other" if outcome == "wrong-model" else "pinned"},
+                },
+                {
+                    "type": "event_msg",
+                    "payload": {"type": "user_message", "message": "fixture prompt"},
+                },
+            ]
+            if outcome == "extra-prompt":
+                records.append(
+                    {
+                        "type": "event_msg",
+                        "payload": {"type": "user_message", "message": "second prompt"},
+                    }
+                )
+            session.write_text("\n".join(map(json.dumps, records)))
+            rows = [
+                {"type": "thread.started", "thread_id": "thread-1"},
+                {"type": "item.completed", "item": {"type": "agent_message", "text": "Done."}},
+                {
+                    "type": "turn.failed" if outcome == "failed-turn" else "turn.completed",
+                    "usage": {},
+                },
+            ]
+            if outcome == "missing-final":
+                rows.pop(1)
+            kwargs["stdout"].write(("\n".join(map(json.dumps, rows)) + "\n").encode())
+
+        def wait(self, timeout):
+            if outcome == "timeout" and self.returncode is None:
+                raise subprocess.TimeoutExpired("fixture", timeout)
+            self.returncode = 0 if self.returncode is None else self.returncode
+            return self.returncode
+
+        def poll(self):
+            return self.returncode
+
+    monkeypatch.setattr(phases.subprocess, "Popen", Process)
+    monkeypatch.setattr(
+        phases,
+        "terminate_owned_process",
+        lambda process: setattr(process, "returncode", -1) if process.returncode is None else None,
+    )
+    kwargs = dict(
+        phase="codex-exec",
+        prompt="fixture prompt",
+        executable=tmp_path / "codex.exe",
+        auth_source=source,
+        model="pinned",
+        allowed_tools={"mnemos_retrieve"},
+    )
+    if outcome == "success":
+        result = phases.run_codex_exec_phase(config, **kwargs)
+        assert result["status"] == "completed" and result["session_id"] == "thread-1"
+        assert result["model_verified"] and result["user_prompt_verified"]
+    else:
+        with pytest.raises(ValueError):
+            phases.run_codex_exec_phase(config, **kwargs)
+    assert not (home / "auth.json").exists()
+    assert source.read_text() == "synthetic credential"
+    receipt = json.loads((config.root / "codex-exec/process.json").read_text())
+    assert receipt["auth_copy_removed"] and not receipt["cleanup_errors"]
+    assert receipt["status"] == ("completed" if outcome == "success" else "failed")
+
+
+@pytest.mark.parametrize(
     "resource", ["project", "registry", "descriptor", "settings", "plugin_snapshot"]
 )
 def test_resources_outside_disposable_root_are_rejected(config, resource):

@@ -446,6 +446,168 @@ def run_codex_phase(
     return result
 
 
+def run_codex_exec_phase(
+    config: PhaseEnvironment,
+    *,
+    phase: str,
+    prompt: str,
+    executable: Path,
+    auth_source: Path,
+    model: str,
+    allowed_tools: set[str],
+) -> dict[str, Any]:
+    """One noninteractive native turn; preserve session evidence and clean auth."""
+    if not allowed_tools or not allowed_tools <= MCP_TOOLS:
+        raise ValueError("Codex explicit phase requires a known tool allowlist")
+    if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", model) is None:
+        raise ValueError("Codex explicit phase requires a pinned model")
+    if auth_source.name != "auth.json":
+        raise ValueError("Codex authentication must use the auth.json filename")
+    directory = _phase_root(config, phase)
+    disabled = (
+        "code_mode_host",
+        "shell_tool",
+        "unified_exec",
+        "apps",
+        "multi_agent",
+        "multi_agent_v2",
+        "memories",
+        "goals",
+        "plugins",
+        "remote_plugin",
+        "browser_use",
+        "browser_use_external",
+        "computer_use",
+        "image_generation",
+        "artifact",
+        "workspace_dependencies",
+        "skill_search",
+        "hooks",
+    )
+    command = [
+        str(executable),
+        "--ask-for-approval",
+        "never",
+        *(value for feature in disabled for value in ("--disable", feature)),
+        "-c",
+        'web_search="disabled"',
+        "-c",
+        'cli_auth_credentials_store="file"',
+        "-c",
+        'model_reasoning_effort="high"',
+        "-c",
+        "mcp_servers.mnemos.enabled_tools=" + json.dumps(sorted(allowed_tools)),
+        "exec",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        str(config.project),
+        "--json",
+        "--color",
+        "never",
+        "--model",
+        model,
+        prompt,
+    ]
+    result: dict[str, Any] = {
+        "host": "codex-exec",
+        "phase": phase,
+        "status": "running",
+        "command": command[:-1] + ["<synthetic phase prompt>"],
+        "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+        "max_seconds": 180,
+        "requested_model": model,
+        "reasoning_effort": "high",
+        "disabled_features": list(disabled),
+        "allowed_tools": sorted(allowed_tools),
+    }
+    auth = None
+    process = None
+    started = time.monotonic()
+    try:
+        codex_home, env = _prepare_codex(config, directory, phase)
+        result["home"] = str(codex_home)
+        auth = _auth_copy(auth_source, codex_home, config.root)
+        with (
+            (directory / "stdout.jsonl").open("wb") as stdout,
+            (directory / "stderr.txt").open("wb") as stderr,
+        ):
+            process = subprocess.Popen(
+                command,
+                cwd=config.project,
+                env=env,
+                shell=False,
+                stdout=stdout,
+                stderr=stderr,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            result["pid"] = process.pid
+            _save_result(directory, result)
+            try:
+                process.wait(timeout=180)
+                result["timed_out"] = False
+            except subprocess.TimeoutExpired:
+                result["timed_out"] = True
+                terminate_owned_process(process)
+        result["returncode"] = process.returncode
+        if process.returncode != 0 or result["timed_out"]:
+            raise ValueError("Codex explicit native process failed")
+        rows = [
+            json.loads(line)
+            for line in (directory / "stdout.jsonl").read_bytes().splitlines()
+            if line.strip()
+        ]
+        starts = [row for row in rows if row.get("type") == "thread.started"]
+        terminal = [row for row in rows if row.get("type") == "turn.completed"]
+        if (
+            len(starts) != 1
+            or not isinstance(starts[0].get("thread_id"), str)
+            or not starts[0]["thread_id"]
+            or len(terminal) != 1
+            or rows[-1].get("type") != "turn.completed"
+            or any(row.get("type") in {"error", "turn.failed"} for row in rows)
+            or not any(
+                row.get("type") == "item.completed"
+                and row.get("item", {}).get("type") == "agent_message"
+                and isinstance(row["item"].get("text"), str)
+                and row["item"]["text"].strip()
+                for row in rows
+            )
+        ):
+            raise ValueError("Codex explicit stream lacks a successful final turn")
+        result["session_id"] = starts[0]["thread_id"]
+        sessions = list((codex_home / "sessions").rglob("*.jsonl"))
+        if len(sessions) != 1:
+            raise ValueError("Codex explicit phase requires one retained native session")
+        session_rows = [
+            json.loads(line) for line in sessions[0].read_bytes().splitlines() if line.strip()
+        ]
+        identities = [
+            row.get("payload", {}).get("id")
+            for row in session_rows
+            if row.get("type") == "session_meta"
+        ]
+        if identities != [result["session_id"]]:
+            raise ValueError("Codex explicit stream and retained session differ")
+        result["session_file"] = str(sessions[0])
+        result["session_sha256"] = hashlib.sha256(sessions[0].read_bytes()).hexdigest()
+        observed = _codex_observed_models(codex_home)
+        result["observed_models"] = observed
+        result["model_verified"] = bool(observed) and all(item == model for item in observed)
+        messages = _codex_user_messages(codex_home)
+        result["user_prompt_verified"] = messages == [prompt]
+        if not result["model_verified"] or not result["user_prompt_verified"]:
+            raise ValueError("Codex explicit model or prompt observation differs")
+        result["reported_usage"] = terminal[0].get("usage")
+        result["status"] = "completed"
+    except BaseException as exc:
+        result.update(status="failed", exception_type=type(exc).__name__)
+        raise
+    finally:
+        _cleanup_phase(directory, result, process, auth, started)
+    return result
+
+
 def run_claude_phase(
     config: PhaseEnvironment,
     *,
