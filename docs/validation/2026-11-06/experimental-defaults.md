@@ -29,4 +29,17 @@ The [check receipt](experimental-defaults-checks.json) records counts, files and
 log hashes. Raw logs remain in a private ignored archive. These are code and
 contract checks; they establish no retrieval-quality improvement, native-host
 acceptance or pilot use. The prior installed receipt remains tied to product
-`24887ef3`. A new artifact check is required for this later change.
+`24887ef3`.
+
+Product `e8a4f12e917ec9359b4092d6214ea9c1dfe419fb` then built a wheel from its
+source distribution; both artifacts passed Twine checks. The new
+[installed receipt](installed-smoke-e8a4f12e.json) verifies the package outside
+the checkout, all five disabled defaults, real FastEmbed CLI/MCP recall after
+a service restart, same-ID evidence inspection, and other-project isolation.
+The consumer workspace was removed and no consumer processes remained.
+The wheel SHA256 is
+`f112e3b78d481b0774a0426d53e7e5dded17acedb39d259cae98a939b5496a32`.
+
+This is a locally tested artifact. It was not published or installed in a live
+host profile. Native-host acceptance still needs the separate validation login
+and a new run bound to this checkpoint. The daily-use pilot remains unstarted.

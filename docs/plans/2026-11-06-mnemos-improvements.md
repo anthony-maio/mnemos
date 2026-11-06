@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; first local comparison failed; semantic repair and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Prior checkpoint installed CLI/MCP restart recall passed; native teaching passed, next session failed authentication; new defaults need an artifact retest; complete native lifecycle and pilot open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart recall and disabled defaults passed at e8a4f12e; complete native lifecycle and pilot open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
 
@@ -108,3 +108,9 @@ No historical archive is removed or rewritten.
   all 264 affected tests passed, including all 77 prior failed/error cases.
   Five artifact-harness checks and source formatting/type checks passed. A
   fresh full-suite run and the new installed artifact check are not implied.
+- Product `e8a4f12e` subsequently built wheel/source artifacts and passed Twine.
+  Its installed smoke check confirmed all five disabled defaults and passed
+  real-embedding CLI/MCP restart recall, same-ID inspection and project isolation.
+  Consumer service/workspace cleanup passed. The [new receipt](../validation/2026-11-06/installed-smoke-e8a4f12e.json)
+  supplements the earlier artifact evidence. No publication, live profile
+  installation, complete native lifecycle or pilot use is claimed.
