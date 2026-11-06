@@ -5597,21 +5597,24 @@ class SQLiteStore(MemoryStore):
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
-                all_targets = {
+                all_ids = set(validated) | {
                     target for preferences in validated.values() for target in preferences
                 }
                 existing: set[str] = set()
-                if all_targets:
-                    placeholders = ", ".join("?" for _ in all_targets)
+                if all_ids:
+                    placeholders = ", ".join("?" for _ in all_ids)
                     existing = {
                         str(row[0])
                         for row in self._conn.execute(
                             f"SELECT id FROM memory_chunks WHERE id IN ({placeholders})",
-                            tuple(all_targets),
+                            tuple(all_ids),
                         ).fetchall()
                     }
                 now = datetime.now(timezone.utc).isoformat()
                 for source_id, preferences in validated.items():
+                    # Another client may have deleted a cached graph source.
+                    if source_id not in existing:
+                        continue
                     self._conn.execute(
                         "DELETE FROM memory_edges WHERE source_id = ? AND edge_type = ?",
                         (source_id, self._GRAPH_PREFERENCE_EDGE_TYPE),
@@ -5874,49 +5877,63 @@ class SQLiteStore(MemoryStore):
 
     def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
         with self._lock:
-            self._conn.execute(
-                "DELETE FROM memory_edges WHERE source_id = ? AND edge_type = ?",
-                (chunk_id, self._GRAPH_EDGE_TYPE),
-            )
+            # A savepoint makes replacement atomic without committing a caller's
+            # transaction. The DELETE acquires the writer lock before checking
+            # source/target existence, so another connection cannot race the check.
+            self._conn.execute("SAVEPOINT mnemos_graph_neighbors")
+            try:
+                self._conn.execute(
+                    "DELETE FROM memory_edges WHERE source_id = ? AND edge_type = ?",
+                    (chunk_id, self._GRAPH_EDGE_TYPE),
+                )
+                if (
+                    self._conn.execute(
+                        "SELECT 1 FROM memory_chunks WHERE id = ?", (chunk_id,)
+                    ).fetchone()
+                    is not None
+                ):
+                    if neighbors:
+                        target_ids = [target_id for target_id in neighbors if target_id != chunk_id]
+                        existing_targets: set[str] = set()
+                        if target_ids:
+                            placeholders = ", ".join("?" for _ in target_ids)
+                            existing_targets = {
+                                str(row[0])
+                                for row in self._conn.execute(
+                                    f"SELECT id FROM memory_chunks WHERE id IN ({placeholders})",
+                                    tuple(target_ids),
+                                ).fetchall()
+                            }
 
-            if neighbors:
-                target_ids = [target_id for target_id in neighbors if target_id != chunk_id]
-                existing_targets: set[str] = set()
-                if target_ids:
-                    placeholders = ", ".join("?" for _ in target_ids)
-                    existing_targets = {
-                        str(row[0])
-                        for row in self._conn.execute(
-                            f"SELECT id FROM memory_chunks WHERE id IN ({placeholders})",
-                            tuple(target_ids),
-                        ).fetchall()
-                    }
+                        now = datetime.now(timezone.utc).isoformat()
+                        rows = [
+                            (chunk_id, target_id, float(weight), self._GRAPH_EDGE_TYPE, now)
+                            for target_id, weight in neighbors.items()
+                            if target_id != chunk_id and target_id in existing_targets
+                        ]
+                        if rows:
+                            self._conn.executemany(
+                                """
+                                INSERT INTO memory_edges(
+                                    source_id, target_id, weight, edge_type, updated_at)
+                                VALUES (?, ?, ?, ?, ?)
+                                ON CONFLICT(source_id, target_id, edge_type) DO UPDATE SET
+                                    weight=excluded.weight,
+                                    updated_at=excluded.updated_at
+                                """,
+                                rows,
+                            )
 
-                now = datetime.now(timezone.utc).isoformat()
-                rows = [
-                    (chunk_id, target_id, float(weight), self._GRAPH_EDGE_TYPE, now)
-                    for target_id, weight in neighbors.items()
-                    if target_id != chunk_id and target_id in existing_targets
-                ]
-                if rows:
-                    self._conn.executemany(
-                        """
-                        INSERT INTO memory_edges(source_id, target_id, weight, edge_type, updated_at)
-                        VALUES (?, ?, ?, ?, ?)
-                        ON CONFLICT(source_id, target_id, edge_type) DO UPDATE SET
-                            weight=excluded.weight,
-                            updated_at=excluded.updated_at
-                        """,
-                        rows,
+                    self._conn.execute(
+                        "INSERT INTO mnemos_meta(key,value) VALUES (?, '1') "
+                        "ON CONFLICT(key) DO UPDATE SET value='1'",
+                        (self._GRAPH_LEGACY_EDGE_KEY,),
                     )
-
-            self._conn.execute(
-                "INSERT INTO mnemos_meta(key,value) VALUES (?, '1') "
-                "ON CONFLICT(key) DO UPDATE SET value='1'",
-                (self._GRAPH_LEGACY_EDGE_KEY,),
-            )
-
-            self._conn.commit()
+                self._conn.execute("RELEASE SAVEPOINT mnemos_graph_neighbors")
+            except BaseException:
+                self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_graph_neighbors")
+                self._conn.execute("RELEASE SAVEPOINT mnemos_graph_neighbors")
+                raise
 
     def get_stats(self) -> dict[str, Any]:
         """Return statistics from the database."""
