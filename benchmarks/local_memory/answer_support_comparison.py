@@ -128,6 +128,10 @@ def _seed_case(
     foreign = root / "foreign"
     project.mkdir(parents=True)
     foreign.mkdir()
+    # Output commonly lives inside the source checkout. Plain subdirectories
+    # would inherit that repository's identity and collapse the scope control.
+    for directory in (project, foreign):
+        subprocess.run(["git", "init", "-q", str(directory)], check=True, capture_output=True)
     registry = ScopeRegistry()
     registry.register_project(project, user_profile_id="development", enabled=True)
     registry.register_project(foreign, user_profile_id="development", enabled=True)
@@ -137,6 +141,8 @@ def _seed_case(
     foreign_context = registry.resolve(
         foreign, user_profile_id="development", session_id=case["id"], host="manual"
     )
+    if context.project_id == foreign_context.project_id:
+        raise ValueError("Development project identities must be distinct")
     config = MnemosConfig()
     config.modules.surprisal = False
     config.modules.sleep = False

@@ -1,10 +1,15 @@
 """The support treatment filters the exact baseline candidates without extraction."""
 
 from datetime import datetime, timezone
+import subprocess
 
 import pytest
 
-from benchmarks.local_memory.answer_support_comparison import compare_query, grade_selection
+from benchmarks.local_memory.answer_support_comparison import (
+    _seed_case,
+    compare_query,
+    grade_selection,
+)
 from mnemos.answer_support import AnswerSupportConfig
 from mnemos.judgment import MockJudge
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
@@ -18,6 +23,37 @@ class FixedEmbedding(SimpleEmbeddingProvider):
 
     def embed(self, text):
         return [1.0, 0.0]
+
+
+@pytest.mark.asyncio
+async def test_seeded_projects_remain_distinct_inside_a_checkout(tmp_path):
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    memory, context = _seed_case(
+        tmp_path / "run",
+        {
+            "id": "scope",
+            "facts": [
+                {"id": "local", "content": "Morgan owns billing."},
+                {"id": "foreign", "content": "River owns search.", "scope": "foreign"},
+            ],
+        },
+        FixedEmbedding(),
+    )
+    try:
+        local = memory.engine.store.get("local")
+        foreign = memory.engine.store.get("foreign")
+        assert local.metadata["scope_id"] != foreign.metadata["scope_id"]
+        rows = await compare_query(
+            memory,
+            context,
+            {"id": "q", "query": "Who owns search?", "expected_fact_ids": []},
+            judge=MockJudge({"support:*": "related"}),
+            support_config=AnswerSupportConfig(),
+        )
+        assert len(rows) == 4
+        assert all("foreign" not in row["baseline_ids"] for row in rows)
+    finally:
+        await memory.engine.aclose()
 
 
 def test_grading_keeps_unavailable_results_out_of_correct_abstention():
