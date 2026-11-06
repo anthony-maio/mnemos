@@ -9,7 +9,7 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; first local comparison failed; semantic repair and fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; v2 repairs most format failures but still fails semantic support and abstention; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart recall and disabled defaults passed at e8a4f12e; complete native lifecycle and pilot open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
@@ -114,3 +114,19 @@ No historical archive is removed or rewritten.
   Consumer service/workspace cleanup passed. The [new receipt](../validation/2026-11-06/installed-smoke-e8a4f12e.json)
   supplements the earlier artifact evidence. No publication, live profile
   installation, complete native lifecycle or pilot use is claimed.
+- Product `6d46aa1a` adds explicit probability contracts, candidate-at-a-time
+  judgment and an optional separate answer/source treatment. Existing production
+  behavior stays unchanged. Seventy-six focused tests, formatting and strict
+  source type checks passed before the frozen v2 development comparison.
+- The [v2 comparison](../validation/2026-11-06/answer-support-development-v2.md)
+  completed 320 observations over the same 20 development questions. All four
+  support treatments received identical baseline facts within each retrieval
+  arm. Hybrid candidate-at-a-time support retained 9/10 expected answers and
+  abstained correctly on 5/10 no-answer questions; only 4/10 answerable returns
+  were free of extra unsupported facts. Separating answer/source questions
+  retained 10/10 but abstained on only 3/10. No treatment qualifies for promotion.
+- All 444 model replies are accounted for. Source hashes, database integrity,
+  reconstructed snapshot hashes and archive members verified. The private model
+  server was unloaded and stopped. Further semantic development, fresh and
+  extraction evaluations, native authentication/lifecycle, host tokenizer
+  integration, the actual pilot and publication remain open.
