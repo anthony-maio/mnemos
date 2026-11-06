@@ -110,6 +110,7 @@ async def test_automatic_correction_switch_changes_lifecycle_not_retrieval_query
         memory.engine.config.modules.surprisal = False
         memory.engine.config.modules.affective = False
         memory.engine.config.modules.mutable_rag = mutable_enabled
+        memory.engine.config.modules.sleep = True
         await memory.dispatch("remember", {"context": context.model_dump(), "content": "Use React"})
         await memory.maintenance.run_once(force=True)
         old = memory.engine.store.get_all()[0]
@@ -298,6 +299,7 @@ def test_fact_proposal_cannot_be_an_unversioned_correction():
 @pytest.mark.asyncio
 async def test_explicit_remember_and_versioned_correction_keep_identity(tmp_path):
     memory, context = service(tmp_path)
+    memory.engine.config.modules.spreading = True
     try:
         await memory.dispatch(
             "remember",
@@ -528,6 +530,7 @@ async def test_bad_extraction_keeps_source_pending(tmp_path, response):
     memory.engine._llm = llm
     memory.engine.surprisal_gate._llm = llm
     memory.engine.config.surprisal.threshold = 0
+    memory.engine.config.modules.sleep = True
     try:
         event = CaptureEvent(
             event_id="source",

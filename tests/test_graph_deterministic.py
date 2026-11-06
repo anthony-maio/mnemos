@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from mnemos.config import MnemosConfig
 from mnemos.engine import MnemosEngine
 from mnemos.types import MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
@@ -34,7 +35,11 @@ def _run_order(
     tmp_path.mkdir(parents=True, exist_ok=True)
     store = SQLiteStore(str(tmp_path / "graph.sqlite"))
     try:
-        engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=store,
+        )
         if incremental:
             for fact in facts:
                 store.store(fact)
@@ -77,7 +82,11 @@ def test_correction_and_delete_refill_preferences_without_stale_targets(tmp_path
     path = tmp_path / "correction.sqlite"
     store = SQLiteStore(str(path))
     try:
-        engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=store,
+        )
         facts = [_fact("a", [1.0, 0.0]), _fact("b", [0.99, 0.1]), _fact("c", [0.1, 0.99])]
         for fact in facts:
             store.store(fact)
@@ -142,7 +151,11 @@ def test_empty_preferences_are_a_ready_restart_state(tmp_path: Path) -> None:
     store = SQLiteStore(str(path))
     fact = _fact("isolated", [1.0, 0.0])
     try:
-        engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=store,
+        )
         store.store(fact)
         store._conn.commit()
         engine.refresh_graph_chunk(fact)
@@ -152,7 +165,11 @@ def test_empty_preferences_are_a_ready_restart_state(tmp_path: Path) -> None:
 
     restarted_store = SQLiteStore(str(path))
     try:
-        restarted = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=restarted_store)
+        restarted = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=restarted_store,
+        )
         assert restarted_store.graph_derivation_status()["ready"]
         assert restarted.spreading_activation.get_stats()["graph_derivation_status"] == "ready"
     finally:
@@ -163,7 +180,11 @@ def test_malformed_preference_marker_is_pending_without_hot_path_crash(tmp_path:
     store = SQLiteStore(str(tmp_path / "malformed-marker.sqlite"))
     fact = _fact("isolated", [1.0, 0.0])
     try:
-        engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=store,
+        )
         store.store(fact)
         store._conn.commit()
         engine.refresh_graph_chunk(fact)

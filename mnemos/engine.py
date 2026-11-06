@@ -200,7 +200,7 @@ class MnemosEngine:
             store=InMemoryStore(),
         )
 
-        result = await engine.process(Interaction(role="user", content="Hello!"))
+        result = await engine.remember("I use Python for machine learning.")
         memories = await engine.retrieve("user preferences", top_k=5)
     """
 
@@ -288,7 +288,7 @@ class MnemosEngine:
         # Rebuild associative graph from persisted storage so retrieval
         # keeps working across process restarts.
         bind_graph = getattr(self._store, "bind_graph_contract", None)
-        if callable(bind_graph):
+        if self.config.modules.spreading and callable(bind_graph):
             bind_graph(
                 {
                     **self.spreading_activation.persistence_contract(),
@@ -296,7 +296,8 @@ class MnemosEngine:
                     "max_neighbors": self.config.spreading.max_neighbors_per_node,
                 }
             )
-        self._hydrate_spreading_graph_from_store()
+        if self.config.modules.spreading:
+            self._hydrate_spreading_graph_from_store()
 
     async def aclose(self) -> None:
         """Release owned providers and storage after engine operations have stopped.
@@ -718,13 +719,17 @@ class MnemosEngine:
         explicit_remember: bool = False,
     ) -> ProcessResult:
         """
-        Process an interaction through the full encoding pipeline.
+        Process an interaction through the explicitly enabled research modules.
 
         Pipeline:
-        1. SurprisalGate: compute prediction error; gate low-surprisal inputs
-        2. If passes gate: AffectiveRouter: classify emotional state and tag chunk
-        3. Update SpreadingActivation graph with new chunk
-        4. Add to SleepDaemon episodic buffer (always, regardless of gate)
+        1. If sleep is enabled, add to its episodic buffer regardless of the gate.
+        2. If surprisal is enabled, gate automatic inputs by prediction error.
+        3. If affective is enabled, classify and tag encoded chunks.
+        4. If spreading is enabled, update the associative graph.
+
+        Explicit remember bypasses the automatic gate. With automatic encoding
+        disabled, ordinary process calls return stored=False. Durable capture
+        and versioned explicit operations are provided by LocalMemoryService.
 
         Args:
             interaction: The user/assistant interaction to process.
@@ -786,9 +791,15 @@ class MnemosEngine:
                 reason=f"Skipped transient/noisy memory: {skip_reason}.",
             )
 
-        # Always add to episodic buffer for eventual consolidation
-        # (The hippocampus stores everything briefly, even mundane inputs)
-        self.sleep_daemon.add_episode(safe_interaction)
+        if self.config.modules.sleep:
+            self.sleep_daemon.add_episode(safe_interaction)
+
+        if not self.config.modules.surprisal and not explicit_remember:
+            return ProcessResult(
+                stored=False,
+                salience=0.0,
+                reason="Automatic encoding is disabled; use remember for explicit memory.",
+            )
 
         # Step 1: Surprisal gate — filter by prediction error
         result = await self.surprisal_gate.process(safe_interaction, force_encode=explicit_remember)
@@ -806,14 +817,16 @@ class MnemosEngine:
         result.chunk.metadata["encoding_reason"] = result.reason
 
         # Step 2: Affective tagging — classify and attach cognitive state
-        state = await self.affective_router.classify_state(safe_interaction)
-        self.affective_router.tag_chunk(result.chunk, state)
+        if self.config.modules.affective:
+            state = await self.affective_router.classify_state(safe_interaction)
+            self.affective_router.tag_chunk(result.chunk, state)
 
         # Update the stored chunk with the affective tag
         result.chunk = self._store.upsert_canonical(result.chunk)
 
         # Step 3: Add to spreading activation graph
-        self.spreading_activation.add_node_from_chunk(result.chunk)
+        if self.config.modules.spreading:
+            self.spreading_activation.add_node_from_chunk(result.chunk)
 
         # Connect the new node to its strongest eligible scoped neighbors and
         # persist the resulting sparse graph when the backend supports it.
@@ -1251,18 +1264,27 @@ class MnemosEngine:
         Returns:
             ConsolidationResult with facts extracted, chunks pruned, tools generated.
         """
-        reconsolidation_results = await self.mutable_rag.process_labile_chunks()
+        reconsolidation_results = (
+            await self.mutable_rag.process_labile_chunks()
+            if self.config.modules.mutable_rag
+            else []
+        )
 
-        result = await self.sleep_daemon.consolidate(
-            llm_provider=self._llm,
-            embedder=self._embedder,
+        result = (
+            await self.sleep_daemon.consolidate(
+                llm_provider=self._llm,
+                embedder=self._embedder,
+            )
+            if self.config.modules.sleep
+            else ConsolidationResult()
         )
 
         # Add consolidated chunks to the spreading activation graph
         new_chunks = self._store.get_all()
         for chunk in new_chunks:
             if (
-                chunk.metadata.get("source") == "sleep_consolidation"
+                self.config.modules.spreading
+                and chunk.metadata.get("source") == "sleep_consolidation"
                 and self.spreading_activation.get_node(chunk.id) is None
             ):
                 self.spreading_activation.add_node_from_chunk(chunk)

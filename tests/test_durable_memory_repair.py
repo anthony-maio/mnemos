@@ -105,6 +105,13 @@ async def test_consolidate_promotes_persisted_episodic_events_across_restarts(
     store = SQLiteStore(db_path=str(db_path))
     engine = MnemosEngine(
         config=MnemosConfig(
+            modules={
+                "surprisal": True,
+                "mutable_rag": True,
+                "affective": True,
+                "sleep": True,
+                "spreading": True,
+            },
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             sleep=SleepConfig(
                 min_episodes_before_consolidation=1,
@@ -140,6 +147,13 @@ async def test_retrieve_does_not_queue_query_reconsolidation_after_restart(
 ) -> None:
     db_path = tmp_path / "reconsolidation.sqlite"
     config = MnemosConfig(
+        modules={
+            "surprisal": True,
+            "mutable_rag": True,
+            "affective": True,
+            "sleep": True,
+            "spreading": True,
+        },
         surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
         sleep=SleepConfig(
             min_episodes_before_consolidation=1,
@@ -215,6 +229,13 @@ async def test_manual_store_keeps_unknown_scores_null_when_provider_unavailable(
     store = SQLiteStore(db_path=str(db_path))
     engine = MnemosEngine(
         config=MnemosConfig(
+            modules={
+                "surprisal": True,
+                "mutable_rag": True,
+                "affective": True,
+                "sleep": True,
+                "spreading": True,
+            },
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
         ),
         llm=FailingLLM(),

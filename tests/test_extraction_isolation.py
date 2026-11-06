@@ -82,6 +82,7 @@ def _service(
     memory = LocalMemoryService(engine, registry)
     memory.engine.config.modules.surprisal = False
     memory.engine.config.modules.affective = False
+    memory.engine.config.modules.sleep = True
     return memory, context
 
 

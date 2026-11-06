@@ -376,6 +376,13 @@ Now we demonstrate the complete orchestration:
 """)
 
     config = MnemosConfig(
+        modules={
+            "surprisal": True,
+            "mutable_rag": True,
+            "affective": True,
+            "sleep": True,
+            "spreading": True,
+        },
         surprisal=SurprisalConfig(threshold=0.0, min_content_length=5),
         sleep=SleepConfig(
             min_episodes_before_consolidation=3,

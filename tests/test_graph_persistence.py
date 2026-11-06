@@ -11,7 +11,11 @@ from mnemos.utils.storage import SQLiteStore
 def test_graph_refresh_discovers_explicit_workspace_members_only(tmp_path, refresh_id):
     path = str(tmp_path / "workspace-graph.sqlite")
     store = SQLiteStore(path)
-    engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+    engine = MnemosEngine(
+        config=MnemosConfig(modules={"spreading": True}),
+        embedder=SimpleEmbeddingProvider(dim=2),
+        store=store,
+    )
     facts = [
         MemoryChunk(
             id=identifier,
@@ -49,7 +53,11 @@ def test_graph_refresh_discovers_explicit_workspace_members_only(tmp_path, refre
             assert not any("foreign" in target for target in edges.get(source, {}))
         store.close()
         store = SQLiteStore(path)
-        MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            embedder=SimpleEmbeddingProvider(dim=2),
+            store=store,
+        )
         assert store.get_graph_edges()["project"]["workspace"] == pytest.approx(1.0)
     finally:
         store.close()
@@ -58,7 +66,9 @@ def test_graph_refresh_discovers_explicit_workspace_members_only(tmp_path, refre
 @pytest.mark.asyncio
 async def test_persisted_neighbor_beyond_startup_and_semantic_pool_is_loaded(tmp_path):
     path = str(tmp_path / "graph.sqlite")
-    config = MnemosConfig(spreading=SpreadingConfig(startup_hydration_limit=1))
+    config = MnemosConfig(
+        modules={"spreading": True}, spreading=SpreadingConfig(startup_hydration_limit=1)
+    )
     config.retrieval.max_candidates = 2
     config.modules.affective = False
 
@@ -104,7 +114,9 @@ def test_incompatible_graph_is_rebuilt_in_resumable_batches_without_changing_fac
     path = str(tmp_path / "graph.sqlite")
     embedder = SimpleEmbeddingProvider(dim=8)
     store = SQLiteStore(path)
-    engine = MnemosEngine(embedder=embedder, store=store)
+    engine = MnemosEngine(
+        config=MnemosConfig(modules={"spreading": True}), embedder=embedder, store=store
+    )
     for identifier in ("a", "b", "c"):
         store.store(
             MemoryChunk(
@@ -119,14 +131,18 @@ def test_incompatible_graph_is_rebuilt_in_resumable_batches_without_changing_fac
     store._conn.commit()
     store.close()
     store = SQLiteStore(path)
-    engine = MnemosEngine(embedder=embedder, store=store)
+    engine = MnemosEngine(
+        config=MnemosConfig(modules={"spreading": True}), embedder=embedder, store=store
+    )
     assert store.get_graph_edges() == {}
     assert engine.rebuild_graph_batch(limit=1) == 1
     assert store.graph_rebuild_cursor() == "a"
     store.close()
     store = SQLiteStore(path)
     try:
-        engine = MnemosEngine(embedder=embedder, store=store)
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}), embedder=embedder, store=store
+        )
         assert store.graph_rebuild_cursor() == "a"
         assert engine.rebuild_graph_batch(limit=1) == 1
         assert store.graph_rebuild_cursor() == "b"

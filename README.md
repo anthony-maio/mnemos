@@ -181,6 +181,8 @@ The research modules explore the following mechanisms. These are design hypothes
 
 The direct Python examples below illustrate individual mechanisms. Their development fixtures do not establish managed-service behavior or a biomimetic quality advantage. The verified preview workflow is explicit scoped memory with these modules disabled.
 
+In this development branch, all five module switches default to `false`. Selecting a model provider does not enable them. Existing explicit settings still apply. See [experimental module settings](docs/experimental-modules.md) for opt-in configuration and the upgrade behavior.
+
 ---
 
 ## Five Architectures
@@ -223,6 +225,7 @@ from mnemos import MnemosEngine, MnemosConfig, SurprisalConfig, Interaction
 
 engine = MnemosEngine(
     config=MnemosConfig(
+        modules={"surprisal": True},
         surprisal=SurprisalConfig(threshold=0.3)  # cosine distance
     )
 )
@@ -395,7 +398,7 @@ from mnemos import MnemosEngine, MnemosConfig
 from mnemos.utils import OllamaProvider, SQLiteStore
 
 engine = MnemosEngine(
-    config=MnemosConfig(),
+    config=MnemosConfig(modules={"surprisal": True, "sleep": True}),
     llm=OllamaProvider(model="llama3"),
     store=SQLiteStore(db_path="memory.db"),
 )
@@ -705,6 +708,7 @@ from mnemos.config import (
 )
 
 config = MnemosConfig(
+    modules={"surprisal": True, "sleep": True, "spreading": True},
     surprisal=SurprisalConfig(threshold=0.25),
     sleep=SleepConfig(consolidation_interval_seconds=1800),
     spreading=SpreadingConfig(decay_rate=0.15, max_hops=4),

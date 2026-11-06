@@ -31,6 +31,10 @@ from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import MockLLMProvider
 from mnemos.utils.storage import InMemoryStore, SQLiteStore
 
+EXPERIMENT_MODULES = dict(
+    surprisal=True, mutable_rag=True, affective=True, sleep=True, spreading=True
+)
+
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 
@@ -38,6 +42,7 @@ from mnemos.utils.storage import InMemoryStore, SQLiteStore
 def engine():
     """A fully configured MnemosEngine with all-local providers."""
     config = MnemosConfig(
+        modules=EXPERIMENT_MODULES,
         surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
         sleep=SleepConfig(
             min_episodes_before_consolidation=3,
@@ -56,6 +61,7 @@ def engine():
 def strict_engine():
     """Engine with strict surprisal gate (threshold=0.99 — almost nothing stored)."""
     config = MnemosConfig(
+        modules=EXPERIMENT_MODULES,
         surprisal=SurprisalConfig(threshold=0.99, min_content_length=5),
     )
     return MnemosEngine(
@@ -267,6 +273,7 @@ class TestEngineRetrieve:
         store = CountingInMemoryStore()
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -368,6 +375,7 @@ class TestEngineScopedMemory:
         )
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
                 sleep=SleepConfig(
                     min_episodes_before_consolidation=1,
@@ -436,6 +444,7 @@ class TestEngineGovernance:
     @pytest.mark.asyncio
     async def test_capture_mode_hooks_only_blocks_manual_process(self) -> None:
         config = MnemosConfig(
+            modules=EXPERIMENT_MODULES,
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             governance=MemoryGovernanceConfig(capture_mode="hooks_only"),
         )
@@ -461,6 +470,7 @@ class TestEngineGovernance:
     @pytest.mark.asyncio
     async def test_max_chunks_per_scope_cap_prunes_oldest(self) -> None:
         config = MnemosConfig(
+            modules=EXPERIMENT_MODULES,
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             governance=MemoryGovernanceConfig(max_chunks_per_scope=2),
         )
@@ -486,6 +496,7 @@ class TestEngineGovernance:
     @pytest.mark.asyncio
     async def test_retention_ttl_prunes_old_chunks(self) -> None:
         config = MnemosConfig(
+            modules=EXPERIMENT_MODULES,
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             governance=MemoryGovernanceConfig(retention_ttl_days=1),
         )
@@ -697,6 +708,7 @@ class TestEngineRetrievePersistence:
 
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -742,6 +754,7 @@ class TestEngineRetrievePersistence:
         store = InMemoryStore()
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -804,6 +817,7 @@ class TestEngineRetrievePersistence:
         store = RecordingStore()
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -836,6 +850,7 @@ class TestEngineRetrievePersistence:
         store = InMemoryStore()
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -875,6 +890,7 @@ class TestEngineRetrievePersistence:
         store = InMemoryStore()
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             ),
             llm=MockLLMProvider(),
@@ -965,6 +981,7 @@ class TestEnginePersistence:
 
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
                 spreading=SpreadingConfig(startup_auto_connect=False),
             ),
@@ -985,6 +1002,7 @@ class TestEnginePersistence:
         """A restarted engine should rebuild spreading graph nodes from persisted chunks."""
         db_path = tmp_path / "mnemos_persist.db"
         config = MnemosConfig(
+            modules=EXPERIMENT_MODULES,
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
         )
 
@@ -1018,6 +1036,7 @@ class TestEnginePersistence:
         """Processing should not create graph edges across unrelated project scopes."""
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=EXPERIMENT_MODULES,
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
                 spreading=SpreadingConfig(
                     auto_connect_threshold=0.0,

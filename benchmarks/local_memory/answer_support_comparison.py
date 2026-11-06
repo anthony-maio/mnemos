@@ -148,6 +148,8 @@ def _seed_case(
     config.modules.sleep = False
     config.modules.mutable_rag = False
     config.modules.affective = False
+    # Keep the graph arm explicit when application defaults change.
+    config.modules.spreading = True
     config.retrieval.query_state_source = "none"
     store = SQLiteStore(str(root / "accepted.sqlite"))
     try:

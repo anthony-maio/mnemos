@@ -89,6 +89,11 @@ def main() -> None:
             "from mcp.server.fastmcp import FastMCP\n"
             "from importlib.resources import files\n"
             "from mnemos.benchmark import _resolve_dataset_pack, load_documents\n"
+            "from mnemos.config import MnemosConfig\n"
+            "from mnemos.settings import AppSettings\n"
+            "module_defaults = MnemosConfig().modules.model_dump()\n"
+            "assert module_defaults and not any(module_defaults.values())\n"
+            "assert AppSettings().modules.model_dump() == module_defaults\n"
             "package = pathlib.Path(mnemos.__file__).resolve()\n"
             "assert pathlib.Path(sys.prefix).resolve() in package.parents\n"
             f"assert md.version('mnemos-memory') == mnemos.__version__ == {version!r}\n"
@@ -109,6 +114,7 @@ def main() -> None:
             "print(json.dumps({'version': md.version('mnemos-memory'), "
             "'mcp_version': md.version('mcp'), 'fastembed_version': md.version('fastembed'), "
             "'console_scripts': scripts, 'hermes_entrypoint': provider[0].value, "
+            "'experimental_module_defaults': module_defaults, "
             "'bundled_benchmark_documents': dataset_counts}))\n",
             encoding="utf-8",
         )

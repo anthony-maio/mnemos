@@ -27,7 +27,12 @@ def make_engine():
         responses={"valence": "-1, 1, 1", "has this stored memory": "CHANGED: Now use Rust"},
         record_calls=True,
     )
-    engine = MnemosEngine(llm=llm, embedder=FixedEmbedding(), store=InMemoryStore())
+    engine = MnemosEngine(
+        config=MnemosConfig(modules={"affective": True, "spreading": True, "mutable_rag": True}),
+        llm=llm,
+        embedder=FixedEmbedding(),
+        store=InMemoryStore(),
+    )
     for identifier, embedding, state in [
         ("semantic", [1.0, 0.0], CognitiveState(valence=1, arousal=0, complexity=0)),
         ("state", [0.8, 0.6], CognitiveState(valence=-1, arousal=1, complexity=1)),

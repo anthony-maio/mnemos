@@ -60,6 +60,9 @@ def service(
     )
     engine.config.sleep.extraction_mode = "judged"
     engine.config.modules.surprisal = False
+    engine.config.modules.sleep = True
+    engine.config.modules.mutable_rag = True
+    engine.config.modules.affective = True
     return LocalMemoryService(engine, registry), context, store
 
 

@@ -92,6 +92,8 @@ async def test_the_service_gate_rejects_on_low_novelty_and_waits_on_outage(tmp_p
         llm=UnavailableLLMProvider(), embedder=SimpleEmbeddingProvider(), store=store, judge=judge
     )
     engine.config.surprisal.mode = "novelty"
+    engine.config.modules.surprisal = True
+    engine.config.modules.sleep = True
     engine.config.sleep.extraction_mode = "judged"
     memory = LocalMemoryService(engine, registry)
     try:

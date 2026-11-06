@@ -16,6 +16,7 @@ from mnemos.utils.storage import InMemoryStore
 def engine() -> MnemosEngine:
     return MnemosEngine(
         config=MnemosConfig(
+            modules={"surprisal": True, "sleep": True, "affective": True, "spreading": True},
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             sleep=SleepConfig(
                 min_episodes_before_consolidation=3,

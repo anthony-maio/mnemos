@@ -4,6 +4,7 @@ import json
 
 import pytest
 
+from mnemos.config import MnemosConfig
 from mnemos.engine import MnemosEngine
 from mnemos.types import MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
@@ -13,7 +14,11 @@ from mnemos.utils.storage import SQLiteStore
 def test_projection_failure_rolls_back_preferences_edges_and_markers(tmp_path, monkeypatch):
     store = SQLiteStore(str(tmp_path / "atomic-graph.sqlite"))
     try:
-        engine = MnemosEngine(store=store, embedder=SimpleEmbeddingProvider(dim=2))
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            store=store,
+            embedder=SimpleEmbeddingProvider(dim=2),
+        )
         for identifier in ("a", "b"):
             fact = MemoryChunk(
                 id=identifier,
@@ -56,7 +61,11 @@ def test_wrong_builder_marker_cannot_promote_unrebuilt_sources(tmp_path):
     path = str(tmp_path / "wrong-builder.sqlite")
     store = SQLiteStore(path)
     try:
-        engine = MnemosEngine(store=store, embedder=SimpleEmbeddingProvider(dim=2))
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            store=store,
+            embedder=SimpleEmbeddingProvider(dim=2),
+        )
         for identifier in ("a", "b", "c"):
             fact = MemoryChunk(
                 id=identifier,
@@ -78,7 +87,11 @@ def test_wrong_builder_marker_cannot_promote_unrebuilt_sources(tmp_path):
 
     store = SQLiteStore(path)
     try:
-        engine = MnemosEngine(store=store, embedder=SimpleEmbeddingProvider(dim=2))
+        engine = MnemosEngine(
+            config=MnemosConfig(modules={"spreading": True}),
+            store=store,
+            embedder=SimpleEmbeddingProvider(dim=2),
+        )
         assert store.graph_derivation_status()["pending_count"] == 3
         assert store.get_graph_preferences(completed_only=True) == {}
         assert engine.rebuild_graph_batch(limit=1) == 1

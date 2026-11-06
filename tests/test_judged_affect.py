@@ -64,6 +64,7 @@ async def test_recent_state_recall_makes_no_classification_call() -> None:
     judge = _scores(valence=4, arousal=0, complexity=0)
     engine = MnemosEngine(
         config=MnemosConfig(
+            modules={"surprisal": True, "affective": True},
             surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
             retrieval=RetrievalConfig(profile="biomimetic", query_state_source="recent_state"),
         ),

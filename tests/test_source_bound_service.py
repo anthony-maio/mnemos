@@ -29,6 +29,8 @@ def service(tmp_path: Path) -> tuple[LocalMemoryService, ScopeContext, SQLiteSto
     engine = MnemosEngine(
         llm=UnavailableLLMProvider(), embedder=SimpleEmbeddingProvider(), store=store
     )
+    engine.config.modules.sleep = True
+    engine.config.modules.mutable_rag = True
     return LocalMemoryService(engine, registry), context, store
 
 

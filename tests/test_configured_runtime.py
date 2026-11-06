@@ -50,6 +50,8 @@ async def test_missing_model_captures_episode_without_fabricating_fact(tmp_path:
         env={
             "MNEMOS_CONFIG_PATH": str(tmp_path / "missing.toml"),
             "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.db"),
+            "MNEMOS_MODULE_SURPRISAL": "true",
+            "MNEMOS_MODULE_SLEEP": "true",
         },
         cwd=tmp_path,
     )

@@ -427,13 +427,13 @@ class JudgmentConfig(BaseModel):
 
 
 class ModuleConfig(BaseModel):
-    """Independent experimental switches; explicit lifecycle commands stay available."""
+    """Opt-in experiments; explicit lifecycle commands stay available when off."""
 
-    surprisal: bool = True
-    mutable_rag: bool = True
-    affective: bool = True
-    sleep: bool = True
-    spreading: bool = True
+    surprisal: bool = False
+    mutable_rag: bool = False
+    affective: bool = False
+    sleep: bool = False
+    spreading: bool = False
 
 
 class MnemosConfig(BaseModel):
@@ -445,6 +445,7 @@ class MnemosConfig(BaseModel):
 
     Example usage:
         config = MnemosConfig(
+            modules=ModuleConfig(surprisal=True, sleep=True),
             surprisal=SurprisalConfig(threshold=0.25),
             sleep=SleepConfig(consolidation_interval_seconds=1800),
         )

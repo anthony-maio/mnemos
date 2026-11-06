@@ -1,9 +1,8 @@
 """
 examples/mcp_agent_demo.py — Demonstrates how an agent would use Mnemos via MCP.
 
-This shows the programmatic equivalent of what happens when an agent
-like Claude Code calls Mnemos MCP tools. Useful for understanding the
-flow without needing a full MCP client setup.
+This legacy embedded API experiment does not validate the managed MCP
+service. Use restart_recall.py for the explicit-memory service workflow.
 """
 
 import asyncio
@@ -16,10 +15,17 @@ from mnemos.types import Interaction
 
 async def main():
     # ------------------------------------------------------------------
-    # Setup: configure mnemos (same as MCP server does internally)
+    # Setup: explicitly enable the embedded research modules
     # ------------------------------------------------------------------
     engine = MnemosEngine(
         config=MnemosConfig(
+            modules={
+                "surprisal": True,
+                "mutable_rag": True,
+                "affective": True,
+                "sleep": True,
+                "spreading": True,
+            },
             surprisal=SurprisalConfig(threshold=0.2),  # More sensitive
             sleep=SleepConfig(
                 consolidation_interval_seconds=0,  # Allow immediate consolidation

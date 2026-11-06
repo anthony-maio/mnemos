@@ -40,6 +40,13 @@ async def main() -> None:
     # Use threshold=0.0 to store everything (for demo purposes).
     # In production, use the default 0.3 to filter mundane inputs.
     config = MnemosConfig(
+        modules={
+            "surprisal": True,
+            "mutable_rag": True,
+            "affective": True,
+            "sleep": True,
+            "spreading": True,
+        },
         surprisal=SurprisalConfig(threshold=0.0, min_content_length=5),
         debug=True,
     )

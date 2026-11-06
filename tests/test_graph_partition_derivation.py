@@ -159,12 +159,13 @@ def _assert_weight_maps(
 
 def _config(*, hydration_limit: int = 5000) -> MnemosConfig:
     return MnemosConfig(
+        modules={"spreading": True},
         spreading=SpreadingConfig(
             auto_connect_threshold=THRESHOLD,
             max_neighbors_per_node=MAX_NEIGHBORS,
             startup_hydration_limit=hydration_limit,
             startup_auto_connect=False,
-        )
+        ),
     )
 
 

@@ -1,5 +1,6 @@
 const state = {
   settingsView: null,
+  pendingModules: null,
   dashboard: null,
   selectedMemoryId: null,
   selectedMemoryMeta: null,
@@ -74,7 +75,13 @@ function preferredHost(settings) {
 }
 
 function activePresetId(settings) {
-  return settings.sleep?.recall_gated_plasticity_enabled ? "stable-memory" : "starter-sqlite";
+  const modules = settings.modules || {};
+  if (["surprisal", "mutable_rag", "affective", "spreading"].some((name) => modules[name])) {
+    return null;
+  }
+  const recallGated = Boolean(settings.sleep?.recall_gated_plasticity_enabled);
+  if (modules.sleep && recallGated) return "stable-memory";
+  return !modules.sleep && !recallGated ? "starter-sqlite" : null;
 }
 
 function refreshProviderFields() {
@@ -92,6 +99,7 @@ function refreshProviderFields() {
 function fillForm(view) {
   state.settingsView = view;
   const { settings } = view;
+  state.pendingModules = null;
 
   document.getElementById("onboarding-mode").value = settings.onboarding?.mode || "dev";
   document.getElementById("preferred-host").value = preferredHost(settings);
@@ -140,6 +148,7 @@ function applyPreset(presetId) {
     return;
   }
   document.getElementById("store-type").value = preset.payload?.storage?.type || "sqlite";
+  state.pendingModules = { ...preset.payload.modules };
   document.getElementById("recall-gated-enabled").checked =
     preset.payload?.sleep?.recall_gated_plasticity_enabled || false;
   document.getElementById("recall-min-supporting-episodes").value =
@@ -152,6 +161,7 @@ function applyPreset(presetId) {
 function collectPayload() {
   const provider = activeProvider();
   return {
+    ...(state.pendingModules === null ? {} : { modules: { ...state.pendingModules } }),
     onboarding: {
       mode: document.getElementById("onboarding-mode").value,
       preferred_host: document.getElementById("preferred-host").value,

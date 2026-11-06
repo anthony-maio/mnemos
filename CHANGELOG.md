@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased improvements -- 2026-11-06
+
+- Experimental module switches now default to off. Choosing a model provider does not enable automatic extraction, reconsolidation, state scoring or graph retrieval. Explicit module settings remain honored; omitted flags take the new defaults. No user configuration is rewritten.
+- The embedded Python API now honors disabled ingestion and consolidation switches. Explicit remember calls remain available. Starter SQLite explicitly disables experiments when selected; ordinary setup edits preserve existing module settings.
+- Research examples and comparison helpers opt in explicitly. Historical evaluation records remain unchanged. These changes have not been published or installed in a live host profile.
+
 ## Unreleased 0.7.0b1 candidate -- 2026-10-26
 
 Development candidate from the functional local memory branch. The stable default remains 0.6.0. The existing release benchmark fails, so this candidate is not published to PyPI. Automatic extraction and biomimetic ranking have not established a quality advantage.

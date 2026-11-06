@@ -224,7 +224,10 @@ async def test_engine_scopes_cannot_be_spoofed_in_metadata(tmp_path: Path) -> No
     engine = MnemosEngine(
         llm=MockLLMProvider(),
         scope_registry=registry,
-        config=MnemosConfig(surprisal=SurprisalConfig(threshold=0, min_content_length=0)),
+        config=MnemosConfig(
+            modules={"surprisal": True},
+            surprisal=SurprisalConfig(threshold=0, min_content_length=0),
+        ),
     )
     result = await engine.process(
         Interaction(

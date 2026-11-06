@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from mnemos.config import MnemosConfig
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeRegistry
@@ -47,7 +48,12 @@ async def test_revision_during_state_classification_is_ranked_and_budgeted(
     registry.register_project(tmp_path, user_profile_id="local", enabled=True)
     context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
     store = SQLiteStore(str(tmp_path / "memory.sqlite"))
-    engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+    engine = MnemosEngine(
+        config=MnemosConfig(modules={"affective": True, "spreading": spreading}),
+        llm=UnavailableLLMProvider(),
+        embedder=RevisionEmbeddings(),
+        store=store,
+    )
     engine.config.retrieval.spreading_enabled = spreading
     memory = LocalMemoryService(engine, registry)
     payload = {"context": context.model_dump(mode="json")}

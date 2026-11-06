@@ -1,26 +1,22 @@
 """
-mnemos — Biomimetic memory architectures for LLMs.
+Explicit memory with optional experimental encoding and retrieval modules.
 
-Mnemos implements five neuroscience-inspired memory modules:
+The managed service provides durable, scoped memory. Experimental modules
+require explicit opt-in and have not established a retrieval-quality benefit.
 
-1. SurprisalGate   — Predictive coding memory gate (only encodes surprising inputs)
-2. MutableRAG      — Memory reconsolidation (facts evolve on retrieval, no stale data)
-3. AffectiveRouter — Emotional state-dependent memory routing (amygdala filter)
-4. SleepDaemon     — Hippocampal-neocortical consolidation with optional recall-gated plasticity
-5. SpreadingActivation — Graph-based associative context retrieval
-
-Quick start (zero external dependencies):
+This embedded example uses in-memory storage and synthetic embeddings for an
+offline demonstration. It does not persist across restarts or validate semantic
+retrieval. See examples/restart_recall.py for the installed service workflow.
 
     import asyncio
     from mnemos import MnemosEngine
-    from mnemos.types import Interaction
 
     async def main():
-        engine = MnemosEngine()  # Uses MockLLM + SimpleEmbedding + InMemoryStore
-        await engine.process(Interaction(role="user", content="I use Python for ML."))
-        memories = await engine.retrieve("programming languages")
-        for m in memories:
-            print(m.content)
+        engine = MnemosEngine()
+        await engine.remember("I use Python for ML.")
+        memories = await engine.retrieve("I use Python for ML.")
+        for memory in memories:
+            print(memory.content)
 
     asyncio.run(main())
 """

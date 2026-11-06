@@ -64,9 +64,16 @@ SETUP_PRESETS: list[dict[str, Any]] = [
         "id": "starter-sqlite",
         "label": "Starter SQLite",
         "recommended": True,
-        "description": "Default shipped path: one SQLite file, guided setup, and minimal moving parts.",
+        "description": "Explicit memory in SQLite. Selecting this preset turns off all experimental modules.",
         "payload": {
             "storage": {"type": "sqlite"},
+            "modules": {
+                "surprisal": False,
+                "mutable_rag": False,
+                "affective": False,
+                "sleep": False,
+                "spreading": False,
+            },
             "sleep": {
                 "recall_gated_plasticity_enabled": False,
                 "recall_min_supporting_episodes": 2,
@@ -78,9 +85,16 @@ SETUP_PRESETS: list[dict[str, Any]] = [
         "id": "stable-memory",
         "label": "Embedded API recall experiment",
         "recommended": False,
-        "description": "Legacy embedded API setting. Does not change managed-service extraction or establish a quality improvement.",
+        "description": "Enables experimental extraction and embedded API recall gating. No measured quality improvement is established.",
         "payload": {
             "storage": {"type": "sqlite"},
+            "modules": {
+                "surprisal": False,
+                "mutable_rag": False,
+                "affective": False,
+                "sleep": True,
+                "spreading": False,
+            },
             "sleep": {
                 "recall_gated_plasticity_enabled": True,
                 "recall_min_supporting_episodes": 2,

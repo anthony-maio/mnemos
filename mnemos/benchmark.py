@@ -21,7 +21,7 @@ from typing import Any
 
 import numpy as np
 
-from .config import MnemosConfig, MutableRAGConfig, SurprisalConfig
+from .config import MnemosConfig, ModuleConfig, MutableRAGConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .runtime import build_embedder_from_env
 from .types import Interaction, MemoryChunk, RetrievalFeedbackEvent
@@ -850,6 +850,9 @@ def run_retrieval_benchmark(
     else:
         engine = MnemosEngine(
             config=MnemosConfig(
+                modules=ModuleConfig(
+                    surprisal=True, mutable_rag=True, affective=True, sleep=True, spreading=True
+                ),
                 surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
                 mutable_rag=MutableRAGConfig(enabled=False),
             ),
