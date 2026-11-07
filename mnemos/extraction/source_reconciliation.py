@@ -257,6 +257,11 @@ def build_reconciliation_schema(
                     allowed_operations.append("correct")
                 if exact_ids:
                     allowed_operations.remove("add")
+            if len(exact_ids) > 1:
+                # The candidate already matches multiple fact identities. A
+                # targetless conflict or another target cannot resolve that
+                # identity ambiguity.
+                allowed_operations = ["unresolved"]
         for operation in allowed_operations:
             paired_targets: list[MemoryChunk | None]
             if operation in {"support", "correct"}:
@@ -381,6 +386,14 @@ def _validate_decisions(
             raise ValueError("Reconciliation cites an unavailable target")
         if target is not None and decision.expected_version != target.version:
             raise ValueError("Reconciliation target version is stale")
+        if (
+            candidate.source_role == "user"
+            and len(normalized_target_ids.get(normalize_memory_text(candidate.content), [])) > 1
+            and decision.operation != "unresolved"
+        ):
+            raise ValueError(
+                "Duplicate exact user content requires unresolved: ambiguous exact normalized content"
+            )
         if decision.operation == "correct":
             if not _is_user_revision(candidate):
                 raise ValueError("Only user correction candidates may be corrected")

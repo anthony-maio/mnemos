@@ -149,6 +149,8 @@ async def reconcile_source_candidates_with_judge(
             }
             aliases = {f"t{position}": target.id for position, target in enumerate(targets)}
             for index, candidate in batch:
+                if candidate.source_role == "user" and len(exact_matches[index]) > 1:
+                    continue  # Known identity ambiguity already requires review.
                 if candidate.kind != "correction_or_rejection":
                     for position, target in enumerate(targets):
                         if target.id in exact_matches[index]:
@@ -243,6 +245,9 @@ def _decide(
     is_user = candidate.source_role == "user"
     revision = _is_user_revision(candidate)
     margin = 0.1
+
+    if is_user and len(exact) > 1:
+        return _decision(index, "unresolved", reason_code="multiple_matching_targets")
 
     if candidate.kind == "correction_or_rejection":
         if not targets:
