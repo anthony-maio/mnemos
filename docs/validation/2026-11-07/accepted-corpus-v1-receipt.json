@@ -1,0 +1,763 @@
+{
+  "stage": "development",
+  "status": "completed_not_quality_accepted",
+  "source_commit": "bd2c3e2c1884e63795d73d05a25a2898308b4930",
+  "dataset_sha256": "ff95cdda87ec6bcefdfb592685a9fa3a0d31914e5d76c119e275c889db89234a",
+  "corpus_sha256": "c3b285abe1979bc2187db97b4c1e2a77416b4c361f8079b57647df7890cb35f6",
+  "runner_sha256": "6b4e6a8ec735813be233c2d096a6abaf0808815ab19b9a114226c897e2279115",
+  "protocol_sha256": "0a05bcb63307217bd4cea7f314ee4abbc2e49f56e9b4e3ad9c1fa6de026eb718",
+  "bound_files": 149,
+  "provider": "FastEmbed",
+  "provider_version": "0.9.1",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "embedding_dimension": 384,
+  "embedding_asset_files": 17,
+  "embedding_assets_unchanged": true,
+  "provider_load_ms": 1323.807599954307,
+  "run_wall_seconds": 20.47250930010341,
+  "document_calls": 17,
+  "query_calls": 12,
+  "options": {
+    "repetitions": 3,
+    "top_k": 5,
+    "max_context_tokens": 1200,
+    "confidence": 0.95,
+    "bootstrap_repetitions": 10000,
+    "bootstrap_seed": 20261107
+  },
+  "coverage": {
+    "counts": {
+      "heldout_sessions": 1,
+      "critical_facts": 1,
+      "answerable_queries": 2,
+      "no_answer_queries": 2,
+      "state_pairs": 0
+    },
+    "query_kinds": {
+      "answerable": 2,
+      "no_answer": 2
+    },
+    "hosts": [
+      "codex"
+    ],
+    "project_count": 1,
+    "minimum_deficits": {
+      "heldout_sessions": 199,
+      "critical_facts": 99,
+      "answerable_queries": 98,
+      "no_answer_queries": 98,
+      "state_pairs": 50,
+      "missing_hosts": 2,
+      "multiple_projects": 1
+    },
+    "minimums_met": false,
+    "state_conditions_used_by_baseline": false,
+    "freshness_and_semantic_review_verified": false
+  },
+  "summary": {
+    "status": "complete",
+    "stage": "development",
+    "corpus_sha256": "c3b285abe1979bc2187db97b4c1e2a77416b4c361f8079b57647df7890cb35f6",
+    "observations": 36,
+    "coverage": {
+      "counts": {
+        "heldout_sessions": 1,
+        "critical_facts": 1,
+        "answerable_queries": 2,
+        "no_answer_queries": 2,
+        "state_pairs": 0
+      },
+      "query_kinds": {
+        "answerable": 2,
+        "no_answer": 2
+      },
+      "hosts": [
+        "codex"
+      ],
+      "project_count": 1,
+      "minimum_deficits": {
+        "heldout_sessions": 199,
+        "critical_facts": 99,
+        "answerable_queries": 98,
+        "no_answer_queries": 98,
+        "state_pairs": 50,
+        "missing_hosts": 2,
+        "multiple_projects": 1
+      },
+      "minimums_met": false,
+      "state_conditions_used_by_baseline": false,
+      "freshness_and_semantic_review_verified": false
+    },
+    "quality_kinds": {
+      "answerable": {
+        "strategies": {
+          "vector": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 6,
+            "estimate": 1.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": 1.0,
+            "operational_failure": 0,
+            "unsupported_count": 24,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          },
+          "lexical": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 6,
+            "estimate": 1.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": 1.0,
+            "operational_failure": 0,
+            "unsupported_count": 24,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          },
+          "hybrid": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 6,
+            "estimate": 1.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": 1.0,
+            "operational_failure": 0,
+            "unsupported_count": 24,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 1.0,
+                  "lower": 0.3423802271438862,
+                  "upper": 1.0,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          }
+        },
+        "paired_to_vector": {
+          "lexical": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          },
+          "hybrid": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          }
+        },
+        "paired_fractional_recall_to_vector": {
+          "lexical": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          },
+          "hybrid": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          }
+        }
+      },
+      "no_answer": {
+        "strategies": {
+          "vector": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 0,
+            "estimate": 0.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 27,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          },
+          "lexical": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 0,
+            "estimate": 0.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 27,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          },
+          "hybrid": {
+            "attempted": 6,
+            "unique_queries": 2,
+            "successes": 0,
+            "estimate": 0.0,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 27,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 2,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              },
+              {
+                "repetition": 3,
+                "interval": {
+                  "estimate": 0.0,
+                  "lower": 0.0,
+                  "upper": 0.6576197728561138,
+                  "confidence": 0.95,
+                  "method": "wilson",
+                  "sample_count": 2,
+                  "cluster_count": null
+                }
+              }
+            ]
+          }
+        },
+        "paired_to_vector": {
+          "lexical": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          },
+          "hybrid": {
+            "estimate": 0.0,
+            "lower": 0.0,
+            "upper": 0.0,
+            "confidence": 0.95,
+            "method": "paired_bootstrap",
+            "sample_count": 6,
+            "cluster_count": 1
+          }
+        },
+        "paired_fractional_recall_to_vector": {
+          "lexical": null,
+          "hybrid": null
+        }
+      },
+      "state_pair_semantic": {
+        "strategies": {
+          "vector": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          },
+          "lexical": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          },
+          "hybrid": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          }
+        },
+        "paired_to_vector": {
+          "lexical": null,
+          "hybrid": null
+        },
+        "paired_fractional_recall_to_vector": {
+          "lexical": null,
+          "hybrid": null
+        }
+      },
+      "state_pair_state": {
+        "strategies": {
+          "vector": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          },
+          "lexical": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          },
+          "hybrid": {
+            "attempted": 0,
+            "unique_queries": 0,
+            "successes": 0,
+            "estimate": null,
+            "clean_hits": 0,
+            "mean_fractional_recall": null,
+            "operational_failure": 0,
+            "unsupported_count": 0,
+            "scope_leak_count": 0,
+            "stale_count": 0,
+            "wilson_by_repetition": [
+              {
+                "repetition": 1,
+                "interval": null
+              },
+              {
+                "repetition": 2,
+                "interval": null
+              },
+              {
+                "repetition": 3,
+                "interval": null
+              }
+            ]
+          }
+        },
+        "paired_to_vector": {
+          "lexical": null,
+          "hybrid": null
+        },
+        "paired_fractional_recall_to_vector": {
+          "lexical": null,
+          "hybrid": null
+        }
+      }
+    },
+    "quality_gate_claimed": false,
+    "full_module_ablation_run": false,
+    "interval_note": "Wilson intervals describe unique questions within each repetition. Queries within a session can still be dependent. Paired differences resample whole sessions, retaining all queries and repetitions.",
+    "state_pair_note": "Declared state variants are recorded controls. All three baseline strategies ignore state; no state-module effectiveness claim follows."
+  },
+  "independent_audit": {
+    "status": "verified",
+    "observations_recomputed": 36,
+    "role_vectors_verified": 29,
+    "document_calls": 17,
+    "query_calls": 12,
+    "database_checks": [
+      {
+        "snapshot_id": "accepted-retrieval-development-v1",
+        "facts": 6,
+        "sources": 6,
+        "evidence": 6,
+        "jobs": 0,
+        "access_count": 0,
+        "integrity": "ok",
+        "foreign_key_errors": 0
+      },
+      {
+        "snapshot_id": "after-correction",
+        "facts": 6,
+        "sources": 6,
+        "evidence": 6,
+        "jobs": 0,
+        "access_count": 0,
+        "integrity": "ok",
+        "foreign_key_errors": 0
+      },
+      {
+        "snapshot_id": "after-declared-removal",
+        "facts": 5,
+        "sources": 5,
+        "evidence": 5,
+        "jobs": 0,
+        "access_count": 0,
+        "integrity": "ok",
+        "foreign_key_errors": 0
+      }
+    ],
+    "stable_query_strategy_groups": 12,
+    "query_strategy_groups": 12,
+    "unique_queries": 4,
+    "session_clusters": 1,
+    "wilson_sample_per_repetition": 2,
+    "paired_sample_count": 6,
+    "paired_cluster_count": 1,
+    "cache_assets_verified": 17,
+    "summary": {
+      "answerable": {
+        "vector": {
+          "successes": 6,
+          "attempted": 6,
+          "unsupported_selections": 24
+        },
+        "lexical": {
+          "successes": 6,
+          "attempted": 6,
+          "unsupported_selections": 24
+        },
+        "hybrid": {
+          "successes": 6,
+          "attempted": 6,
+          "unsupported_selections": 24
+        }
+      },
+      "no_answer": {
+        "vector": {
+          "successes": 0,
+          "attempted": 6,
+          "unsupported_selections": 27
+        },
+        "lexical": {
+          "successes": 0,
+          "attempted": 6,
+          "unsupported_selections": 27
+        },
+        "hybrid": {
+          "successes": 0,
+          "attempted": 6,
+          "unsupported_selections": 27
+        }
+      }
+    },
+    "source_commit": "bd2c3e2c1884e63795d73d05a25a2898308b4930",
+    "dataset_sha256": "ff95cdda87ec6bcefdfb592685a9fa3a0d31914e5d76c119e275c889db89234a",
+    "model_calls_in_audit": 0,
+    "fresh_corpus_run": false,
+    "quality_gate_claimed": false,
+    "audit_sha256": "a80934c619578602b49424f06e9d64d5e049f1b17a5908c44cccf1bbc96bccdc"
+  },
+  "output_sha256": {
+    "accepted-0000-0000.sqlite": "87b6672ad91fd65cb98b9d973ab5ee5e2d59ddd6f537f688735d7735c1baa033",
+    "accepted-0000-0000.sqlite-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+    "accepted-0000-0000.sqlite-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "accepted-0000-0001.sqlite": "0c7b63676fb494e16b4d2b5713ece1ea5e9687939a1b42959dd33659baeaed6d",
+    "accepted-0000-0001.sqlite-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+    "accepted-0000-0001.sqlite-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "accepted-0000-0002.sqlite": "e75a384a7913f59560610d19f0d8dd525133a04ea68ccb43f0d523115e470c79",
+    "accepted-0000-0002.sqlite-shm": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+    "accepted-0000-0002.sqlite-wal": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "audit.json": "62e9d660ad818d26079fd900442f3b1c7892f14b9faacf93cc15ffc7a15cd766",
+    "control.json": "49b2a4ba4b0cd460f97c6f24616d580b6f1e8910b48de0b56b7dd6244bdf1334",
+    "corpus.json": "ff95cdda87ec6bcefdfb592685a9fa3a0d31914e5d76c119e275c889db89234a",
+    "embedding-calls.jsonl": "cd242c1973fd0a0178a2fae18396b9d519ea68a92e4bdcd7c09fba683dc5d6c8",
+    "observations.jsonl": "2e8aa93cd4e1b8c2b43675180f6db15c746b0dd0f34fc55faacf30849223f237",
+    "summary.json": "2ec747f2235f609686958c437e15b145f01656a5107f5dc6a404f82ed0024795"
+  },
+  "private_archive_sha256": "24497cfae85d92640b3e69fa1e05a20c6fe067764441fba29f4a8674e4ee1156",
+  "verified_archive_members": 172,
+  "private_archive_bytes": 929157,
+  "quality_gate_claimed": false,
+  "pilot_days": 0,
+  "fresh_corpus_run": false,
+  "production_source_changed": false
+}
