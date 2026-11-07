@@ -1,6 +1,6 @@
 # Installed performance check preparation
 
-The next performance check is prepared but has not run. It targets the installed
+At this preparation checkpoint, the performance check had not run. It targets the installed
 `749f1213` package, local BGE embeddings and a separate runtime on the system
 volume. The [protocol](../../plans/2026-11-07-installed-performance-v1.md) keeps
 the original 500 ms warm-recall and 100 ms durable-hook requirements.
@@ -23,6 +23,9 @@ missing event and a mismatched source. The probe used a direct capture-client
 stub; it did not test HTTP, native host execution or performance. Percentile and
 failure-accounting checks passed. The runner's overlap guard refused setup
 while the original retrieval evaluation was still running.
+
+V1 subsequently stopped at the service's embedding-identity guard before any
+timed requests. See the [failure and fixture repair](installed-performance-v1-failure.md).
 
 No timing result, new model inference, pilot day or readiness claim follows
 from this preparation. Run only after the fresh retrieval comparison reaches a
