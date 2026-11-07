@@ -151,6 +151,44 @@ def test_resources_outside_disposable_root_are_rejected(config, resource):
         replace(config, **{resource: config.root.parent / "live"}).validate()
 
 
+@pytest.mark.parametrize("extra", [False, True])
+def test_codex_exec_user_provenance_separates_host_context_from_submitted_prompts(tmp_path, extra):
+    sessions = tmp_path / "sessions"
+    sessions.mkdir()
+
+    def message(kind, provenance, text):
+        return {
+            "type": "response_item",
+            "payload": {
+                "type": "message",
+                "role": "user",
+                "content": [{"type": "input_text", "text": text}],
+                "internal_chat_message_metadata_passthrough": {
+                    "content_item_kinds": [kind],
+                    "content_item_metadata": [{"provenance": {"type": provenance}}],
+                },
+            },
+        }
+
+    rows = [
+        message("agents_md.instructions", "agents_md", "Host instructions"),
+        message("environments.environment_context", "harness", "Host environment"),
+        message("user.text", "user", "Original prompt"),
+    ]
+    if extra:
+        rows.append(message("user.text", "user", "Additional prompt"))
+    (sessions / "one.jsonl").write_text("\n".join(map(json.dumps, rows)))
+    assert phases._codex_exec_user_messages(tmp_path) == ["Original prompt"] + (
+        ["Additional prompt"] if extra else []
+    )
+    rows[0]["payload"]["internal_chat_message_metadata_passthrough"]["content_item_metadata"][0][
+        "provenance"
+    ]["type"] = "user"
+    (sessions / "one.jsonl").write_text("\n".join(map(json.dumps, rows)))
+    with pytest.raises(ValueError, match="provenance"):
+        phases._codex_exec_user_messages(tmp_path)
+
+
 def test_environment_removes_live_selectors_credentials_and_import_overrides(monkeypatch):
     keys = [
         "MNEMOS_RUNTIME_DESCRIPTOR",

@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; v2 repairs most format failures but still fails semantic support and abstention; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart recall and disabled defaults passed at e8a4f12e; complete native lifecycle and pilot open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart checks passed at 6d46aa1a; two Codex attempts exposed host/harness compatibility failures before memory calls; complete native lifecycle and pilot open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
 
@@ -130,3 +130,15 @@ No historical archive is removed or rewritten.
   server was unloaded and stopped. Further semantic development, fresh and
   extraction evaluations, native authentication/lifecycle, host tokenizer
   integration, the actual pilot and publication remain open.
+- Product `6d46aa1a` built source/wheel artifacts, passed Twine and passed a fresh
+  installed smoke check outside the checkout. See the
+  [Codex checkpoint](../validation/2026-11-06/native-codex-checkpoint.md).
+- Codex v1 at runner `5741ffb1` failed when CLI 0.146.0 was rejected as too old
+  for the selected model. V2 at `28e4ec92` used the app-bundled 0.164.0 alpha
+  runtime and authenticated with the pinned model, but the harness disabled
+  its required Code Mode transport. Neither completed a memory tool. Both
+  private archives verified and cleanup passed; normal credentials were unchanged.
+- The current runtime also changed user-message provenance records. A failing
+  regression and offline trace check established the parser repair; 88 focused
+  checks pass. The original native failures remain failed. Native Code Mode
+  transport and MCP-call provenance need a new frozen acceptance protocol.

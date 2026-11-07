@@ -236,6 +236,65 @@ def _codex_user_messages(home: Path) -> list[Any]:
     return messages
 
 
+def _codex_exec_user_messages(home: Path) -> list[Any]:
+    """Read current host provenance without counting injected context as a user turn."""
+    legacy = _codex_user_messages(home)
+    submitted: list[str] = []
+    modern = False
+    unclassified = False
+    for path in sorted((home / "sessions").rglob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            payload = record.get("payload", {})
+            if (
+                record.get("type") != "response_item"
+                or payload.get("type") != "message"
+                or payload.get("role") != "user"
+            ):
+                continue
+            meta = payload.get("internal_chat_message_metadata_passthrough", {})
+            kinds, details = meta.get("content_item_kinds"), meta.get("content_item_metadata")
+            content = payload.get("content")
+            if kinds is None and details is None:
+                unclassified = True
+                continue
+            modern = True
+            if (
+                not isinstance(content, list)
+                or not isinstance(kinds, list)
+                or not isinstance(details, list)
+                or len(content) != len(kinds)
+                or len(content) != len(details)
+            ):
+                raise ValueError("Codex user content provenance is incomplete")
+            text: list[str] = []
+            for item, kind, detail in zip(content, kinds, details):
+                source = detail.get("provenance", {}) if isinstance(detail, dict) else {}
+                expected = {
+                    "user.text": "user",
+                    "agents_md.instructions": "agents_md",
+                    "environments.environment_context": "harness",
+                }
+                if (
+                    kind not in expected
+                    or source.get("type") != expected[kind]
+                    or item.get("type") != "input_text"
+                    or not isinstance(item.get("text"), str)
+                ):
+                    raise ValueError("Codex user content provenance is ambiguous")
+                if kind == "user.text":
+                    text.append(item["text"])
+            if text:
+                submitted.append("".join(text))
+    if modern:
+        if unclassified or (legacy and legacy != submitted):
+            raise ValueError("Codex user content provenance disagrees across records")
+        return submitted
+    return legacy
+
+
 def _cleanup_phase(
     directory: Path,
     result: dict[str, Any],
@@ -596,7 +655,7 @@ def run_codex_exec_phase(
         observed = _codex_observed_models(codex_home)
         result["observed_models"] = observed
         result["model_verified"] = bool(observed) and all(item == model for item in observed)
-        messages = _codex_user_messages(codex_home)
+        messages = _codex_exec_user_messages(codex_home)
         result["user_prompt_verified"] = messages == [prompt]
         if not result["model_verified"] or not result["user_prompt_verified"]:
             raise ValueError("Codex explicit model or prompt observation differs")
