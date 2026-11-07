@@ -18,6 +18,7 @@ from urllib.parse import urlsplit
 import httpx
 
 from .extraction_evaluation import ExtractionCase
+from .reconciliation_decoder import DecoderMode, DecoderProvider
 from .extraction_evaluation_run import (
     MODEL,
     MODEL_DIGEST,
@@ -118,7 +119,7 @@ def grade_reconciliation(
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
     treatments = getattr(args, "treatments", "prompt_v1")
-    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3"}:
+    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4"}:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
     if treatments == "identity_v2":
@@ -133,14 +134,24 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "direct_chat_off": ("direct", False),
             "direct_chat_on": ("direct", False),
         }
+    decoder_modes: dict[str, DecoderMode] = {}
+    if treatments == "decoder_v4":
+        decoder_modes = {
+            "bounded": "bounded",
+            "reversed": "reversed",
+            "json": "json",
+            "none": "none",
+        }
+        arms = {arm: ("direct", False) for arm in decoder_modes}
     provider_options = {
         arm: {"think": arm == "direct_chat_on", "force_chat": arm.startswith("direct_chat_")}
         for arm in arms
     }
-    output_allowance = 4096 if treatments == "reasoning_v3" else 2048
+    extended_limits = treatments in {"reasoning_v3", "decoder_v4"}
+    output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
-    provider_timeout = 90 if treatments == "reasoning_v3" else 30
-    case_timeout = 120 if treatments == "reasoning_v3" else 60
+    provider_timeout = 90 if extended_limits else 30
+    case_timeout = 120 if extended_limits else 60
     for endpoint in (args.endpoint, args.tokenizer_url):
         url = urlsplit(endpoint)
         if (
@@ -193,6 +204,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "model_digest": MODEL_DIGEST,
         "temperature": 0,
         "provider_options": provider_options,
+        "decoder_modes": decoder_modes,
         "context_length": 8192,
         "max_output_tokens": output_allowance,
         "max_counted_input_tokens": input_allowance,
@@ -260,7 +272,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         [case.candidate],
                         [event.model_copy(deep=True) for event in source.events],
                         [target.model_copy(deep=True) for target in source.targets],
-                        provider,
+                        (
+                            DecoderProvider(provider, mode=decoder_modes[arm])
+                            if arm in decoder_modes
+                            else provider
+                        ),
                         prompt_style=style,
                         relevant_revision_flag=relevant,
                     )
@@ -314,7 +330,9 @@ def main() -> None:
     parser.add_argument("--source-root", default=".")
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
     parser.add_argument(
-        "--treatments", choices=("prompt_v1", "identity_v2", "reasoning_v3"), default="prompt_v1"
+        "--treatments",
+        choices=("prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4"),
+        default="prompt_v1",
     )
     asyncio.run(run(parser.parse_args()))
 
