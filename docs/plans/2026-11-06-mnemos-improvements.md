@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent retrieval, extraction and reconciliation studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; value-span referent v5 reaches 19/20 decisions and 9/9 review controls but misses a known target and fails confirmation; intermediate semantic errors remain despite correct review operations; fresh quality and persisted extraction open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; the stronger referent diagnostic yields 49/72 correct operations, 110/198 correct relations and only 3/12 stable seed groups, with five wrong corrections and eleven wrong additions; Qwen3.5 empty-load setup verified separately; model comparison, fresh quality and persisted extraction open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
@@ -551,3 +551,19 @@ No historical archive is removed or rewritten.
   documentation checks, formatting and strict types passed. Model and owned
   runtime cleanup passed. Defaults and installed pilot state remain unchanged;
   intermediate relation quality, fresh evaluation and actual use remain open.
+- The [relation and consistency diagnostic](../validation/2026-11-07/relations-v6.md)
+  completed 72 matched views of twelve seed scenarios in five clusters. The
+  unchanged comparator produced 49 correct operations, five wrong corrections,
+  eleven wrong additions and 110/198 correct relations, with no operational
+  failures. Only two seeds were correct at both layers in all six views; three
+  stayed consistent. ID-only changes altered seven of 36 paired operations.
+  All 72 scores and replays, 138 source hashes, 198 relations and twelve groups
+  verified; all 175 archive members passed readback. The 183 focused and 12
+  documentation checks passed, including 24 new checks. Cleanup passed.
+- A [local Qwen3.5 candidate](../validation/2026-11-07/qwen35-local-setup.md)
+  downloaded and passed zero-generation loading at context 8192. The package's
+  original blobs and appended manifest reference verified; two earlier manifest
+  verifier failures remain preserved. Its separate archive has 24 verified
+  members, and all setup processes stopped. It has no semantic-quality result;
+  sampling defaults and native tokenizer compatibility must be bound before a
+  model comparison. Production defaults and the inactive pilot remain unchanged.
