@@ -467,6 +467,8 @@ The managed service exposes these tools:
 | `mnemos_job_status` | Inspect the status and result of a durable processing job |
 | `mnemos_correct` | Apply an expected-version correction to a stored fact |
 | `mnemos_forget` | Apply an expected-version suppression to a stored fact |
+| `mnemos_forget_preview` | Review related facts and sources; pass the inspected `fact.version` as the required `expected_version` |
+| `mnemos_forget_related` | Apply a complete preview's unchanged preconditions and explicitly reviewed fact/source selections |
 | `mnemos_stats` | Report service health and scoped store statistics |
 | `mnemos_health` | Profile readiness and dependency diagnostics |
 | `mnemos_inspect` | Inspect a fact and its evidence using `fact_id`; the legacy `chunk_id` name is also supported |
