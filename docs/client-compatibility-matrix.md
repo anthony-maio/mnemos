@@ -1,5 +1,18 @@
 # Client compatibility and observed evidence
 
+## November 7, 2026 pilot integration checkpoint
+
+The [Claude pilot integration check](validation/2026-11-07/native-pilot-claude.md)
+loaded the drafted project MCP and local hook settings using the installed
+`6d0e5ba6` wheel. One print-mode session restarted the disposable store,
+retrieved and inspected the seed, and captured five raw records with verified
+physical project/profile/session identity. Cleanup passed and the real pilot
+stayed inactive. The prompt and Stop hooks still reported degraded identity:
+one provisional prompt record is separate from its UUID-backed transcript
+record. Its capture-only job and four extraction jobs remain pending; the seed
+is the sole fact. This bounded integration pass does not establish complete
+capture identity, interactive approval, Codex pilot hooks or daily use.
+
 ## November 6, 2026 checkpoint
 
 The [native Codex v7 check](validation/2026-11-06/native-codex-v7-checkpoint.md)

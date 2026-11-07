@@ -9,9 +9,9 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V4 completed 352 observations: hybrid temporal support retained 24/27 answerable hits but abstained on 11/17 versus baseline 14/17; failure review identifies missing-value, temporal and conflict errors; no promotion; further development and fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V5 completed 352 observations: hybrid hits were 27/27 for both treatments, but the candidate reduced clean hits from 26 to 19 and abstentions from 14/17 to 13/17; four candidate contract failures; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed on their named artifacts; Claude v5 now passes all six phases on 6d0e5ba6 with complete deletion and ten suppressed replays; private pilot projects selected, remaining entry gates and actual use open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; the persistent pilot is prepared but inactive; one native Claude project-MCP/hook run passes bounded checks with degraded capture identity; remaining entry gates and actual use open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
@@ -387,3 +387,16 @@ No historical archive is removed or rewritten.
   the current source regression and the negative support result. All twelve
   documentation checks pass with the canonical website explicitly selected.
   These documentation changes do not publish or activate anything.
+- The [native Claude pilot integration](../validation/2026-11-07/native-pilot-claude.md)
+  now verifies the drafted project MCP and local hook settings on the persistent
+  `6d0e5ba6` installation, using only disposable state. Two correlated native
+  calls retrieved and inspected the seed; five raw captures had correct physical
+  identity. One provisional prompt and the separate transcript record preserve
+  the known degraded association diagnostics. The capture-only and extraction
+  jobs remain pending, with one explicit seed fact and zero automatic facts.
+  Cleanup, source credentials and inactive pilot files passed independent checks.
+  The first pre-native shutdown failure and audit status correction are preserved.
+  All 53 v2 archive members verified. Seventy focused parser/runner checks and
+  static checks pass; the earlier full regression retains its own source binding.
+  Interactive approval, Codex hooks, rollback, recovery, quality and actual pilot
+  use remain open. No live configuration was applied and no pilot day was counted.
