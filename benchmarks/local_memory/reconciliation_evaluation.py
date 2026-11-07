@@ -29,6 +29,7 @@ from .extraction_evaluation_run import (
 )
 from mnemos.extraction.source_reconciliation import ReconciliationDecision, StagedReconciliation
 from mnemos.extraction.source_relationship import PromptStyle, reconcile_source_relationships
+from mnemos.extraction.source_target_identity import reconcile_source_target_identity
 from mnemos.extraction.source_selection import (
     ExtractiveMemory,
     SelectionInventory,
@@ -116,6 +117,16 @@ def grade_reconciliation(
 
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
+    treatments = getattr(args, "treatments", "prompt_v1")
+    if treatments not in {"prompt_v1", "identity_v2"}:
+        raise ValueError("Unknown reconciliation treatments")
+    arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
+    if treatments == "identity_v2":
+        arms = {
+            "legacy_full": ("legacy", False),
+            "direct_full": ("direct", False),
+            "identity_v1": None,
+        }
     for endpoint in (args.endpoint, args.tokenizer_url):
         url = urlsplit(endpoint)
         if (
@@ -173,7 +184,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "max_counted_input_tokens": 5632,
         "case_timeout_seconds": 60,
         "repetitions": args.repetitions,
-        "arms": ARMS,
+        "arms": arms,
+        "treatments": treatments,
         "storage_writes": False,
         "extraction_calls": 0,
         "retrieval_calls": 0,
@@ -190,7 +202,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             (repetition, case, arm)
             for repetition in range(args.repetitions)
             for case in cases
-            for arm in ARMS
+            for arm in arms
         ]
         random.Random(manifest["shuffle_seed"]).shuffle(order)
         write(
@@ -210,18 +222,25 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             error = None
             started = time.perf_counter()
             try:
-                style, relevant = ARMS[arm]
-                result = await asyncio.wait_for(
-                    reconcile_source_relationships(
+                options = arms[arm]
+                if options is None:
+                    reconciliation = reconcile_source_target_identity(
+                        [case.candidate],
+                        [event.model_copy(deep=True) for event in source.events],
+                        [target.model_copy(deep=True) for target in source.targets],
+                        provider,
+                    )
+                else:
+                    style, relevant = options
+                    reconciliation = reconcile_source_relationships(
                         [case.candidate],
                         [event.model_copy(deep=True) for event in source.events],
                         [target.model_copy(deep=True) for target in source.targets],
                         provider,
                         prompt_style=style,
                         relevant_revision_flag=relevant,
-                    ),
-                    timeout=60,
-                )
+                    )
+                result = await asyncio.wait_for(reconciliation, timeout=60)
             except Exception as exc:
                 error = type(exc).__name__ + ": " + str(exc)
             observation = {
@@ -270,6 +289,7 @@ def main() -> None:
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--source-root", default=".")
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
+    parser.add_argument("--treatments", choices=("prompt_v1", "identity_v2"), default="prompt_v1")
     asyncio.run(run(parser.parse_args()))
 
 
