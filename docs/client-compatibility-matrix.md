@@ -13,6 +13,20 @@ record. Its capture-only job and four extraction jobs remain pending; the seed
 is the sole fact. This bounded integration pass does not establish complete
 capture identity, interactive approval, Codex pilot hooks or daily use.
 
+The subsequent [Codex pilot integration check](validation/2026-11-07/native-pilot-codex.md)
+passed on the same installed wheel. Two correlated native calls retrieved and
+inspected the controller seed. UserPromptSubmit and Stop persisted one user
+prompt and one assistant reply with normal identities and a shared native turn.
+Their completed jobs produced two unasserted raw chunks, not accepted facts.
+Cleanup passed. The run used an invocation-only trust override after strict
+command and artifact validation; ordinary interactive trust and all-hook
+coverage remain unverified. Both pilot integrations remain synthetic checks.
+
+The [configuration rollback rehearsal](validation/2026-11-07/pilot-config-rollback.md)
+also passed exact application/restore checks for all seven drafts and fourteen
+drift refusals on disposable copies. Nine live paths stayed unchanged. These
+results do not apply the draft, pass recovery/quality gates or start daily use.
+
 ## November 6, 2026 checkpoint
 
 The [native Codex v7 check](validation/2026-11-06/native-codex-v7-checkpoint.md)
