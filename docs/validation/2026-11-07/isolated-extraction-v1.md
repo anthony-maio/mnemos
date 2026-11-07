@@ -65,3 +65,6 @@ archive members under SHA-256
 The next bounded step is a decoder-schema repair followed by a separately
 recorded development rerun. Fresh evaluation, semantic review, persisted
 extraction, native-host integration and pilot acceptance remain open.
+
+The [v2 follow-up](isolated-extraction-v2.md) prevents the invalid revision flag
+but preserves the missing correction as an unresolved target-selection result.

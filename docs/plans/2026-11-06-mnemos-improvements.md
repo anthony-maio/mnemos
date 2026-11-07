@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent accepted-fact retrieval and event-to-proposal development runs completed; extraction v2 matches 14/15 quality cases with 8/9 critical facts and a separate passing scope guard; fresh evaluation, semantic review and persisted extraction open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
@@ -473,3 +473,13 @@ No historical archive is removed or rewritten.
   The run performed no retrieval or accepted-fact commits. Model and owned
   runtime cleanup passed. The failure is frozen before a schema repair; fresh
   evaluation and actual pilot use remain open.
+- The [extraction schema follow-up](../validation/2026-11-07/isolated-extraction-v2.md)
+  prevents the invalid kind/revision-flag combination while preserving runtime
+  guards. Ten failing regressions now pass; all 98 focused checks pass. The
+  repeated 16-case measurement has no operational failures but remains at
+  14/15 exact quality cases and 8/9 critical facts: the known correction now
+  reaches reconciliation and becomes an unresolved review despite its visible
+  target. All 26 replies, 132 source hashes and 16 identical input pairs verified;
+  all 160 private archive members passed readback. Both endpoints closed and
+  all listed processes were absent after the original tree-stop warning.
+  Target selection, fresh quality, persisted extraction and pilot use remain open.
