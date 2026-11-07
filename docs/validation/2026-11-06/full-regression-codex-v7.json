@@ -1,0 +1,68 @@
+{
+  "status": "passed",
+  "source_commit": "6c12ff94ddf3bc8c15ec3a1c211f8791cba61916",
+  "started_at": "2026-11-07T04:41:50.679137+00:00",
+  "finished_at": "2026-11-07T04:50:14.881202+00:00",
+  "exit_code": 0,
+  "counts": {
+    "failure": 0,
+    "error": 0,
+    "skipped": 4,
+    "collected": 2849,
+    "passed": 2845
+  },
+  "head_unchanged": true,
+  "website_unchanged": true,
+  "fixtures_unchanged": true,
+  "website_sha256": "81c3781956c90c76f8ac863dce96edfb6c110bbaa38f93965bf0200ad91d0640",
+  "website_explicitly_selected": true,
+  "restored_fixture_files_verified": 208,
+  "skips": [
+    {
+      "test": "tests.test_bridge::test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_bridge::test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "test": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    }
+  ],
+  "private_archive_sha256": "c721b1544d6e00f9228b01fa2f6ee9e916638fa0b298915cd3009fd3ab93383c",
+  "private_archive_bytes": 68498,
+  "verified_members": 6,
+  "files": {
+    "archive-codex-v7-regression.py": {
+      "sha256": "fd1d8ef742cb390fa54dceee75bb3a960e3e45b10f603c35b84b49e7f87b1b6e",
+      "bytes": 3484
+    },
+    "control.json": {
+      "sha256": "a4e13b1c40f79d1cfc2997fbd8418e3bd7b8fb0d74af4a6cb0476fed73332699",
+      "bytes": 1215
+    },
+    "junit.xml": {
+      "sha256": "a91fd5bc224b0056901915912f9782ac8d81b352f9e2ca950d476c4657e7b9d6",
+      "bytes": 397105
+    },
+    "pytest.txt": {
+      "sha256": "0fbd2ff16b672b0125674ad5a70c8663941b7581a2efc022df138438c4a3cdf9",
+      "bytes": 3672
+    },
+    "restored-fixtures-exact.json": {
+      "sha256": "bc9ffcde97bb81800c31212df2885101ec1eb5e9729abb8f4ba8c672734c1513",
+      "bytes": 32804
+    },
+    "run-full-regression-codex-v7.py": {
+      "sha256": "33341f931f422ea0504c8b01077a59da3d1084d3b3706c93f731c72de6490fdb",
+      "bytes": 3745
+    }
+  },
+  "limits": "Full source regression with the canonical website explicitly selected. Does not establish native acceptance, pilot readiness, quality improvement or publication. Prior failed runs remain unchanged."
+}

@@ -367,3 +367,23 @@ No historical archive is removed or rewritten.
   passed Claude v5. Twelve runner checks and formatting pass. The original
   Codex v6 pass remains bound to its earlier artifact. Full regression at the
   new frozen runner source is required before this attempt starts.
+- The [Codex v7 full regression](../validation/2026-11-06/full-regression-codex-v7.md)
+  passed 2,845 tests with four platform-specific skips at `6c12ff94`. Source,
+  the canonical website and 208 restored fixtures stayed unchanged. All six
+  archive members verified.
+- [Codex v7](../validation/2026-11-06/native-codex-v7-checkpoint.md) passed all
+  six native phases on the same installed `6d0e5ba6` wheel as Claude v5. All
+  19 MCP calls correlated, reviewed deletion and one exact source replay passed,
+  controls survived, credentials stayed unchanged and cleanup passed. All 788
+  private archive files verified. Neither native run supplies a pilot day.
+- [Persistent pilot revision 3](../validation/2026-11-06/private-pilot-persistent-v3.md)
+  installs the verified wheel in an inactive private user-profile directory.
+  All 86 package files, 57 dependency versions and four configuration probes
+  pass. The earlier LocalAppData path mismatch is preserved. Seven regenerated
+  patches are unapplied and nine live paths remain unchanged. No service or
+  database was created. All 26 archive members verified; native integration,
+  rollback, quality/recovery and actual-use gates remain open.
+- README and compatibility claims now identify the common installed artifact,
+  the current source regression and the negative support result. All twelve
+  documentation checks pass with the canonical website explicitly selected.
+  These documentation changes do not publish or activate anything.

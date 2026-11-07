@@ -2,18 +2,19 @@
 
 ## November 6, 2026 checkpoint
 
-The [native Codex v6 check](validation/2026-11-06/native-codex-checkpoint.md)
-passed all six explicit-memory phases on installed product `929c44a4` with
-runner `f15bf9f5`: teach and inspect, restarted recall, same-ID correction,
+The [native Codex v7 check](validation/2026-11-06/native-codex-v7-checkpoint.md)
+passed all six explicit-memory phases on installed product `6d0e5ba6` with
+runner `6c12ff94`: teach and inspect, restarted recall, same-ID correction,
 corrected recall, reviewed forgetting, and final recall after restart and
 original-source replay. All 19 MCP calls completed with verified native call
 correlation. Source evidence, retained controls, scope isolation and cleanup
 passed. This is one synthetic scenario and one run, with experimental modules
-disabled. The earlier failed attempts remain recorded.
+disabled. The earlier [v6 pass and failed attempts](validation/2026-11-06/native-codex-checkpoint.md)
+retain their original artifact bindings and outcomes.
 
 The same product passed isolated installed CLI/MCP checks. The later
-[full source suite](validation/2026-11-06/full-regression-review-selection-v5.md)
-at `15229fb7` passed 2,820 tests with four platform-specific skips and the
+[full source suite](validation/2026-11-06/full-regression-codex-v7.md)
+at `6c12ff94` passed 2,845 tests with four platform-specific skips and the
 canonical website explicitly selected.
 
 [Claude v5](validation/2026-11-06/native-claude-v5-checkpoint.md) passed all six
@@ -28,8 +29,8 @@ This is one synthetic run on the named wheel. Its forget phase used $0.4962732
 of the $0.50 phase allowance; the pass does not establish a comfortable cost
 margin or broader reliability. Current-candidate Hermes acceptance, automatic
 extraction, native tokenizer compatibility and actual pilot use remain open.
-The earlier Codex pass retains its own product binding and does not transfer
-automatically to later wheels.
+Codex v7 and Claude v5 now share the same wheel binding. Neither pass transfers
+automatically to later wheels or the separate pilot launcher configuration.
 
 ## Earlier checkpoints
 
