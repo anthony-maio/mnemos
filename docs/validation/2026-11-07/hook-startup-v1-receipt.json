@@ -1,0 +1,178 @@
+{
+  "status": "completed_and_audited",
+  "source_commit": "5735c502febbf495cda3e8c336a8b7069a298738",
+  "protocol_commit": "53966160d7269f81acee9e85e26376cca4ff2279",
+  "summary": {
+    "empty_site": {
+      "complete": {
+        "count": 20,
+        "median_ms": 118.34854993503541,
+        "p95_ms": 439.9437848944219,
+        "max_ms": 726.8948000855744
+      },
+      "imports": {
+        "count": 20,
+        "median_ms": 0.0034499680623412132,
+        "p95_ms": 0.005340145435184241,
+        "max_ms": 0.00609993003308773
+      }
+    },
+    "empty_no_site": {
+      "complete": {
+        "count": 20,
+        "median_ms": 105.43935012537986,
+        "p95_ms": 263.26909506460686,
+        "max_ms": 681.6756001207978
+      },
+      "imports": {
+        "count": 20,
+        "median_ms": 0.003300025127828121,
+        "p95_ms": 0.005360145587474115,
+        "max_ms": 0.01409999094903469
+      }
+    },
+    "client_site": {
+      "complete": {
+        "count": 20,
+        "median_ms": 201.58879994414747,
+        "p95_ms": 225.7036850438454,
+        "max_ms": 331.8640000652522
+      },
+      "imports": {
+        "count": 20,
+        "median_ms": 114.58074999973178,
+        "p95_ms": 134.16983509669083,
+        "max_ms": 169.57319993525743
+      }
+    },
+    "client_no_site": {
+      "complete": {
+        "count": 20,
+        "median_ms": 186.8162500904873,
+        "p95_ms": 312.4585999175907,
+        "max_ms": 406.5884000156075
+      },
+      "imports": {
+        "count": 20,
+        "median_ms": 114.43565005902201,
+        "p95_ms": 145.53570486605167,
+        "max_ms": 154.36509996652603
+      }
+    },
+    "empty_paired": {
+      "count": 20,
+      "median_delta_ms": -10.677500162273645,
+      "no_site_faster_pairs": 16
+    },
+    "client_paired": {
+      "count": 20,
+      "median_delta_ms": -13.721249881200492,
+      "no_site_faster_pairs": 17
+    },
+    "environment_equal": true,
+    "failures": 0
+  },
+  "audit": {
+    "status": "verified",
+    "observations": 88,
+    "timed_observations": 80,
+    "bindings": 98,
+    "failed_commands": 0,
+    "environment_equal": true,
+    "no_site_uses_base_prefix": true,
+    "process_ids_absent": 88,
+    "audit_model_calls": 0,
+    "import_traces": {
+      "client_site": [
+        {
+          "self_us": 3001,
+          "cumulative_us": 12423,
+          "module": "site"
+        },
+        {
+          "self_us": 2905,
+          "cumulative_us": 27966,
+          "module": "typing"
+        },
+        {
+          "self_us": 1080,
+          "cumulative_us": 31651,
+          "module": "mnemos"
+        },
+        {
+          "self_us": 1416,
+          "cumulative_us": 38630,
+          "module": "email._policybase"
+        },
+        {
+          "self_us": 1654,
+          "cumulative_us": 41664,
+          "module": "email.feedparser"
+        },
+        {
+          "self_us": 1649,
+          "cumulative_us": 44911,
+          "module": "email.parser"
+        },
+        {
+          "self_us": 2112,
+          "cumulative_us": 58182,
+          "module": "http.client"
+        },
+        {
+          "self_us": 1203,
+          "cumulative_us": 80469,
+          "module": "mnemos.hook_client"
+        }
+      ],
+      "client_no_site": [
+        {
+          "self_us": 3094,
+          "cumulative_us": 31064,
+          "module": "typing"
+        },
+        {
+          "self_us": 3640,
+          "cumulative_us": 40109,
+          "module": "mnemos"
+        },
+        {
+          "self_us": 1249,
+          "cumulative_us": 43526,
+          "module": "email._policybase"
+        },
+        {
+          "self_us": 1554,
+          "cumulative_us": 46458,
+          "module": "email.feedparser"
+        },
+        {
+          "self_us": 1596,
+          "cumulative_us": 49521,
+          "module": "email.parser"
+        },
+        {
+          "self_us": 2217,
+          "cumulative_us": 65263,
+          "module": "http.client"
+        },
+        {
+          "self_us": 1286,
+          "cumulative_us": 89520,
+          "module": "mnemos.hook_client"
+        }
+      ]
+    }
+  },
+  "product_change": false,
+  "service_starts": 0,
+  "model_calls": 0,
+  "hook_dispatches": 0,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "archive_sha256": "d7f0356aeedd9a8d0b4f0685b36fe942596f08625ad6fe4c13732fd36a8fc7f7",
+  "archive_members": 111,
+  "archive_bytes": 868741
+}

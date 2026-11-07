@@ -699,3 +699,15 @@ No historical archive is removed or rewritten.
   verify. This opt-in path is not installed in a live host. Complete installed
   timing with real embeddings and the original launcher checks is the next gate;
   the failed 100 ms hook results and zero-day pilot remain unchanged.
+- The [complete scoped ranking comparison](../validation/2026-11-07/scoped-rank-performance-v1.md)
+  retains 320 observations and 160 identical response/context pairs. Recall p95
+  falls from 311.35 to 134.88 ms. All 208 captures survive restart, and their
+  jobs complete without adding accepted facts. Complete Stop and prompt hooks
+  still fail 100 ms at 547.11 and 860.06 ms. The independent audit and archive
+  verification pass; all owned processes stopped.
+- The [startup diagnostic](../validation/2026-11-07/hook-startup-v1.md) retains
+  88 observations. Skipping site initialization saves only 13.72 ms per matched
+  client command at the median, leaves about 114 ms of client imports, and
+  omits normal virtual environment initialization. Separate import traces point
+  to the HTTP/email parser dependency chain and package initialization. The
+  audit passes; no launcher or product change follows from this small gain.
