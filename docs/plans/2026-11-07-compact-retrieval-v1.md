@@ -17,7 +17,7 @@ results, zero requested results, captured evidence, an injected embedding
 outage and conflict recall. Keep the corpus and allowed scopes fixed.
 
 Run full and compact for each case, three repetitions, alternating their order
-by repetition. This gives 36 pairs and 72 retrieval calls. Both formats must
+by repetition. This gives 18 pairs and 36 retrieval calls. Both formats must
 return the same literal context, record IDs, versions, scopes, assertion status,
 source references and source-availability status. Keep degraded diagnostics and
 captured-evidence warnings. Reject any foreign-project content. Verify stored
