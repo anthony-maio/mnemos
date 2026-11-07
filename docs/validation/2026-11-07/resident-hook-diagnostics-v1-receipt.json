@@ -1,0 +1,441 @@
+{
+  "status": "completed_diagnostics",
+  "source_commit": "feb6ac3b3eebd2e178ec584b3be1e72cca1228fc",
+  "protocol_commit": "4b443603",
+  "installed_wheel_sha256": "51ba20ba811eaa33cd18bde9665c49d21feaa10e7874bffdf878e3b9762b550f",
+  "exec_session": 82484,
+  "exit_code": 0,
+  "audit": {
+    "status": "verified",
+    "audit_model_calls": 0,
+    "observations": 17,
+    "real_commands": 12,
+    "startup_controls": 5,
+    "worker_dispatches": 12,
+    "memory_dispatches": 18,
+    "prompt_embedding_calls": 6,
+    "bound_files_verified": 110,
+    "model_assets_verified": 17,
+    "database_counts": {
+      "memory_chunks": 10000,
+      "episodic_events": 10012,
+      "fact_evidence": 10000,
+      "memory_jobs": 12
+    },
+    "job_statuses": {
+      "pending": 12
+    },
+    "source_job_records_verified": 12,
+    "database_sha256": "2d189af96eddcac8b1d712bf414e2743ee4cbba619c2011ac47ee8f8de306b67",
+    "database_bytes_unchanged_by_audit": true,
+    "span_times_are_inclusive": true,
+    "component_times_are_latency_gates": false,
+    "metrics": {
+      "empty": {
+        "complete_command": {
+          "count": 5,
+          "median_ms": 217.3151,
+          "min_ms": 207.1978,
+          "max_ms": 779.3293
+        },
+        "command_entry": {
+          "count": 5,
+          "median_ms": 129.6859,
+          "min_ms": 122.4889,
+          "max_ms": 278.2972
+        },
+        "command_import": {
+          "count": 5,
+          "median_ms": 116.3668,
+          "min_ms": 109.6794,
+          "max_ms": 266.293
+        },
+        "outside_script_entry": {
+          "count": 5,
+          "median_ms": 87.6292,
+          "min_ms": 84.7089,
+          "max_ms": 501.0321
+        }
+      },
+      "Stop": {
+        "worker_dispatch": {
+          "count": 5,
+          "median_ms": 216.1177,
+          "min_ms": 97.4548,
+          "max_ms": 220.5834
+        },
+        "command_worker_request": {
+          "count": 5,
+          "median_ms": 223.348,
+          "min_ms": 104.9512,
+          "max_ms": 229.0466
+        },
+        "worker.settings_fingerprint": {
+          "count": 5,
+          "median_ms": 2.5441,
+          "min_ms": 2.1019,
+          "max_ms": 4.7232
+        },
+        "worker.canonical_project_root": {
+          "count": 5,
+          "median_ms": 170.9892,
+          "min_ms": 58.7589,
+          "max_ms": 176.5171
+        },
+        "worker.adapter_context": {
+          "count": 5,
+          "median_ms": 171.024,
+          "min_ms": 58.7954,
+          "max_ms": 176.5885
+        },
+        "worker.outbox.sanitize": {
+          "count": 5,
+          "median_ms": 0.2383,
+          "min_ms": 0.1272,
+          "max_ms": 0.2467
+        },
+        "worker.outbox._write": {
+          "count": 5,
+          "median_ms": 6.5121,
+          "min_ms": 5.4029,
+          "max_ms": 9.1719
+        },
+        "worker.outbox.append": {
+          "count": 5,
+          "median_ms": 9.4779,
+          "min_ms": 7.7029,
+          "max_ms": 13.3531
+        },
+        "worker.client._descriptor": {
+          "count": 5,
+          "median_ms": 0.2713,
+          "min_ms": 0.1988,
+          "max_ms": 0.2923
+        },
+        "worker.client._dispatch_http": {
+          "count": 5,
+          "median_ms": 14.6106,
+          "min_ms": 13.8709,
+          "max_ms": 16.1753
+        },
+        "worker.outbox.acknowledge": {
+          "count": 5,
+          "median_ms": 8.6436,
+          "min_ms": 8.2485,
+          "max_ms": 11.541
+        },
+        "worker.outbox.pending": {
+          "count": 10,
+          "median_ms": 2.2159,
+          "min_ms": 1.6351,
+          "max_ms": 3.0
+        },
+        "worker.client.replay_outbox": {
+          "count": 5,
+          "median_ms": 4.2162,
+          "min_ms": 3.9047,
+          "max_ms": 5.133
+        },
+        "worker.client.capture": {
+          "count": 5,
+          "median_ms": 37.942,
+          "min_ms": 35.3848,
+          "max_ms": 41.9
+        },
+        "worker.adapter_capture": {
+          "count": 5,
+          "median_ms": 38.0328,
+          "min_ms": 35.4454,
+          "max_ms": 41.9586
+        },
+        "service_dispatch.capture": {
+          "count": 5,
+          "median_ms": 3.1274,
+          "min_ms": 2.3668,
+          "max_ms": 3.4409
+        },
+        "store.capture_event_and_job": {
+          "count": 5,
+          "median_ms": 2.7434,
+          "min_ms": 2.0966,
+          "max_ms": 3.0562
+        },
+        "service.capture": {
+          "count": 5,
+          "median_ms": 3.0794,
+          "min_ms": 2.3252,
+          "max_ms": 3.3853
+        },
+        "complete_command": {
+          "count": 5,
+          "median_ms": 440.5272,
+          "min_ms": 317.6673,
+          "max_ms": 563.0975
+        },
+        "command_entry": {
+          "count": 5,
+          "median_ms": 348.9319,
+          "min_ms": 230.4663,
+          "max_ms": 355.8803
+        },
+        "command_import": {
+          "count": 5,
+          "median_ms": 114.8066,
+          "min_ms": 114.1926,
+          "max_ms": 115.9073
+        },
+        "outside_script_entry": {
+          "count": 5,
+          "median_ms": 91.59530000000001,
+          "min_ms": 87.20100000000002,
+          "max_ms": 207.2172
+        }
+      },
+      "UserPromptSubmit": {
+        "worker_dispatch": {
+          "count": 5,
+          "median_ms": 393.7234,
+          "min_ms": 380.0245,
+          "max_ms": 408.6741
+        },
+        "command_worker_request": {
+          "count": 5,
+          "median_ms": 402.3302,
+          "min_ms": 388.9188,
+          "max_ms": 418.0143
+        },
+        "worker.settings_fingerprint": {
+          "count": 5,
+          "median_ms": 2.6443,
+          "min_ms": 2.5584,
+          "max_ms": 3.2291
+        },
+        "worker.canonical_project_root": {
+          "count": 5,
+          "median_ms": 60.5646,
+          "min_ms": 56.5271,
+          "max_ms": 63.3029
+        },
+        "worker.adapter_context": {
+          "count": 5,
+          "median_ms": 60.5989,
+          "min_ms": 56.5789,
+          "max_ms": 63.3448
+        },
+        "worker.outbox.sanitize": {
+          "count": 5,
+          "median_ms": 0.1604,
+          "min_ms": 0.1391,
+          "max_ms": 0.2307
+        },
+        "worker.outbox._write": {
+          "count": 5,
+          "median_ms": 6.6293,
+          "min_ms": 6.246,
+          "max_ms": 10.8289
+        },
+        "worker.outbox.append": {
+          "count": 5,
+          "median_ms": 9.9441,
+          "min_ms": 8.8274,
+          "max_ms": 13.1249
+        },
+        "worker.client._descriptor": {
+          "count": 10,
+          "median_ms": 0.27895000000000003,
+          "min_ms": 0.2012,
+          "max_ms": 0.4323
+        },
+        "worker.client._dispatch_http": {
+          "count": 10,
+          "median_ms": 147.39225,
+          "min_ms": 13.0672,
+          "max_ms": 302.7496
+        },
+        "worker.outbox.acknowledge": {
+          "count": 5,
+          "median_ms": 10.6418,
+          "min_ms": 8.527,
+          "max_ms": 12.563
+        },
+        "worker.outbox.pending": {
+          "count": 10,
+          "median_ms": 2.21125,
+          "min_ms": 1.8617,
+          "max_ms": 3.5427
+        },
+        "worker.client.replay_outbox": {
+          "count": 5,
+          "median_ms": 4.7396,
+          "min_ms": 3.9763,
+          "max_ms": 6.6121
+        },
+        "worker.client.capture": {
+          "count": 5,
+          "median_ms": 40.7268,
+          "min_ms": 35.0549,
+          "max_ms": 46.1556
+        },
+        "worker.adapter_capture": {
+          "count": 5,
+          "median_ms": 40.7937,
+          "min_ms": 35.1439,
+          "max_ms": 46.2416
+        },
+        "worker.client.retrieve": {
+          "count": 5,
+          "median_ms": 284.0965,
+          "min_ms": 279.1021,
+          "max_ms": 303.0604
+        },
+        "worker.adapter_retrieve": {
+          "count": 5,
+          "median_ms": 284.1403,
+          "min_ms": 279.1403,
+          "max_ms": 303.1018
+        },
+        "service_dispatch.capture": {
+          "count": 5,
+          "median_ms": 3.26,
+          "min_ms": 2.5967,
+          "max_ms": 3.5512
+        },
+        "store.capture_event_and_job": {
+          "count": 5,
+          "median_ms": 2.8449,
+          "min_ms": 2.2143,
+          "max_ms": 3.0905
+        },
+        "service.capture": {
+          "count": 5,
+          "median_ms": 3.2098,
+          "min_ms": 2.5481,
+          "max_ms": 3.4989
+        },
+        "service_dispatch.retrieve": {
+          "count": 5,
+          "median_ms": 271.8508,
+          "min_ms": 267.1023,
+          "max_ms": 289.91
+        },
+        "embedding.vectors": {
+          "count": 5,
+          "median_ms": 4.7769,
+          "min_ms": 4.3453,
+          "max_ms": 5.672
+        },
+        "store.retrieve": {
+          "count": 5,
+          "median_ms": 123.2112,
+          "min_ms": 121.4304,
+          "max_ms": 133.3309
+        },
+        "store.retrieve_lexical": {
+          "count": 5,
+          "median_ms": 111.4913,
+          "min_ms": 108.8464,
+          "max_ms": 122.0268
+        },
+        "engine.retrieve": {
+          "count": 5,
+          "median_ms": 257.6748,
+          "min_ms": 254.3194,
+          "max_ms": 276.0893
+        },
+        "service.retrieve": {
+          "count": 5,
+          "median_ms": 271.809,
+          "min_ms": 267.0596,
+          "max_ms": 289.8405
+        },
+        "complete_command": {
+          "count": 5,
+          "median_ms": 655.4192,
+          "min_ms": 639.1333,
+          "max_ms": 670.8176
+        },
+        "command_entry": {
+          "count": 5,
+          "median_ms": 555.9521,
+          "min_ms": 541.9899,
+          "max_ms": 566.5685
+        },
+        "command_import": {
+          "count": 5,
+          "median_ms": 134.8999,
+          "min_ms": 131.3026,
+          "max_ms": 144.2217
+        },
+        "outside_script_entry": {
+          "count": 5,
+          "median_ms": 100.57069999999999,
+          "min_ms": 97.14339999999993,
+          "max_ms": 104.2491
+        }
+      }
+    }
+  },
+  "sql_probe": {
+    "status": "verified",
+    "audit_model_calls": 0,
+    "observations": 48,
+    "timed_observations": 40,
+    "exact_equal_pairs": 24,
+    "returned_rows_per_observation": 30,
+    "bindings_verified": 98,
+    "prior_attempt_observations": 0,
+    "prior_attempt_error_type": "TypeError",
+    "database_bytes_unchanged": true,
+    "database_sha256": "7d362132eb196e099ac63e2578602c80196ac0b07c486a2682b911d6d23de5ac",
+    "timing": {
+      "vector": {
+        "baseline": {
+          "count": 10,
+          "median_ms": 87.4202,
+          "min_ms": 85.8324,
+          "max_ms": 113.3221
+        },
+        "narrow": {
+          "count": 10,
+          "median_ms": 82.50325000000001,
+          "min_ms": 78.5917,
+          "max_ms": 106.6376
+        },
+        "paired": {
+          "median_delta_ms": -5.020649999999996,
+          "narrow_faster_pairs": 9
+        }
+      },
+      "lexical": {
+        "baseline": {
+          "count": 10,
+          "median_ms": 99.56854999999999,
+          "min_ms": 95.7077,
+          "max_ms": 108.5555
+        },
+        "narrow": {
+          "count": 10,
+          "median_ms": 93.90785,
+          "min_ms": 86.4645,
+          "max_ms": 105.6578
+        },
+        "paired": {
+          "median_delta_ms": -4.345099999999995,
+          "narrow_faster_pairs": 8
+        }
+      }
+    },
+    "complete_latency_pass_claimed": false,
+    "fresh_quality_claimed": false
+  },
+  "owned_processes_stopped": true,
+  "runtime_descriptors_absent": true,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "complete_latency_pass_claimed": false,
+  "effective_settings_values_recorded": false,
+  "archive_sha256": "5396507567b0180f28b021890988660c61195bcec0ecddbedc6d244ad305127c",
+  "archive_members": 143,
+  "archive_bytes": 72271722,
+  "wall_seconds": 83.79847350018099
+}
