@@ -1,0 +1,419 @@
+{
+  "status": "verified",
+  "source_commit": "1393ef21d7431e13ac32c37b9ba826a9258846c3",
+  "protocol_sha256": "4e6a1f3d38d3503e0063a2d9b6ad2bcf98a2db0c9ef8504377a988ba2d60ef03",
+  "model_manifest_sha256": {
+    "qwen3_original": "789a23fef58797e60208692c723fa99eabc1f43aef6311917be4a8a310a17461",
+    "qwen3_stability": "f0627d6cf5770196561a1a624035f2e85d7420967eeaa4f9599632ff2f4944d3",
+    "qwen35_original": "eee7bca78eb06d75d0c585697255b6a4988bcb49044ee33bfa9932405b8897c4",
+    "qwen35_stability": "4ee9f2babcdf2c05642ddec0f622a4c627a44256d702d56fe6a249bf7e5f8a12"
+  },
+  "audit_sha256": {
+    "qwen3_original": "2bc1cf3e8381fac1e26eac6d14b3438ab807a515bffff3dece95907110c43829",
+    "qwen3_stability": "e76c43127d6cdc6156bf92f381c0b7157bdc75f8bee27a483c3630ad50aef227",
+    "qwen35_original": "419d86378a3f6911331fd2992799ef0fed9fac666ce3ef588f6cbc98393194e1",
+    "qwen35_stability": "7f904bfb06c88ef710ffa34efc7d1c624d3b738a3e8a826fa317de70cb61a0c6"
+  },
+  "private_archive_sha256": "4b8e55b6e6f3e18ce61be75ca51926be721be6d4667649bcc85507fb372a569b",
+  "private_archive_members": 204,
+  "private_archive_bytes": 1234344,
+  "owned_pids_absent": [
+    50808,
+    50924,
+    63816,
+    65796,
+    66788,
+    73568,
+    86664,
+    93004,
+    93208,
+    98152
+  ],
+  "ports_closed": [
+    11437,
+    58603,
+    64025
+  ],
+  "original_cleanup_stop_codes": {
+    "server_stop": 255
+  },
+  "focused_tests": 188,
+  "provider_regressions": 28,
+  "documentation_tests": 12,
+  "strict_mypy_source_files": 4,
+  "black_files": 7,
+  "native_sampling_records_verified": 180,
+  "smoke_responses": 2,
+  "quality_responses": 178,
+  "helper_preflight_note": "Initial authoring check split slash-containing case IDs at the first slash and failed before inference. Corrected to split the arm suffix at the final slash; all 89 prompts matched. No observations were overwritten.",
+  "helper_audit_note": "First audit stopped before writing results because it assumed every request used referent comparisons. Five original cases use the unchanged relationship fallback. Span checks now apply only to referent requests; all request schemas and runtime decisions are still replayed. Original helper preserved; no model rerun or scoring change.",
+  "helper_audit_second_note": "Second audit verified both Qwen3 datasets, then encountered a malformed Qwen3.5 final response. The helper now retains malformed finals for runtime replay and only skips unavailable JSON span parsing, requiring an existing runtime failure. Earlier audit files are equality-checked and never overwritten. Original helper preserved.",
+  "results": {
+    "qwen3": {
+      "original": {
+        "observations": 20,
+        "exact_operations": 18,
+        "correct_reviews": 9,
+        "expected_reviews": 9,
+        "wrong_targets": 0,
+        "wrong_additions": 1,
+        "operational_failures": 0,
+        "logical_calls": 17,
+        "raw_responses": 17,
+        "stop_reasons": {
+          "stop": 17
+        },
+        "median_ms": 1578.9750000694767,
+        "p95_ms": 2942.3536001704633,
+        "max_native_input": 1942,
+        "max_provider_input": 1442,
+        "max_generated": 152,
+        "prompt_tokens": 17520,
+        "cached_tokens": 10355,
+        "output_tokens": 1361,
+        "final_characters": 5306,
+        "value_spans": 29,
+        "selected_spans": 26,
+        "invalid_spans": 0,
+        "runtime_replays": 20,
+        "verified_source_hashes": 139
+      },
+      "stability": {
+        "observations": 72,
+        "exact_operations": 49,
+        "correct_reviews": 21,
+        "expected_reviews": 30,
+        "wrong_targets": 5,
+        "wrong_additions": 9,
+        "operational_failures": 1,
+        "logical_calls": 72,
+        "raw_responses": 72,
+        "stop_reasons": {
+          "stop": 72
+        },
+        "median_ms": 2571.7843000311404,
+        "p95_ms": 3371.7195000499487,
+        "max_native_input": 2866,
+        "max_provider_input": 2002,
+        "max_generated": 231,
+        "prompt_tokens": 110859,
+        "cached_tokens": 60782,
+        "output_tokens": 7733,
+        "final_characters": 29131,
+        "value_spans": 270,
+        "selected_spans": 183,
+        "invalid_spans": 2,
+        "runtime_replays": 72,
+        "verified_source_hashes": 139,
+        "relations": 198,
+        "correct_relations": 109,
+        "relation_exact_views": 33,
+        "combined_exact_views": 33,
+        "all_operations_correct_seeds": 3,
+        "all_combined_correct_seeds": 2,
+        "stability": {
+          "groups_expected": 12,
+          "groups_complete": 12,
+          "operation_stable": 3,
+          "relations_stable": 3,
+          "both_stable": 3
+        },
+        "groups": [
+          {
+            "base_id": "count-explicit",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "count-vague",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-different-audience",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-missing-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-polarity",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-unrelated",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-vague-count",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "retention-paraphrase",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-basic",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-missing-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-qualified",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-wrong-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          }
+        ]
+      }
+    },
+    "qwen35": {
+      "original": {
+        "observations": 20,
+        "exact_operations": 17,
+        "correct_reviews": 8,
+        "expected_reviews": 9,
+        "wrong_targets": 1,
+        "wrong_additions": 0,
+        "operational_failures": 1,
+        "logical_calls": 17,
+        "raw_responses": 17,
+        "stop_reasons": {
+          "stop": 16,
+          "length": 1
+        },
+        "median_ms": 1099.1392000578344,
+        "p95_ms": 2211.866900091991,
+        "max_native_input": 1960,
+        "max_provider_input": 1456,
+        "max_generated": 4096,
+        "prompt_tokens": 17683,
+        "cached_tokens": 4444,
+        "output_tokens": 5148,
+        "final_characters": 23956,
+        "value_spans": 29,
+        "selected_spans": 19,
+        "invalid_spans": 0,
+        "runtime_replays": 20,
+        "verified_source_hashes": 139
+      },
+      "stability": {
+        "observations": 72,
+        "exact_operations": 52,
+        "correct_reviews": 14,
+        "expected_reviews": 30,
+        "wrong_targets": 11,
+        "wrong_additions": 9,
+        "operational_failures": 0,
+        "logical_calls": 72,
+        "raw_responses": 72,
+        "stop_reasons": {
+          "stop": 72
+        },
+        "median_ms": 1649.466949980706,
+        "p95_ms": 2034.6695999614894,
+        "max_native_input": 2884,
+        "max_provider_input": 2016,
+        "max_generated": 121,
+        "prompt_tokens": 111867,
+        "cached_tokens": 41832,
+        "output_tokens": 6471,
+        "final_characters": 25350,
+        "value_spans": 270,
+        "selected_spans": 93,
+        "invalid_spans": 0,
+        "runtime_replays": 72,
+        "verified_source_hashes": 139,
+        "relations": 198,
+        "correct_relations": 142,
+        "relation_exact_views": 40,
+        "combined_exact_views": 40,
+        "all_operations_correct_seeds": 7,
+        "all_combined_correct_seeds": 6,
+        "stability": {
+          "groups_expected": 12,
+          "groups_complete": 12,
+          "operation_stable": 8,
+          "relations_stable": 7,
+          "both_stable": 7
+        },
+        "groups": [
+          {
+            "base_id": "count-explicit",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "count-vague",
+            "operation_stable": true,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-different-audience",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-missing-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-polarity",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-unrelated",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-vague-count",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "retention-paraphrase",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-basic",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-missing-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-qualified",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-wrong-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          }
+        ]
+      }
+    }
+  },
+  "matched": {
+    "original": {
+      "operation": {
+        "both_correct": 15,
+        "qwen3_only": 3,
+        "qwen35_only": 2
+      }
+    },
+    "stability": {
+      "operation": {
+        "both_correct": 39,
+        "qwen3_only": 10,
+        "qwen35_only": 13,
+        "both_wrong": 10
+      },
+      "combined": {
+        "both_wrong": 28,
+        "both_correct": 29,
+        "qwen35_only": 11,
+        "qwen3_only": 4
+      }
+    }
+  },
+  "new_model_calls_during_audit": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "pilot_days": 0
+}
