@@ -690,3 +690,12 @@ No historical archive is removed or rewritten.
   105 bindings, 16 model/runtime assets and 192 archive members. The worker and
   private model server are stopped. Fresh quality, a faster qualifying path,
   current installed/native validation and the actual pilot remain open.
+- The [resident hook worker](../validation/2026-11-07/resident-hook-worker-v1.md)
+  keeps the existing adapters and durable outbox behind a small command client.
+  It reloads membership, detects settings/environment/directory changes, renews
+  startup and replay checks per event, and refuses blind retry after an ambiguous
+  response. All 21 new checks and 153 related regressions pass. The `feb6ac3b`
+  wheel builds and passes Twine; 94 installed files and the command import boundary
+  verify. This opt-in path is not installed in a live host. Complete installed
+  timing with real embeddings and the original launcher checks is the next gate;
+  the failed 100 ms hook results and zero-day pilot remain unchanged.
