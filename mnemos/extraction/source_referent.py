@@ -177,6 +177,13 @@ async def compare_referents(
         + json.dumps(payload, ensure_ascii=True),
         **({"format": schema} if provider.supports_structured_output else {}),
     )
+    return validate_referent_response(raw, candidate, targets).comparisons
+
+
+def validate_referent_response(
+    raw: str, candidate: ExtractiveMemory, targets: list[MemoryChunk]
+) -> ReferentResponse:
+    """Validate all literal spans and the complete request-bound target set."""
     response = ReferentResponse.model_validate_json(raw)
     _validate_span(response.candidate_value, candidate.content)
     by_id = {target.id: target for target in targets}
@@ -191,4 +198,40 @@ async def compare_referents(
         _validate_span(item.target_value, target.content)
     if seen != set(by_id):
         raise ValueError("Referent comparison must cover every observed target")
-    return response.comparisons
+    return response
+
+
+def pairwise_target(target: MemoryChunk) -> MemoryChunk:
+    """Keep storage identity outside the model's semantic comparison input."""
+    return target.model_copy(deep=True, update={"id": "observed-target", "version": 1})
+
+
+def restore_pairwise_response(
+    raw: str, candidate: ExtractiveMemory, target: MemoryChunk
+) -> ReferentComparison:
+    """Map one validated local identity back to its observed storage snapshot."""
+    response = validate_referent_response(raw, candidate, [pairwise_target(target)])
+    return response.comparisons[0].model_copy(
+        update={"target_fact_id": target.id, "expected_version": target.version}
+    )
+
+
+async def compare_referents_pairwise(
+    candidate: ExtractiveMemory, targets: list[MemoryChunk], provider: LLMProvider
+) -> list[ReferentComparison]:
+    """Compare literal pairs independently, without competing targets or IDs.
+
+    Each request still makes a semantic judgment. Identical pair inputs prevent
+    identity/order/distractor changes from changing that request, but do not
+    guarantee a correct or deterministic model response. No partial result is
+    returned if a later request fails.
+    """
+    comparisons = []
+    for target in targets:
+        values = await compare_referents(candidate, [pairwise_target(target)], provider)
+        comparisons.append(
+            values[0].model_copy(
+                update={"target_fact_id": target.id, "expected_version": target.version}
+            )
+        )
+    return comparisons

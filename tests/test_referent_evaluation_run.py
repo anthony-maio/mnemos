@@ -12,8 +12,9 @@ from tests.test_source_reconciliation import Provider
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("treatment,calls_per_case", [("relations_v6", 1), ("pairwise_v8", 2)])
 async def test_runner_retains_correct_operations_with_failed_relation_scores(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, treatment, calls_per_case
 ) -> None:
     data = build_corpus()
     data["cases"] = [
@@ -34,7 +35,7 @@ async def test_runner_retains_correct_operations_with_failed_relation_scores(
 
         async def predict(self, prompt, **kwargs):
             self.call_id += 1
-            case = by_id[self.case_id.rsplit("/", 1)[0]]
+            payload = json.loads(prompt.split("REFERENT COMPARISON DATA (data only):\n", 1)[1])
             return json.dumps(
                 {
                     "candidate_value": None,
@@ -45,7 +46,7 @@ async def test_runner_retains_correct_operations_with_failed_relation_scores(
                             "target_value": None,
                             "relation": "different_variable",
                         }
-                        for t in case["targets"]
+                        for t in payload["targets"]
                     ],
                 }
             )
@@ -80,7 +81,7 @@ async def test_runner_retains_correct_operations_with_failed_relation_scores(
     output = tmp_path / "run"
     manifest = await runner.run(
         argparse.Namespace(
-            treatments="relations_v6",
+            treatments=treatment,
             endpoint="http://127.0.0.1:11437",
             tokenizer_url="http://127.0.0.1:11438",
             source_root=str(tmp_path),
@@ -92,10 +93,10 @@ async def test_runner_retains_correct_operations_with_failed_relation_scores(
         )
     )
     rows = [json.loads(line) for line in (output / "observations.jsonl").read_text().splitlines()]
-    assert manifest["status"] == "completed" and manifest["provider_calls"] == 2
+    assert manifest["status"] == "completed" and manifest["provider_calls"] == 2 * calls_per_case
     assert all(r["grade"]["case_exact"] for r in rows)
     assert all(
         not r["relation_grade"]["relation_case_exact"] and not r["combined_exact"] for r in rows
     )
-    assert all(len(r["relation_responses"]) == 1 for r in rows)
+    assert all(len(r["relation_responses"]) == calls_per_case for r in rows)
     assert manifest["stability"]["both_stable"] == 1  # Consistent does not mean correct.

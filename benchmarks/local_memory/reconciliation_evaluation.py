@@ -22,6 +22,7 @@ from .reconciliation_decoder import DecoderMode, DecoderProvider
 from .referent_evaluation import (
     CapturedReferents,
     grade_relations,
+    grade_pairwise_relations,
     load_relation_annotations,
     score_stability,
 )
@@ -144,6 +145,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "referent_v5",
         "relations_v6",
         "referent_only_v7",
+        "pairwise_v8",
     }:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
@@ -163,6 +165,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         arms = {"direct_full": ("direct", False), "identity_v1": None, "referent_v5": None}
     if treatments in {"relations_v6", "referent_only_v7"}:
         arms = {"referent_v5": None}
+    if treatments == "pairwise_v8":
+        arms = {"referent_pairwise_v8": None}
     decoder_modes: dict[str, DecoderMode] = {}
     if treatments == "decoder_v4":
         decoder_modes = {
@@ -182,6 +186,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "referent_v5",
         "relations_v6",
         "referent_only_v7",
+        "pairwise_v8",
     }
     output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
@@ -205,9 +210,10 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     if sha(dataset) != args.dataset_sha256:
         raise ValueError("Dataset differs from the frozen digest")
     data, cases = load_reconciliation_cases(dataset)
-    if bool(data.get("relation_annotations")) != (treatments == "relations_v6"):
+    relation_study = treatments in {"relations_v6", "pairwise_v8"}
+    if bool(data.get("relation_annotations")) != relation_study:
         raise ValueError("Relation-annotated data requires the relation-scored treatment")
-    annotations = load_relation_annotations(data) if treatments == "relations_v6" else {}
+    annotations = load_relation_annotations(data) if relation_study else {}
     sources = sorted((root / "mnemos").rglob("*.py")) + sorted(
         (root / "benchmarks/local_memory").glob("*.py")
     )
@@ -314,7 +320,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         [event.model_copy(deep=True) for event in source.events],
                         [target.model_copy(deep=True) for target in source.targets],
                         captured if annotations else provider,
-                        comparison_style="referent" if arm == "referent_v5" else "quoted",
+                        comparison_style=(
+                            "referent_pairwise"
+                            if arm == "referent_pairwise_v8"
+                            else "referent" if arm == "referent_v5" else "quoted"
+                        ),
                     )
                 else:
                     style, relevant = options
@@ -351,10 +361,20 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             }
             if annotations:
                 observation["relation_responses"] = captured.responses
-                observation["relation_grade"] = grade_relations(
-                    annotations[source.case_id],
-                    captured.responses,
-                    error=error,
+                observation["relation_grade"] = (
+                    grade_pairwise_relations(
+                        annotations[source.case_id],
+                        case.candidate,
+                        list(source.targets),
+                        captured.responses,
+                        error=error,
+                    )
+                    if arm == "referent_pairwise_v8"
+                    else grade_relations(
+                        annotations[source.case_id],
+                        captured.responses,
+                        error=error,
+                    )
                 )
                 observation["combined_exact"] = (
                     observation["grade"]["case_exact"]
@@ -416,6 +436,7 @@ def main() -> None:
             "referent_v5",
             "relations_v6",
             "referent_only_v7",
+            "pairwise_v8",
         ),
         default="prompt_v1",
     )

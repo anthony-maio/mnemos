@@ -7,6 +7,9 @@ import json
 from typing import Any
 
 from mnemos.utils.llm import LLMProvider
+from mnemos.extraction.source_referent import restore_pairwise_response
+from mnemos.extraction.source_selection import ExtractiveMemory
+from mnemos.types import MemoryChunk
 
 RELATIONS = frozenset({"same_variable", "different_variable", "insufficient_identity"})
 
@@ -108,6 +111,28 @@ def grade_relations(
         "relation_case_exact": valid and correct == len(expected),
         "observed_relations": observed if valid else {},
     }
+
+
+def grade_pairwise_relations(
+    case: dict[str, Any],
+    candidate: ExtractiveMemory,
+    targets: list[MemoryChunk],
+    responses: list[str],
+    *,
+    error: str | None,
+) -> dict[str, Any]:
+    """Score all separately retained responses with the controller's ID map."""
+    normalized: list[str] = []
+    if error is None and len(responses) == len(targets):
+        try:
+            comparisons = [
+                restore_pairwise_response(raw, candidate, target).model_dump()
+                for raw, target in zip(responses, targets)
+            ]
+            normalized = [json.dumps({"comparisons": comparisons})]
+        except (ValueError, TypeError, IndexError):
+            pass
+    return grade_relations(case, normalized, error=error)
 
 
 def score_stability(
