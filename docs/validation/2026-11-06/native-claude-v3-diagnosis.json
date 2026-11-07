@@ -1,0 +1,65 @@
+{
+  "source_trace_sha256": "62f2c53df8d2f70e6012dac38a2c8b3ff1807c90839fc229ed29f072942ce494",
+  "persisted_preview_sha256": "0fd70e4363336653f56157ae8558568d2c520c860224edb61c82e2d3102550a3",
+  "persisted_preview_bytes": 50711,
+  "preview_result_line": 66,
+  "preview_candidate_count": 19,
+  "preview_additional_source_count": 22,
+  "preview_complete": true,
+  "forget_phase_tool_results": 6,
+  "attempts": [
+    {
+      "request_line": 338,
+      "response_line": 339,
+      "status": "rejected",
+      "committed": false,
+      "selected_additional_fact_count": 1,
+      "selected_additional_source_count": 1,
+      "invalid_source_count": 1,
+      "invalid_sources_equal_target_sources": false,
+      "deletion_coverage": null
+    },
+    {
+      "request_line": 483,
+      "response_line": 484,
+      "status": "committed",
+      "committed": true,
+      "selected_additional_fact_count": 1,
+      "selected_additional_source_count": 1,
+      "invalid_source_count": 0,
+      "invalid_sources_equal_target_sources": false,
+      "deletion_coverage": {
+        "retained_advisory_fact_count": 12,
+        "retained_eligible_source_event_count": 21,
+        "retained_exact_fact_count": 6,
+        "selection": "reviewed_selection",
+        "semantic_erasure_proven": false
+      }
+    }
+  ],
+  "final_database_label_scan": {
+    "memory_chunks": {
+      "rows": 21,
+      "rows_with_forgotten_label": 6
+    },
+    "episodic_events": {
+      "rows": 32,
+      "rows_with_forgotten_label": 8
+    },
+    "fact_evidence": {
+      "rows": 22,
+      "rows_with_forgotten_label": 6
+    },
+    "fact_revisions": {
+      "rows": 0,
+      "rows_with_forgotten_label": 0
+    },
+    "memory_jobs": {
+      "rows": 35,
+      "rows_with_forgotten_label": 0
+    }
+  },
+  "native_gate": "failed",
+  "final_restart_replay_attempted": false,
+  "limits": "Read-only analysis of the original failed attempt; no repaired parser run or reclassification as passed."
+}

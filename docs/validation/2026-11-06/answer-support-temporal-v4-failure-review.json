@@ -1,0 +1,167 @@
+{
+  "stage": "development_failure_review",
+  "source_failure_audit_sha256": "c5061d08fe9328e6a8324afccd1b332dc8bd6780d153d384b2bd5917a902ba27",
+  "scope": "All fully assessed vector-arm errors from the completed v4 run; no new inference or rescoring.",
+  "observations": 10,
+  "wrong_support_decisions": 13,
+  "all_wrong_selections_reported_probability_one": true,
+  "examples": [
+    {
+      "treatment": "qwen3-14b-joint",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-attribute",
+      "query_id": "backup",
+      "query": "Which region stores Iris backups now?",
+      "baseline_ids": [
+        "backup-region",
+        "frontend-region"
+      ],
+      "expected_fact_ids": [
+        "backup-region"
+      ],
+      "supported_ids": [
+        "backup-region",
+        "frontend-region"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-joint",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-undated",
+      "query_id": "historical",
+      "query": "Where was Coral's incident handbook in 2020?",
+      "baseline_ids": [
+        "handbook"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "handbook"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-undated",
+      "query_id": "historical",
+      "query": "Where was Coral's incident handbook in 2020?",
+      "baseline_ids": [
+        "handbook"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "handbook"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-joint",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-quoted-future",
+      "query_id": "future",
+      "query": "Which backend will be active for Kestrel on January 1, 2027?",
+      "baseline_ids": [
+        "dated-backend",
+        "quoted-transition"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "dated-backend",
+        "quoted-transition"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-quoted-future",
+      "query_id": "future",
+      "query": "Which backend will be active for Kestrel on January 1, 2027?",
+      "baseline_ids": [
+        "dated-backend",
+        "quoted-transition"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "dated-backend"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-development-v1",
+      "case_id": "time",
+      "query_id": "region",
+      "query": "Which cloud region hosts Juniper's PostgreSQL queue?",
+      "baseline_ids": [
+        "current-queue",
+        "old-queue"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "current-queue"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-development-v1",
+      "case_id": "attribution",
+      "query_id": "record",
+      "query": "What is the identifier of Juniper's independent deployment verification record?",
+      "baseline_ids": [
+        "verification-rule",
+        "reported-check"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "verification-rule"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-joint",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-unmarked-conflict",
+      "query_id": "duration",
+      "query": "How long does Hazel currently retain audit logs?",
+      "baseline_ids": [
+        "long-retention",
+        "short-retention",
+        "retention-owner"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "long-retention",
+        "short-retention"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-temporal-development-v1",
+      "case_id": "temporal-unmarked-conflict",
+      "query_id": "duration",
+      "query": "How long does Hazel currently retain audit logs?",
+      "baseline_ids": [
+        "long-retention",
+        "short-retention",
+        "retention-owner"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "long-retention",
+        "short-retention"
+      ]
+    },
+    {
+      "treatment": "qwen3-14b-qualified",
+      "dataset_version": "answer-support-development-v1",
+      "case_id": "negation",
+      "query_id": "approver",
+      "query": "Who approves Juniper production database migrations?",
+      "baseline_ids": [
+        "prod-rule",
+        "staging-rule"
+      ],
+      "expected_fact_ids": [],
+      "supported_ids": [
+        "prod-rule"
+      ]
+    }
+  ],
+  "limits": "One repetition over reused development questions. This audit diagnoses failures; it does not estimate calibration or prove their cause."
+}

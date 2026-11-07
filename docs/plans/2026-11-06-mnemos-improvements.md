@@ -9,9 +9,9 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V4 completed 352 observations: hybrid temporal support retained 24/27 answerable hits but abstained on 11/17 versus baseline 14/17; no promotion; failure review and fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V4 completed 352 observations: hybrid temporal support retained 24/27 answerable hits but abstained on 11/17 versus baseline 14/17; failure review identifies missing-value, temporal and conflict errors; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed; Claude v2 passed four phases then failed during forgetting, cleanup passed; private pilot projects selected, entry gates and actual use remain open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed; Claude v3 passed four phases then failed on a large forget preview and incomplete cleanup; private pilot projects selected, entry gates and actual use remain open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
@@ -240,3 +240,25 @@ No historical archive is removed or rewritten.
   the Claude forgetting failure and temporal failure audit, then continue the
   original fresh/extraction/context/pilot/delivery obligations. The goal has not
   been marked complete or paused by the runner.
+- The account holder subsequently paused the goal and explicitly resumed it.
+  The new work retains the two selected private pilot projects and isolated
+  validation profile; the pilot remains unstarted.
+- The [Claude v2 diagnosis](../validation/2026-11-06/native-claude-v2-diagnosis.md)
+  traced the rejected request to target-linked source IDs copied into the
+  additional selection. Product `5de8b1f1` clarifies MCP descriptions, parameter
+  schema and operating guidance. Forty-nine existing checks, formatting and
+  strict module types passed. Its wheel/source build, Twine and fresh installed
+  smoke check passed; installed dependency versions match the preceding attempt.
+- [Claude v3](../validation/2026-11-06/native-claude-v3-checkpoint.md) at runner
+  `67166200` kept native prompts and acceptance rules unchanged. The first four
+  phases passed. A 50,711-byte forget preview was replaced with a partial native
+  view and saved file; the parser failed. The model also mistyped a source ID,
+  then corrected it and deleted only a subset. Six fact rows still contained
+  forgotten labels. Final replay was not attempted. All 138 private archive
+  members verified, cleanup passed, and source credentials were unchanged.
+  A bounded, complete forget-review contract is the next native-workflow repair.
+- The [v4 failure review](../validation/2026-11-06/answer-support-temporal-v4-failure-review.md)
+  inspected the ten fully assessed vector-arm error observations, containing
+  thirteen wrong selections. Each reported probability 1.0. Missing requested
+  values, unsupported time extrapolation and unresolved conflicts need distinct
+  checks. No model call, threshold change, rescoring or default promotion occurred.
