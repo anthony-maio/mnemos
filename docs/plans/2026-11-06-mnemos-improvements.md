@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent retrieval, extraction and reconciliation studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; identity, reasoning and decoder candidates fail their development gates; reversing schema branches leaves 17/20 unchanged, removing the schema falls to 10/20 with seven runtime rejections; semantic target identity, fresh quality and persisted extraction open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent retrieval, extraction and reconciliation studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; value-span referent v5 reaches 19/20 decisions and 9/9 review controls but misses a known target and fails confirmation; intermediate semantic errors remain despite correct review operations; fresh quality and persisted extraction open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
@@ -538,3 +538,16 @@ No historical archive is removed or rewritten.
   tree-stop warning retained. These decoder changes did not resolve the known
   semantic identity errors. Defaults, installed pilot state and prior scores
   remain unchanged; fresh quality, persisted extraction and actual use stay open.
+- The [value-span referent screen](../validation/2026-11-07/referent-v5.md)
+  completed 60 observations. The new contract scored 19/20 with 9/9 review
+  controls, no wrong accepted targets or additions and no operational failures.
+  It missed the known single-target correction and fails confirmation. Direct
+  scored 17/20; quoted identity scored 15/20 with two quote failures and one
+  wrong addition. A post-run inspection found seven incorrect intermediate
+  relations among 17 comparisons, six hidden by correct final review outcomes.
+  All 60 scores and runtime replays, 136 source hashes, 20 paired inputs and
+  29 value fields verified; all 176 archive members passed readback. Preflight
+  also preserved all 60 earlier identity outcomes. The 159 focused and 12
+  documentation checks, formatting and strict types passed. Model and owned
+  runtime cleanup passed. Defaults and installed pilot state remain unchanged;
+  intermediate relation quality, fresh evaluation and actual use remain open.
