@@ -36,6 +36,14 @@ a second restart preserved the completed rows and explicit control. Cleanup
 passed. This covers one simulated startup fault; provider failure, mid-write
 crash, ordinary trust, quality and actual daily use remain open.
 
+A separate [installed embedding recovery check](validation/2026-11-07/pilot-embedding-recovery.md)
+passed one injected typed provider failure on `6d0e5ba6`. Two writes stayed
+pending during the fault, existing recall reported lexical-only degradation,
+and ordinary installed service restart restored real semantic processing after
+the unchanged backoff. Exact replay and another restart preserved rows. This
+API check adds no native-host evidence and does not establish natural ONNX
+failure classification, extraction quality or daily use.
+
 ## November 6, 2026 checkpoint
 
 The [native Codex v7 check](validation/2026-11-06/native-codex-v7-checkpoint.md)
