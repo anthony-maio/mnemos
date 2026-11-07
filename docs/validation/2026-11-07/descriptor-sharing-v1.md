@@ -3,8 +3,8 @@
 Fix `3d1866d5` lets a service or hook client finish reading its original
 descriptor while the owner publishes a replacement. Later readers see the
 new descriptor. All 120 focused checks pass, including 12 new cases, and
-strict type checks pass for Windows and Linux. The new installed artifact
-and full regression are pending.
+strict type checks pass for Windows and Linux. Installed CLI/MCP checks also pass with real BGE embeddings. The fresh
+full regression is pending.
 
 Both descriptor consumers now open Windows files with read, write and
 delete sharing. The writer first uses the existing replacement operation.
@@ -46,3 +46,14 @@ remains a failure on its original source. The
 artifact binding. These focused checks do not establish fresh native-host,
 quality, latency or daily-use pilot results. No live configuration changed
 and nothing was published.
+
+The [installed-artifact receipt](descriptor-sharing-install-v1-receipt.json)
+verifies all 96 installed package files, 85 committed Python files and
+57 dependency versions. All 17 cached model assets stayed unchanged. The
+[installed smoke result](installed-smoke-3d1866d5.json) covers explicit
+remember, service restart, same-ID recall, MCP discovery and inspection,
+project isolation and service shutdown. Generated Codex guidance matches
+the previously reviewed bytes. No native model call was made.
+
+Wheel SHA-256: `253ca806dba5aa817bd7ddcba1af123535b29853aa211fee61a14f71799a62b8`.
+Installed validation archive SHA-256: `25a9c37b0622fd370122cc2806eb17dbbdbbf599ee161a82e0baa1e484540d3d`.
