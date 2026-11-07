@@ -823,3 +823,11 @@ No historical archive is removed or rewritten.
   delivery/site checkouts, public branches and live host settings stay unchanged.
   The read-only follow-up review found no material plan findings; it emphasized
   that experimental support results cannot qualify baseline pilot retrieval.
+
+- The [refreshed private pilot](../validation/2026-11-07/persistent-pilot-v4.md)
+  now uses the frozen f5a944ea wheel in a separate inactive installation. Its
+  96 package files, 57 dependency versions and four configuration probes pass.
+  All seven current host patches pass exact rollback and fourteen drift refusals
+  on disposable copies. Nine live paths and the older inactive pilot stay
+  unchanged. Normal hook trust requires the user's native review flow; the
+  separately frozen v12 attempt covers explicit MCP lifecycle with hooks off.
