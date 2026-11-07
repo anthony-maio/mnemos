@@ -1,0 +1,149 @@
+{
+  "status": "completed_with_latency_and_byte_comparison_failures",
+  "source_commit": "feb6ac3b3eebd2e178ec584b3be1e72cca1228fc",
+  "protocol_commit": "73d2ec8e",
+  "wheel_sha256": "51ba20ba811eaa33cd18bde9665c49d21feaa10e7874bffdf878e3b9762b550f",
+  "exec_session": 59874,
+  "exit_code": 0,
+  "observations": 257,
+  "timed_observations": 250,
+  "bound_files_verified": 118,
+  "model_assets_verified": 17,
+  "fixture_facts_verified": 10000,
+  "fixture_document_vectors_verified": 10000,
+  "fixture_vector_index_entries_verified": 10000,
+  "fixture_document_batches": 79,
+  "capture_events_preserved_after_restart": 204,
+  "additional_unknown_chunks": 50,
+  "job_statuses": {
+    "completed": 100,
+    "pending": 104
+  },
+  "database_counts": {
+    "memory_chunks": 10050,
+    "episodic_events": 10204,
+    "fact_evidence": 10100,
+    "memory_jobs": 204
+  },
+  "database_sha256": "deeeaa639d74203f06106418c9332299a036dd3800d8a2fa3e15c27c099cf841",
+  "database_bytes_unchanged_by_audit": true,
+  "resident_commands_without_runtime_imports_or_fallback": 102,
+  "paired_output_mismatches": 51,
+  "timing": {
+    "recall": {
+      "attempted": 50,
+      "failed": 0,
+      "median_ms": 299.435600056313,
+      "p95_ms": 327.62331494595855,
+      "maximum_ms": 532.7371000312269,
+      "limit_ms": 500,
+      "gate": "PASS"
+    },
+    "Stop": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 917.0915998984128,
+        "p95_ms": 1610.4836949380115,
+        "maximum_ms": 1878.9021000266075,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "resident": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 327.4956999812275,
+        "p95_ms": 481.15603493060917,
+        "maximum_ms": 1106.6606999374926,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "median_delta_ms": -590.3159499866888,
+        "resident_faster_pairs": 49,
+        "pairs": 50
+      }
+    },
+    "UserPromptSubmit": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 50,
+        "median_ms": 1280.1072499714792,
+        "p95_ms": 1932.9608599771746,
+        "maximum_ms": 2166.850599925965,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "resident": {
+        "attempted": 50,
+        "failed": 50,
+        "median_ms": 682.6228001154959,
+        "p95_ms": 1276.2394999735989,
+        "maximum_ms": 1580.9667001012713,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "median_delta_ms": -582.6769500272349,
+        "resident_faster_pairs": 48,
+        "pairs": 50
+      }
+    }
+  },
+  "native_host_run": false,
+  "quality_claimed": false,
+  "pilot_days": 0,
+  "policy_preflight": {
+    "checks": 3,
+    "passed": true,
+    "model_calls": 0,
+    "service_starts": 0,
+    "environment_ast_equivalent": true
+  },
+  "decoded_output_equivalence": {
+    "status": "verified",
+    "pairs": 102,
+    "decoded_output_mismatches": 0,
+    "prompt_context_mismatches": 0,
+    "byte_output_mismatches": 51,
+    "command_or_capture_failures": 0,
+    "frozen_comparison_scores_changed": false,
+    "model_calls": 0,
+    "explanation": "All prompt pairs differ only in JSON object key order. Full decoded values and the context string are identical."
+  },
+  "credential_values_redacted_from_private_metadata": true,
+  "package_files_verified": 94,
+  "dependency_versions_verified": 57,
+  "vectors_match_original_v3": true,
+  "accepted_snapshot_unchanged": true,
+  "fixture_embedding_and_load_seconds": 31.138051999965683,
+  "fixture_model_construction_ms": 1429.6576001215726,
+  "startup": [
+    {
+      "kind": "service",
+      "start_ms": 3608.8996999897063,
+      "ownership_check_ms": 1272.7087999228388
+    },
+    {
+      "kind": "worker",
+      "start_ms": 1828.5769000649452,
+      "ownership_check_ms": 1109.9135999102145
+    },
+    {
+      "kind": "service",
+      "start_ms": 3044.7545000351965,
+      "ownership_check_ms": 1161.431800108403
+    }
+  ],
+  "startup_includes_ownership_check": true,
+  "wall_seconds": 355.8983567999676,
+  "owned_processes_stopped": true,
+  "runtime_descriptors_absent": true,
+  "live_configuration_changed": false,
+  "published": false,
+  "seed_database_sha256": "7d362132eb196e099ac63e2578602c80196ac0b07c486a2682b911d6d23de5ac",
+  "archive_sha256": "e51c585c225668c1028e71c180805603ba063e64874cb5283d8714dadf074e37",
+  "archive_members": 146,
+  "archive_bytes": 134348867,
+  "audit_model_calls": 0
+}

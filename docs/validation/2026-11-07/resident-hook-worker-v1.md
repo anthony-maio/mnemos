@@ -64,6 +64,11 @@ retrieval and output, while preserving the private launcher's configuration chec
 The original failed measurements remain unchanged. Current installed lifecycle,
 native-host acceptance and actual pilot use have not run for this candidate.
 
+The subsequent [installed comparison](resident-hook-performance-v1.md) records
+complete command measurements with real retrieval and restart durability. It
+reduces median latency but still fails the 100 ms requirement. Native-host and
+pilot acceptance remain separate.
+
 - [Worker and performance protocol](../../plans/2026-11-07-resident-hook-worker-v1.md)
 - [Verification receipt](resident-hook-worker-v1-receipt.json)
 - [Original hook latency diagnosis](hook-startup-diagnostics-v1.md)
