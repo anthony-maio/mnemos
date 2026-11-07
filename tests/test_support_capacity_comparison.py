@@ -1,6 +1,7 @@
 """Offline paired-input and failure-accounting checks; no models run here."""
 
 import copy
+from datetime import date
 
 import pytest
 
@@ -92,5 +93,32 @@ async def test_capacity_retains_failed_observation_without_abstention_credit(tmp
         assert row["support_error_type"] == "MnemosTransientError"
         assert not row["support_grade"]["correct_abstention"]
         assert row["model"] == "failed-model" and row["input_sha256"]
+    finally:
+        await service.engine.aclose()
+
+
+@pytest.mark.asyncio
+async def test_paired_inputs_bind_reference_date_for_both_support_protocols(tmp_path):
+    case = {
+        "id": "time-anchor",
+        "facts": [{"id": "local", "content": "The project used Redis in 2024."}],
+        "queries": [
+            {"id": "past", "query": "Which queue was used in 2024?", "expected_fact_ids": ["local"]}
+        ],
+    }
+    service, context = _seed_case(tmp_path / "accepted", case, FixedEmbedding())
+    try:
+        inputs = await capacity.freeze_inputs(
+            service, context, case, reference_date=date(2026, 11, 6)
+        )
+        rows = []
+        for protocol in ("joint_v1", "qualified_v3"):
+            judge = MockJudge({"support:*": "evidence:0"})
+            policy = SupportTreatment(protocol, judge, AnswerSupportConfig(protocol=protocol))
+            for entry in inputs:
+                rows.append(await capacity.evaluate_input(entry, policy, "offline"))
+            assert all(state["reference_date"] == "2026-11-06" for state, _, _ in judge.calls)
+        capacity.verify_pairing(rows, {"joint_v1", "qualified_v3"})
+        assert all(row["reference_date"] == "2026-11-06" for row in rows)
     finally:
         await service.engine.aclose()

@@ -7,7 +7,7 @@ import asyncio
 from collections import defaultdict
 from contextvars import ContextVar
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import hashlib
 import json
 from pathlib import Path
@@ -58,7 +58,11 @@ class FrozenInput:
 
 
 async def freeze_inputs(
-    service: LocalMemoryService, context: ScopeContext, case: dict[str, Any]
+    service: LocalMemoryService,
+    context: ScopeContext,
+    case: dict[str, Any],
+    *,
+    reference_date: date | None = None,
 ) -> list[FrozenInput]:
     inputs = []
     for query in case["queries"]:
@@ -94,6 +98,8 @@ async def freeze_inputs(
                 record["baseline_grade"] = grade_selection(
                     query["expected_fact_ids"], ids, record["baseline_status"]
                 )
+                if reference_date is not None:
+                    record["reference_date"] = reference_date.isoformat()
                 inputs.append(
                     FrozenInput(
                         service, context.model_copy(deep=True), json.dumps(record, sort_keys=True)
@@ -116,6 +122,9 @@ async def evaluate_input(
         context=entry.context,
         judge=policy.judge,
         config=policy.config,
+        reference_date=(
+            date.fromisoformat(record["reference_date"]) if "reference_date" in record else None
+        ),
     )
     selected = [candidate.fact_id for candidate in support.supported]
     status = support.status if record["baseline_status"] == "assessed" else "unavailable"
