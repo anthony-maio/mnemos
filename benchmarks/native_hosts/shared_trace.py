@@ -29,6 +29,22 @@ _RAW_TOOLS = {
 }
 _CLAUDE_PREFIX = "mcp__plugin_mnemos-memory_mnemos__"
 _BAD_STATUS = {"rejected", "degraded", "error", "failed", "failure"}
+CODEX_INVENTORY_SOURCE = "text(ALL_TOOLS.map(tool => tool.name).sort());"
+CODEX_INVENTORY_PREFIX = (
+    "Before any memory call, run one Code Mode cell containing exactly this JavaScript:\n"
+    + CODEX_INVENTORY_SOURCE
+    + "\nThis records the complete advertised tool inventory. Do not filter, replace or "
+    "construct tool names. If the result has no names starting with mcp__mnemos__, run "
+    "the identical cell once more. If it still has none, stop. After this inventory "
+    "observation, carry out the following unchanged memory request.\n\n"
+)
+
+
+def inventory_observation_prompt(prompt: str, *, expected_sha256: str) -> str:
+    """Add observation instructions only after binding the original request."""
+    if hashlib.sha256(prompt.encode()).hexdigest() != expected_sha256:
+        raise ValueError("Lifecycle prompt differs from its frozen pre-inventory request")
+    return CODEX_INVENTORY_PREFIX + prompt
 
 
 @dataclass(frozen=True)
@@ -529,6 +545,153 @@ def parse_codex_code_mode_trace(
             raise ValueError("Trace changed while parsing")
     load_source_records(Path(provenance.source_file), provenance=provenance)
     return tuple(calls), hashes
+
+
+def parse_codex_tool_inventory(
+    directory: Path,
+    *,
+    provenance: TraceProvenance,
+    model: str,
+    allowed_tools: set[str],
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str], dict[str, Any]]:
+    """Require a complete, native inventory before any memory operation.
+
+    Only the fixed expression over ALL_TOOLS supplies evidence. An empty
+    Mnemos inventory may be observed once while startup finishes; the second
+    observation must match. Model prose, selected-name queries and literal
+    arrays cannot establish the advertised set.
+    """
+    if not allowed_tools or not allowed_tools <= _RAW_TOOLS:
+        raise ValueError("Invalid inventory allowlist")
+    calls, hashes = parse_codex_code_mode_trace(directory, provenance=provenance, model=model)
+    if any(call.name not in allowed_tools for call in calls):
+        raise ValueError("Native call is outside the inventory allowlist")
+    root = directory.resolve(strict=True)
+
+    def read_bound(relative: str) -> Any:
+        path = root / relative
+        if (
+            relative not in hashes
+            or path.is_symlink()
+            or not path.resolve(strict=True).is_relative_to(root)
+        ):
+            raise ValueError("Inventory payload is not bound to the native trace")
+        raw = path.read_bytes()
+        if hashlib.sha256(raw).hexdigest() != hashes[relative]:
+            raise ValueError("Inventory payload changed after trace verification")
+        return json.loads(raw)
+
+    log = root / "trace.jsonl"
+    raw = log.read_bytes()
+    if hashlib.sha256(raw).hexdigest() != hashes["trace.jsonl"]:
+        raise ValueError("Inventory trace changed after verification")
+    records = [json.loads(line) for line in raw.splitlines() if line.strip()]
+    starts = [row for row in records if row["payload"]["type"] == "code_cell_started"]
+    ends = {
+        row["payload"]["runtime_cell_id"]: row
+        for row in records
+        if row["payload"]["type"] == "code_cell_ended"
+    }
+    initial = {
+        row["payload"]["runtime_cell_id"]: row
+        for row in records
+        if row["payload"]["type"] == "code_cell_initial_response"
+    }
+    first_memory = min(
+        row["seq"] for row in records if row["payload"]["type"] == "tool_call_started"
+    )
+
+    def inventory(row: dict[str, Any], identity: str) -> tuple[list[str], str]:
+        event = row["payload"]
+        if event.get("status") != "completed":
+            raise ValueError("Inventory response did not complete")
+        reference = _object(event.get("response_payload"), "inventory response reference")
+        relative = reference.get("path")
+        if not isinstance(relative, str):
+            raise ValueError("Inventory response path is missing")
+        payload = _object(read_bound(relative), "inventory payload")
+        response = _object(payload.get("response"), "inventory response")
+        if set(response) != {"Result"}:
+            raise ValueError("Inventory response is not a successful result")
+        result = _object(response["Result"], "inventory result")
+        content = result.get("content_items")
+        if (
+            result.get("cell_id") != identity
+            or "error_text" not in result
+            or result.get("error_text") is not None
+            or not isinstance(content, list)
+            or len(content) != 1
+        ):
+            raise ValueError("Inventory response has the wrong cell or content")
+        item = _object(content[0], "inventory content item")
+        if item.get("type") != "input_text" or not isinstance(item.get("text"), str):
+            raise ValueError("Inventory response must contain one text item")
+        names = json.loads(item["text"])
+        if not isinstance(names, list) or any(
+            not isinstance(name, str)
+            or not name
+            or not name.isascii()
+            or not name.replace("_", "").isalnum()
+            for name in names
+        ):
+            raise ValueError("Inventory contains invalid tool names")
+        if names != sorted(set(names)):
+            raise ValueError("Inventory names are duplicated or unsorted")
+        return names, relative
+
+    attempts = []
+    prefix = "mcp__mnemos__"
+    expected = sorted(prefix + name for name in allowed_tools)
+    previous_end = 0
+    for start in starts[:2]:
+        event = start["payload"]
+        identity = event["runtime_cell_id"]
+        end = ends[identity]
+        if event.get("source_js", "").strip() != CODEX_INVENTORY_SOURCE:
+            raise ValueError("Inventory must use the complete unmodified ALL_TOOLS expression")
+        if (
+            start["seq"] <= previous_end
+            or end["seq"] >= first_memory
+            or any(start["seq"] < other["seq"] < end["seq"] for other in starts)
+        ):
+            raise ValueError("Inventory must finish before memory calls without overlapping cells")
+        previous_end = end["seq"]
+        if identity not in initial:
+            raise ValueError("Inventory lacks its initial native response")
+        names, relative = inventory(end, identity)
+        first_names, first_relative = inventory(initial[identity], identity)
+        if names != first_names:
+            raise ValueError("Initial and final inventory responses differ")
+        advertised = [name for name in names if name.startswith(prefix)]
+        attempts.append(
+            {
+                "cell_id": identity,
+                "model_call_id": event["model_visible_call_id"],
+                "advertised_names": names,
+                "mnemos_names": advertised,
+                "initial_response_sha256": hashes[first_relative],
+                "final_response_sha256": hashes[relative],
+                "finished_sequence": end["seq"],
+            }
+        )
+        if advertised:
+            if advertised != expected:
+                raise ValueError("Advertised Mnemos inventory differs from the phase allowlist")
+            for name, digest in hashes.items():
+                if hashlib.sha256((root / name).read_bytes()).hexdigest() != digest:
+                    raise ValueError("Native evidence changed during inventory verification")
+            return (
+                calls,
+                hashes,
+                {
+                    "status": "verified",
+                    "expected_mnemos_names": expected,
+                    "attempts": attempts,
+                    "inventory_before_memory_calls": True,
+                    "first_memory_sequence": first_memory,
+                },
+            )
+    raise ValueError("Mnemos inventory is still empty after the bounded readiness check")
 
 
 def parse_codex_mcp_records(

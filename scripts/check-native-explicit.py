@@ -276,6 +276,24 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             "docs/plans/2026-11-06-native-claude-review-selection-v5.md",
         )
     )
+    require_inventory = getattr(args, "require_tool_inventory", False)
+    lifecycle_prompts = {}
+    if require_inventory:
+        if host != "codex":
+            raise ValueError("Native tool inventory observation requires Codex")
+        prompt_manifest = "docs/plans/2026-11-07-native-codex-inventory-v9-prompts.json"
+        inputs += ("docs/plans/2026-11-07-native-codex-inventory-v9.md", prompt_manifest)
+        manifest = json.loads((ROOT / prompt_manifest).read_bytes())
+        lifecycle_prompts = manifest["lifecycle_prompt_sha256"]
+        if manifest.get("schema_version") != 1 or set(lifecycle_prompts) != {
+            "teach",
+            "recall-v1",
+            "correct",
+            "recall-v2",
+            "forget",
+            "recall-forgotten",
+        }:
+            raise ValueError("Frozen lifecycle prompt manifest is invalid")
     for relative in inputs:
         committed = subprocess.check_output(
             ["git", "show", f"{runner_commit}:{relative}"], cwd=ROOT
@@ -308,6 +326,8 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "host_executable_sha256": host_digest,
         "code_mode_executable_sha256": code_mode_digest,
         "host": host,
+        "tool_inventory_required": require_inventory,
+        "lifecycle_prompt_sha256": lifecycle_prompts,
         "model": CODEX_MODEL if host == "codex" else MODEL,
         "authentication_preflight": authentication,
         "input_hashes": {relative: sha(ROOT / relative) for relative in inputs},
@@ -445,6 +465,11 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
 
         def phase(name: str, prompt: str, allowed: set[str]) -> list[dict[str, Any]]:
             row: dict[str, Any] = {"phase": name, "status": "running"}
+            if bound["tool_inventory_required"]:
+                row["lifecycle_prompt_sha256"] = hashlib.sha256(prompt.encode()).hexdigest()
+                prompt = trace.inventory_observation_prompt(
+                    prompt, expected_sha256=bound["lifecycle_prompt_sha256"][name]
+                )
             report["phases"].append(row)
             save(root / "report.json", report)
             config = native.PhaseEnvironment(
@@ -506,9 +531,17 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 traces = list(trace_root.iterdir())
                 if len(traces) != 1 or not traces[0].is_dir():
                     raise ValueError("Exactly one owned native rollout trace is required")
-                calls, trace_hashes = trace.parse_codex_code_mode_trace(
-                    traces[0], provenance=provenance, model=CODEX_MODEL
-                )
+                if bound["tool_inventory_required"]:
+                    calls, trace_hashes, inventory = trace.parse_codex_tool_inventory(
+                        traces[0], provenance=provenance, model=CODEX_MODEL, allowed_tools=allowed
+                    )
+                    save(directory / "tool-inventory.json", inventory)
+                    row["tool_inventory_verified"] = True
+                    row["tool_inventory_sha256"] = sha(directory / "tool-inventory.json")
+                else:
+                    calls, trace_hashes = trace.parse_codex_code_mode_trace(
+                        traces[0], provenance=provenance, model=CODEX_MODEL
+                    )
                 save(directory / "rollout-trace-hashes.json", trace_hashes)
                 row["rollout_trace_hashes_sha256"] = sha(directory / "rollout-trace-hashes.json")
                 row["correlation"] = "native_model_id_to_cell_id_to_mcp_runtime_id"
@@ -756,6 +789,7 @@ def main() -> None:
     parser.add_argument("--codex", type=Path)
     parser.add_argument("--host", choices=("claude-code", "codex"), default="claude-code")
     parser.add_argument("--auth", type=Path)
+    parser.add_argument("--require-tool-inventory", action="store_true")
     args = parser.parse_args()
     if args.serve:
         serve(args.serve.resolve())
