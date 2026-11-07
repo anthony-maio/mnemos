@@ -243,6 +243,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             "docs/plans/2026-11-06-native-codex-runtime-v2.md",
             "docs/plans/2026-11-06-native-codex-code-mode-v3.md",
             "docs/plans/2026-11-06-native-codex-trace-v4.md",
+            "docs/plans/2026-11-06-native-codex-dispatch-v5.md",
         )
         if host == "codex"
         else ()

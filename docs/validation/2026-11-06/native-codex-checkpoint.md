@@ -1,9 +1,10 @@
 # Installed artifact and Codex checkpoint
 
 The new installed artifact passed its CLI/MCP restart checks. Complete native
-lifecycle acceptance is still open: the first three Codex attempts stopped during the first
-phase, before a memory tool completed. Neither is a successful teach, correct or
-forget result. The older Claude authentication failure remains preserved.
+lifecycle acceptance is still open: all four Codex attempts stopped during the
+first phase. V4 completed three MCP calls but failed trace normalization. None
+completed the six-phase lifecycle. The older Claude authentication failure
+remains preserved.
 
 ## Installed artifact
 
@@ -78,6 +79,28 @@ tokens and 31 reasoning output tokens. These are host-reported fields, not a
 billing statement. The owned host and service processes stopped, the runtime
 descriptor and copied authentication were removed, and the normal credential
 file's bytes remained unchanged.
+
+## Attempt v4: successful dispatch, unrecognized correlation event
+
+Runner `084ce3f7` used the documented per-tool permissions only for the current
+phase. The native stream recorded completed store, consolidate and job-status
+calls. The job-status result reported a completed remember job with a fact ID.
+The parser then rejected `mcp_tool_call_correlation_assigned`, an event emitted
+on successful dispatch that was absent from the pre-dispatch failure in v3.
+No later lifecycle phase ran.
+
+The [v4 receipt](native-codex-v4-receipt.json) binds the failed attempt to 188
+verified private archive members. Service/process, descriptor and copied-auth
+cleanup passed; normal authentication bytes were unchanged. Usage is retained
+in the receipt without a billing claim.
+
+The [v5 amendment](../../plans/2026-11-06-native-codex-dispatch-v5.md) requires
+each dispatch assignment to match the native runtime call and carry a unique
+MCP ID within that call's recorded interval. The repaired adapter now parses
+all three saved v4 calls with native model correlation and hashes 41 evidence
+files. This offline check does not relabel v4 or complete its missing phases.
+All 118 focused checks passed after the new positive and missing-correlation
+regressions failed before repair.
 
 ## Validation and next work
 

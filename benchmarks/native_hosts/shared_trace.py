@@ -307,6 +307,7 @@ def parse_codex_code_mode_trace(
         "tool_call_runtime_started": "tool_call_id",
         "tool_call_runtime_ended": "tool_call_id",
         "tool_call_ended": "tool_call_id",
+        "mcp_tool_call_correlation_assigned": "tool_call_id",
     }
 
     def payload(ref: Any, expected_kind: str) -> dict[str, Any]:
@@ -357,7 +358,9 @@ def parse_codex_code_mode_trace(
         ):
             raise ValueError("Event crosses native thread or turn")
         if kind in keyed:
-            if row.get("thread_id") != session_id or row.get("codex_turn_id") != turn_id:
+            if kind != "mcp_tool_call_correlation_assigned" and (
+                row.get("thread_id") != session_id or row.get("codex_turn_id") != turn_id
+            ):
                 raise ValueError("Operational event lacks native ownership")
             identity = event.get(keyed[kind])
             if not isinstance(identity, str) or not identity:
@@ -437,6 +440,21 @@ def parse_codex_code_mode_trace(
     pairs("tool_call_started", "tool_call_runtime_started")
     pairs("tool_call_runtime_started", "tool_call_runtime_ended")
     pairs("tool_call_runtime_ended", "tool_call_ended")
+    correlations = groups.get("mcp_tool_call_correlation_assigned", {})
+    if set(correlations) != set(groups.get("tool_call_started", {})):
+        raise ValueError("Native MCP dispatch correlation is incomplete")
+    mcp_ids: set[str] = set()
+    for identity, assigned in correlations.items():
+        mcp_id = assigned["payload"].get("mcp_call_id")
+        if not isinstance(mcp_id, str) or not mcp_id or mcp_id in mcp_ids:
+            raise ValueError("Native MCP dispatch ID is missing or duplicated")
+        mcp_ids.add(mcp_id)
+        if not (
+            groups["tool_call_runtime_started"][identity]["seq"]
+            < assigned["seq"]
+            < groups["tool_call_runtime_ended"][identity]["seq"]
+        ):
+            raise ValueError("MCP dispatch correlation is outside its runtime call")
     calls = []
     local_ids: set[tuple[str, str]] = set()
     for identity, start, end in pairs("tool_call_started", "tool_call_ended"):

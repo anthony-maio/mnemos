@@ -104,6 +104,14 @@ def fixture():
         {"type": "thread_ended", "thread_id": "session-1", "status": "completed"},
         {"type": "rollout_ended", "status": "completed"},
     ]
+    events.insert(
+        7,
+        {
+            "type": "mcp_tool_call_correlation_assigned",
+            "tool_call_id": "tool-1",
+            "mcp_call_id": "native-mcp-1",
+        },
+    )
     session = [
         {"type": "session_meta", "payload": {"id": "session-1"}},
         {"type": "response_item", "payload": copy.deepcopy(model_call)},
@@ -181,6 +189,10 @@ def test_native_parent_ids_bind_streamed_model_cell_and_mcp_result(tmp_path):
         "finished-before-start",
         "same-source-wrong-id",
         "wrong-session",
+        "missing-correlation",
+        "unbound-correlation",
+        "duplicate-correlation",
+        "late-correlation",
     ],
 )
 def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
@@ -198,7 +210,7 @@ def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
     elif mutation == "args":
         payloads["3"]["invocation"]["arguments"] = {}
     elif mutation == "failed":
-        events[8]["status"] = "failed"
+        events[9]["status"] = "failed"
     elif mutation == "ambiguous-result":
         payloads["5"]["result"]["Err"] = "blocked"
     elif mutation == "result-content":
@@ -206,7 +218,7 @@ def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
     elif mutation == "tool-result":
         payloads["6"]["value"]["isError"] = True
     elif mutation == "missing-end":
-        events.pop(9)
+        events.pop(10)
     elif mutation == "duplicate":
         events.insert(6, copy.deepcopy(events[5]))
     elif mutation == "cross-turn":
@@ -225,9 +237,9 @@ def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
             }
         )
     elif mutation == "missing-inference":
-        events.pop(7)
+        events.pop(8)
     elif mutation == "missing-cell-end":
-        events.pop(10)
+        events.pop(11)
     elif mutation == "wrong-response":
         payloads["4"]["response_id"] = "other"
     elif mutation == "runtime-id":
@@ -235,10 +247,18 @@ def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
     elif mutation == "extra-tool":
         events.insert(9, {**events[5], "tool_call_id": "unaccounted"})
     elif mutation == "finished-before-start":
-        events[5], events[9] = events[9], events[5]
+        events[5], events[10] = events[10], events[5]
     elif mutation == "same-source-wrong-id":
         session[1]["payload"]["call_id"] = "other"
     elif mutation == "wrong-session":
         session[0]["payload"]["id"] = "other"
+    elif mutation == "missing-correlation":
+        events.pop(7)
+    elif mutation == "unbound-correlation":
+        events[7]["tool_call_id"] = "other"
+    elif mutation == "duplicate-correlation":
+        events.insert(8, copy.deepcopy(events[7]))
+    elif mutation == "late-correlation":
+        events.insert(11, events.pop(7))
     with pytest.raises(ValueError):
         parse(tmp_path, events, payloads, session)
