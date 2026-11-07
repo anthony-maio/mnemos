@@ -119,7 +119,7 @@ def grade_reconciliation(
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
     treatments = getattr(args, "treatments", "prompt_v1")
-    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4"}:
+    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4", "referent_v5"}:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
     if treatments == "identity_v2":
@@ -134,6 +134,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "direct_chat_off": ("direct", False),
             "direct_chat_on": ("direct", False),
         }
+    if treatments == "referent_v5":
+        arms = {"direct_full": ("direct", False), "identity_v1": None, "referent_v5": None}
     decoder_modes: dict[str, DecoderMode] = {}
     if treatments == "decoder_v4":
         decoder_modes = {
@@ -147,7 +149,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         arm: {"think": arm == "direct_chat_on", "force_chat": arm.startswith("direct_chat_")}
         for arm in arms
     }
-    extended_limits = treatments in {"reasoning_v3", "decoder_v4"}
+    extended_limits = treatments in {"reasoning_v3", "decoder_v4", "referent_v5"}
     output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
     provider_timeout = 90 if extended_limits else 30
@@ -265,6 +267,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         [event.model_copy(deep=True) for event in source.events],
                         [target.model_copy(deep=True) for target in source.targets],
                         provider,
+                        comparison_style="referent" if arm == "referent_v5" else "quoted",
                     )
                 else:
                     style, relevant = options
@@ -331,7 +334,7 @@ def main() -> None:
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
     parser.add_argument(
         "--treatments",
-        choices=("prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4"),
+        choices=("prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4", "referent_v5"),
         default="prompt_v1",
     )
     asyncio.run(run(parser.parse_args()))

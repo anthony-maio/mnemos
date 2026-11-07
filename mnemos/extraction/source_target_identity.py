@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import json
-from typing import Any, Literal
+from typing import Any, Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,6 +20,7 @@ from .source_reconciliation import (
     _validate_inputs,
 )
 from .source_relationship import reconcile_source_relationships
+from .source_referent import compare_referents
 from .source_selection import ExtractiveMemory
 from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider
@@ -80,6 +81,13 @@ class TargetComparison(BaseModel):
 class IdentityResponse(BaseModel):
     model_config = ConfigDict(extra="forbid")
     comparisons: list[TargetComparison]
+
+
+class TargetMatch(NamedTuple):
+    target_fact_id: str
+    expected_version: int
+    possible: bool
+    complete: bool
 
 
 def identity_schema(targets: list[MemoryChunk]) -> dict[str, Any]:
@@ -161,7 +169,11 @@ async def reconcile_source_target_identity(
     events: list[EpisodicEvent],
     targets: list[MemoryChunk],
     provider: LLMProvider,
+    *,
+    comparison_style: Literal["quoted", "referent"] = "quoted",
 ) -> list[StagedReconciliation]:
+    if comparison_style not in {"quoted", "referent"}:
+        raise ValueError("Unknown identity comparison style")
     candidate_snapshot, event_snapshot, target_snapshot = _validate_inputs(
         candidates, events, targets
     )
@@ -209,9 +221,21 @@ async def reconcile_source_target_identity(
                 else _review(index, "The correction has no observed target.")
             )
             continue
-        comparisons = []
+        comparisons: list[TargetMatch] = []
         for start in range(0, len(visible), 8):
             batch = visible[start : start + 8]
+            if comparison_style == "referent":
+                referents = await compare_referents(candidate, batch, provider)
+                comparisons.extend(
+                    TargetMatch(
+                        item.target_fact_id,
+                        item.expected_version,
+                        item.relation != "different_variable",
+                        item.relation == "same_variable",
+                    )
+                    for item in referents
+                )
+                continue
             payload = {
                 "candidate": {
                     "source_id": candidate.source_id,
@@ -235,23 +259,23 @@ async def reconcile_source_target_identity(
             )
             response = IdentityResponse.model_validate_json(raw)
             _validate_comparisons(response, candidate, batch)
-            comparisons.extend(response.comparisons)
-        possible = [
-            item
-            for item in comparisons
-            if all(
-                getattr(item, name).relation != "different"
-                for name in ("subject", "attribute", "qualifiers")
+            comparisons.extend(
+                TargetMatch(
+                    item.target_fact_id,
+                    item.expected_version,
+                    all(
+                        getattr(item, name).relation != "different"
+                        for name in ("subject", "attribute", "qualifiers")
+                    ),
+                    all(
+                        getattr(item, name).relation == "same"
+                        for name in ("subject", "attribute", "qualifiers")
+                    ),
+                )
+                for item in response.comparisons
             )
-        ]
-        complete = [
-            item
-            for item in possible
-            if all(
-                getattr(item, name).relation == "same"
-                for name in ("subject", "attribute", "qualifiers")
-            )
-        ]
+        possible = [item for item in comparisons if item.possible]
+        complete = [item for item in possible if item.complete]
         if len(possible) == len(complete) == 1:
             chosen = complete[0]
             selected = next(target for target in visible if target.id == chosen.target_fact_id)

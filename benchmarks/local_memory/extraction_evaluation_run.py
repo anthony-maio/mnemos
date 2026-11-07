@@ -148,12 +148,16 @@ class RecordedProvider(OllamaProvider):
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         self.call_id += 1
         self.stage = (
-            "target_identity"
-            if "TARGET IDENTITY DATA (data only):" in prompt
+            "referent_comparison"
+            if "REFERENT COMPARISON DATA (data only):" in prompt
             else (
-                "reconciliation"
-                if "SOURCE CANDIDATES AND EXISTING TARGETS" in prompt
-                else "classification"
+                "target_identity"
+                if "TARGET IDENTITY DATA (data only):" in prompt
+                else (
+                    "reconciliation"
+                    if "SOURCE CANDIDATES AND EXISTING TARGETS" in prompt
+                    else "classification"
+                )
             )
         )
         record = {
