@@ -8,11 +8,11 @@ No release, live configuration change, or pilot completion is implied.
 
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
-| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Runtime composition and adapters preserve one current cohort, source binding and failure status; 43 new boundary checks pass. Three live repetitions reproduce all 44 prior intersections: 25/27 clean hits, 16/17 abstentions and one unsupported selection each time. All 132 observations complete without operational failure, but support alone takes 3,984.61 ms p95 and fails the 500 ms recall budget. A later paired sparse-format experiment on 68 development questions fails quality: 72/136 contract failures and only 6/80 answerable hits, despite lower output cost. Its p95 still exceeds 500 ms. Fresh support evaluation remains open; components stay experimental |
+| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; isolated wheel/source build and five installed regressions also pass; exact review package prepared, publication pending |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Runtime composition and adapters preserve one current cohort, source binding and failure status; 43 new boundary checks pass. Three live repetitions reproduce all 44 prior intersections: 25/27 clean hits, 16/17 abstentions and one unsupported selection each time. All 132 observations complete without operational failure, but support alone takes 3,984.61 ms p95 and fails the 500 ms recall budget. A later paired sparse-format experiment on 68 development questions fails quality: 72/136 contract failures and only 6/80 answerable hits, despite lower output cost. Its p95 still exceeds 500 ms. The final named-map run also fails: 74/80 hits, 33/56 abstentions, 41 unsupported selections, one contract failure and 3,209.62 ms support-only p95. Codec tuning is closed; bounded end-to-end evaluation remains open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | First fresh retrieval-only comparison completed and audited: 200 sessions, 700 declared facts, 580 query strings and 5,220 observations. Vector/hybrid Recall@5 100%, lexical 93.5%; all have 50% clean hits and 22.7% correct abstention. Every successful abstention has zero eligible facts; none with available candidates. The 90% abstention requirement fails. Extraction, support and full-module comparisons remain separate |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Product c80eb051 passes installed CLI/MCP checks and all six native Codex v11 phases: 19 correlated calls, six complete inventories, installed guidance delivery and one suppressed original-source replay. The independent audit verifies original jobs, same-ID correction, reviewed deletion, final recall and retained controls. Earlier incomplete/failed attempts and Claude/pilot evidence retain their source bindings. Applicable retrieval quality, normal host trust, Claude capture identity limits, current pilot configuration acceptance and actual use remain open; pilot inactive with zero days |
-| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Host-tokenizer support with a conservative fallback is implemented; native tokenizer compatibility and fresh quality remain open. Product f5a944ea passes the audited 320-observation installed comparison using the same native launcher in both arms: recall median falls from 110.32 to 97.89 ms and prompt median from 257.89 to 245.86 ms. All 160 output/context pairs match and all 208 captures survive restart with completed jobs. Recall p95 passes 500 ms at 104.92 ms; complete Stop/prompt p95 remains 321.73/365.53 ms, failing 100 ms. The rejected sparse-support experiment remains disabled. The native launcher remains experimental; Git identity resolution, command startup, semantic span compression and broader consumption remain open |
+| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Host-tokenizer support with a conservative fallback is implemented; native tokenizer compatibility and fresh quality remain open. Product f5a944ea passes the audited 320-observation installed comparison using the same native launcher in both arms: recall median falls from 110.32 to 97.89 ms and prompt median from 257.89 to 245.86 ms. All 160 output/context pairs match and all 208 captures survive restart with completed jobs. Recall p95 passes 500 ms at 104.92 ms; complete Stop/prompt p95 remains 321.73/365.53 ms, failing the experiment's whole-command 100 ms bound. The original requirement applies 100 ms to durable capture; direct acknowledgment timing is still unproven and needs a separately frozen measurement. The rejected sparse-support experiment remains disabled. The native launcher remains experimental; Git identity resolution, command startup, semantic span compression and broader consumption remain open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Product f5a944ea passes isolated real-BGE CLI/MCP restart recall, scope isolation and indexed evidence ordering. Its wheel verifies 96 installed package files, 85 committed Python files, 57 dependency versions and 17 unchanged model assets. Full regression on 1299ed9b passes 3,674 cases with four platform skips, including all 75 native-launcher subprocess tests. README and compatibility notes identify this artifact and preserve older native-host bindings. The prepared canonical delivery patch still targets 0456cb5d and remains unapplied; it needs updating for the new source. Canonical integration, website alignment, package delivery and publication remain open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
@@ -23,14 +23,22 @@ host acceptance.
 
 ## Work order
 
-1. Storage failure and atomic graph writes, including stale clients.
-2. Prospective answer-support protocol and fixed-snapshot development harness.
-3. Answer-support behavior and context packing, measured independently.
-4. Installed explicit-memory workflow and current native-host acceptance.
-5. Prepare exact pilot configuration, backup and rollback for approval; run the
-   existing two-week/two-project protocol during actual use.
-6. Complete validation, reconcile claims and prepare delivery. Any needed
-   publication approval follows concrete, reviewable artifacts.
+The November 7 adversarial review changes the order without reducing the six
+original goals. Follow the [candidate convergence plan](2026-11-07-candidate-convergence.md):
+
+1. Close and archive the completed codec series. No further output variants.
+2. Finish the minimal storage backport's installed-package review independently.
+3. Freeze product `f5a944ea`, refresh one canonical delivery bundle and the
+   private pilot drafts, and validate the selected native host on that wheel.
+4. Run one bounded retrieval-plus-support increment with at most one integration
+   repair/rerun. Fresh acceptance follows only a passing development candidate.
+5. Measure durable acknowledgment, warm recall and whole-command time separately
+   under a prospective protocol. Preserve the prior whole-command FAIL labels.
+6. Prepare exact pilot changes and rollback for activation only after entry
+   checks pass. Count actual daily use. Publication is a separate final decision.
+
+A manual MCP-only learning pilot is an alternative scope requiring an explicit
+prospective decision. It does not waive the original quality or pilot gates.
 
 The worktree is initially sparse: historical `docs/validation` archives remain
 in Git and the preserved worktrees. Source, tests, benchmark code and datasets,
@@ -789,3 +797,20 @@ No historical archive is removed or rewritten.
 - The [evidence-index full regression](../validation/2026-11-07/full-regression-fact-evidence-index-v1.md) passes 3,674 tests with 4 platform skips on 1299ed9b. All 75 native-launcher subprocess checks run and pass; source, website, 208 fixtures and the executable remain unchanged. The complete installed comparison is frozen with the same native launcher in both arms, changing only the package version.
 
 - The [complete evidence-index comparison](../validation/2026-11-07/fact-evidence-index-performance-v1.md) changes only the installed package while retaining the native launcher in both arms. All 320 observations, 160 matching output/context pairs and 208 restart-surviving captures are audited. Candidate p95 gates: Stop: FAIL; prompt submission: FAIL; recall: PASS. Accepted data, artifact/model bindings and process cleanup verify; prior evidence is preserved.
+
+- The requested [adversarial review](../validation/2026-11-07/adversarial-goal-review-v1.md)
+  found that delivery and pilot convergence had fallen behind experiments.
+  The final [named-map comparison](../validation/2026-11-07/named-choice-support-v1.md)
+  completed 272 observations and passed the evidence audit, but selected 41
+  unsupported facts against the baseline's 14. Its 3,209.62 ms support-only p95
+  still fails the recall budget. The codec remains disabled and this series is
+  closed. The revised work order freezes product f5a944ea, gives the small
+  storage backport independent delivery priority and caps the next quality
+  increment at two development runs. Existing gate failures remain unchanged.
+
+- The [backport package check](../validation/2026-11-07/storage-backport-package-v1.md)
+  builds the wheel from the source archive on unchanged d8a5e647 and verifies
+  all 35 source/installed package files. Five installed graph regressions,
+  CLI help, Twine and dependency checks pass. The refreshed 25-member review
+  archive retains the original patch and baseline typing failures. Its 0.6.0
+  verification artifacts are not a new release and must not be uploaded.
