@@ -9,6 +9,22 @@ from benchmarks.local_memory import support_temporal_comparison as temporal
 
 
 @pytest.mark.asyncio
+async def test_study_rejects_unknown_candidate_before_output_or_provider_setup(tmp_path):
+    output = tmp_path / "must-not-exist"
+    with pytest.raises(ValueError, match="Unsupported candidate support protocol"):
+        await temporal.run(
+            Namespace(
+                endpoint="http://127.0.0.1:11437",
+                candidate_protocol="unreviewed",
+                source_root=str(Path(__file__).resolve().parents[1]),
+                output=str(output),
+                dataset=[],
+            )
+        )
+    assert not output.exists()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("change", ["labels", "duplicate_dataset"])
 async def test_temporal_study_rejects_dataset_drift_before_provider_setup(
     tmp_path, monkeypatch, change
