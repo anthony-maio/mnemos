@@ -33,6 +33,7 @@ INPUTS = (
     "benchmarks/native_hosts/native_processes.py",
     "benchmarks/native_hosts/shared_trace.py",
     "docs/plans/2026-11-07-native-pilot-claude-v1.md",
+    "docs/plans/2026-11-07-native-pilot-claude-v2.md",
 )
 
 
@@ -183,6 +184,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             )
         },
         "private_plan_sha256": sha(args.patches / "plan.json"),
+        "watched_file_hashes_before": {str(path): digest for path, digest in watched.items()},
         "authentication_preflight": authentication,
         "project_id": context.project_id,
         "profile": PROFILE,
@@ -218,6 +220,13 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                 timeout=60,
                 creationflags=subprocess.CREATE_NO_WINDOW,
             )
+            record.setdefault("service_stop_results", []).append(
+                {
+                    "returncode": stopped.returncode,
+                    "stdout": stopped.stdout,
+                    "stderr": stopped.stderr,
+                }
+            )
             if stopped.returncode:
                 raise ValueError("Owned service stop failed")
         deadline = time.monotonic() + 20
@@ -239,6 +248,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                 async with ClientSession(read, write) as session:
                     await session.initialize()
                     catalog = await session.list_tools()
+                    inspect_tool = next(
+                        tool for tool in catalog.tools if tool.name == "mnemos_inspect"
+                    )
+                    if "chunk_id" not in inspect_tool.inputSchema.get("required", []):
+                        raise ValueError("Installed inspection contract differs")
 
                     async def call(name: str, payload: dict[str, Any]) -> dict[str, Any]:
                         result = await session.call_tool(name, payload)
@@ -264,7 +278,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                     record["seed_job"] = job
                     record["catalog"] = [tool.name for tool in catalog.tools]
                     remember_owner()
-        stop_service()
+                    # Close the owner before the Windows stdio client's process tree.
+                    await asyncio.to_thread(stop_service)
         save(report, record)
         phase = root / "native"
         phase.mkdir()
@@ -385,7 +400,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             raise ValueError("Native retrieval did not return the seeded fact")
         if not any(
             call.name == "mnemos_inspect"
-            and call.arguments.get("fact_id") == record["seed_fact_id"]
+            and call.arguments.get("chunk_id") == record["seed_fact_id"]
             for call in calls
         ):
             raise ValueError("Native inspection targeted a different fact")
@@ -446,7 +461,13 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             stop_service()
         except Exception as error:
             cleanup_errors.append(type(error).__name__)
-        if any(not path.is_file() or sha(path) != digest for path, digest in watched.items()):
+        record["watched_file_hashes_after"] = {
+            str(path): sha(path) if path.is_file() else None for path in watched
+        }
+        watched_unchanged = (
+            record["watched_file_hashes_before"] == record["watched_file_hashes_after"]
+        )
+        if not watched_unchanged:
             cleanup_errors.append("WatchedFileChanged")
         if any(
             not (root / name).is_file() or sha(root / name) != digest
@@ -464,7 +485,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         record.update(
             cleanup="passed" if not cleanup_errors else "failed",
             cleanup_errors=cleanup_errors,
-            source_credentials_and_pilot_files_unchanged=not cleanup_errors,
+            source_credentials_and_pilot_files_unchanged=watched_unchanged,
             finished_at=datetime.now(timezone.utc).isoformat(),
         )
         if cleanup_errors:
