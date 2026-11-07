@@ -353,3 +353,12 @@ No historical archive is removed or rewritten.
   their corrected receipts. All 58 archive members verified. Seven patches
   are prepared but unapplied; nine live paths remain unchanged. Native-host
   application, persistent installation, rollback and pilot gates remain open.
+- The [three-check comparison v5](../validation/2026-11-06/answer-support-checked-v5.md)
+  completed all 352 observations with 130 source hashes, 176 pairs, 22 stores
+  and 620 request/response bindings verified. Hybrid hits were 27/27 for both
+  treatments, but clean hits fell from 26 to 19 and abstentions from 14/17 to
+  13/17 with the candidate. Four candidate contract failures received no
+  abstention credit. Exact prompt reconstruction corrected an audit overcount
+  from 4,848 to 4,473 bytes without changing any quality result. Both archives
+  verified and runtime cleanup passed. Keep the candidate experimental; no
+  quality promotion, fresh-evaluation pass or pilot day follows from this run.

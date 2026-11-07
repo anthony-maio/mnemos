@@ -1,0 +1,50 @@
+{
+  "status": "verified_audit_correction",
+  "original_receipt": "answer-support-checked-v5-receipt.json",
+  "original_private_archive_sha256": "de27069cbd6c6f0b145b68e5414fd2c2f4bec3010f48294ecbf8e1f54b86759e",
+  "reason": "Reconstructing Choice objects from serialized string instructions added the safety preamble twice when render_prompt serialized them again. The final audit removes exactly one recorded preamble and requires an exact serialization roundtrip for all 620 requests.",
+  "changed_fields": [
+    "max_rendered_prompt_bytes",
+    "max_rendered_prompt_bytes_by_treatment"
+  ],
+  "previous_max_rendered_prompt_bytes": 4848,
+  "max_rendered_prompt_bytes": 4473,
+  "max_rendered_prompt_bytes_by_treatment": {
+    "qwen3-14b-checked": 4473,
+    "qwen3-14b-joint": 2482
+  },
+  "protocol_max_prompt_bytes": 5120,
+  "all_other_analysis_fields_identical": true,
+  "failure_audit_bytes_identical": true,
+  "raw_evidence_bytes_unchanged": true,
+  "new_inference_calls": 0,
+  "observations_sha256": "a8db5024e15769944950df488da9686e35f65b6751c83e285d0f7166b01967a4",
+  "private_archive_sha256": "ad673bdf9fc8ceeaf72bf22545c7efe600fddc54ca64a524a4190120668110f3",
+  "verified_members": 6,
+  "files": {
+    "failure-audit-v3.json": {
+      "sha256": "970b99d1c5eb2f79f18475ddc862bcd7e59173550344c86e38c588ac37851766",
+      "bytes": 101268
+    },
+    "verification/analyze-support-checked-v5-v3.py": {
+      "sha256": "a56a5f30b3e3ee24bebeb6c7a7c6a5b89ae817d14a416e0d7900a04720fe844b",
+      "bytes": 16264
+    },
+    "verification/archive-checked-v5-audit-correction.py": {
+      "sha256": "9dda60c17f8ebc75d7977b6574944297d84b2005a26fc9cec552c99ab824bd50",
+      "bytes": 3340
+    },
+    "verification/correct-checked-v5-prompt-audit.py": {
+      "sha256": "5c79beec8415b01cde6d733311a101027d5a4ed5729cbcab475b3ac69f0cf4c1",
+      "bytes": 1463
+    },
+    "verification/support-checked-analysis-v3-output.txt": {
+      "sha256": "9981fe07e4db776f7db78523dba98edc53431cbfd8aed7b302ec563773727d4f",
+      "bytes": 4480
+    },
+    "verified-analysis-v3.json": {
+      "sha256": "857c0efe49dc52d4e2112ee19887128555842f76158265dbf07841f89f619154",
+      "bytes": 66231
+    }
+  }
+}
