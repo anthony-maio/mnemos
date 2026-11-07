@@ -1,0 +1,5158 @@
+{
+  "schema_version": 1,
+  "version": "referent-stability-development-v1",
+  "stage": "development",
+  "evaluation": "preclassified_reconciliation",
+  "relation_annotations": true,
+  "scope": "Twelve authored seed scenarios in five clusters, each with six matched presentations. Seventy-two views are not independent scenarios. Relations and final operations are labeled before model output. Development diagnostics, not fresh acceptance.",
+  "cases": [
+    {
+      "id": "schedule-basic/base",
+      "base_id": "schedule-basic",
+      "variant": "base",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "same_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-basic/renamed",
+      "base_id": "schedule-basic",
+      "variant": "renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "same_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-basic/augmented",
+      "base_id": "schedule-basic",
+      "variant": "augmented",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "same_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-basic/reversed",
+      "base_id": "schedule-basic",
+      "variant": "reversed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "same_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-basic/augmented-renamed",
+      "base_id": "schedule-basic",
+      "variant": "augmented-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "same_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-basic/reversed-renamed",
+      "base_id": "schedule-basic",
+      "variant": "reversed-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-basic-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-basic-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "same_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The named schedule is unchanged; the day is the corrected value."
+    },
+    {
+      "id": "schedule-qualified/base",
+      "base_id": "schedule-qualified",
+      "variant": "base",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-20",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "different_variable",
+        "fact-20": "same_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary",
+        "fact-20": "secondary"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-qualified/renamed",
+      "base_id": "schedule-qualified",
+      "variant": "renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-204",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "different_variable",
+        "item-204": "same_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary",
+        "item-204": "secondary"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-qualified/augmented",
+      "base_id": "schedule-qualified",
+      "variant": "augmented",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-20",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "different_variable",
+        "fact-20": "same_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-20": "secondary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-qualified/reversed",
+      "base_id": "schedule-qualified",
+      "variant": "reversed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-20",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-20": "same_variable",
+        "fact-10": "different_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-20": "secondary",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-qualified/augmented-renamed",
+      "base_id": "schedule-qualified",
+      "variant": "augmented-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-204",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "different_variable",
+        "item-204": "same_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-204": "secondary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-qualified/reversed-renamed",
+      "base_id": "schedule-qualified",
+      "variant": "reversed-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-qualified-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-qualified-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-204",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-204": "same_variable",
+        "item-831": "different_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-204": "secondary",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "Production identifies the second target; staging is an incompatible environment."
+    },
+    {
+      "id": "schedule-wrong-environment/base",
+      "base_id": "schedule-wrong-environment",
+      "variant": "base",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-wrong-environment/renamed",
+      "base_id": "schedule-wrong-environment",
+      "variant": "renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-831": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-wrong-environment/augmented",
+      "base_id": "schedule-wrong-environment",
+      "variant": "augmented",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "different_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-wrong-environment/reversed",
+      "base_id": "schedule-wrong-environment",
+      "variant": "reversed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "different_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-wrong-environment/augmented-renamed",
+      "base_id": "schedule-wrong-environment",
+      "variant": "augmented-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "different_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-wrong-environment/reversed-renamed",
+      "base_id": "schedule-wrong-environment",
+      "variant": "reversed-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-wrong-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper production snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-wrong-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "different_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The correction names production, while the only schedule target names staging."
+    },
+    {
+      "id": "schedule-missing-environment/base",
+      "base_id": "schedule-missing-environment",
+      "variant": "base",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary",
+        "fact-20": "secondary"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "schedule-missing-environment/renamed",
+      "base_id": "schedule-missing-environment",
+      "variant": "renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "item-831": "primary",
+        "item-204": "secondary"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "schedule-missing-environment/augmented",
+      "base_id": "schedule-missing-environment",
+      "variant": "augmented",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-20": "secondary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "schedule-missing-environment/reversed",
+      "base_id": "schedule-missing-environment",
+      "variant": "reversed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-20": "insufficient_identity",
+        "fact-10": "insufficient_identity",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-20": "secondary",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "schedule-missing-environment/augmented-renamed",
+      "base_id": "schedule-missing-environment",
+      "variant": "augmented-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-204": "secondary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "schedule-missing-environment/reversed-renamed",
+      "base_id": "schedule-missing-environment",
+      "variant": "reversed-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "schedule-missing-environment-source",
+          "role": "user",
+          "content": "Correction: the Juniper snapshot window is Tuesday at 21:00, not Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "schedule-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-204": "insufficient_identity",
+        "item-831": "insufficient_identity",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-204": "secondary",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "Neither environment is specified by the candidate, and both remain plausible."
+    },
+    {
+      "id": "count-explicit/base",
+      "base_id": "count-explicit",
+      "variant": "base",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "same_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-explicit/renamed",
+      "base_id": "count-explicit",
+      "variant": "renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "same_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-explicit/augmented",
+      "base_id": "count-explicit",
+      "variant": "augmented",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "same_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-explicit/reversed",
+      "base_id": "count-explicit",
+      "variant": "reversed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "same_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-explicit/augmented-renamed",
+      "base_id": "count-explicit",
+      "variant": "augmented-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "same_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-explicit/reversed-renamed",
+      "base_id": "count-explicit",
+      "variant": "reversed-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-explicit-source",
+          "role": "user",
+          "content": "Correction: the Harbor worker pool needs eighteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-explicit-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "same_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The worker pool and its size are identified; only the number changes."
+    },
+    {
+      "id": "count-vague/base",
+      "base_id": "count-vague",
+      "variant": "base",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary",
+        "fact-20": "secondary"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "count-vague/renamed",
+      "base_id": "count-vague",
+      "variant": "renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "item-831": "primary",
+        "item-204": "secondary"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "count-vague/augmented",
+      "base_id": "count-vague",
+      "variant": "augmented",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-20": "secondary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "count-vague/reversed",
+      "base_id": "count-vague",
+      "variant": "reversed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-20": "insufficient_identity",
+        "fact-10": "insufficient_identity",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-20": "secondary",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "count-vague/augmented-renamed",
+      "base_id": "count-vague",
+      "variant": "augmented-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-204": "secondary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "count-vague/reversed-renamed",
+      "base_id": "count-vague",
+      "variant": "reversed-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "count-vague-source",
+          "role": "user",
+          "content": "Correction: the count should be eighteen, not twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "count-vague-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-204": "insufficient_identity",
+        "item-831": "insufficient_identity",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-204": "secondary",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The candidate does not identify what is counted; a matching old value is insufficient."
+    },
+    {
+      "id": "requirement-polarity/base",
+      "base_id": "requirement-polarity",
+      "variant": "base",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "same_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-polarity/renamed",
+      "base_id": "requirement-polarity",
+      "variant": "renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "same_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-polarity/augmented",
+      "base_id": "requirement-polarity",
+      "variant": "augmented",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "same_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-polarity/reversed",
+      "base_id": "requirement-polarity",
+      "variant": "reversed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "same_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-polarity/augmented-renamed",
+      "base_id": "requirement-polarity",
+      "variant": "augmented-renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "same_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-polarity/reversed-renamed",
+      "base_id": "requirement-polarity",
+      "variant": "reversed-renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-polarity-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Include device serial numbers in every Finch incident report.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-polarity-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "same_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "Omit reverses include for the same data and report rule."
+    },
+    {
+      "id": "requirement-missing-environment/base",
+      "base_id": "requirement-missing-environment",
+      "variant": "base",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary",
+        "fact-20": "secondary"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-missing-environment/renamed",
+      "base_id": "requirement-missing-environment",
+      "variant": "renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "item-831": "primary",
+        "item-204": "secondary"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-missing-environment/augmented",
+      "base_id": "requirement-missing-environment",
+      "variant": "augmented",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-20": "secondary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-missing-environment/reversed",
+      "base_id": "requirement-missing-environment",
+      "variant": "reversed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-20": "insufficient_identity",
+        "fact-10": "insufficient_identity",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-20": "secondary",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-missing-environment/augmented-renamed",
+      "base_id": "requirement-missing-environment",
+      "variant": "augmented-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-204": "secondary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-missing-environment/reversed-renamed",
+      "base_id": "requirement-missing-environment",
+      "variant": "reversed-renamed",
+      "cluster_id": "schedule",
+      "events": [
+        {
+          "id": "requirement-missing-environment-source",
+          "role": "user",
+          "content": "From now on, the Juniper snapshot window must be Tuesday at 21:00 instead of Monday.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Juniper staging snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Juniper production snapshot window is Monday at 21:00.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-missing-environment-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-204": "insufficient_identity",
+        "item-831": "insufficient_identity",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-204": "secondary",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The prospective requirement still lacks the environment needed to replace a rule."
+    },
+    {
+      "id": "requirement-vague-count/base",
+      "base_id": "requirement-vague-count",
+      "variant": "base",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary",
+        "fact-20": "secondary"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-vague-count/renamed",
+      "base_id": "requirement-vague-count",
+      "variant": "renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity"
+      },
+      "logical_target_ids": {
+        "item-831": "primary",
+        "item-204": "secondary"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-vague-count/augmented",
+      "base_id": "requirement-vague-count",
+      "variant": "augmented",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "insufficient_identity",
+        "fact-20": "insufficient_identity",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-20": "secondary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-vague-count/reversed",
+      "base_id": "requirement-vague-count",
+      "variant": "reversed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-20",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-20": "insufficient_identity",
+        "fact-10": "insufficient_identity",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-20": "secondary",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-vague-count/augmented-renamed",
+      "base_id": "requirement-vague-count",
+      "variant": "augmented-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "insufficient_identity",
+        "item-204": "insufficient_identity",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-204": "secondary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-vague-count/reversed-renamed",
+      "base_id": "requirement-vague-count",
+      "variant": "reversed-renamed",
+      "cluster_id": "numeric",
+      "events": [
+        {
+          "id": "requirement-vague-count-source",
+          "role": "user",
+          "content": "From now on, the count must be eighteen instead of twelve.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-204",
+          "content": "The Harbor test set contains twelve fixtures.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The Harbor worker pool has twelve workers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-vague-count-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "The referent requires review."
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-204": "insufficient_identity",
+        "item-831": "insufficient_identity",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-204": "secondary",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "An unidentified count does not become a new independent requirement."
+    },
+    {
+      "id": "requirement-unrelated/base",
+      "base_id": "requirement-unrelated",
+      "variant": "base",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "requirement-unrelated/renamed",
+      "base_id": "requirement-unrelated",
+      "variant": "renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "requirement-unrelated/augmented",
+      "base_id": "requirement-unrelated",
+      "variant": "augmented",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "different_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "requirement-unrelated/reversed",
+      "base_id": "requirement-unrelated",
+      "variant": "reversed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "different_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "requirement-unrelated/augmented-renamed",
+      "base_id": "requirement-unrelated",
+      "variant": "augmented-renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "different_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "requirement-unrelated/reversed-renamed",
+      "base_id": "requirement-unrelated",
+      "variant": "reversed-renamed",
+      "cluster_id": "report",
+      "events": [
+        {
+          "id": "requirement-unrelated-source",
+          "role": "user",
+          "content": "From now on, omit device serial numbers from every Finch incident report.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Harbor releases require two reviewers.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-unrelated-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "different_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The complete report rule is independent of the observed release-reviewer requirement."
+    },
+    {
+      "id": "retention-paraphrase/base",
+      "base_id": "retention-paraphrase",
+      "variant": "base",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "same_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "retention-paraphrase/renamed",
+      "base_id": "retention-paraphrase",
+      "variant": "renamed",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "same_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "retention-paraphrase/augmented",
+      "base_id": "retention-paraphrase",
+      "variant": "augmented",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "same_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "retention-paraphrase/reversed",
+      "base_id": "retention-paraphrase",
+      "variant": "reversed",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "fact-10",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "same_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "retention-paraphrase/augmented-renamed",
+      "base_id": "retention-paraphrase",
+      "variant": "augmented-renamed",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "same_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "retention-paraphrase/reversed-renamed",
+      "base_id": "retention-paraphrase",
+      "variant": "reversed-renamed",
+      "cluster_id": "retention",
+      "events": [
+        {
+          "id": "retention-paraphrase-source",
+          "role": "user",
+          "content": "Correction: Morrow build artifacts should be kept for thirty days, not seven.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "The retention period for Morrow build artifacts is seven days.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "retention-paraphrase-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "item-831",
+          "expected_version": 4,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "same_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "Kept for a duration and retention period identify the same property of the artifacts."
+    },
+    {
+      "id": "requirement-different-audience/base",
+      "base_id": "requirement-different-audience",
+      "variant": "base",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-10",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-10": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-10": "primary"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    },
+    {
+      "id": "requirement-different-audience/renamed",
+      "base_id": "requirement-different-audience",
+      "variant": "renamed",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-831",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-831": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-831": "primary"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    },
+    {
+      "id": "requirement-different-audience/augmented",
+      "base_id": "requirement-different-audience",
+      "variant": "augmented",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-70": "different_variable",
+        "fact-10": "different_variable",
+        "fact-90": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-70": "distractor-format",
+        "fact-10": "primary",
+        "fact-90": "distractor-theme"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    },
+    {
+      "id": "requirement-different-audience/reversed",
+      "base_id": "requirement-different-audience",
+      "variant": "reversed",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "fact-90",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-10",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "fact-70",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "fact-90": "different_variable",
+        "fact-10": "different_variable",
+        "fact-70": "different_variable"
+      },
+      "logical_target_ids": {
+        "fact-90": "distractor-theme",
+        "fact-10": "primary",
+        "fact-70": "distractor-format"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    },
+    {
+      "id": "requirement-different-audience/augmented-renamed",
+      "base_id": "requirement-different-audience",
+      "variant": "augmented-renamed",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-557": "different_variable",
+        "item-831": "different_variable",
+        "item-069": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-557": "distractor-format",
+        "item-831": "primary",
+        "item-069": "distractor-theme"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    },
+    {
+      "id": "requirement-different-audience/reversed-renamed",
+      "base_id": "requirement-different-audience",
+      "variant": "reversed-renamed",
+      "cluster_id": "repository",
+      "events": [
+        {
+          "id": "requirement-different-audience-source",
+          "role": "user",
+          "content": "From now on, require review for changes in the Atlas public repository.",
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "item-069",
+          "content": "The Quartz public status page uses the violet theme.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-831",
+          "content": "Changes in the Atlas private repository require no review.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        },
+        {
+          "id": "item-557",
+          "content": "The Granite artifact export format is TIFF.",
+          "version": 4,
+          "scope": "project",
+          "scope_id": "referent-development",
+          "profile_id": "referent-profile"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "requirement-different-audience-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ],
+      "expected_relations": {
+        "item-069": "different_variable",
+        "item-831": "different_variable",
+        "item-557": "different_variable"
+      },
+      "logical_target_ids": {
+        "item-069": "distractor-theme",
+        "item-831": "primary",
+        "item-557": "distractor-format"
+      },
+      "annotation_rationale": "The complete public-repository rule does not replace a private-repository rule."
+    }
+  ]
+}

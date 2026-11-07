@@ -19,6 +19,12 @@ import httpx
 
 from .extraction_evaluation import ExtractionCase
 from .reconciliation_decoder import DecoderMode, DecoderProvider
+from .referent_evaluation import (
+    CapturedReferents,
+    grade_relations,
+    load_relation_annotations,
+    score_stability,
+)
 from .extraction_evaluation_run import (
     MODEL,
     MODEL_DIGEST,
@@ -119,7 +125,14 @@ def grade_reconciliation(
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
     treatments = getattr(args, "treatments", "prompt_v1")
-    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4", "referent_v5"}:
+    if treatments not in {
+        "prompt_v1",
+        "identity_v2",
+        "reasoning_v3",
+        "decoder_v4",
+        "referent_v5",
+        "relations_v6",
+    }:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
     if treatments == "identity_v2":
@@ -136,6 +149,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         }
     if treatments == "referent_v5":
         arms = {"direct_full": ("direct", False), "identity_v1": None, "referent_v5": None}
+    if treatments == "relations_v6":
+        arms = {"referent_v5": None}
     decoder_modes: dict[str, DecoderMode] = {}
     if treatments == "decoder_v4":
         decoder_modes = {
@@ -149,7 +164,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         arm: {"think": arm == "direct_chat_on", "force_chat": arm.startswith("direct_chat_")}
         for arm in arms
     }
-    extended_limits = treatments in {"reasoning_v3", "decoder_v4", "referent_v5"}
+    extended_limits = treatments in {"reasoning_v3", "decoder_v4", "referent_v5", "relations_v6"}
     output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
     provider_timeout = 90 if extended_limits else 30
@@ -172,6 +187,9 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     if sha(dataset) != args.dataset_sha256:
         raise ValueError("Dataset differs from the frozen digest")
     data, cases = load_reconciliation_cases(dataset)
+    if bool(data.get("relation_annotations")) != (treatments == "relations_v6"):
+        raise ValueError("Relation-annotated data requires the relation-scored treatment")
+    annotations = load_relation_annotations(data) if treatments == "relations_v6" else {}
     sources = sorted((root / "mnemos").rglob("*.py")) + sorted(
         (root / "benchmarks/local_memory").glob("*.py")
     )
@@ -207,6 +225,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "temperature": 0,
         "provider_options": provider_options,
         "decoder_modes": decoder_modes,
+        "relation_annotations": bool(annotations),
         "context_length": 8192,
         "max_output_tokens": output_allowance,
         "max_counted_input_tokens": input_allowance,
@@ -251,6 +270,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             provider.think = provider_options[arm]["think"]
             provider.force_chat = provider_options[arm]["force_chat"]
             before_calls = provider.call_id
+            captured = CapturedReferents(provider)
             snapshot = {
                 "events": [event.model_dump(mode="json") for event in source.events],
                 "targets": [target.model_dump(mode="json") for target in source.targets],
@@ -266,7 +286,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         [case.candidate],
                         [event.model_copy(deep=True) for event in source.events],
                         [target.model_copy(deep=True) for target in source.targets],
-                        provider,
+                        captured if annotations else provider,
                         comparison_style="referent" if arm == "referent_v5" else "quoted",
                     )
                 else:
@@ -286,7 +306,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                 result = await asyncio.wait_for(reconciliation, timeout=case_timeout)
             except Exception as exc:
                 error = type(exc).__name__ + ": " + str(exc)
-            observation = {
+            observation: dict[str, Any] = {
                 "case_id": source.case_id,
                 "cluster_id": source.cluster_id,
                 "arm": arm,
@@ -302,6 +322,17 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                 "grade": grade_reconciliation(case, result, error=error),
                 "result": [value.model_dump() for value in result] if result is not None else None,
             }
+            if annotations:
+                observation["relation_responses"] = captured.responses
+                observation["relation_grade"] = grade_relations(
+                    annotations[source.case_id],
+                    captured.responses,
+                    error=error,
+                )
+                observation["combined_exact"] = (
+                    observation["grade"]["case_exact"]
+                    and observation["relation_grade"]["relation_case_exact"]
+                )
             append(output / "observations.jsonl", observation)
             observations.append(observation)
             print(json.dumps({"completed": len(observations), "planned": len(order)}), flush=True)
@@ -316,6 +347,13 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         manifest.update(
             status="completed", observations=len(observations), provider_calls=provider.call_id
         )
+        if annotations:
+            manifest["stability"] = score_stability(
+                observations,
+                annotations,
+                expected_arms=list(arms),
+                repetitions=args.repetitions,
+            )
     except BaseException as exc:
         manifest.update(status="failed", error_type=type(exc).__name__, error=str(exc))
         raise
@@ -334,7 +372,14 @@ def main() -> None:
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
     parser.add_argument(
         "--treatments",
-        choices=("prompt_v1", "identity_v2", "reasoning_v3", "decoder_v4", "referent_v5"),
+        choices=(
+            "prompt_v1",
+            "identity_v2",
+            "reasoning_v3",
+            "decoder_v4",
+            "referent_v5",
+            "relations_v6",
+        ),
         default="prompt_v1",
     )
     asyncio.run(run(parser.parse_args()))
