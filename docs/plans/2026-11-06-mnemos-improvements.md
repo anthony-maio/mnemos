@@ -601,3 +601,12 @@ No historical archive is removed or rewritten.
   All 144 observations, 396 quality responses and 140 source hashes were audited.
   The 187 checks and cleanup passed; the archive has 191 verified members. No
   confirmation, promotion, fresh-quality pass or pilot day follows from this run.
+- The [identity-span screen](../validation/2026-11-07/spans-v9.md) rejected a
+  three-dimension witness contract. Qwen3.5 fell from 66/72 to 30/72 operations,
+  with ten wrong additions and twelve missing-witness failures. It made no
+  corrections, including all thirty required corrections. Valid literal spans
+  still mislabeled changed values as different attributes. All 172 responses,
+  72 runtime replays and 141 source hashes were audited; 26 unrequested pairs
+  remained in the denominator. The 219 checks and cleanup passed, and the
+  174-member archive verified. V8 remains the stronger experimental baseline;
+  no quality gate, confirmation, default change or pilot day is implied.
