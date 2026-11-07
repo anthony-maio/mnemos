@@ -16,6 +16,15 @@ and a forbidden fact in another project. Run six cases: one result, up to five
 results, zero requested results, captured evidence, an injected embedding
 outage and conflict recall. Keep the corpus and allowed scopes fixed.
 
+Use deterministic synthetic embeddings keyed to the four fixture project names,
+with identical document/query vectors and no learned document-frequency state.
+Assert that captured evidence is returned and all five ordinary facts fit the
+multi-record case before comparing formats. These embeddings control transport
+coverage; they provide no semantic retrieval-quality evidence. Preserve earlier
+fixture attempts separately: a nested "foreign" directory resolved to the same
+Git project, and the next attempt's adaptive test embedder returned no captured
+evidence. Neither attempt establishes complete scenario coverage.
+
 Run full and compact for each case, three repetitions, alternating their order
 by repetition. This gives 18 pairs and 36 retrieval calls. Both formats must
 return the same literal context, record IDs, versions, scopes, assertion status,
