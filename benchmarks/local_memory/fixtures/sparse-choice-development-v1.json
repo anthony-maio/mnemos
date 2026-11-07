@@ -1,0 +1,121 @@
+{
+  "version": "sparse-choice-development-v1",
+  "stage": "development",
+  "reference_date": "2026-11-06",
+  "description": "New synthetic development scenarios for the sparse-output transport comparison. Manually specified accepted facts, retained source text and labels; no extraction or fresh acceptance claim.",
+  "cases": [
+    {
+      "id": "future-storage",
+      "facts": [
+        {"id": "active", "content": "Lantern currently stores exported reports in reports-a."},
+        {"id": "scheduled", "content": "Lantern's move to reports-b is approved for December 20, 2026. The move has not happened."}
+      ],
+      "queries": [
+        {"id": "current", "query": "Where does Lantern store exported reports now?", "expected_fact_ids": ["active"]},
+        {"id": "date", "query": "When is Lantern's approved move to reports-b scheduled?", "expected_fact_ids": ["scheduled"]},
+        {"id": "completion", "query": "On which date did Lantern complete its move to reports-b?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "temporary-window",
+      "facts": [
+        {"id": "trial", "content": "During Merrow's trial from September 3 through September 18, 2026, each batch contained 64 records. That setting applied only during the trial."}
+      ],
+      "queries": [
+        {"id": "during", "query": "How many records were in a Merrow batch on September 10, 2026?", "expected_fact_ids": ["trial"]},
+        {"id": "after", "query": "How many records are in a Merrow batch now?", "expected_fact_ids": []},
+        {"id": "before", "query": "How many records were in a Merrow batch on August 20, 2026?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "owner-replacement",
+      "facts": [
+        {"id": "former", "content": "Iris owned Caldera's release checklist from January 1 through October 15, 2026."},
+        {"id": "successor", "content": "Noel replaced Iris as Caldera's release-checklist owner on October 16, 2026 and is the current owner."}
+      ],
+      "queries": [
+        {"id": "historical", "query": "Who owned Caldera's release checklist on February 2, 2026?", "expected_fact_ids": ["former"]},
+        {"id": "current", "query": "Who owns Caldera's release checklist now?", "expected_fact_ids": ["successor"]}
+      ]
+    },
+    {
+      "id": "unresolved-duration",
+      "facts": [
+        {"id": "short", "content": "Halcyon currently retains request logs for 14 days."},
+        {"id": "long", "content": "Halcyon currently retains request logs for 45 days."},
+        {"id": "reviewer", "content": "Halcyon's compliance group reviews requests to change log retention."}
+      ],
+      "queries": [
+        {"id": "duration", "query": "How long does Halcyon currently retain request logs?", "expected_fact_ids": []},
+        {"id": "reviewer", "query": "Who reviews requests to change Halcyon's log retention?", "expected_fact_ids": ["reviewer"]}
+      ]
+    },
+    {
+      "id": "missing-region",
+      "facts": [
+        {"id": "queue", "content": "Anvil's production work queue uses RabbitMQ."},
+        {"id": "retention", "content": "Anvil retains completed work items for 12 hours."}
+      ],
+      "queries": [
+        {"id": "technology", "query": "Which queue technology does Anvil use in production?", "expected_fact_ids": ["queue"]},
+        {"id": "region", "query": "In which cloud region is Anvil's production work queue deployed?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "approval-status",
+      "facts": [
+        {"id": "pending", "content": "Beacon's proposed migration to SQLite has not been approved."},
+        {"id": "requirement", "content": "Beacon requires a security review before approving any storage migration."}
+      ],
+      "queries": [
+        {"id": "status", "query": "Has Beacon's proposed migration to SQLite been approved?", "expected_fact_ids": ["pending"]},
+        {"id": "approver", "query": "Who approved Beacon's migration to SQLite?", "expected_fact_ids": []},
+        {"id": "date", "query": "On which date was Beacon's migration to SQLite approved?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "environment-count",
+      "facts": [
+        {"id": "staging", "content": "Rill runs three replicas in staging."},
+        {"id": "production", "content": "Rill runs eight replicas in production."}
+      ],
+      "queries": [
+        {"id": "staging", "query": "How many replicas does Rill run in staging?", "expected_fact_ids": ["staging"]},
+        {"id": "production", "query": "How many replicas does Rill run in production?", "expected_fact_ids": ["production"]}
+      ]
+    },
+    {
+      "id": "attributed-result",
+      "facts": [
+        {"id": "report", "content": "Devon reported that Larch's deployment passed every check. This report has not been independently verified."},
+        {"id": "rule", "content": "Larch requires an independent deployment verification record before marking a deployment validated."}
+      ],
+      "queries": [
+        {"id": "speaker", "query": "Who reported that Larch's deployment passed every check?", "expected_fact_ids": ["report"]},
+        {"id": "record", "query": "What is the identifier of Larch's independent deployment verification record?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "conditional-setting",
+      "facts": [
+        {"id": "conditional", "content": "If the pending capacity request is approved, Tern will raise its worker limit to 24. Approval and implementation have not happened."}
+      ],
+      "queries": [
+        {"id": "planned", "query": "What worker limit would Tern use if the pending capacity request were approved?", "expected_fact_ids": ["conditional"]},
+        {"id": "current", "query": "What worker limit does Tern use now?", "expected_fact_ids": []}
+      ]
+    },
+    {
+      "id": "undated-location",
+      "facts": [
+        {"id": "current", "content": "Moraine's current operations handbook is at docs/operations.md."},
+        {"id": "translation", "content": "Moraine has proposed translating its operations handbook into French, but no translation exists yet."}
+      ],
+      "queries": [
+        {"id": "current", "query": "Where is Moraine's current operations handbook?", "expected_fact_ids": ["current"]},
+        {"id": "historical", "query": "Where was Moraine's operations handbook in 2019?", "expected_fact_ids": []},
+        {"id": "translation", "query": "What is the path of Moraine's French operations handbook?", "expected_fact_ids": []}
+      ]
+    }
+  ]
+}
