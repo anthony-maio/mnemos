@@ -44,21 +44,36 @@ DATASET_DIGESTS = {
     "answer-support-temporal-development-v1": "9adc7a464e4387802e2a76e2f63e4d8572ba398da7969f2cc84b15855bc8a807",
 }
 
+SupportProtocol = Literal["joint_v1", "qualified_v3", "checked_v4", "contrast_v5"]
+
+
+def support_configuration(protocol: SupportProtocol) -> AnswerSupportConfig:
+    return AnswerSupportConfig(
+        protocol=protocol, batching="all" if protocol == "contrast_v5" else "candidate"
+    )
+
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
     if urlparse(args.endpoint).hostname not in {"localhost", "127.0.0.1", "::1"}:
         raise ValueError("Temporal comparison requires an explicit loopback endpoint")
-    candidate: Literal["qualified_v3", "checked_v4"]
+    candidate: SupportProtocol
     requested_candidate = getattr(args, "candidate_protocol", "qualified_v3")
     if requested_candidate == "qualified_v3":
         candidate = "qualified_v3"
     elif requested_candidate == "checked_v4":
         candidate = "checked_v4"
+    elif requested_candidate == "contrast_v5":
+        candidate = "contrast_v5"
     else:
         raise ValueError("Unsupported candidate support protocol")
-    protocols: list[tuple[str, Literal["joint_v1", "qualified_v3", "checked_v4"]]] = [
+    candidate_name = {
+        "qualified_v3": "qualified",
+        "checked_v4": "checked",
+        "contrast_v5": "contrast",
+    }[candidate]
+    protocols: list[tuple[str, SupportProtocol]] = [
         ("joint", "joint_v1"),
-        ("qualified" if candidate == "qualified_v3" else "checked", candidate),
+        (candidate_name, candidate),
     ]
     root = Path(args.source_root).resolve()
     output = Path(args.output).resolve()
@@ -97,7 +112,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     random.Random(20261106).shuffle(order)
     manifest: dict[str, Any] = {
         "stage": "development",
-        "study": "temporal-support-v4" if candidate == "qualified_v3" else "checked-support-v5",
+        "study": {
+            "qualified_v3": "temporal-support-v4",
+            "checked_v4": "checked-support-v5",
+            "contrast_v5": "contrast-support-v6",
+        }[candidate],
         "status": "prepared",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "source_commit": source_commit,
@@ -120,10 +139,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "think": False,
         "repetitions": 1,
         "support_config": AnswerSupportConfig(batching="candidate").model_dump(),
-        "treatments": [
-            AnswerSupportConfig(protocol=protocol, batching="candidate").model_dump()
-            for _, protocol in protocols
-        ],
+        "treatments": [support_configuration(protocol).model_dump() for _, protocol in protocols],
         "extraction": "disabled; one accepted-fact store per scenario",
         "model_runs": [],
     }
@@ -241,7 +257,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                                 output / "judge-requests.jsonl",
                                 active,
                             ),
-                            AnswerSupportConfig(protocol=protocol, batching="candidate"),
+                            support_configuration(protocol),
                         )
                         for name, protocol in protocols
                     ]
@@ -377,7 +393,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", required=True)
     parser.add_argument(
-        "--candidate-protocol", choices=["qualified_v3", "checked_v4"], default="qualified_v3"
+        "--candidate-protocol",
+        choices=["qualified_v3", "checked_v4", "contrast_v5"],
+        default="qualified_v3",
     )
     for name in ["output", "endpoint", "source-root", "protocol", "embedding-cache"]:
         parser.add_argument("--" + name, required=True)

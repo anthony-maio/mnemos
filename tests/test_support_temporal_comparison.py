@@ -8,6 +8,14 @@ import pytest
 from benchmarks.local_memory import support_temporal_comparison as temporal
 
 
+def test_contrast_uses_one_comparison_batch_and_preserves_prior_treatments():
+    contrast = temporal.support_configuration("contrast_v5")
+    assert contrast.protocol == "contrast_v5" and contrast.batching == "all"
+    assert contrast.min_probability == 0.8 and contrast.timeout_seconds == 15
+    for protocol in ("joint_v1", "qualified_v3", "checked_v4"):
+        assert temporal.support_configuration(protocol).batching == "candidate"
+
+
 @pytest.mark.asyncio
 async def test_study_rejects_unknown_candidate_before_output_or_provider_setup(tmp_path):
     output = tmp_path / "must-not-exist"
@@ -26,8 +34,9 @@ async def test_study_rejects_unknown_candidate_before_output_or_provider_setup(t
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("change", ["labels", "duplicate_dataset"])
+@pytest.mark.parametrize("protocol", ["qualified_v3", "contrast_v5"])
 async def test_temporal_study_rejects_dataset_drift_before_provider_setup(
-    tmp_path, monkeypatch, change
+    tmp_path, monkeypatch, change, protocol
 ):
     root = Path(__file__).resolve().parents[1]
     original = root / "benchmarks/local_memory/fixtures/answer-support-development-v1.json"
@@ -54,6 +63,7 @@ async def test_temporal_study_rejects_dataset_drift_before_provider_setup(
     with pytest.raises(ValueError, match=error):
         await temporal.run(
             Namespace(
+                candidate_protocol=protocol,
                 source_root=str(root),
                 output=str(tmp_path / "attempt"),
                 dataset=[str(p) for p in inputs],
