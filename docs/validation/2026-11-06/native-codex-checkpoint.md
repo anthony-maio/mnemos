@@ -1,11 +1,11 @@
 # Installed artifact and Codex checkpoint
 
-The new installed artifact passed its CLI/MCP restart checks. Complete native
-lifecycle acceptance is still open: all five Codex attempts stopped during the
-first phase. V4 completed three MCP calls but failed trace normalization. V5
-completed three MCP calls but also recorded a failed model script cell. None
-completed the six-phase lifecycle. The older Claude authentication failure
-remains preserved.
+The updated installed artifact passed its CLI/MCP restart checks and all six
+native Codex explicit-memory lifecycle phases in v6. The first five Codex
+attempts remain failed and preserved below, as does the older Claude
+authentication failure. This establishes one bounded synthetic native workflow;
+it does not establish extraction quality, supported-answer quality, automatic
+capture, pilot completion or publication.
 
 ## Installed artifact
 
@@ -27,7 +27,8 @@ Both artifacts passed Twine, and the
 [new installed receipt](installed-smoke-929c44a4.json) passed the same real
 FastEmbed CLI/MCP restart, evidence, scope and cleanup checks. A separate fresh
 native environment outside the checkout exposes all four updated descriptions;
-its MCP server bytes match the wheel. Complete native acceptance remains open.
+its MCP server bytes match the wheel. V6 below validates the explicit native
+lifecycle against this artifact.
 
 ## Attempt v1: older CLI
 
@@ -141,6 +142,44 @@ updated descriptions without starting a memory service. Formatting, strict
 mypy for the MCP server and the diff check passed. No new behavioral assertion
 is inferred from these documentation checks.
 
+## Attempt v6: complete explicit-memory lifecycle
+
+Runner `f15bf9f5` used product `929c44a4`, the installed wheel above, the pinned
+Codex 0.164.0 alpha runtime and Code Mode host, and `gpt-6-astra` at high
+reasoning effort. Each of six fresh native sessions received exactly one prompt.
+The source, installed bytes, binaries, model, prompt and session identities
+matched their frozen bindings. All model cells completed successfully and all
+19 MCP calls had native model-to-cell-to-runtime correlation.
+
+| Phase | Completed MCP calls | Verified outcome |
+| --- | ---: | --- |
+| Teach | 3 | Explicit fact stored; its original remember job observed completed |
+| Recall v1 | 2 | Service restarted; same fact ID, version 1 and retained evidence inspected |
+| Correct | 6 | Inspected fact corrected under its version; original correction job observed completed |
+| Recall v2 | 2 | Service restarted; same ID, version 2, corrected content and evidence inspected |
+| Forget | 4 | Preview reviewed and applied with unchanged preconditions; deletion and retained controls checked |
+| Recall forgotten | 2 | Original remember payload suppressed at its original event identity; another restart kept the target absent and the review control available |
+
+Independent database checks covered facts, source events, revisions, evidence,
+jobs, suppression and graph state. The unrelated and foreign-project controls
+remained unchanged; a separate CLI query retrieved the foreign project's own
+positive control. Neither forgotten label appeared in the final fresh native
+session. SQLite integrity returned `ok` and the foreign-key check was empty.
+
+The [v6 receipt](native-codex-v6-receipt.json) records each phase and a private
+archive with 776 verified members. Its SHA-256 is
+`250af44116b3c99b09f54f507f4c229cfb6b4638ea88ba8897f74523162e1f7f`.
+Every recorded trace hash matched before archiving. The eleven owned native
+and service process IDs had exited. Runtime descriptor and copied credentials
+were removed, and the normal credential file remained byte-for-byte unchanged.
+No live host configuration or live memory database was modified.
+
+The host reported 716,728 input tokens, 595,712 cached input tokens, 2,615 output
+tokens and 106 reasoning output tokens across the six phases. These are usage
+fields, not a billing statement or a context-efficiency improvement. This was
+one synthetic scenario and one run. The v6 result does not erase the earlier
+failures or establish a general reliability rate.
+
 ## Validation and next work
 
 The new runner first passed 86 focused checks for process isolation, timeouts,
@@ -167,5 +206,6 @@ These checks prepare a new attempt; they do not establish native acceptance.
 
 The separate Claude validation login remains pending. Supported-answer quality,
 fresh evaluation, extraction evaluation, native tokenizer compatibility and the
-two-week/two-project pilot remain open. Nothing in this checkpoint establishes
-publication or readiness to start that pilot.
+two-week/two-project pilot remain open. A fresh full-suite run is also open;
+collection found 2,728 tests, which is not an execution result. Nothing in this
+checkpoint establishes publication or satisfaction of all pilot entry gates.
