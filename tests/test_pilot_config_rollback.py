@@ -1,7 +1,5 @@
 """Rehearsal preserves exact bytes and refuses to overwrite subsequent edits."""
 
-from pathlib import Path
-
 import pytest
 
 from tests.test_installed_artifact import load_script
@@ -50,3 +48,25 @@ def test_rehearsal_cannot_write_outside_root(runner, tmp_path):
     with pytest.raises(ValueError, match="escaped"):
         runner.guarded_replace(target, expected=b"keep", replacement=None, root=sandbox)
     assert target.read_bytes() == b"keep"
+
+
+def test_home_reference_allows_fresh_temp_but_preserves_host_and_project_boundaries(
+    runner, tmp_path
+):
+    home = tmp_path / "user"
+    project = tmp_path / "project"
+    watched = {
+        home / ".claude.json": b"reference",
+        home / ".codex/config.toml": b"host",
+        project / "AGENTS.md": None,
+    }
+    temporary = home / "AppData/Local/Temp/unique-rehearsal"
+    assert runner.validate_output_root(temporary, watched, home) == temporary.resolve()
+    for forbidden in (home / ".codex/new", project / "new", home / ".claude.json"):
+        with pytest.raises(ValueError):
+            runner.validate_output_root(forbidden, watched, home)
+
+
+def test_existing_output_is_never_reused(runner, tmp_path):
+    with pytest.raises(ValueError, match="fresh disposable"):
+        runner.validate_output_root(tmp_path, {}, tmp_path / "home")

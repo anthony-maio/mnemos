@@ -80,6 +80,22 @@ def guarded_replace(
         Path(temporary).unlink(missing_ok=True)
 
 
+def validate_output_root(output: Path, watched: dict[Path, bytes | None], home: Path) -> Path:
+    root = output.resolve()
+    # A single reference file directly in HOME does not make all user-owned
+    # temporary directories part of the live host configuration.
+    protected_directories = {
+        path.resolve().parent for path in watched if path.resolve().parent != home.resolve()
+    }
+    if root.exists() or any(root.is_relative_to(path) for path in protected_directories):
+        raise ValueError(
+            "Use a fresh disposable directory outside the live configuration directories"
+        )
+    if any(root == path.resolve() or path.resolve().is_relative_to(root) for path in watched):
+        raise ValueError("Disposable output overlaps a live target")
+    return root
+
+
 def run(plan_path: Path, output: Path) -> dict[str, Any]:
     from mnemos.service import _protect_private_path
 
@@ -107,13 +123,7 @@ def run(plan_path: Path, output: Path) -> dict[str, Any]:
         if digest(original) != reference["sha256"]:
             raise ValueError("Live reference file drifted since the reviewed draft")
         watched[target] = original
-    root = output.resolve()
-    if root.exists() or any(
-        root == path.resolve() or root.is_relative_to(path.resolve().parent) for path in watched
-    ):
-        raise ValueError(
-            "Use a fresh disposable directory outside the live configuration directories"
-        )
+    root = validate_output_root(output, watched, Path.home())
     root.mkdir(parents=True)
     _protect_private_path(root)
     report: dict[str, Any] = {
