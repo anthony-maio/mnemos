@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
 
 from mnemos.contracts import RetrievalRequest
 from mnemos.scopes import scope_allows
@@ -45,6 +45,15 @@ class AcceptedQuery(BaseModel):
     pair_id: str | None = None
     pair_variant: Literal["semantic", "state"] | None = None
     declared_state: str | None = None
+    pair_mode: Literal["fixed_query", "source_wordings"] = "fixed_query"
+
+    @model_serializer(mode="wrap")
+    def serialize_query(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        record: dict[str, Any] = handler(self)
+        # Preserve the exact canonical representation of existing v1 inputs.
+        if self.pair_mode == "fixed_query":
+            record.pop("pair_mode", None)
+        return record
 
     @property
     def kind(self) -> str:
@@ -64,7 +73,9 @@ class AcceptedCase(BaseModel):
 
 class AcceptedCorpus(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    version: Literal["accepted-retrieval-corpus-v1"] = "accepted-retrieval-corpus-v1"
+    version: Literal["accepted-retrieval-corpus-v1", "accepted-retrieval-corpus-v2"] = (
+        "accepted-retrieval-corpus-v1"
+    )
     dataset_id: str
     stage: Literal["development", "heldout"]
     source_label: str
@@ -165,7 +176,11 @@ def validate_corpus(corpus: AcceptedCorpus, options: CorpusOptions) -> dict[str,
             projects.add((request.context.user_profile_id, request.context.project_id))
             query_counts[query.kind] += 1
             if query.pair_id is None:
-                if query.pair_variant is not None or query.declared_state is not None:
+                if (
+                    query.pair_variant is not None
+                    or query.declared_state is not None
+                    or query.pair_mode != "fixed_query"
+                ):
                     raise ValueError("State fields require a matched pair identity")
             else:
                 if (
@@ -183,14 +198,27 @@ def validate_corpus(corpus: AcceptedCorpus, options: CorpusOptions) -> dict[str,
             if len(group) != 2 or {q.pair_variant for q in group} != {"semantic", "state"}:
                 raise ValueError("State pairs require exactly two matched variants")
             left, right = group
+            same_request = left.request.model_dump(exclude={"query"}) == right.request.model_dump(
+                exclude={"query"}
+            )
+            wording_ok = (
+                left.request.query == right.request.query
+                if left.pair_mode == "fixed_query"
+                else corpus.version == "accepted-retrieval-corpus-v2"
+                and left.request.query != right.request.query
+            )
             if (
                 left.snapshot_id != right.snapshot_id
                 or left.observed_at != right.observed_at
-                or left.request != right.request
+                or not same_request
+                or not wording_ok
+                or left.pair_mode != right.pair_mode
                 or left.expected_fact_ids != right.expected_fact_ids
                 or left.declared_state == right.declared_state
             ):
-                raise ValueError("State pairs must differ only in their declared state condition")
+                raise ValueError(
+                    "State pairs must preserve their explicit wording/control mode and shared conditions"
+                )
             pairs.add((case.session_id, pair_id))
     counts = {
         "heldout_sessions": len(sessions),
@@ -451,7 +479,7 @@ def summarize_corpus(
         "quality_gate_claimed": False,
         "full_module_ablation_run": False,
         "interval_note": "Wilson intervals describe unique questions within each repetition. Queries within a session can still be dependent. Paired differences resample whole sessions, retaining all queries and repetitions.",
-        "state_pair_note": "Declared state variants are recorded controls. All three baseline strategies ignore state; no state-module effectiveness claim follows.",
+        "state_pair_note": "Fixed-query variants are baseline controls. Source-wording variants preserve different query texts and may change embeddings. All three strategies ignore declared state labels; neither comparison establishes state-module effectiveness.",
     }
 
 
