@@ -493,3 +493,12 @@ No historical archive is removed or rewritten.
   all 165 private archive members passed readback. Sixty-four focused checks,
   formatting and strict types passed. The model unloaded and owned processes
   stopped. Defaults, the installed pilot artifact and prior scores stay unchanged.
+- The [duplicate-identity repair](../validation/2026-11-07/duplicate-identity-v1.md)
+  enforces unresolved review when a direct user candidate exactly matches
+  multiple fact identities. Both decoder and runtime reject alternative
+  operations; the judged path skips unnecessary model calls. Fourteen initial
+  and six judged-path regressions are repaired; all 142 focused checks pass.
+  Replaying the 240 frozen choices rejects the six duplicate disagreements and
+  preserves the other 234 outcomes, with zero model calls and no score changes.
+  All 13 private repair archive members verified. Semantic target ambiguity,
+  fresh evaluation, installed delivery and actual pilot use remain open.
