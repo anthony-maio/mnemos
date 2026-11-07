@@ -250,6 +250,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         else (
             "docs/plans/2026-11-06-native-claude-explicit-v2.md",
             "docs/plans/2026-11-06-native-claude-forget-guidance-v3.md",
+            "docs/plans/2026-11-06-native-claude-review-pages-v4.md",
         )
     )
     for relative in inputs:

@@ -262,3 +262,19 @@ No historical archive is removed or rewritten.
   thirteen wrong selections. Each reported probability 1.0. Missing requested
   values, unsupported time extrapolation and unresolved conflicts need distinct
   checks. No model call, threshold change, rescoring or default promotion occurred.
+- Product `5de1844f` adds lossless paged MCP forget previews and digest-bound
+  short fact/source selections while retaining the storage deletion guards.
+  Seventy-seven distinct focused checks pass, including independent-writer
+  mutation between resolution and apply. Build, Twine, installed smoke,
+  formatting and strict source types pass. The saved oversized preview
+  reconstructs exactly in five bounded pages; this is not native acceptance.
+- Verifier `aebe2a4e` adds independent page reconstruction and exact alias-to-ID
+  selection checks. Its 77-test focused run includes 36 new adversarial cases.
+  Original inspection, source-dependency, correlation and receipt gates remain.
+  The [preparation checkpoint](../validation/2026-11-06/forget-review-pages-checkpoint.md)
+  records the new artifact and prospective Claude v4 protocol.
+- The first full run at `5de1844f` finished with 2,749 passes, four skips, two
+  failures and 19 setup errors from absent historical fixtures. All 208 restored
+  fixture files match Git bytes, and the affected files pass all 50 checks.
+  The original failure is archived. A fresh full suite and the next native
+  attempt remain pending; the private pilot has no recorded days.
