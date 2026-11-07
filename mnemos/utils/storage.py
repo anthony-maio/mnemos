@@ -434,7 +434,8 @@ class SQLiteStore(MemoryStore):
 
     _CREATE_FTS_UPDATE_TRIGGER_SQL = """
         CREATE TRIGGER IF NOT EXISTS memory_chunks_au
-        AFTER UPDATE ON memory_chunks
+        AFTER UPDATE OF content ON memory_chunks
+        WHEN old.content IS NOT new.content
         BEGIN
             INSERT INTO memory_fts(memory_fts, rowid, content)
             VALUES ('delete', old.rowid, old.content);
@@ -499,6 +500,8 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FTS_SQL)
         self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
+        # Replace the legacy trigger so access metadata does not reindex unchanged text.
+        self._conn.execute("DROP TRIGGER IF EXISTS memory_chunks_au")
         self._conn.execute(self._CREATE_FTS_UPDATE_TRIGGER_SQL)
         self._conn.execute(
             """
