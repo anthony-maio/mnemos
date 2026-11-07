@@ -1,0 +1,158 @@
+{
+  "status": "INACTIVE_DRAFT",
+  "recorded_at": "2026-11-07T04:19:11.718954+00:00",
+  "product_commit": "6d0e5ba69f39d55df8623830cb682e14a5b2d607",
+  "wheel_sha256": "ecd11eb7ecbb9cc4f14552d9a7253dead7a8348879c35063411bb850abe06036",
+  "native_receipt": "native-claude-v5-receipt.json",
+  "installed_backup_restore": {
+    "status": "passed",
+    "package_version": "0.7.0b1",
+    "started_at": "2026-11-07T04:15:35.237272+00:00",
+    "finished_at": "2026-11-07T04:15:38.670058+00:00",
+    "concurrent_writer": {
+      "commits": 11,
+      "commits_during_backup": 10,
+      "backup_seconds": 0.0959937998559326,
+      "errors": []
+    },
+    "first_restore": {
+      "facts": 1004,
+      "controls": 3,
+      "sources": 3,
+      "completed_jobs": 3,
+      "evidence_bindings": 3,
+      "registry_preserved": true,
+      "embedding_identity_preserved": true
+    },
+    "second_restore": {
+      "facts": 1003,
+      "newer_suppressions_merged": true,
+      "forgotten_fact_source_evidence_absent": true,
+      "exact_original_source_replay_suppressed": true,
+      "retained_and_foreign_controls_preserved": true,
+      "refused_restores": [
+        "existing_destination",
+        "conflicting_project_identity"
+      ]
+    },
+    "sqlite_checks": {
+      "databases": 3,
+      "integrity": "ok",
+      "foreign_key_errors": 0
+    },
+    "cleanup": {
+      "writer_stopped": true,
+      "stores_closed": 3
+    },
+    "model_calls": 0,
+    "synthetic_fixture": true,
+    "limits": "Installed backup API over seeded synthetic records and a synthetic embedding identity. No real pilot data, model inference, native outage recovery, quality score or pilot day. Concurrent write overlap is reported by observed committed timestamps, not inferred from thread presence."
+  },
+  "launcher": {
+    "configuration_probes": 4,
+    "nonblocking_hook_argument_checks": 2,
+    "cli_help": "passed",
+    "source_sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+    "service_started": false,
+    "limits": "Configuration resolution and launcher exit behavior only; actual MCP/hook integration and host configuration application are untested."
+  },
+  "project_count": 2,
+  "host_selection_confirmed": false,
+  "persistent_runtime_installed": false,
+  "live_files_rechecked": 7,
+  "live_configuration_changed": false,
+  "activation_authorized": false,
+  "pilot_days": 0,
+  "target_directory_created": false,
+  "missing_evidence": [
+    "Applicable original quality and provider-recovery entry gates.",
+    "Exact host configuration diff and persistent installed-runtime binding; end-to-end launcher/MCP/hook checks and rollback review.",
+    "Current-artifact coverage for every participating host and final host selection.",
+    "Explicit activation approval and actual two-week daily observations."
+  ],
+  "private_archive_sha256": "5cde0ad5ad914337361fed32c0ab084bde97708e44b42d76ab46e4175026df24",
+  "verified_members": 20,
+  "files": {
+    "backup-check/before-forget.zip": {
+      "sha256": "55101fe5d71171783ef1e7faf83127c9ccc21b9d505ecc155f63f50a6b4f319f",
+      "bytes": 108878
+    },
+    "backup-check/report.json": {
+      "sha256": "ef365ca9d05d7f71d4770c8a0be1b8024cdf4ed223feec25446a1906b324f89c",
+      "bytes": 2384
+    },
+    "backup-check/restored-after.sqlite": {
+      "sha256": "2ce6becfb79ea28629a45c7091a2c10ec1a3cfb4a65e33f4437217b89e97f740",
+      "bytes": 5967872
+    },
+    "backup-check/restored-before.sqlite": {
+      "sha256": "cf31f4ef0122e9417f3f05be76f617e6e85d30a1fa770812c24e703601f6c88b",
+      "bytes": 5967872
+    },
+    "backup-check/scopes.json": {
+      "sha256": "8a224e9b0a874eb0125896a35b7db01b567e3b994cb22a7b902e217178f66f63",
+      "bytes": 693
+    },
+    "backup-check/source.sqlite": {
+      "sha256": "84bb3b9500172331ee601b3f6b1b9f1694b848f8e90f02e36509dcf80798d459",
+      "bytes": 5976064
+    },
+    "draft/launch.py": {
+      "sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+      "bytes": 3999
+    },
+    "draft/launcher-probes-final.json": {
+      "sha256": "c63bc20bb6a58ae52bbd0cf42eab11b8301903543e6b3b54e05fc9cbca0f4bdd",
+      "bytes": 3789
+    },
+    "draft/launcher-probes.json": {
+      "sha256": "2d5d26f55013b9e2e2173e651876ac3a2affe324bdd966e27863a58fe285a09b",
+      "bytes": 3243
+    },
+    "draft/proposal.json": {
+      "sha256": "bc175a093e227a4ee4d87f46f1ebbad18639a8c85e2cbe18ebb553c311b025c8",
+      "bytes": 4025
+    },
+    "draft/record.json": {
+      "sha256": "a2a35c0af8ee20750210c5ce7dfb16dffd7ef9bdffecd8f40ea04438e0073309",
+      "bytes": 2498
+    },
+    "draft/scopes.json": {
+      "sha256": "c859e42c07fed051281282df6734b2308d77a9a3e5b04f3ac3234fd426861501",
+      "bytes": 568
+    },
+    "draft/settings.toml": {
+      "sha256": "a6cba7455f113891b766cc07c0bf14ff3e95f9462b45808972636023c9fdfb5d",
+      "bytes": 710
+    },
+    "preparation/archive-pilot-preparation-v2.py": {
+      "sha256": "f38395e57a193f33963ab951e41a875b7dfe27d56f9bd7921e6c8b8d80318c4d",
+      "bytes": 4482
+    },
+    "preparation/check-private-pilot-launcher-v2.py": {
+      "sha256": "8a1691764ad3e2f4836a078bede797a1cf0c394eaa7e8d91ba961826d3238ecf",
+      "bytes": 3004
+    },
+    "preparation/pilot-backup-restore-6d0e5ba6.py": {
+      "sha256": "88adec2131ddcaa7429ce077f496374e5eba5c14995f620c70a6b1d90ed90568",
+      "bytes": 9301
+    },
+    "preparation/pilot-backup-restore-6d0e5ba6.txt": {
+      "sha256": "03656eea3f91d09fdeb4e6dcca58a2e0d803dc8569386efca62a9e7cc4f69aa9",
+      "bytes": 779
+    },
+    "preparation/pilot-launch-draft-v1.py": {
+      "sha256": "26703aea13e103a5673f9243477583b00a6a1d288c763b8a9de6240e58dc2f14",
+      "bytes": 3776
+    },
+    "preparation/pilot-launch-draft.py": {
+      "sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+      "bytes": 3999
+    },
+    "preparation/refresh-private-pilot-v2.py": {
+      "sha256": "c1ab8c6b457ae9027120ed973859d2d308b0b4421006e6d87eba54d0df41c1ce",
+      "bytes": 5906
+    }
+  },
+  "limits": "Private preparation, not activation or daily-use evidence. Original quality and provider-recovery gates remain. The prior draft and its archive are preserved."
+}

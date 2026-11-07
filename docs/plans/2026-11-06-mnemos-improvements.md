@@ -338,3 +338,11 @@ No historical archive is removed or rewritten.
   types. Actual requests fit the existing budgets at 4,473 bytes per prompt and
   10,383 per query. Runner `64045705` and the prospective v5 protocol are frozen
   before model comparison. No new model result or default promotion is implied.
+- [Private pilot preparation v2](../validation/2026-11-06/private-pilot-preparation-v2.md)
+  preserves the first draft and binds a second inactive draft to the passing
+  `6d0e5ba6` wheel. That installed artifact passed synthetic backup/restore,
+  newer-forget suppression, exact source replay and retained/foreign controls.
+  Four configuration probes verified the draft launcher's local selectors
+  against conflicting inherited settings; no service started. Seven live paths
+  remain unchanged. Exact host diffs, persistent runtime, real launcher/MCP/hook
+  checks, quality/provider-recovery gates and actual pilot use remain open.
