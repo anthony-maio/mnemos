@@ -1,0 +1,298 @@
+{
+  "status": "completed_and_audited",
+  "source_commit": "5735c502febbf495cda3e8c336a8b7069a298738",
+  "baseline_commit": "feb6ac3b3eebd2e178ec584b3be1e72cca1228fc",
+  "candidate_wheel_sha256": "ec9f6927afe9297c893ef017bdb6ddd95519f00ffa6d27520c07a95dda1bce26",
+  "baseline_wheel_sha256": "51ba20ba811eaa33cd18bde9665c49d21feaa10e7874bffdf878e3b9762b550f",
+  "protocol_commit": "49b8f8ef4409ab841c9942cb6f1e77c0cb58e9b0",
+  "summary": {
+    "recall": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 285.0137000204995,
+        "p95_ms": 311.3467551069334,
+        "maximum_ms": 401.2140000704676,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 119.21305011492223,
+        "p95_ms": 134.88217998528853,
+        "maximum_ms": 181.9564001634717,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -167.1373499557376,
+        "candidate_faster_pairs": 50,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "Stop": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 321.81124994531274,
+        "p95_ms": 646.2701449869196,
+        "maximum_ms": 877.5959999766201,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 328.9559499826282,
+        "p95_ms": 547.1105500124395,
+        "maximum_ms": 895.6242999993265,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": 1.4390000142157078,
+        "candidate_faster_pairs": 24,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "UserPromptSubmit": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 666.4093498839065,
+        "p95_ms": 895.7049249554984,
+        "maximum_ms": 1537.294999929145,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 510.86775003932416,
+        "p95_ms": 860.0647800718427,
+        "maximum_ms": 994.5016000419855,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -145.64955001696944,
+        "candidate_faster_pairs": 44,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "blocks": {
+      "baseline-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 276.85449994169176,
+          "p95_ms": 299.52526008710265,
+          "maximum_ms": 401.2140000704676,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 319.04840003699064,
+          "p95_ms": 688.7360799591983,
+          "maximum_ms": 837.6178001053631,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 642.4965001642704,
+          "p95_ms": 820.7743001170454,
+          "maximum_ms": 1141.2896998226643,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 115.3537998907268,
+          "p95_ms": 127.3032400291413,
+          "maximum_ms": 135.9206000342965,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 314.14419994689524,
+          "p95_ms": 512.718379963189,
+          "maximum_ms": 895.6242999993265,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 495.14100002124906,
+          "p95_ms": 903.0579601414494,
+          "maximum_ms": 994.5016000419855,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 121.56319990754128,
+          "p95_ms": 146.09876000322396,
+          "maximum_ms": 181.9564001634717,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 333.228699862957,
+          "p95_ms": 534.6178000327196,
+          "maximum_ms": 829.2479000519961,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 511.8888998404145,
+          "p95_ms": 725.4411800298838,
+          "maximum_ms": 959.7567000892013,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "baseline-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 298.3113001100719,
+          "p95_ms": 312.96478011645377,
+          "maximum_ms": 370.75409991666675,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 324.20170004479587,
+          "p95_ms": 529.2177199851719,
+          "maximum_ms": 877.5959999766201,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 674.3759999517351,
+          "p95_ms": 898.4722999855876,
+          "maximum_ms": 1537.294999929145,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      }
+    },
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "native_host_run": false,
+    "pilot_days": 0
+  },
+  "audit": {
+    "status": "verified",
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "blocks": [
+      {
+        "block": "baseline-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 122,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "693235451f7a135408e6335c7388916a6a4b4e0e3226441b72c64f1b189e5c53",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 122,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "a37cc337cfcc460a6d1e1d8192ad2632d873fdda653c5239e967bb5c270ed256",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 122,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "d7f53934ef572ddb50d36c410b455b12197eb13500b05e76607fad2129bd47d9",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "baseline-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 122,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "bdf35ec6d77c9414c00278d592efedf9853702289f2bb4a63859a648faa0c9f1",
+        "accepted_snapshot_unchanged": true
+      }
+    ],
+    "process_ids_absent": 235,
+    "seed_unchanged": true,
+    "audit_model_calls": 0,
+    "settings_values_recorded": false
+  },
+  "wall_seconds": 593.8048975998536,
+  "archive_sha256": "a5e303ba8bd2c4cd3ee7d0281abd2fb0cf853c85441c7981ab01fee68ce0afb6",
+  "archive_members": 188,
+  "archive_logical_files": 350,
+  "archive_bytes": 401609167,
+  "content_addressed_archive": true,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "all_owned_processes_stopped": true,
+  "documentation_checks": 12
+}
