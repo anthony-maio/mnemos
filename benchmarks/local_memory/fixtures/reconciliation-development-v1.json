@@ -1,0 +1,937 @@
+{
+  "schema_version": 1,
+  "version": "reconciliation-development-v1",
+  "stage": "development",
+  "evaluation": "preclassified_reconciliation",
+  "scope": "Twenty authored cases from previously studied families. Supplied classifications isolate target reconciliation. Three repeats do not create sixty independent cases. No extraction, fresh evaluation, native-host or storage-write claim.",
+  "cases": [
+    {
+      "id": "known-correction",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "correction-missing",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "correction-unrelated",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch deployment region is us-west-2.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "correction-duplicate",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "THE LARCH BACKUP WINDOW IS THURSDAY AT 18:00.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "correction-distractor",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch deployment region is us-west-2.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "known-correction-target-1",
+          "expected_version": 5,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "correction-ambiguous-environment",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch production backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "The Larch staging backup window is Thursday at 18:00.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "correction-qualified",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch production backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch staging backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "The Larch production backup window is Thursday at 18:00.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "known-correction-target-1",
+          "expected_version": 5,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "correction-wrong-environment",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch production backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch staging backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "correction-wrong-attribute",
+      "cluster_id": "backup-window",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup retention period is fourteen days.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "numeric-correction",
+      "cluster_id": "numeric-setting",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch worker pool has sixteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch worker pool has twelve workers.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "numeric-unrelated",
+      "cluster_id": "numeric-setting",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch worker pool has sixteen workers, not twelve.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch deployment region is us-west-2.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "numeric-ambiguous",
+      "cluster_id": "numeric-setting",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the count should be sixteen, not twelve.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch worker pool has twelve workers.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "The Larch test suite has twelve fixtures.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "correction_or_rejection",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "independent-empty",
+      "cluster_id": "independent-fact",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "The Larch deployment branch is evergreen.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "independent-unrelated",
+      "cluster_id": "independent-fact",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "The Larch deployment branch is evergreen.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch deployment region is us-west-2.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "exact-support",
+      "cluster_id": "exact-support",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "support",
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "duplicate-support",
+      "cluster_id": "exact-support",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        },
+        {
+          "id": "known-correction-target-1",
+          "content": "THE LARCH BACKUP WINDOW IS THURSDAY AT 18:00.",
+          "version": 5,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "asserted_fact",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "unresolved",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    },
+    {
+      "id": "requirement-observed",
+      "cluster_id": "requirement-revision",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "From now on, exclude customer email addresses from every Larch release note.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "Include customer email addresses in every Larch release note.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "correct",
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "requirement-missing",
+      "cluster_id": "requirement-revision",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "From now on, exclude customer email addresses from every Larch release note.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "continuing_requirement",
+          "retention_request_unit": null,
+          "revises_existing_requirement": true
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "assistant-independent",
+      "cluster_id": "assistant-history",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "assistant",
+          "content": "The Larch deployment branch is evergreen.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch deployment region is us-west-2.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "attributed_history",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": null
+        }
+      ]
+    },
+    {
+      "id": "assistant-disagreement",
+      "cluster_id": "assistant-history",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "assistant",
+          "content": "The Larch backup window is Friday at 18:00.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [],
+      "selections": [
+        {
+          "source_id": "known-correction-source",
+          "first_unit": 0,
+          "last_unit": 0,
+          "kind": "attributed_history",
+          "retention_request_unit": null,
+          "revises_existing_requirement": false
+        }
+      ],
+      "expected_alternatives": [
+        {
+          "candidate_index": 0,
+          "operation": "conflict",
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "reason": "Authored expected review outcome."
+        },
+        {
+          "candidate_index": 0,
+          "operation": "conflict",
+          "target_fact_id": null,
+          "expected_version": null,
+          "reason": "Authored expected review outcome."
+        }
+      ]
+    }
+  ]
+}
