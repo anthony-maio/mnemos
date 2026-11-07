@@ -10,6 +10,7 @@ import json
 import os
 from pathlib import Path
 import runpy
+import socket
 import sqlite3
 import subprocess
 import sys
@@ -34,7 +35,9 @@ INPUTS = (
     "benchmarks/native_hosts/native_processes.py",
     "benchmarks/native_hosts/shared_trace.py",
     "benchmarks/native_hosts/pilot_settings.py",
+    "benchmarks/native_hosts/pilot_outage.py",
     "docs/plans/2026-11-07-native-pilot-codex-v1.md",
+    "docs/plans/2026-11-07-native-pilot-codex-outage-v1.md",
 )
 
 
@@ -51,7 +54,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     from mcp import ClientSession
     from mcp.client.stdio import StdioServerParameters, stdio_client
     from mnemos.scopes import ScopeRegistry
-    from mnemos.service import _protect_private_path
+    from mnemos.service import _ProcessLock, _protect_private_path
 
     pilot = args.pilot_root.resolve()
     root = args.output.resolve()
@@ -91,6 +94,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     ):
         raise ValueError("Codex version differs")
     pilot_settings = checkpoint["helper"]("benchmarks/native_hosts/pilot_settings.py")
+    outage = checkpoint["helper"]("benchmarks/native_hosts/pilot_outage.py")
+    prompt = outage.PROMPT if args.service_outage else PROMPT
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     for name in INPUTS:
         committed = subprocess.check_output(["git", "show", f"{head}:{name}"], cwd=ROOT)
@@ -185,14 +190,19 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "model": MODEL,
         "hook_trust": "one-run override after exact six-command validation; no persisted trust",
         "live_configuration_changed": False,
+        "service_outage": args.service_outage,
     }
     report = root / "report.json"
 
     def remember_owner() -> None:
         if descriptor.exists():
-            pid = json.loads(descriptor.read_bytes())["pid"]
+            owner = json.loads(descriptor.read_bytes())
+            pid = owner["pid"]
             if pid not in record["service_pids"]:
                 record["service_pids"].append(pid)
+                record.setdefault("service_endpoints", []).append(
+                    {"pid": pid, "port": owner["port"]}
+                )
 
     def stop_service() -> None:
         remember_owner()
@@ -228,6 +238,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         if descriptor.exists():
             raise ValueError("Owned service descriptor remains")
 
+    owner_lock = None
     save(report, record)
     try:
         params = StdioServerParameters(
@@ -273,8 +284,23 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                     remember_owner()
                     # Close the owner before the Windows stdio client's process tree.
                     await asyncio.to_thread(stop_service)
+        if args.service_outage:
+            before_outage = outage.snapshot(root / "memory.sqlite")
+            save(root / "state-before-outage.json", before_outage)
+            with socket.socket() as probe:
+                probe.settimeout(1)
+                if probe.connect_ex(("127.0.0.1", record["service_endpoints"][-1]["port"])) == 0:
+                    raise ValueError("Seed service port remains open")
+            owner_lock = _ProcessLock(descriptor.with_suffix(".lock"))
+            if not owner_lock.acquire():
+                raise ValueError("Could not hold the disposable service ownership lock")
+            contender = _ProcessLock(descriptor.with_suffix(".lock"))
+            if contender.acquire():
+                contender.release()
+                raise ValueError("Disposable ownership lock did not exclude startup")
+            record["outage_lock_verified"] = True
         save(report, record)
-        allowed = ["mnemos_retrieve", "mnemos_inspect"]
+        allowed = [] if args.service_outage else ["mnemos_retrieve", "mnemos_inspect"]
         disabled = (
             "shell_tool",
             "shell_snapshot",
@@ -298,7 +324,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             str(args.codex),
             "--ask-for-approval",
             "never",
-            "--enable",
+            "--disable" if args.service_outage else "--enable",
             "code_mode_host",
             "--enable",
             "hooks",
@@ -329,7 +355,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "never",
             "--model",
             MODEL,
-            PROMPT,
+            prompt,
         ]
         trace_root = phase / "rollout-trace"
         trace_root.mkdir()
@@ -345,12 +371,12 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "allowed_tools": allowed,
             "disabled_features": list(disabled),
             "command": command[:-1] + ["<frozen synthetic prompt>"],
-            "prompt_sha256": hashlib.sha256(PROMPT.encode()).hexdigest(),
+            "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
             "max_seconds": 180,
             "requested_model": MODEL,
             "reasoning_effort": "high",
         }
-        (phase / "prompt.txt").write_text(PROMPT, encoding="utf-8")
+        (phase / "prompt.txt").write_text(prompt, encoding="utf-8")
         auth_copy = None
         process = None
         started = time.monotonic()
@@ -430,7 +456,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         if (
             not models
             or any(model != MODEL for model in models)
-            or native._codex_exec_user_messages(home) != [PROMPT]
+            or native._codex_exec_user_messages(home) != [prompt]
         ):
             raise ValueError("Native model or prompt observation differs")
         process_result.update(
@@ -453,6 +479,48 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                 "user_prompt_verified",
             ]
         }
+        if args.service_outage:
+            from mnemos.client import Outbox
+
+            messages = [
+                row["item"]["text"]
+                for row in rows
+                if row.get("type") == "item.completed"
+                and row.get("item", {}).get("type") == "agent_message"
+                and isinstance(row["item"].get("text"), str)
+            ]
+            outage.require_no_tools(session_rows, messages[-1] if messages else "")
+            if descriptor.exists() or outage.snapshot(root / "memory.sqlite") != before_outage:
+                raise ValueError("Service became available or store changed during the outage")
+            with socket.socket() as probe:
+                probe.settimeout(1)
+                if probe.connect_ex(("127.0.0.1", record["service_endpoints"][-1]["port"])) == 0:
+                    raise ValueError("Former service port reopened during the outage")
+            turns = [
+                row["payload"]["turn_id"]
+                for row in session_rows
+                if row.get("type") == "turn_context"
+            ]
+            if len(turns) != 1:
+                raise ValueError("Require one native outage turn")
+            entries = Outbox(root / "runtime/outbox.json").pending()
+            save(root / "outbox-before-recovery.json", entries)
+            outage.require_buffered(
+                entries,
+                session_id=session_id,
+                turn_id=turns[0],
+                project_id=context.project_id,
+                profile=PROFILE,
+            )
+            if owner_lock is None:
+                raise ValueError("Missing outage ownership lock")
+            owner_lock.release()
+            owner_lock = None
+            record["outage_recovery"] = await outage.recover(
+                root, project, environment, before_outage, entries, stop_service, remember_owner
+            )
+            record["status"] = "passed"
+            return record
         provenance = trace.TraceProvenance(
             "codex", process_result["pid"], session_id, str(session_file), sha(session_file)
         )
@@ -542,10 +610,24 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         raise
     finally:
         cleanup_errors = []
+        if owner_lock is not None:
+            owner_lock.release()
         try:
             stop_service()
         except Exception as error:
             cleanup_errors.append(type(error).__name__)
+        if args.service_outage:
+            try:
+                deadline = time.monotonic() + 10
+                remaining = await asyncio.to_thread(outage.remaining_service_pids, descriptor)
+                while remaining and time.monotonic() < deadline:
+                    await asyncio.sleep(0.25)
+                    remaining = await asyncio.to_thread(outage.remaining_service_pids, descriptor)
+                record["remaining_disposable_service_pids"] = remaining
+                if remaining:
+                    cleanup_errors.append("OwnedServiceProcessRemains")
+            except Exception as error:
+                cleanup_errors.append("ProcessAudit:" + type(error).__name__)
         record["watched_file_hashes_after"] = {
             str(path): sha(path) if path.is_file() else None for path in watched
         }
@@ -589,5 +671,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("pilot-root", "patches", "output", "codex", "auth"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--service-outage", action="store_true")
     result = asyncio.run(run(parser.parse_args()))
     raise SystemExit(0 if result["status"] == "passed" else 1)
