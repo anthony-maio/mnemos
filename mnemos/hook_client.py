@@ -15,6 +15,8 @@ import sys
 from typing import Any, Mapping
 from uuid import uuid4
 
+from ._descriptor_io import read_descriptor_text
+
 HOOK_PROTOCOL = 1
 MAX_FRAME_BYTES = 1_048_576
 WORKER_DESCRIPTOR_ENV = "MNEMOS_HOOK_WORKER_DESCRIPTOR"
@@ -78,7 +80,7 @@ def request_hook(
     if host not in {"codex", "claude-code"} or timeout <= 0:
         raise ValueError("Invalid hook client settings")
     try:
-        descriptor = json.loads(Path(descriptor_path).read_text(encoding="utf-8"))
+        descriptor = json.loads(read_descriptor_text(Path(descriptor_path)))
     except (OSError, ValueError):
         return None
     if (

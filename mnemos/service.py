@@ -40,6 +40,7 @@ from urllib.parse import urlsplit
 
 from pydantic import ValidationError
 
+from ._descriptor_io import read_descriptor_text, replace_descriptor
 from .jobs import FactNotFoundError, JobNotFoundError
 from .errors import (
     RELATED_FORGET_REJECTIONS,
@@ -302,7 +303,7 @@ def _write_private_json(
         deadline = time.monotonic() + min(0.25, max(0.0, replace_timeout))
         while True:
             try:
-                os.replace(temporary, path)
+                replace_descriptor(temporary, path)
                 break
             except OSError as exc:
                 # Windows readers can briefly deny replacement even when the
@@ -328,7 +329,7 @@ def _write_private_json(
 def read_runtime_descriptor(path: str | Path | None = None) -> dict[str, Any] | None:
     target = Path(path).expanduser() if path is not None else default_descriptor_path()
     try:
-        raw = json.loads(target.read_text(encoding="utf-8"))
+        raw = json.loads(read_descriptor_text(target))
     except (OSError, json.JSONDecodeError):
         return None
     if not isinstance(raw, dict):
