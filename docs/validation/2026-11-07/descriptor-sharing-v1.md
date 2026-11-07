@@ -4,7 +4,8 @@ Fix `3d1866d5` lets a service or hook client finish reading its original
 descriptor while the owner publishes a replacement. Later readers see the
 new descriptor. All 120 focused checks pass, including 12 new cases, and
 strict type checks pass for Windows and Linux. Installed CLI/MCP checks also pass with real BGE embeddings. The fresh
-full regression is pending.
+[full regression](full-regression-descriptor-sharing-v1.md) passes 3,560
+cases with four platform skips.
 
 Both descriptor consumers now open Windows files with read, write and
 delete sharing. The writer first uses the existing replacement operation.
