@@ -6,10 +6,12 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
+import mnemos.types as types_module
 from mnemos.benchmark import (
     BenchmarkDocument,
     BenchmarkQuery,
@@ -25,6 +27,26 @@ from mnemos.benchmark import (
     run_retrieval_benchmark,
 )
 from mnemos.types import MemoryChunk
+
+
+def test_chronological_benchmark_is_independent_of_clock_resolution(monkeypatch) -> None:
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 1, 1, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(types_module, "datetime", FrozenDateTime)
+    path = Path("benchmarks/datasets/contradiction-update-v1.jsonl")
+    documents = load_documents(path)
+    result = run_retrieval_benchmark(
+        store_type="memory",
+        retriever="engine",
+        top_k=1,
+        documents=documents,
+        queries=_load_queries(path, documents),
+    )
+
+    assert result["mrr"] == 1.0
 
 
 def test_compute_retrieval_metrics_recall_mrr_and_p95() -> None:

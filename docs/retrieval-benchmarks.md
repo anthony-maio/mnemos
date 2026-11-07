@@ -28,6 +28,11 @@ Retriever modes:
 
 `baseline` is intentionally scope-agnostic by default so scoped retrieval value is visible in cross-project benchmarks. To make baseline scope-aware for strict apples-to-apples runs, pass `--baseline-scope-aware`.
 
+Documents are treated as chronological observations in dataset order, with timestamps
+one second apart for both retrievers. Timestamp assignment happens during ingestion,
+outside retrieval timing, so clock resolution and storage speed cannot collapse the
+old/new observations used by the recency datasets.
+
 The report includes a `comparisons` section with per-store deltas:
 - `delta_engine_minus_baseline.recall_at_k`
 - `delta_engine_minus_baseline.mrr`

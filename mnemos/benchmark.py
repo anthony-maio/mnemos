@@ -16,6 +16,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -566,11 +567,16 @@ async def _run_engine_roundtrip(
     top_k: int,
 ) -> tuple[dict[str, str], list[list[str]], list[set[str]], list[float]]:
     id_map: dict[str, str] = {}
-    for doc in documents:
+    # Dataset order represents observation order, independent of clock resolution
+    # and the time each storage backend takes to ingest a document.
+    timeline_start = datetime.now(timezone.utc) - timedelta(seconds=len(documents))
+    for index, doc in enumerate(documents):
+        observed_at = timeline_start + timedelta(seconds=index)
         result = await engine.process(
             Interaction(
                 role="user",
                 content=doc.content,
+                timestamp=observed_at,
                 metadata={"source": "benchmark", "benchmark_id": doc.id},
             ),
             scope=doc.scope,
@@ -578,6 +584,9 @@ async def _run_engine_roundtrip(
         )
         if not result.stored or result.chunk is None:
             raise RuntimeError(f"Engine failed to store benchmark document: {doc.id}")
+        result.chunk.created_at = observed_at
+        result.chunk.updated_at = observed_at
+        engine.store.update(result.chunk.id, result.chunk)
         id_map[doc.id] = result.chunk.id
 
     retrieved_ids: list[list[str]] = []
@@ -809,7 +818,9 @@ def run_retrieval_benchmark(
         if not document_embeddings:
             raise ValueError("Unable to generate document embeddings.")
         id_map: dict[str, str] = {}
-        for doc, embedding in zip(documents, document_embeddings):
+        timeline_start = datetime.now(timezone.utc) - timedelta(seconds=len(documents))
+        for index, (doc, embedding) in enumerate(zip(documents, document_embeddings)):
+            observed_at = timeline_start + timedelta(seconds=index)
             store_id = _benchmark_store_id(doc.id)
             id_map[doc.id] = store_id
             metadata: dict[str, Any] = {"source": "benchmark", "scope": doc.scope}
@@ -821,6 +832,8 @@ def run_retrieval_benchmark(
                     content=doc.content,
                     embedding=embedding,
                     metadata=metadata,
+                    created_at=observed_at,
+                    updated_at=observed_at,
                 )
             )
         ingest_seconds = time.perf_counter() - ingest_start

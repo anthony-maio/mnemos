@@ -21,6 +21,7 @@ Last updated: **March 12, 2026**
 
 ## Known Caveats
 
+- The server uses the MCP Python SDK 1.x API. The `mcp`, `all`, and `dev` extras require `mcp>=1.0.0,<2.0.0`; MCP 2.x requires a separate migration.
 - Tier 2 hosts may differ in MCP UX and timeout defaults.
 - Tier 1 checked-in config files are intentionally minimal and runnable from source or an installed package; replace `mock`/`simple` providers with `ollama`, `openai`, or `openclaw` for real usage.
 - Claude Code is the only host with shipped deterministic auto-capture hooks today.
