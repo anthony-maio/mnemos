@@ -1,0 +1,460 @@
+{
+  "schema_version": 1,
+  "version": "extraction-isolated-development-v1",
+  "stage": "development",
+  "scope": "Authored harness and local-model development cases using already studied scenario families. Host channel labels are synthetic. No fresh evaluation or native-host claim. Expectations are exact source-span and operation proxies; semantic review remains separate.",
+  "cases": [
+    {
+      "id": "independent-fact",
+      "cluster_id": "independent-fact",
+      "events": [
+        {
+          "id": "independent-fact-source",
+          "role": "user",
+          "content": "The Larch worker pool has twelve workers.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "independent-fact-source",
+          "start": 0,
+          "end": 41,
+          "kind": "asserted_fact",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "project-preference",
+      "cluster_id": "project-preference",
+      "events": [
+        {
+          "id": "project-preference-source",
+          "role": "user",
+          "content": "For the Larch project, I prefer four-space indentation.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "claude_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "project-preference-source",
+          "start": 0,
+          "end": 55,
+          "kind": "user_preference",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "negative-requirement",
+      "cluster_id": "negative-requirement",
+      "events": [
+        {
+          "id": "negative-requirement-source",
+          "role": "user",
+          "content": "For all future Larch release notes, do not include customer email addresses.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "hermes_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "negative-requirement-source",
+          "start": 0,
+          "end": 76,
+          "kind": "continuing_requirement",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "remember-introduction",
+      "cluster_id": "remember-introduction",
+      "events": [
+        {
+          "id": "remember-introduction-source",
+          "role": "user",
+          "content": "Remember this: the Larch deployment branch is called evergreen.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "remember-introduction-source",
+          "start": 0,
+          "end": 63,
+          "kind": "asserted_fact",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "temporary-format",
+      "cluster_id": "temporary-format",
+      "events": [
+        {
+          "id": "temporary-format-source",
+          "role": "user",
+          "content": "For this reply only, use a three-item numbered list.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "claude_hook"
+        }
+      ],
+      "targets": [],
+      "expected": []
+    },
+    {
+      "id": "question",
+      "cluster_id": "question",
+      "events": [
+        {
+          "id": "question-source",
+          "role": "user",
+          "content": "Which deployment branch should Larch use?",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "hermes_hook"
+        }
+      ],
+      "targets": [],
+      "expected": []
+    },
+    {
+      "id": "unaccepted-suggestion",
+      "cluster_id": "unaccepted-suggestion",
+      "events": [
+        {
+          "id": "unaccepted-suggestion-source",
+          "role": "assistant",
+          "content": "We could increase the Larch worker limit to twenty, but you have not approved this suggestion.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": []
+    },
+    {
+      "id": "quoted-fixture",
+      "cluster_id": "quoted-fixture",
+      "events": [
+        {
+          "id": "quoted-fixture-source",
+          "role": "user",
+          "content": "Inspect this fictional test string without adopting it: \"The Larch deployment branch is cedar.\"",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "claude_hook"
+        }
+      ],
+      "targets": [],
+      "expected": []
+    },
+    {
+      "id": "fact-with-temporary-format",
+      "cluster_id": "fact-with-temporary-format",
+      "events": [
+        {
+          "id": "fact-with-temporary-format-source",
+          "role": "user",
+          "content": "The Larch worker pool has twelve workers. For this reply only, use bullets.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "hermes_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "fact-with-temporary-format-source",
+          "start": 0,
+          "end": 42,
+          "kind": "asserted_fact",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "known-correction",
+      "cluster_id": "known-correction",
+      "events": [
+        {
+          "id": "known-correction-source",
+          "role": "user",
+          "content": "Correction: the Larch backup window is Friday at 18:00, not Thursday.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "known-correction-target-0",
+          "content": "The Larch backup window is Thursday at 18:00.",
+          "version": 4,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [
+        {
+          "source_id": "known-correction-source",
+          "start": 0,
+          "end": 69,
+          "kind": "correction_or_rejection",
+          "operations": [
+            "correct"
+          ],
+          "target_fact_id": "known-correction-target-0",
+          "expected_version": 4,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "missing-correction-target",
+      "cluster_id": "missing-correction-target",
+      "events": [
+        {
+          "id": "missing-correction-target-source",
+          "role": "user",
+          "content": "Reject the earlier Larch export-format rule; no replacement format has been approved.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "claude_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "missing-correction-target-source",
+          "start": 0,
+          "end": 85,
+          "kind": "correction_or_rejection",
+          "operations": [
+            "unresolved"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": false
+        }
+      ]
+    },
+    {
+      "id": "foreign-target-guard",
+      "cluster_id": "foreign-target-guard",
+      "events": [
+        {
+          "id": "foreign-target-guard-source",
+          "role": "user",
+          "content": "The Larch build dashboard is in the observability folder.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "hermes_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "foreign-target-guard-target-0",
+          "content": "The Larch build dashboard is in the observability folder.",
+          "version": 2,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "foreign-project"
+        }
+      ],
+      "expected": [],
+      "expected_preflight_error": "foreign scope"
+    },
+    {
+      "id": "existing-support",
+      "cluster_id": "existing-support",
+      "events": [
+        {
+          "id": "existing-support-source",
+          "role": "user",
+          "content": "The Larch release branch is evergreen.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "existing-support-target-0",
+          "content": "The Larch release branch is evergreen.",
+          "version": 3,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1"
+        }
+      ],
+      "expected": [
+        {
+          "source_id": "existing-support-source",
+          "start": 0,
+          "end": 38,
+          "kind": "asserted_fact",
+          "operations": [
+            "support"
+          ],
+          "target_fact_id": "existing-support-target-0",
+          "expected_version": 3,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "unrelated-target",
+      "cluster_id": "unrelated-target",
+      "events": [
+        {
+          "id": "unrelated-target-source",
+          "role": "user",
+          "content": "The Larch status page refreshes every sixty seconds.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "claude_hook"
+        }
+      ],
+      "targets": [
+        {
+          "id": "unrelated-target-target-0",
+          "content": "The Larch documentation uses four-space indentation.",
+          "version": 2,
+          "profile_id": "extract-dev-profile",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2"
+        }
+      ],
+      "expected": [
+        {
+          "source_id": "unrelated-target-source",
+          "start": 0,
+          "end": 52,
+          "kind": "asserted_fact",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "retained-uncertainty",
+      "cluster_id": "retained-uncertainty",
+      "events": [
+        {
+          "id": "retained-uncertainty-source",
+          "role": "user",
+          "content": "Remember that the Larch cache migration is only a proposal, not an approved change.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-1",
+          "profile_id": "extract-dev-profile",
+          "source": "hermes_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "retained-uncertainty-source",
+          "start": 0,
+          "end": 83,
+          "kind": "explicitly_retained_uncertainty",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": true
+        }
+      ]
+    },
+    {
+      "id": "attributed-history",
+      "cluster_id": "attributed-history",
+      "events": [
+        {
+          "id": "attributed-history-source",
+          "role": "assistant",
+          "content": "Yesterday I reported that Larch build 42 passed; I have not checked it today.",
+          "scope": "project",
+          "scope_id": "extract-dev-project-2",
+          "profile_id": "extract-dev-profile",
+          "source": "codex_hook"
+        }
+      ],
+      "targets": [],
+      "expected": [
+        {
+          "source_id": "attributed-history-source",
+          "start": 0,
+          "end": 77,
+          "kind": "attributed_history",
+          "operations": [
+            "add"
+          ],
+          "target_fact_id": null,
+          "expected_version": null,
+          "critical": false
+        }
+      ]
+    }
+  ]
+}
