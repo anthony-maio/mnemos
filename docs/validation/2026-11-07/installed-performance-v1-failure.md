@@ -24,10 +24,13 @@ after insertion and reopening. It reused one recorded real vector and made
 zero new embedding calls. The V2 wrapper hash is
 `dff8eeb91cf9e06e35e38b661d350872a47001c0f77a999674efd2c50789e21c`.
 
-V2 will use a new disposable runtime with the original 10,000-fact workload,
+V2 used a new disposable runtime with the original 10,000-fact workload,
 sample counts, complete command timers and 500 ms/100 ms thresholds. The failed
 V1 database will not be changed or counted as a completed measurement. Product
 source, live configuration and the inactive pilot are unchanged.
+
+V2 subsequently stopped on a separate Windows process-ownership assumption
+before collecting timings. See the [V2 failure record](installed-performance-v2-failure.md).
 
 - [Failure receipt](installed-performance-v1-failure-receipt.json)
 - [Original protocol](../../plans/2026-11-07-installed-performance-v1.md)
