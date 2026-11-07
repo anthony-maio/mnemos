@@ -469,7 +469,7 @@ The managed service exposes these tools:
 | `mnemos_forget` | Apply an expected-version suppression to a stored fact |
 | `mnemos_stats` | Report service health and scoped store statistics |
 | `mnemos_health` | Profile readiness and dependency diagnostics |
-| `mnemos_inspect` | Full details on a specific memory chunk |
+| `mnemos_inspect` | Inspect a fact and its evidence using `fact_id`; the legacy `chunk_id` name is also supported |
 | `mnemos_list` | List all stored memories |
 
 Readiness check:

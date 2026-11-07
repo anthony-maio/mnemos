@@ -745,3 +745,15 @@ No historical archive is removed or rewritten.
   All 39 focused MCP checks, strict type checking and formatting pass. This
   product change still needs installed and native validation; the earlier full
   suite remains bound to its original source. The pilot remains inactive.
+- [Codex v10](../validation/2026-11-07/native-codex-v10.md) verifies the new
+  `acc7a317` wheel in an isolated installation and passes four native phases
+  with 12 correlated calls and complete inventories. Three native inspections
+  use `fact_id` successfully. Forgetting fails after two preview requests omit
+  `expected_version`, including one failed code cell. The host subsequently
+  supplies version two and commits deletion, but strict acceptance remains
+  failed; final restart and source replay are unrun. The audit confirms the
+  argument errors, retained controls and database absence, preserving its
+  initial Windows newline-accounting failure and correction. All 732 archive
+  files verify, and all ten recorded process identities are absent. Improve
+  discovery of the required preview version without removing its stale-state
+  guard or changing this result. No live configuration or pilot day changed.
