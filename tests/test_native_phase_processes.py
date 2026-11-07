@@ -65,7 +65,10 @@ def test_codex_exec_requires_terminal_identity_and_removes_auth(
             assert kwargs["stdin"] == subprocess.DEVNULL
             assert "--json" in command and "--ask-for-approval" in command
             assert command[command.index("--ask-for-approval") + 1] == "never"
-            for feature in ("code_mode_host", "shell_tool", "apps", "multi_agent", "memories"):
+            assert command[command.index("code_mode_host") - 1] == "--enable"
+            trace_root = Path(kwargs["env"]["CODEX_ROLLOUT_TRACE_ROOT"])
+            assert trace_root.is_relative_to(config.root / "codex-exec") and trace_root.is_dir()
+            for feature in ("shell_tool", "apps", "multi_agent", "memories"):
                 assert command[command.index(feature) - 1] == "--disable"
             assert 'mcp_servers.mnemos.enabled_tools=["mnemos_retrieve"]' in command
             assert 'cli_auth_credentials_store="file"' in command

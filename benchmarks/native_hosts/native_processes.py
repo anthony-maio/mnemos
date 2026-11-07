@@ -524,7 +524,6 @@ def run_codex_exec_phase(
         raise ValueError("Codex authentication must use the auth.json filename")
     directory = _phase_root(config, phase)
     disabled = (
-        "code_mode_host",
         "shell_tool",
         "shell_snapshot",
         "unified_exec",
@@ -548,6 +547,8 @@ def run_codex_exec_phase(
         str(executable),
         "--ask-for-approval",
         "never",
+        "--enable",
+        "code_mode_host",
         *(value for feature in disabled for value in ("--disable", feature)),
         "-c",
         'web_search="disabled"',
@@ -587,6 +588,12 @@ def run_codex_exec_phase(
     try:
         codex_home, env = _prepare_codex(config, directory, phase)
         result["home"] = str(codex_home)
+        trace_root = directory / "rollout-trace"
+        trace_root.mkdir()
+        _private(trace_root)
+        env["CODEX_ROLLOUT_TRACE_ROOT"] = str(trace_root.resolve())
+        env["PATH"] = str(executable.parent) + os.pathsep + env.get("PATH", "")
+        result["rollout_trace_root"] = str(trace_root.resolve())
         auth = _auth_copy(auth_source, codex_home, config.root)
         with (
             (directory / "stdout.jsonl").open("wb") as stdout,

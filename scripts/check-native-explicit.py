@@ -32,6 +32,7 @@ MODEL = "claude-sonnet-4-6"
 CODEX_MODEL = "gpt-6-astra"
 CODEX_VERSION = "codex-cli 0.164.0-alpha.11.1"
 CODEX_BINARY_SHA256 = "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098"
+CODE_MODE_BINARY_SHA256 = "2727abaa2b30eb4afbe64b1da51a26cb594dd18dda82c6292b5373b15a758257"
 PROFILE = "native-explicit-20261106"
 INPUTS = (
     "scripts/check-native-explicit.py",
@@ -240,6 +241,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         (
             "docs/plans/2026-11-06-native-codex-explicit-v1.md",
             "docs/plans/2026-11-06-native-codex-runtime-v2.md",
+            "docs/plans/2026-11-06-native-codex-code-mode-v3.md",
         )
         if host == "codex"
         else ()
@@ -260,6 +262,11 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
     host_digest = sha(executable)
     if host == "codex" and host_digest != CODEX_BINARY_SHA256:
         raise ValueError("Native Codex binary differs from the frozen runtime")
+    code_mode_digest = None
+    if host == "codex":
+        code_mode_digest = sha(executable.with_name("codex-code-mode-host.exe"))
+        if code_mode_digest != CODE_MODE_BINARY_SHA256:
+            raise ValueError("Native Code Mode binary differs from the frozen runtime")
     return {
         "source_commit": args.source_commit,
         "runner_commit": runner_commit,
@@ -269,6 +276,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "python": sys.version,
         "host_version": host_version,
         "host_executable_sha256": host_digest,
+        "code_mode_executable_sha256": code_mode_digest,
         "host": host,
         "model": CODEX_MODEL if host == "codex" else MODEL,
         "authentication_preflight": authentication,
