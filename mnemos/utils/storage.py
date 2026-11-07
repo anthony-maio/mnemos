@@ -964,9 +964,12 @@ class SQLiteStore(MemoryStore):
             # source_id and aborts the entire write transaction. The target IDs are
             # already filtered by the existing_targets query below — this adds the
             # symmetric guard for the source.
-            if neighbors and not self._conn.execute(
-                "SELECT 1 FROM memory_chunks WHERE id = ?", (chunk_id,)
-            ).fetchone():
+            if (
+                neighbors
+                and not self._conn.execute(
+                    "SELECT 1 FROM memory_chunks WHERE id = ?", (chunk_id,)
+                ).fetchone()
+            ):
                 self._conn.commit()
                 return
 
