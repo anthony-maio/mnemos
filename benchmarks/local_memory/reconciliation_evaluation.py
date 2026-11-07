@@ -124,6 +124,17 @@ def grade_reconciliation(
 
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
+    from .model_binding import select_model, verify_runtime_binding
+    from mnemos.utils.llm import validate_ollama_sampling
+
+    binding = select_model(
+        getattr(args, "model", None),
+        getattr(args, "model_digest", None),
+        getattr(args, "model_blob_sha256", None),
+    )
+    study_model = binding.name if binding else MODEL
+    study_digest = binding.digest if binding else MODEL_DIGEST
+    sampling = validate_ollama_sampling(getattr(args, "sampling_options", None))
     treatments = getattr(args, "treatments", "prompt_v1")
     if treatments not in {
         "prompt_v1",
@@ -132,6 +143,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "decoder_v4",
         "referent_v5",
         "relations_v6",
+        "referent_only_v7",
     }:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
@@ -149,7 +161,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         }
     if treatments == "referent_v5":
         arms = {"direct_full": ("direct", False), "identity_v1": None, "referent_v5": None}
-    if treatments == "relations_v6":
+    if treatments in {"relations_v6", "referent_only_v7"}:
         arms = {"referent_v5": None}
     decoder_modes: dict[str, DecoderMode] = {}
     if treatments == "decoder_v4":
@@ -164,7 +176,13 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         arm: {"think": arm == "direct_chat_on", "force_chat": arm.startswith("direct_chat_")}
         for arm in arms
     }
-    extended_limits = treatments in {"reasoning_v3", "decoder_v4", "referent_v5", "relations_v6"}
+    extended_limits = treatments in {
+        "reasoning_v3",
+        "decoder_v4",
+        "referent_v5",
+        "relations_v6",
+        "referent_only_v7",
+    }
     output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
     provider_timeout = 90 if extended_limits else 30
@@ -203,9 +221,14 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     async with httpx.AsyncClient(trust_env=False, timeout=10) as client:
         response = await client.get(args.endpoint + "/api/tags")
         response.raise_for_status()
-        model = next(item for item in response.json()["models"] if item["name"] == MODEL)
-        if model["digest"] != MODEL_DIGEST:
+        model = next(item for item in response.json()["models"] if item["name"] == study_model)
+        if model["digest"] != study_digest:
             raise ValueError("Installed model digest differs from protocol")
+        runtime_binding = (
+            await verify_runtime_binding(client, args.endpoint, args.tokenizer_url, binding)
+            if binding
+            else None
+        )
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     manifest = {
@@ -220,8 +243,10 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "source_sha256": {p.relative_to(root).as_posix(): sha(p) for p in sources},
         "dataset_sha256": sha(dataset),
         "protocol_sha256": sha(protocol),
-        "model": MODEL,
-        "model_digest": MODEL_DIGEST,
+        "model": study_model,
+        "model_digest": study_digest,
+        "runtime_binding": runtime_binding,
+        "sampling_options": sampling,
         "temperature": 0,
         "provider_options": provider_options,
         "decoder_modes": decoder_modes,
@@ -250,6 +275,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         timeout=provider_timeout,
         max_tokens=output_allowance,
         max_input_tokens=input_allowance,
+        model=study_model,
+        sampling_options=sampling,
     )
     observations = []
     try:
@@ -339,6 +366,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         for name, digest in manifest["source_sha256"].items():
             if sha(root / name) != digest:
                 raise RuntimeError("Bound source changed during evaluation")
+        if binding:
+            async with httpx.AsyncClient(trust_env=False, timeout=10) as client:
+                manifest["runtime_binding_after"] = await verify_runtime_binding(
+                    client, args.endpoint, args.tokenizer_url, binding
+                )
         if (
             sha(dataset) != manifest["dataset_sha256"]
             or sha(protocol) != manifest["protocol_sha256"]
@@ -369,6 +401,10 @@ def main() -> None:
     for name in ("dataset", "dataset-sha256", "protocol", "output", "endpoint", "tokenizer-url"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--source-root", default=".")
+    parser.add_argument("--model")
+    parser.add_argument("--model-digest")
+    parser.add_argument("--model-blob-sha256")
+    parser.add_argument("--sampling-options", type=json.loads)
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
     parser.add_argument(
         "--treatments",
@@ -379,6 +415,7 @@ def main() -> None:
             "decoder_v4",
             "referent_v5",
             "relations_v6",
+            "referent_only_v7",
         ),
         default="prompt_v1",
     )

@@ -17,12 +17,13 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import os
 import re
 import ssl
 import threading
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, Literal, cast
 
 import httpx
@@ -34,6 +35,44 @@ from .reliability import (
     RetryPolicy,
     call_with_async_retry,
 )
+
+
+def validate_ollama_sampling(options: object) -> dict[str, int | float]:
+    """Copy supported sampling controls; never forward resource or routing options."""
+    if options is None:
+        return {}
+    if not isinstance(options, Mapping):
+        raise ValueError("Ollama sampling options must be a mapping")
+    allowed = {
+        "seed",
+        "top_k",
+        "top_p",
+        "min_p",
+        "repeat_penalty",
+        "presence_penalty",
+        "frequency_penalty",
+    }
+    result: dict[str, int | float] = {}
+    for name, value in options.items():
+        if name not in allowed or type(value) not in (int, float):
+            raise ValueError("Unknown or non-numeric Ollama sampling option")
+        try:
+            finite = math.isfinite(value)
+        except OverflowError:
+            finite = False
+        valid = finite
+        if name in {"seed", "top_k"}:
+            valid = (
+                valid and type(value) is int and (-1 if name == "seed" else 0) <= value <= 2**31 - 1
+            )
+        elif name in {"top_p", "min_p"}:
+            valid = valid and 0 <= value <= 1
+        elif name == "repeat_penalty":
+            valid = valid and value >= 0
+        if not valid:
+            raise ValueError("Invalid Ollama sampling option value")
+        result[name] = value
+    return result
 
 
 def _provider_name_from_base_url(base_url: str) -> str:
@@ -243,6 +282,9 @@ class OllamaProvider(LLMProvider):
             unchanged; booleans and documented reasoning levels are supported.
         force_chat: Use the chat route even without structured reasoning.
             False preserves automatic route selection.
+        sampling_options: Optional seed, top_k, top_p, min_p, repeat_penalty,
+            presence_penalty and frequency_penalty. A per-call mapping replaces
+            this mapping; explicit None clears it. Omitted controls keep Ollama defaults.
     """
 
     supports_structured_output = True
@@ -259,6 +301,7 @@ class OllamaProvider(LLMProvider):
         *,
         think: bool | Literal["low", "medium", "high", "max"] | None = None,
         force_chat: bool = False,
+        sampling_options: Mapping[str, int | float] | None = None,
     ) -> None:
         if type(force_chat) is not bool:
             raise ValueError("force_chat must be a boolean")
@@ -269,6 +312,7 @@ class OllamaProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.think = _validate_ollama_think(think)
         self.force_chat = force_chat
+        self.sampling_options = validate_ollama_sampling(sampling_options)
         self.response_observer = response_observer
         self._default_trust_context: ssl.SSLContext | None = None
         self._trust_context_lock = threading.Lock()
@@ -307,6 +351,7 @@ class OllamaProvider(LLMProvider):
         """
         temperature = kwargs.get("temperature", self.temperature)
         max_tokens = kwargs.get("max_tokens", self.max_tokens)
+        sampling = validate_ollama_sampling(kwargs.get("sampling_options", self.sampling_options))
         think = _validate_ollama_think(kwargs.get("think", self.think))
         force_chat = kwargs.get("force_chat", self.force_chat)
         if type(force_chat) is not bool:
@@ -326,6 +371,7 @@ class OllamaProvider(LLMProvider):
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
+                **sampling,
             },
         }
         if use_chat:

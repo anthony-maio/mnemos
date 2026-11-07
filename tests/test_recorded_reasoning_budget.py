@@ -37,6 +37,8 @@ async def test_reasoning_route_and_budget_are_recorded_with_final_text(
         "max_tokens": 4096,
         "timeout": 90,
         "max_input_tokens": 3584,
+        "model": "qwen3:14b",
+        "sampling_options": {},
     }
     assert [url for url, _ in requests] == ["http://counter/tokenize", "http://local/api/chat"]
     assert requests[1][1]["options"]["num_predict"] == 4096

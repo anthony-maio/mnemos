@@ -111,19 +111,22 @@ class RecordedProvider(OllamaProvider):
         timeout: float = 30,
         max_tokens: int = 2048,
         max_input_tokens: int = 5632,
+        model: str = MODEL,
+        sampling_options: dict[str, int | float] | None = None,
     ) -> None:
         if any(type(value) is not int or value < 1 for value in (max_tokens, max_input_tokens)):
             raise ValueError("Study input and output allowances must be positive integers")
         if max_input_tokens + max_tokens + 512 > 8192:
             raise ValueError("Input, output and template allowances exceed the study context")
         super().__init__(
-            model=MODEL,
+            model=model,
             base_url=endpoint,
             timeout=timeout,
             temperature=0,
             max_tokens=max_tokens,
             think=False,
             response_observer=self.observe,
+            sampling_options=sampling_options,
         )
         self.output = output
         self.tokenizer_url = tokenizer_url
@@ -173,6 +176,8 @@ class RecordedProvider(OllamaProvider):
                 "max_tokens": kwargs.get("max_tokens", self.max_tokens),
                 "timeout": self.timeout,
                 "max_input_tokens": self.max_input_tokens,
+                "model": self.model,
+                "sampling_options": kwargs.get("sampling_options", self.sampling_options),
             },
         }
         append(self.output / "provider-requests.jsonl", record)
@@ -182,6 +187,8 @@ class RecordedProvider(OllamaProvider):
         counting_text = prompt + json.dumps(kwargs.get("format", {}), ensure_ascii=True)
         started = time.perf_counter()
         try:
+            if kwargs.get("model", self.model) != self.model:
+                raise ValueError("Model override would invalidate the bound study tokenizer")
             requested_output = kwargs.get("max_tokens", self.max_tokens)
             if (
                 type(requested_output) is not int
