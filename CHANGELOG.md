@@ -2,6 +2,8 @@
 
 ## Unreleased improvements -- 2026-11-06
 
+- Forget-review guidance now covers advisory paraphrases and eligible source captures with no derived facts, including deferred captures. Required candidate sources are only a minimum dependency set. Extraction-review tools identify their separate purpose; selection and deletion protections are unchanged.
+- Native Claude validation now explicitly denies installed tools outside each phase and requires the advertised startup catalog to match the phase allowlist. Earlier failed attempts retain their results; this runner change still needs native validation.
 - Large MCP forget previews now return lossless pages capped at 12,000 bytes including the native JSON string wrapper. Digest-bound short fact/source references reduce ID transcription errors; existing storage deletion guards still apply. Native acceptance of the paged workflow remains pending.
 - Related-forget descriptions now distinguish additional selectable source events from the target-linked cleanup already included in deletion. MCP parameter schemas and operating guidance identify the eligible preview fields. Preview and deletion checks are unchanged.
 

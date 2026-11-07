@@ -552,6 +552,51 @@ def _run_claude(config, source, **kwargs):
     )
 
 
+def test_claude_denies_every_installed_tool_outside_the_phase(config, tmp_path, monkeypatch):
+    import asyncio
+
+    from mnemos.mcp_server import _create_service_mcp_server
+
+    source = tmp_path / ".credentials.json"
+    source.write_text("synthetic credential")
+    catalog = {
+        phases.CLAUDE_PREFIX + tool.name
+        for tool in asyncio.run(_create_service_mcp_server().list_tools())
+    }
+    allowed = {phases.CLAUDE_PREFIX + "mnemos_retrieve"}
+    assert phases.CLAUDE_PREFIX + "mnemos_reviews" in catalog - allowed
+
+    def launch(command, **kwargs):
+        assert command[command.index("--tools") + 1] == ""
+        assert set(command[command.index("--allowed-tools") + 1].split(",")) == allowed
+        denied = set(command[command.index("--disallowed-tools") + 1].split(","))
+        assert denied == catalog - allowed
+        assert not denied & allowed
+        return FakeProcess()
+
+    monkeypatch.setattr(phases.subprocess, "Popen", launch)
+    result = _run_claude(config, source)
+    assert set(result["catalog_tools"]) == catalog
+    assert set(result["disallowed_tools"]) == catalog - allowed
+    assert result["auth_copy_removed"] is True
+
+
+@pytest.mark.parametrize(
+    "names", [[], ["mnemos_reviews"], ["mnemos_retrieve"] * 2, ["Bash"], [None]]
+)
+def test_claude_catalog_failure_precedes_phase_and_authentication(config, monkeypatch, names):
+    from mnemos import mcp_server
+
+    class Catalog:
+        async def list_tools(self):
+            return [SimpleNamespace(name=name) for name in names]
+
+    monkeypatch.setattr(mcp_server, "_create_service_mcp_server", Catalog)
+    with pytest.raises(ValueError, match="catalog"):
+        _run_claude(config, Path("must-not-read-credentials"))
+    assert not (config.root / "test-phase").exists()
+
+
 @pytest.mark.parametrize("failure", ["spawn", "timeout", "none"])
 def test_authentication_cleaned_on_process_failure_timeout_and_success(
     config, tmp_path, monkeypatch, failure

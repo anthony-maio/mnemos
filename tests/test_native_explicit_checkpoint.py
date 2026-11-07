@@ -41,8 +41,19 @@ def test_codex_auth_preflight_rejects_expiring_credentials_without_exposing_them
 
 
 def completed():
-    process = {"status": "completed", "auth_copy_removed": True, "session_id": "native-1"}
+    process = {
+        "status": "completed",
+        "auth_copy_removed": True,
+        "session_id": "native-1",
+        "allowed_tools": ["mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"],
+    }
     records = [
+        {
+            "type": "system",
+            "subtype": "init",
+            "session_id": "native-1",
+            "tools": process["allowed_tools"].copy(),
+        },
         {"type": "assistant", "session_id": "native-1", "message": {"model": "claude-sonnet-4-6"}},
         {
             "type": "result",
@@ -63,17 +74,52 @@ def test_native_terminal_requires_actual_model_session_and_cleanup(runner):
         lambda p, r: p.update(auth_copy_removed=False),
         lambda p, r: p.update(status="failed"),
         lambda p, r: r[0].update(session_id="another"),
-        lambda p, r: r[0]["message"].update(model="another"),
-        lambda p, r: r[1].update(is_error=True),
-        lambda p, r: r[1].update(subtype="error_max_budget_usd"),
-        lambda p, r: r[1].update(result=""),
-        lambda p, r: r.pop(0),
+        lambda p, r: r[1]["message"].update(model="another"),
+        lambda p, r: r[2].update(is_error=True),
+        lambda p, r: r[2].update(subtype="error_max_budget_usd"),
+        lambda p, r: r[2].update(result=""),
+        lambda p, r: r.pop(1),
     ]
     for mutate in mutations:
         changed_process, changed_records = deepcopy(process), deepcopy(records)
         mutate(changed_process, changed_records)
         with pytest.raises(ValueError):
             runner.verify_native_result(changed_process, changed_records)
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "missing-init",
+        "duplicate-init",
+        "extra-tool",
+        "missing-tool",
+        "duplicate-tool",
+        "invalid-tool",
+        "invalid-catalog",
+        "missing-allowlist",
+    ],
+)
+def test_native_result_requires_exact_advertised_tool_set(runner, mutation):
+    process, records = completed()
+    if mutation == "missing-init":
+        records.pop(0)
+    elif mutation == "duplicate-init":
+        records.insert(0, deepcopy(records[0]))
+    elif mutation == "extra-tool":
+        records[0]["tools"].append("mcp__plugin_mnemos-memory_mnemos__mnemos_reviews")
+    elif mutation == "missing-tool":
+        records[0]["tools"] = []
+    elif mutation == "duplicate-tool":
+        records[0]["tools"] *= 2
+    elif mutation == "invalid-tool":
+        records[0]["tools"] = [{}]
+    elif mutation == "invalid-catalog":
+        records[0]["tools"] = "mnemos_retrieve"
+    else:
+        process.pop("allowed_tools")
+    with pytest.raises(ValueError, match="advertised tool"):
+        runner.verify_native_result(process, records)
 
 
 def test_replay_uses_original_payload_and_only_committed_target_sources(runner):

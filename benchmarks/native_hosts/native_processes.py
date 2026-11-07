@@ -7,6 +7,7 @@ protocol, queue exit, and provider bindings before executing a phase.
 
 from __future__ import annotations
 
+import asyncio
 from dataclasses import dataclass
 import hashlib
 import json
@@ -683,6 +684,23 @@ def run_codex_exec_phase(
     return result
 
 
+def _claude_tool_catalog() -> frozenset[str]:
+    """Read installed tool names without entering a service/client lifespan."""
+    from mnemos.mcp_server import _create_service_mcp_server
+
+    names = [tool.name for tool in asyncio.run(_create_service_mcp_server().list_tools())]
+    if (
+        not names
+        or any(
+            not isinstance(name, str) or not re.fullmatch(r"mnemos_[a-z0-9_]+", name)
+            for name in names
+        )
+        or len(set(names)) != len(names)
+    ):
+        raise ValueError("Installed Mnemos tool catalog is malformed")
+    return frozenset(CLAUDE_PREFIX + name for name in names)
+
+
 def run_claude_phase(
     config: PhaseEnvironment,
     *,
@@ -703,6 +721,10 @@ def run_claude_phase(
         or any(name not in {CLAUDE_PREFIX + tool for tool in MCP_TOOLS} for name in allowed_tools)
     ):
         raise ValueError("Only named Mnemos tools may be enabled")
+    catalog = _claude_tool_catalog()
+    if not set(allowed_tools) <= catalog:
+        raise ValueError("A required phase tool is absent from the installed catalog")
+    disallowed_tools = sorted(catalog - set(allowed_tools))
     directory = _phase_root(config, phase)
     home = directory / "claude-home"
     home.mkdir()
@@ -737,6 +759,7 @@ def run_claude_phase(
         "",
         "--allowed-tools",
         ",".join(allowed_tools),
+        *(["--disallowed-tools", ",".join(disallowed_tools)] if disallowed_tools else []),
         "--disable-slash-commands",
         "--permission-mode",
         "default",
@@ -759,6 +782,8 @@ def run_claude_phase(
         "command": command[:-1] + ["<synthetic phase prompt>"],
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "allowed_tools": allowed_tools,
+        "catalog_tools": sorted(catalog),
+        "disallowed_tools": disallowed_tools,
         "max_seconds": max_seconds,
         "max_budget_usd": max_budget_usd,
     }

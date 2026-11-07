@@ -45,6 +45,15 @@ included: do not add `target.source_event_ids` or `target.affected_sources` to
 `selected_source_event_ids`. Report the returned deletion coverage and any
 retained records; committed status alone does not prove complete erasure.
 
+Review advisory candidates for paraphrases and formatted quotations of the
+requested information, not just exact matches. Review each eligible source
+independently: deferred captures and sources with no derived facts still retain
+their text. Required candidate sources are only a minimum dependency set.
+Select relevant source-only captures too, preserving unrelated information and
+the user's scope. Shared sources require selecting all their derived facts.
+Zero retained exact copies does not establish complete deletion. The
+automatic-extraction review queue is separate from forget review.
+
 ## Retrieval quality guidance
 
 - Use a real embedding provider for production quality.

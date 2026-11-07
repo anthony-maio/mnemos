@@ -721,24 +721,26 @@ def _register_service_tools(mcp: Any) -> None:
             Field(description="Copy review.next_cursor to read the next page of the same preview."),
         ] = None,
     ) -> str:
-        """Read-only preview of related facts and source events before a reviewed forget.
+        """Read-only review of related facts and raw source captures before forgetting.
 
-        The bounded preview includes exact current or historical assertion
-        matches and, when indexed vectors are available, advisory similarity
-        candidates from the same project and profile. Similarity results are
-        not exhaustive and are never selected automatically. Applying the
-        preview always removes the target fact and its linked evidence
-        cleanup. Only additional related facts or source events require
-        explicit reviewed selections; stale previews must be regenerated. No
-        other facts are deleted automatically.
-        Copy the returned apply_preconditions fields unchanged into
-        mnemos_forget_related, then add explicitly reviewed selections.
-        Select additional facts from candidates and additional source events
-        only from the top-level source_events entries with selection_allowed
-        set to true. target.source_event_ids and target.affected_sources describe
-        cleanup already included with the target; do not copy those source IDs
-        into selected_source_event_ids. Include each selected candidate's
-        required_source_event_ids from the eligible top-level source events.
+        Review candidates for the information the user asked to forget, including
+        historical versions, paraphrases and formatted quotations. match_type is
+        a search hint, not a deletion decision: similarity candidates can contain
+        that information even when exact assertions do not match. Inspect each
+        additional selected fact with mnemos_inspect. Keep unrelated information.
+        Review top-level source_events independently of the candidate list.
+        An eligible source can retain the requested information with no derived
+        facts or with status=deferred. Required candidate sources are a minimum,
+        not the complete source selection. Select relevant eligible sources even
+        when derived_fact_ids is empty; shared sources require selecting all
+        their derived facts. Never select a source with selection_allowed=false.
+        Select only records within the user's requested deletion scope.
+        The preview searches the same project and profile. Indexed similarity
+        candidates are advisory and not exhaustive. Nothing selects records
+        automatically. The target and its linked cleanup are already included:
+        do not select target.source_event_ids or target.affected_sources again.
+        Additional source selections must come from eligible source_events.
+        Include each selected candidate's required_source_event_ids or refs.
         Large previews return lossless fragments with paths into the snapshot
         and character offsets for long text. Read every page in order by passing
         review.next_cursor with the same fact_id, expected_version and limit.
@@ -747,6 +749,9 @@ def _register_service_tools(mcp: Any) -> None:
         Prefer candidates' f-prefixed selection_ref values and eligible sources'
         s-prefixed selection_ref values when applying. Required source refs must
         also be reviewed and explicitly selected. References belong to this digest.
+        Copy apply_preconditions unchanged into mnemos_forget_related and add
+        the reviewed selections. Forget review uses this tool and mnemos_inspect;
+        the automatic-extraction review queue is a separate workflow.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
         if service_context.scope.project_id is None:
@@ -788,6 +793,7 @@ def _register_service_tools(mcp: Any) -> None:
                 description=(
                     "Only additional reviewed source_event_id values from the preview's "
                     "top-level source_events entries with selection_allowed=true. "
+                    "Review sources independently, including deferred captures with no derived facts. "
                     "Do not copy target.source_event_ids or target.affected_sources here: "
                     "their cleanup is already included with the target."
                 )
@@ -804,7 +810,11 @@ def _register_service_tools(mcp: Any) -> None:
         selected_source_refs: Annotated[
             list[str] | None,
             Field(
-                description="Reviewed eligible source selection_ref values such as s1; use instead of selected_source_event_ids."
+                description=(
+                    "Reviewed eligible source selection_ref values such as s1; use instead of "
+                    "selected_source_event_ids. Include relevant source-only captures, not just "
+                    "the sources required by selected facts."
+                )
             ),
         ] = None,
     ) -> str:
@@ -819,6 +829,9 @@ def _register_service_tools(mcp: Any) -> None:
         Copy the preview's apply_preconditions fields unchanged: fact_id,
         expected_version, preview_digest, and preview_limit. Then add the
         explicitly reviewed fact and source selections.
+        Review advisory paraphrases and eligible source-only captures as well
+        as exact copies. A deferred source with no derived facts still retains
+        its text. Required candidate sources alone may leave requested content.
         For large previews, read all pages before applying. Prefer the short
         selected_fact_refs and selected_source_refs to avoid retyping long IDs.
         Do not mix refs and IDs within one selection type. Required sources are
@@ -830,8 +843,9 @@ def _register_service_tools(mcp: Any) -> None:
         target.affected_sources are not additional source selections.
         Report the returned deletion_coverage rather than inferring complete
         erasure from committed status. Its retained exact/advisory fact and
-        eligible source counts cover only the reviewed preview. Zero counts
-        do not prove exhaustive semantic erasure.
+        eligible source counts cover only the reviewed preview. Zero retained
+        exact copies does not mean advisory wording or raw captures were removed.
+        Even zero counts do not prove exhaustive semantic erasure.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_related")
         if service_context.scope.project_id is None:
@@ -912,7 +926,12 @@ def _register_service_tools(mcp: Any) -> None:
         scope: Literal["project", "workspace", "global"] = "project",
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """List extraction reviews in one resolved scope."""
+        """List pending automatic-extraction proposals in one resolved scope.
+
+        This queue is separate from related-forget review. To review existing
+        facts and source captures for deletion, use mnemos_forget_preview and
+        mnemos_inspect instead.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_reviews")
         return _service_json(
             await _service_request(
@@ -932,7 +951,10 @@ def _register_service_tools(mcp: Any) -> None:
         scope: Literal["project", "workspace", "global"] = "project",
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Inspect a pending review's source excerpt and validated provenance."""
+        """Inspect a pending extraction proposal's source excerpt and provenance.
+
+        For existing facts selected during forget review, use mnemos_inspect.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_inspect_review")
         return _service_json(
             await _service_request(

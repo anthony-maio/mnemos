@@ -124,7 +124,9 @@ def render_forget_review(preview: dict[str, Any], cursor: str | None = None) -> 
                     "continue at character offsets. Nothing is summarized. Copy next_cursor into "
                     "mnemos_forget_preview with the same fact_id, expected_version and limit. "
                     "Only the last page provides apply_preconditions for a complete snapshot. "
-                    "Use reviewed f/s selection_ref values to avoid retyping long IDs."
+                    "Use reviewed f/s selection_ref values to avoid retyping long IDs. "
+                    "Review advisory wording and every eligible source, including deferred "
+                    "sources with no derived facts."
                 ),
             },
             "fragments": fragments[first:end],

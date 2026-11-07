@@ -31,6 +31,19 @@ candidate's `required_source_refs` identifies the source selections it requires.
 A null required ref means that source is unavailable for short selection in
 this snapshot. Keep the underlying IDs for inspection and provenance.
 
+Review candidates by the information the user asked to remove. An advisory
+candidate can contain a paraphrase or formatted quotation of that information;
+its match type is a search hint, not a decision to keep it. Inspect selected
+facts and retain unrelated records.
+
+Review every additional source independently of the candidate requirements.
+A source with `derived_fact_ids=[]` or `status=deferred` still retains its text
+and can need explicit selection. A candidate's required sources are the minimum
+dependency set, not a complete list of captures containing the requested
+information. Only select eligible sources within the user's requested scope;
+shared sources require selecting all their derived facts. The extraction-review
+queue is a separate workflow and is not needed for related forgetting.
+
 After reviewing the target, selected candidates and required sources, copy
 `apply_preconditions` unchanged into `mnemos_forget_related`. Pass the chosen
 refs in `selected_fact_refs` and `selected_source_refs`. The existing ID fields
@@ -47,6 +60,9 @@ never bypass blocked-source, shared-source or incomplete-preview protections.
 Inspect the returned deletion coverage. A committed subset can leave exact
 copies, advisory candidates and source events behind. Zero retained counts
 still do not establish exhaustive semantic erasure.
+
+In particular, zero retained exact copies does not mean that paraphrases or
+source-only captures have been removed.
 
 The page and alias contract requires new native acceptance evidence. Existing
 single-preview traces and historical native passes do not prove that a host

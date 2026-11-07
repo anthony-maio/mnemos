@@ -110,6 +110,22 @@ def codex_auth_preflight(path: Path, *, now: float | None = None) -> dict[str, A
 
 
 def verify_native_result(process: dict[str, Any], rows: list[dict[str, Any]]) -> dict[str, Any]:
+    initializations = [
+        row for row in rows if row.get("type") == "system" and row.get("subtype") == "init"
+    ]
+    allowed = process.get("allowed_tools")
+    advertised = initializations[0].get("tools") if len(initializations) == 1 else None
+    if (
+        not isinstance(allowed, list)
+        or not allowed
+        or any(not isinstance(name, str) or not name for name in allowed)
+        or len(set(allowed)) != len(allowed)
+        or not isinstance(advertised, list)
+        or any(not isinstance(name, str) or not name for name in advertised)
+        or len(set(advertised)) != len(advertised)
+        or set(advertised) != set(allowed)
+    ):
+        raise ValueError("Native advertised tool set differs from the phase allowlist")
     if process.get("status") != "completed" or process.get("auth_copy_removed") is not True:
         raise ValueError("Native process or authentication cleanup failed")
     session = process["session_id"]
@@ -127,7 +143,12 @@ def verify_native_result(process: dict[str, Any], rows: list[dict[str, Any]]) ->
     models = [row.get("message", {}).get("model") for row in rows if row.get("type") == "assistant"]
     if not models or any(model != MODEL for model in models):
         raise ValueError("Native model observation differs from the requested model")
-    return {"model": MODEL, "reported_cost_usd": terminal[0].get("total_cost_usd")}
+    return {
+        "model": MODEL,
+        "reported_cost_usd": terminal[0].get("total_cost_usd"),
+        "advertised_tools": sorted(advertised),
+        "tool_catalog_verified": True,
+    }
 
 
 def original_replay_records(
