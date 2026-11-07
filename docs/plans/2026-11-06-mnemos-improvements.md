@@ -9,7 +9,7 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public PR #5 now merged, but broader rollback and caller-transaction protections remain local; integration preflight prepared |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V3's 14B checkpoint improves development abstention to 10/10; temporal false support and two timeouts remain; further development and fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V3's 14B checkpoint improves development abstention to 10/10; temporal support option implemented at c320c3ef and paired v4 comparison started; results and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP checks and all six native Codex phases passed at product 929c44a4 / runner f15bf9f5; actual two-week/two-project pilot and its remaining entry gates open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
@@ -197,3 +197,14 @@ No historical archive is removed or rewritten.
 - Next development work is temporal applicability over explicit replacement
   evidence. Separate extraction/fresh evaluation, native tokenizer integration,
   pilot preparation/use and consistent delivery remain open.
+- Product `c320c3ef` adds optional temporal applicability and scoped comparison
+  evidence, with an explicit reference date shared by both comparison arms.
+  Dependency changes invalidate the whole result, provider state is isolated
+  between calls, and repeated state counts against the request-byte budget.
+  The [preparation checkpoint](../validation/2026-11-06/answer-support-temporal-preparation.md)
+  records 80 passing focused checks, formatting, strict types and the offline
+  prompt preflight. The code remains outside production retrieval.
+- The frozen v4 comparison started from that commit, with 176 identical inputs
+  and 352 planned observations over 44 development questions. Source, labels,
+  thresholds and timeout limits remain fixed during the run. Its results are
+  pending and will be reported separately from implementation validation.
