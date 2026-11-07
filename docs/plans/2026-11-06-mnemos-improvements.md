@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent retrieval, extraction and reconciliation development runs completed; extraction v2 matches 14/15 quality cases with 8/9 critical facts; identity comparison scores 45/60 with six failures, versus legacy48/60 and direct51/60 with nine wrong targets; no variant qualifies; fresh evaluation, semantic review and persisted extraction open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent retrieval, extraction and reconciliation studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; identity and reasoning candidates fail their development gates; thinking scores 15/20 versus 17/20 for both non-thinking route controls; decoder effects, fresh quality, semantic review and persisted extraction open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
@@ -514,3 +514,15 @@ No historical archive is removed or rewritten.
   formatting and strict types passed. Model and owned-runtime cleanup passed;
   defaults, installed artifact, earlier scores and the inactive pilot remain
   unchanged. Quote constraints alone would not resolve the semantic failures.
+- The [route-controlled reasoning screen](../validation/2026-11-07/reasoning-v3.md)
+  completed 60 observations: generate/off and chat/off each scored 17/20,
+  while chat/on scored 15/20 with four wrong corrections. All responses were
+  valid and stopped normally; thinking emission was confirmed in all enabled
+  calls and absent in both controls. Median chat latency rose from 1,405 to
+  12,380 ms and generated tokens from 1,112 to 14,126. The candidate fails its
+  confirmation gate. All 134 source hashes, 20 identical input/prompt/schema
+  groups, request options and final scores verified; all 166 archive members
+  passed readback. All 107 focused tests, formatting and strict types passed.
+  Model and owned-runtime cleanup passed. Final responses sometimes describe
+  mismatched targets yet choose correction; decoder effects need investigation
+  before assuming more reasoning or another prompt decomposition will help.
