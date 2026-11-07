@@ -1,0 +1,59 @@
+{
+  "status": "prepared",
+  "source_commit": "92f9bab43d7582ec58a389c6690669c1e015b74a",
+  "protocol": "contrast_v5",
+  "batching": "all",
+  "focused_checks_passed": 96,
+  "new_contract_checks": 17,
+  "new_runner_checks": 3,
+  "preflight": {
+    "status": "offline_budget_passed",
+    "source_commit": "92f9bab43d7582ec58a389c6690669c1e015b74a",
+    "source_sha256": {
+      "mnemos/answer_support.py": "6df37c493094331a54bbde94301e39252f288d178f17988255e7bfb480a3ee28",
+      "mnemos/judgment.py": "7566ba6f7f9df383bd1d642fd148c64f34c75aff102226090777e18c30284ddc",
+      "mnemos/utils/ollama_judge.py": "3d5d0489baee8a6e7bc4a8687970b1833d6ac33d4af3ec662c15ad49f624e649",
+      "tests/test_answer_support_contrast.py": "1bf3f37b5f9cfe2c8398c1cb2a52e6ea31cceb2a2edb5180f3cbd1213a9967cb"
+    },
+    "dataset_sha256": {
+      "benchmarks/local_memory/fixtures/answer-support-development-v1.json": "2c388cb8a603d4a1463496e0a8243a0a22496026c2a0e1d42dca640ad05d9aef",
+      "benchmarks/local_memory/fixtures/answer-support-temporal-development-v1.json": "9adc7a464e4387802e2a76e2f63e4d8572ba398da7969f2cc84b15855bc8a807"
+    },
+    "helper_sha256": "a7e71efd4590412a67821149341f35033fbb78e357d1aada6028f225414e2d58",
+    "counts": {
+      "cases": 22,
+      "questions": 44,
+      "answerable": 27,
+      "candidate_requests": 44,
+      "no_answer": 17
+    },
+    "maxima": {
+      "single_prompt": {
+        "bytes": 4861,
+        "case_id": "temporal-unmarked-conflict",
+        "query_id": "duration",
+        "candidate_index": 0
+      },
+      "operation_requests": {
+        "bytes": 3938,
+        "case_id": "temporal-unmarked-conflict",
+        "query_id": "duration"
+      }
+    },
+    "provider_calls": 0,
+    "new_scores": false,
+    "limits": "Actual production request construction over all eligible facts in reused development fixtures. Mocks supply contract responses only. No model quality, calibration, latency, token count, retrieval or native acceptance result."
+  },
+  "formatting": "passed",
+  "strict_types": "passed",
+  "private_archive_sha256": "560d3fafe988b5f41295854322c5aaf8ef643e22d6cb7ebb8289315d1b2e6a92",
+  "verified_members": 17,
+  "model_comparison": "NOT_STARTED",
+  "installed_artifact_updated": false,
+  "live_configuration_changed": false,
+  "limits": "Contract checks and offline guarded request construction only. No model quality, fresh evaluation, extraction or daily-use result.",
+  "preparation_revision": 2,
+  "superseded_preparation_archive_sha256": "be6ec3dd46934636e29418f4d2d699abae9777281821acb375d7893a8746e5ed",
+  "wrapper_sha256": "b41f935973213d3a7a186575d3575928e0078760e8ae218764c7272e56311b59",
+  "revision_reason": "Correct the private launcher protocol path before execution. No comparison started."
+}

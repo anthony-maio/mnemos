@@ -437,3 +437,10 @@ No historical archive is removed or rewritten.
   formatting and strict types passed. The initial audit's evidence-column error
   is preserved. No native host, natural provider failure, quality acceptance,
   live activation or pilot day is implied.
+- A [contrastive support candidate](2026-11-07-answer-support-contrast-v6.md)
+  now places the visible candidates in one comparison batch with explicit
+  rejection choices. Ninety-six focused checks, formatting and strict types
+  pass. Offline guarded prompt construction peaks at 4,861 bytes, within the
+  unchanged 5,120-byte limit. The [preparation receipt](../validation/2026-11-07/answer-support-contrast-v6-preparation.json)
+  binds the unchanged datasets and prospective comparison. This is development
+  preparation, with no new quality score, installed artifact or pilot claim.
