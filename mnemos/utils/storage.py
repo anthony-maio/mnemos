@@ -1289,6 +1289,11 @@ class SQLiteStore(MemoryStore):
         );
     """
 
+    _CREATE_FACT_EVIDENCE_LOOKUP_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_fact_evidence_fact_time
+        ON fact_evidence(fact_id, created_at);
+    """
+
     _CREATE_FACT_REVISIONS_SQL = """
         CREATE TABLE IF NOT EXISTS fact_revisions (
             revision_id TEXT PRIMARY KEY,
@@ -1647,6 +1652,7 @@ class SQLiteStore(MemoryStore):
         self._ensure_column("memory_jobs", "lease_token", "TEXT")
         self._ensure_column("memory_jobs", "provider_failures", "INTEGER NOT NULL DEFAULT 0")
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
+        self._conn.execute(self._CREATE_FACT_EVIDENCE_LOOKUP_INDEX_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
         self._ensure_column("memory_suppressions", "superseded_at", "TEXT")
