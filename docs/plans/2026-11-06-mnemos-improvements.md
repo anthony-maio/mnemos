@@ -304,3 +304,13 @@ No historical archive is removed or rewritten.
   The [receipt](../validation/2026-11-06/canonical-website-check.json) preserves
   the initial 11-pass/1-failure result. This test-only repair postdates the full
   regression; product and native-runner code are unchanged.
+- Product `6d0e5ba6` clarifies complete forget selection across advisory wording
+  and eligible source-only captures. The native runner explicitly denies tools
+  outside each phase and verifies the advertised startup catalog. All 180
+  focused checks pass, including fourteen new boundary cases. The original nine
+  red cases and an intermediate read-only-description failure are preserved.
+  Build, Twine, strict types, formatting and fresh installed CLI/MCP checks pass.
+  The [v5 preparation](../validation/2026-11-06/review-selection-v5-preparation.md)
+  binds the new wheel, matching native dependencies, offline page reconstruction
+  and prospective protocol. Full regression and native validation are the next
+  checks; none of this reclassifies v4 or starts the pilot.
