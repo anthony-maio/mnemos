@@ -15,5 +15,6 @@ Private archive SHA-256: `764409e79312bfe034986ad9cab14e6dc50a8eab06623399771936
 
 The [isolated installation](fact-evidence-index-install-v1.md) separately passes
 real-BGE CLI/MCP restart recall, project isolation and indexed evidence ordering.
-The complete installed latency comparison is next. Earlier results retain their
+The [complete installed comparison](fact-evidence-index-performance-v1.md) is
+recorded separately. Earlier results retain their
 original source bindings. The pilot remains inactive and nothing is published.

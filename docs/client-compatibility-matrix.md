@@ -1,5 +1,28 @@
 # Client compatibility and observed evidence
 
+## November 7, 2026 evidence-index checkpoint
+
+Product `f5a944ea` passes [3,674 full-suite tests with four platform skips](validation/2026-11-07/full-regression-fact-evidence-index-v1.md).
+All 75 experimental native-launcher subprocess tests run and pass. The
+[isolated installed artifact](validation/2026-11-07/fact-evidence-index-install-v1.md)
+also passes real-BGE CLI/MCP remember, inspection, service restart, same-ID recall
+and project isolation. Its evidence index preserves equal-time ordering across
+restart. The package remains an unpublished development candidate.
+
+The [complete installed comparison](validation/2026-11-07/fact-evidence-index-performance-v1.md)
+uses the same native launcher in both arms. All 160 output/context pairs match,
+all 208 captures survive restart, and every job completes. Indexed recall p95
+passes 500 ms at 104.92 ms. Complete Stop/prompt p95 is 321.73/365.53 ms; both
+fail the unchanged 100 ms limit. The earlier native-launcher and quality results
+retain their separate bindings.
+
+The latest [native Codex lifecycle](validation/2026-11-07/native-codex-v11.md)
+passes all six phases on `c80eb051`, including reviewed forgetting and suppression
+of original-source replay. Native Claude v5 remains bound to `6d0e5ba6`. Neither
+native result transfers to the new wheel or establishes acceptance of the
+experimental native launcher. The private daily-use pilot remains inactive at
+zero days; current quality, complete-hook latency and delivery gates remain open.
+
 ## November 7, 2026 pilot integration checkpoint
 
 The [Claude pilot integration check](validation/2026-11-07/native-pilot-claude.md)
