@@ -362,3 +362,8 @@ No historical archive is removed or rewritten.
   from 4,848 to 4,473 bytes without changing any quality result. Both archives
   verified and runtime cleanup passed. Keep the candidate experimental; no
   quality promotion, fresh-evaluation pass or pilot day follows from this run.
+- The prospective [Codex v7 checkpoint](2026-11-06-native-codex-review-selection-v7.md)
+  binds a fresh native attempt to the same installed `6d0e5ba6` artifact that
+  passed Claude v5. Twelve runner checks and formatting pass. The original
+  Codex v6 pass remains bound to its earlier artifact. Full regression at the
+  new frozen runner source is required before this attempt starts.
