@@ -619,6 +619,16 @@ class MnemosClient:
     async def capture(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         return await self.request("capture", payload)
 
+    def begin_host_event(self) -> None:
+        """Reset per-invocation attempts between serialized resident host events.
+
+        The caller must wait for the previous event to finish. Keep the loop's
+        connection pool, but allow one new startup attempt and check the shared
+        outbox again, including entries another command process may have queued.
+        """
+        self._autostart_attempted = False
+        self._outbox_drained = False
+
     async def retrieve(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         return await self.request("retrieve", payload, queue_on_failure=False)
 
