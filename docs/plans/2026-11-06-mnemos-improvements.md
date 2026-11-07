@@ -444,3 +444,22 @@ No historical archive is removed or rewritten.
   unchanged 5,120-byte limit. The [preparation receipt](../validation/2026-11-07/answer-support-contrast-v6-preparation.json)
   binds the unchanged datasets and prospective comparison. This is development
   preparation, with no new quality score, installed artifact or pilot claim.
+- The [completed contrastive comparison](../validation/2026-11-07/answer-support-contrast-v6.md)
+  passed all source, snapshot, request and grade audits but failed the quality
+  gate. The hybrid candidate returned 27/27 clean answerable results, 12/17
+  abstentions and five unsupported facts, versus 26/27, 13/17 and seven for
+  joint support. Median support latency rose from 2,401 to 2,736 ms. All 486
+  responses and 352 decisions verified; all 215 private archive members passed
+  readback. The owned runtime unloaded and stopped. The candidate stays
+  experimental; no fresh evaluation, pilot day or installed policy is implied.
+- The [native local context measurement](../validation/2026-11-07/context-density-v1.md)
+  verified 88 distinct literal texts with repeated Qwen token IDs and exact
+  round trips. Its 4,224 packing rows and 96 groups were independently rebuilt;
+  2,112 injected failures matched byte fallback. Hybrid returned context fell
+  from 1,978 unfiltered tokens to 767 after contrastive selection, retaining
+  27/27 expected facts but five unsupported facts. Selection overhead remains
+  separate, and small byte budgets showed severe recall loss despite higher
+  density. Seventeen focused checks passed. All 26 corrected archive members
+  verified; the original packaging failure and cleanup warning remain retained.
+  Both endpoints closed and all owned processes were absent. Native Codex and
+  Claude counters, span compression, fresh quality and pilot use remain open.

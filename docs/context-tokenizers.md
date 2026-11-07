@@ -61,7 +61,9 @@ Per-fact retrieval scores retain their byte-bound accounting; the aggregate
 fields above describe the final context. Legacy custom engines and early empty
 results can retain the older byte-bound response without the additional fields.
 
-This addition establishes the packing contract. It does not establish supported
-facts per token, answer quality or a native host's tokenizer compatibility.
-Those measurements remain open. Source-backed span compression is also open;
-the initial answer-support development experiment failed its quality checks.
+The [local Qwen measurement](validation/2026-11-07/context-density-v1.md) checks
+the packing contract against native token IDs and reports supported facts per
+token, recall and latency on reused development data. The tested support policy
+still fails its abstention target. Codex and Claude tokenizer compatibility,
+deployed host integration, fresh quality evaluation and source-backed span
+compression remain open.
