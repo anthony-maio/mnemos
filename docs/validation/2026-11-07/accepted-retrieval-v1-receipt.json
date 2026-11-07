@@ -1,0 +1,105 @@
+{
+  "status": "completed_development_screen_no_acceptance_claim",
+  "source_commit": "490317feab4c213ec187cdbbd56f697bbaf4529e",
+  "dataset_sha256": "d915df29dcaad59455a890a365f8307a11805f315afc28521dfbcf0204ffeca7",
+  "fixture_sha256": "441dea293e8e2771ff0186d4e0ed07d496d4fefb4d7c925465bee2ba99258f3f",
+  "state_sha256": "b5319445bfa40ee9d2998af12c00e66809712f65b91d0ffa28d193fe707738df",
+  "document_vectors_sha256": "3169709689468711316de3e0df9687e61aa39d0d6c651d8de1c7c5bbd7dcf199",
+  "started_at": "2026-11-07T10:55:31.810658+00:00",
+  "finished_at": "2026-11-07T10:56:01.882298+00:00",
+  "embedding_model": "BAAI/bge-small-en-v1.5",
+  "fastembed_version": "0.9.1",
+  "provider_load_ms": 775.5553999450058,
+  "embedding_asset_files": 17,
+  "embedding_asset_manifest_sha256": "0be775a5ce22d8e317ee9898111abcb027931db20a1c16b7094a9ad36652c26e",
+  "embedding_assets_unchanged": true,
+  "document_calls": 6,
+  "query_calls": 21,
+  "dimensions": 384,
+  "repetitions": 3,
+  "distinct_queries": 7,
+  "answerable_queries_per_repetition": 4,
+  "no_answer_queries_per_repetition": 3,
+  "observations": 63,
+  "summary": {
+    "vector": {
+      "observations": 21,
+      "answerable_queries": 12,
+      "answerable_hits": 12,
+      "no_answer_queries": 9,
+      "correct_abstentions": 0,
+      "operational_failures": 0,
+      "scope_leaks": 0,
+      "nonrelevant_returns": 81
+    },
+    "lexical": {
+      "observations": 21,
+      "answerable_queries": 12,
+      "answerable_hits": 12,
+      "no_answer_queries": 9,
+      "correct_abstentions": 0,
+      "operational_failures": 0,
+      "scope_leaks": 0,
+      "nonrelevant_returns": 75
+    },
+    "hybrid": {
+      "observations": 21,
+      "answerable_queries": 12,
+      "answerable_hits": 12,
+      "no_answer_queries": 9,
+      "correct_abstentions": 0,
+      "operational_failures": 0,
+      "scope_leaks": 0,
+      "nonrelevant_returns": 81
+    }
+  },
+  "independent_audit": {
+    "status": "passed",
+    "observations_recomputed": 63,
+    "document_calls": 6,
+    "query_calls": 21,
+    "dimensions": 384,
+    "all_snapshot_hashes_equal": true,
+    "all_query_vectors_shared": true,
+    "stable_query_strategy_groups": 21,
+    "query_strategy_groups": 21,
+    "source_facts": 6,
+    "retained_sources": 6,
+    "evidence_links": 6,
+    "jobs": 0,
+    "source_access_count": 0,
+    "sqlite_integrity": "ok",
+    "foreign_key_errors": 0,
+    "embedding_assets_unchanged": true,
+    "model_asset_files": 17,
+    "timing": {
+      "vector": {
+        "dispatch_ms_median": 38.21109980344772,
+        "dispatch_ms_p95_nearest_rank": 78.7744999397546,
+        "embedding_ms_median": 5.654599983245134
+      },
+      "lexical": {
+        "dispatch_ms_median": 37.419000174850225,
+        "dispatch_ms_p95_nearest_rank": 49.36839989386499,
+        "embedding_ms_median": 0.0
+      },
+      "hybrid": {
+        "dispatch_ms_median": 40.93259992077947,
+        "dispatch_ms_p95_nearest_rank": 101.64280002936721,
+        "embedding_ms_median": 5.654599983245134
+      }
+    }
+  },
+  "focused_checks_passed": 65,
+  "new_checks": 36,
+  "private_archive_sha256": "28a10c77191746e0b8c81f3e7264bb34de9f19ef5dc3f4bf60b6d1f546b874ea",
+  "verified_archive_members": 29,
+  "automatic_extraction_calls": 0,
+  "generation_calls": 0,
+  "fresh_evaluation": false,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "quality_gate_claimed": false,
+  "limits": "Six declared facts and seven authored development queries, repeated three times. No extraction precision, actual persisted lifecycle, generated-answer faithfulness, native host or 10000-fact latency claim. Exact empty-result abstention criterion retained, including qualified conflicts."
+}

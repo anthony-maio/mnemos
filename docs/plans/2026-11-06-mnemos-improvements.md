@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; isolated pairwise comparison improves Qwen3/Qwen3.5 to 57/72 and 66/72 operations, but three/six wrong corrections still fail both gates; fresh quality and persisted extraction remain open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | New accepted-state path isolates vector/lexical/hybrid inputs, source evidence and query vectors; 63 development observations give each arm 12/12 answerable hits but 0/9 empty-result abstentions; extraction v2 and pairwise v8 remain below their gates; fresh quality and persisted extraction remain open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; pilot integrations, rollback and bounded startup/embedding recovery have evidence; fresh entry audit verifies unchanged installation and patch preconditions, with extraction disabled; applicable retrieval quality, normal host trust, Claude capture identity limits and actual use remain open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter, byte fallback and opt-in compact replies implemented; real MCP transport and six native Codex sessions preserve complete context, with smaller replies and 48/48 correct answer fields; host counter inspection found no advertised arbitrary-text interface; semantic span compression, broader consumption and fresh quality remain open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Source 749f1213 passes 3,221 tests with four platform skips, builds checked artifacts and passes installed CLI/MCP recall with real embeddings; new wheel bytes and 57 dependency versions verified; pilot remains on native-tested 6d0e5ba6; final integration, site update and publication open |
@@ -626,3 +626,13 @@ No historical archive is removed or rewritten.
   with full responses still the default. All 22 archived members verify. The
   pilot retains its older native-tested artifact; no live upgrade or release
   occurred. Neither checkpoint supplies fresh quality or actual daily use.
+- The [accepted-state retrieval screen](../validation/2026-11-07/accepted-retrieval-v1.md)
+  adds a benchmark input path that never runs extraction or maintenance. It
+  validates declared versions, scope partitions, source excerpts and timestamps
+  before embedding, then clones the same database for vector, lexical and hybrid
+  retrieval. All 65 checks pass, including 36 new cases. The local BGE screen
+  completed 63 observations: every arm found 12/12 expected answers but returned
+  nonempty results on all nine repeated no-answer checks. Scope leaks and runtime
+  failures were zero. All 27 embedding calls, 63 grades and 21 stable groups were
+  independently audited, and 29 archive members verified. These are seven
+  development questions; no fresh evaluation or pilot readiness is implied.
