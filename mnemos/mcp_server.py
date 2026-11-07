@@ -917,15 +917,29 @@ def _register_service_tools(mcp: Any) -> None:
 
     @mcp.tool(annotations=read_only)
     async def mnemos_inspect(
-        chunk_id: str,
+        chunk_id: str | None = None,
         ctx: Context[Any, Any, Any] | None = None,
+        fact_id: str | None = None,
     ) -> str:
+        """Inspect a retrieved fact and its evidence within the host's resolved scope.
+
+        Pass the retrieved fact's ID as fact_id. The legacy chunk_id name is
+        also accepted. If both are supplied, they must identify the same fact.
+        """
+        for name, value in (("fact_id", fact_id), ("chunk_id", chunk_id)):
+            if value is not None and not value.strip():
+                raise ValueError(f"{name} must be a nonempty fact identifier")
+        if fact_id is not None and chunk_id is not None and fact_id != chunk_id:
+            raise ValueError("fact_id and chunk_id must identify the same fact")
+        identifier = fact_id if fact_id is not None else chunk_id
+        if identifier is None:
+            raise ValueError("Provide fact_id or chunk_id")
         service_context = _service_context_from_ctx(ctx, "mnemos_inspect")
         return _service_json(
             await _service_request(
                 service_context,
                 "inspect",
-                {"fact_id": chunk_id, "context": service_context.scope.model_dump(mode="json")},
+                {"fact_id": identifier, "context": service_context.scope.model_dump(mode="json")},
             )
         )
 
