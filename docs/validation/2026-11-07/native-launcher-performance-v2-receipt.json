@@ -1,0 +1,352 @@
+{
+  "status": "completed_and_audited",
+  "source_commit": "08a1d61e5cb1564abb06b4dc4efc1d49c4036050",
+  "product_commit": "3d1866d50d6df4d46666155006792ad46a9c6f11",
+  "wheel_sha256": "253ca806dba5aa817bd7ddcba1af123535b29853aa211fee61a14f71799a62b8",
+  "native_binary_sha256": "ec52c79a0ae613ae336836b3e82ddf853a601a0de3f7cd3aa0047318d06ee12b",
+  "summary": {
+    "recall": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 108.82059996947646,
+        "p95_ms": 126.77735498873515,
+        "maximum_ms": 129.75559988990426,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 109.99865003395826,
+        "p95_ms": 125.15729506267233,
+        "maximum_ms": 142.64829992316663,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": 0.8346999529749155,
+        "candidate_faster_pairs": 21,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "Stop": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 289.46149989496917,
+        "p95_ms": 506.1180750024505,
+        "maximum_ms": 978.7978001404554,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 132.30440008919686,
+        "p95_ms": 252.3174799745902,
+        "maximum_ms": 838.4279999881983,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -152.20469993073493,
+        "candidate_faster_pairs": 49,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "UserPromptSubmit": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 427.90114996023476,
+        "p95_ms": 596.4237451204096,
+        "maximum_ms": 1081.9590999744833,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 255.26255008298904,
+        "p95_ms": 373.46251998096704,
+        "maximum_ms": 664.8490000516176,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -167.82959992997348,
+        "candidate_faster_pairs": 48,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "blocks": {
+      "baseline-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 108.78799995407462,
+          "p95_ms": 128.96397984586656,
+          "maximum_ms": 129.75559988990426,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 285.6791999656707,
+          "p95_ms": 486.381219886243,
+          "maximum_ms": 976.7187000252306,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 420.9529000800103,
+          "p95_ms": 614.7242201492188,
+          "maximum_ms": 1011.3715999759734,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 110.05289992317557,
+          "p95_ms": 115.38227987475693,
+          "maximum_ms": 116.59099999815226,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 131.76330015994608,
+          "p95_ms": 254.96183987706897,
+          "maximum_ms": 838.4279999881983,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 252.16530007310212,
+          "p95_ms": 373.0253200046718,
+          "maximum_ms": 531.8434000946581,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 109.28950016386807,
+          "p95_ms": 138.4110000915825,
+          "maximum_ms": 142.64829992316663,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 132.92760006152093,
+          "p95_ms": 245.93462008051574,
+          "maximum_ms": 491.78060004487634,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 257.32859992422163,
+          "p95_ms": 373.1835799757391,
+          "maximum_ms": 664.8490000516176,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "baseline-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 108.8531999848783,
+          "p95_ms": 112.6825001090765,
+          "maximum_ms": 114.7427000105381,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 295.4605999402702,
+          "p95_ms": 483.65882015787037,
+          "maximum_ms": 978.7978001404554,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 429.73250010982156,
+          "p95_ms": 531.2300800345838,
+          "maximum_ms": 1081.9590999744833,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      }
+    },
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "native_host_run": false,
+    "pilot_days": 0
+  },
+  "audit": {
+    "status": "verified",
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "blocks": [
+      {
+        "block": "baseline-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 137,
+        "package_files": 96,
+        "command_transport": "python-winhttp",
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "5409294e3ac02906ba568332dfb1ec35f453a5a41ca72c3e66ba890308e6f8ef",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 137,
+        "package_files": 96,
+        "command_transport": "native",
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 0,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "36e95aeb8d6d08d30d392f3b29ee005142483845421ee132fd8fadfcfde3e088",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 137,
+        "package_files": 96,
+        "command_transport": "native",
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 0,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "a67b785a1174598cd96a509c13214350d258c30a7bc6b7d7b53fa8337075a2c4",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "baseline-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 137,
+        "package_files": 96,
+        "command_transport": "python-winhttp",
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "c35b19cce0394aa74a7e716bc36ed7d03dd79c3b403daad19f5b873f50157db9",
+        "accepted_snapshot_unchanged": true
+      }
+    ],
+    "audit_revision": 1,
+    "source_commit": "08a1d61e5cb1564abb06b4dc4efc1d49c4036050",
+    "product_commit": "3d1866d50d6df4d46666155006792ad46a9c6f11",
+    "native_binary_sha256": "ec52c79a0ae613ae336836b3e82ddf853a601a0de3f7cd3aa0047318d06ee12b",
+    "worker_dispatches_verified": 208,
+    "native_resident_route_failures": 0,
+    "timed_native_resident_route_failures": 0,
+    "native_resident_route_gate": "PASS",
+    "prior_v1_failure_preserved": true,
+    "private_profile_policy_pairs": 12,
+    "complete_hook_measurement": true,
+    "native_host_acceptance": false,
+    "pilot_days": 0,
+    "published": false,
+    "measured_processes_absent": true,
+    "process_ids_checked": 337,
+    "numeric_process_ids_absent": 336,
+    "reused_pids": [
+      {
+        "pid": 13172,
+        "name": "RuntimeBroker.exe",
+        "created_at": "2026-11-07T21:20:18.9300740Z"
+      }
+    ],
+    "process_identity_check_at": "2026-11-07T21:20:43.729261+00:00",
+    "seed_unchanged": true,
+    "audit_model_calls": 0,
+    "settings_values_recorded": false
+  },
+  "wall_seconds": 474.8633877998218,
+  "archive_sha256": "731606d75a70bd13391f4cb4993370c1f4a285f25b7e763a248e5d3f536bfbf5",
+  "archive_members": 243,
+  "archive_logical_files": 353,
+  "archive_bytes": 335930611,
+  "content_addressed_archive": true,
+  "prior_failed_run_archive_sha256": "0001291717adcc2396b0967dae86039243e5fe90273b2d209d6384a234474d85",
+  "original_regression_failures": 4,
+  "original_passing_controls": 2,
+  "documentation_checks": 12,
+  "subprocess_and_related_checks": 137,
+  "new_environment_checks": 6,
+  "rust_deadline_checks": 2,
+  "private_guard_pairs": 12,
+  "private_guard_commands": 24,
+  "clippy": "passed with warnings denied",
+  "formatting": "passed",
+  "production_changed": false,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "all_owned_processes_stopped": true
+}

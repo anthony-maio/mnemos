@@ -31,8 +31,9 @@ Recall uses the unchanged service path. Its small timing difference does not
 establish a native launcher improvement. All 160 decoded response/context pairs,
 including warmups, match exactly. There are 320 observations, 300 timed, and
 208 durable captures. Every capture survives service restart and every associated
-job completes. Accepted facts, source evidence and vectors remain unchanged in
-all four stores; integrity and foreign-key checks pass.
+job completes. Accepted facts and their retained evidence/vectors remain unchanged in
+all four stores; captures add their own event and job records. Integrity and
+foreign-key checks pass.
 
 Both baseline blocks record 52 handled, nondegraded worker dispatches with one
 capture each. Neither candidate block records a worker dispatch. All candidate
