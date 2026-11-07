@@ -25,7 +25,7 @@ class WinHTTPUnavailable(RuntimeError):
 
 def _load_api() -> Any:
     # Load only the Windows system copy, never a DLL beside a project file.
-    api = ctypes.WinDLL("winhttp.dll", use_last_error=True, winmode=0x00000800)
+    api = getattr(ctypes, "WinDLL")("winhttp.dll", use_last_error=True, winmode=0x00000800)
     signatures = {
         "WinHttpOpen": (_HANDLE, [_STRING, _DWORD, _STRING, _STRING, _DWORD]),
         "WinHttpSetTimeouts": (
@@ -60,7 +60,7 @@ def _load_api() -> Any:
 def _require(success: Any) -> None:
     if not success:
         # Numeric errors are safe to retain; server text and credentials are not.
-        raise OSError(ctypes.get_last_error(), "WinHTTP hook transport failed")
+        raise OSError(getattr(ctypes, "get_last_error")(), "WinHTTP hook transport failed")
 
 
 def post(port: int, token: str, wire: bytes, *, timeout: float, limit: int) -> bytes | None:
@@ -130,7 +130,9 @@ def post(port: int, token: str, wire: bytes, *, timeout: float, limit: int) -> b
         headers = "Authorization: Bearer " + token + "\r\nContent-Type: application/json\r\n"
         body = ctypes.create_string_buffer(wire)
         sent = api.WinHttpSendRequest(request, headers, len(headers), body, len(wire), len(wire), 0)
-        if not sent and ctypes.get_last_error() == 12029:  # ERROR_WINHTTP_CANNOT_CONNECT
+        if (
+            not sent and getattr(ctypes, "get_last_error")() == 12029
+        ):  # ERROR_WINHTTP_CANNOT_CONNECT
             return None
         _require(sent)
         _require(api.WinHttpReceiveResponse(request, None))

@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -18,6 +19,25 @@ from mnemos.client import MnemosClient, Outbox
 from mnemos.hook_worker import HookDispatcher, HookWorker
 from mnemos.scopes import ScopeRegistry
 from mnemos.service import MnemosService
+
+
+def test_non_windows_hook_uses_python_transport(monkeypatch):
+    from mnemos import _winhttp_hook
+
+    calls = []
+
+    def python_post(port, token, wire, timeout):
+        calls.append((port, token, wire, timeout))
+        return b"{}"
+
+    def forbidden_native(*args, **kwargs):
+        raise AssertionError("Non-Windows hook attempted the native transport")
+
+    monkeypatch.setattr(hook_client, "sys", SimpleNamespace(platform="linux"))
+    monkeypatch.setattr(hook_client, "_post_http", python_post)
+    monkeypatch.setattr(_winhttp_hook, "post", forbidden_native)
+    assert hook_client._post(12345, "synthetic-token", b"request", 2.0) == b"{}"
+    assert calls == [(12345, "synthetic-token", b"request", 2.0)]
 
 
 def test_environment_binding_preserves_case_sensitive_variable_names():
