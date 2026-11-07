@@ -9,10 +9,10 @@ Build from the repository root with Rust 1.95.0, the compiler used for this
 checkpoint. Dependencies are pinned in `Cargo.lock`.
 
 ```powershell
-cargo build --locked --release --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build-v1
-$env:MNEMOS_NATIVE_HOOK_EXE = (Resolve-Path .venv/native-hook-build-v1/release/mnemos-native-hook-experiment.exe).Path
-python -m pytest tests/test_native_hook_launcher.py
-cargo test --locked --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build-v1
+cargo build --locked --release --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build
+$env:MNEMOS_NATIVE_HOOK_EXE = (Resolve-Path .venv/native-hook-build/release/mnemos-native-hook-experiment.exe).Path
+python -m pytest tests/test_native_hook_launcher.py tests/test_native_hook_profile.py
+cargo test --locked --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build
 ```
 
 The test suite uses disposable descriptors, loopback servers and capture queues.
@@ -25,6 +25,24 @@ It reads the original hook JSON from stdin and the existing
 the ordinary Python adapter to receive the complete original input. A valid
 worker refusal permits the same fallback. Any uncertain outcome after sending
 ends without another dispatch. Only fixed diagnostic metadata reaches stderr.
+
+Private configuration uses `HOST EVENT --profile ABSOLUTE_JSON
+--profile-sha256 SHA256` instead. The reviewed command pins the entire JSON
+profile. Schema version 1 contains `host`, absolute `python`,
+`fallback_launcher`, `worker_descriptor`, `fallback_launcher_sha256` and an
+`environment` object containing the reviewed uppercase `MNEMOS_` settings.
+The descriptor has its own field and cannot also appear in `environment`.
+Do not put credentials in this file. Generate its settings from the reviewed
+launcher's environment setup and verify parity before use.
+
+This mode removes inherited Mnemos selectors, retains unrelated environment
+values and overlays the pinned settings without mutating process-global
+environment. Its safe fallback runs the pinned launcher as
+`PYTHON -I LAUNCHER hook HOST EVENT`, preserving the full original input.
+The launcher still parses effective settings and applies its original guard
+before invoking an adapter. Changed profiles or launchers produce a sanitized
+error without dispatch. The launcher hash is checked again after a worker
+decline. There is no ordinary-adapter fallback from a guarded profile.
 
 The protocol remains version 1. Environment hashing matches Python's sorted
 ASCII JSON representation, with Windows environment keys normalized as CPython

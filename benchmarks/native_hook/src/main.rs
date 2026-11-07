@@ -24,6 +24,77 @@ enum Outcome {
     Unknown,
 }
 
+struct Launch {
+    python: PathBuf,
+    environment: Option<BTreeMap<String, String>>,
+    guarded_launcher: Option<(PathBuf, String)>,
+}
+
+fn file_digest(path: &Path) -> Option<String> {
+    let bytes = std::fs::read(path).ok()?;
+    Some(format!("{:x}", Sha256::digest(bytes)))
+}
+
+fn profile(path: &Path, digest: &str, host: &str) -> Option<Launch> {
+    // The reviewed command pins the whole profile. Do not use a replacement
+    // profile to choose either a worker or a fallback executable.
+    let mut bytes = Vec::new();
+    File::open(path)
+        .ok()?
+        .take(65_537)
+        .read_to_end(&mut bytes)
+        .ok()?;
+    if bytes.len() > 65_536 || format!("{:x}", Sha256::digest(&bytes)) != digest {
+        return None;
+    }
+    let value: Value = serde_json::from_slice(&bytes).ok()?;
+    if value.get("schema_version").and_then(Value::as_u64) != Some(1)
+        || value.get("host").and_then(Value::as_str) != Some(host)
+    {
+        return None;
+    }
+    let python = PathBuf::from(value.get("python")?.as_str()?);
+    let launcher = PathBuf::from(value.get("fallback_launcher")?.as_str()?);
+    let expected = value.get("fallback_launcher_sha256")?.as_str()?.to_string();
+    let descriptor = PathBuf::from(value.get("worker_descriptor")?.as_str()?);
+    if !python.is_absolute()
+        || !python.is_file()
+        || !launcher.is_absolute()
+        || !launcher.is_file()
+        || !descriptor.is_absolute()
+        || file_digest(&launcher).as_deref() != Some(&expected)
+    {
+        return None;
+    }
+    let mut env = environment()?;
+    // Exactly the launcher's configuration boundary: discard inherited
+    // Mnemos selectors, preserve unrelated environment, then install the
+    // frozen host-specific values. Avoid process-global environment mutation.
+    env.retain(|key, _| !key.to_uppercase().starts_with("MNEMOS_"));
+    for (key, value) in value.get("environment")?.as_object()? {
+        let value = value.as_str()?;
+        if !key.starts_with("MNEMOS_")
+            || key == DESCRIPTOR_ENV
+            || !key
+                .bytes()
+                .all(|byte| byte.is_ascii_uppercase() || byte.is_ascii_digit() || byte == b'_')
+            || value.contains('\0')
+        {
+            return None;
+        }
+        env.insert(key.to_owned(), value.to_owned());
+    }
+    env.insert(
+        DESCRIPTOR_ENV.to_owned(),
+        descriptor.into_os_string().into_string().ok()?,
+    );
+    Some(Launch {
+        python,
+        environment: Some(env),
+        guarded_launcher: Some((launcher, expected)),
+    })
+}
+
 // Match json.dumps(mapping, sort_keys=True) for string-only environment data,
 // including its spaces, ASCII escaping and UTF-16 surrogate pairs.
 fn python_string(value: &str) -> String {
@@ -156,17 +227,23 @@ fn read_response(stream: &mut TcpStream, deadline: Instant) -> Result<Vec<u8>, (
     Ok(body)
 }
 
-fn request(host: &str, event: &str, payload: Value, cwd: &str) -> Outcome {
-    let Some(path) = std::env::var_os(DESCRIPTOR_ENV) else {
+fn request(
+    host: &str,
+    event: &str,
+    payload: Value,
+    cwd: &str,
+    env: Option<&BTreeMap<String, String>>,
+) -> Outcome {
+    let Some(env) = env else {
         return Outcome::Fallback;
     };
-    let Some(desc) = descriptor(Path::new(&path)) else {
+    let Some(path) = env.get(DESCRIPTOR_ENV) else {
         return Outcome::Fallback;
     };
-    let Some(env) = environment() else {
+    let Some(desc) = descriptor(Path::new(path)) else {
         return Outcome::Fallback;
     };
-    let env_hash = fingerprint(&env);
+    let env_hash = fingerprint(env);
     let port = desc.get("port").and_then(Value::as_u64).unwrap_or(0);
     let token = desc.get("token").and_then(Value::as_str).unwrap_or("");
     if desc.get("hook_protocol").and_then(Value::as_u64) != Some(1)
@@ -268,14 +345,28 @@ fn diagnostic(host: &str, event: &str, status: &str) {
     eprintln!("mnemos hook diagnostic host={host} event={event} status={status}");
 }
 
-fn fallback(python: &Path, host: &str, event: &str, raw: &[u8]) -> i32 {
+fn fallback(launch: &Launch, host: &str, event: &str, raw: &[u8]) -> i32 {
     let module = if host == "codex" {
         "mnemos.adapters.codex"
     } else {
         "mnemos.adapters.claude_code"
     };
-    let mut command = Command::new(python);
-    command.args(["-m", module, event]).stdin(Stdio::piped());
+    let mut command = Command::new(&launch.python);
+    if let Some((path, expected)) = &launch.guarded_launcher {
+        // Recheck after a worker decline, before a separate process reads it.
+        if file_digest(path).as_deref() != Some(expected) {
+            diagnostic(host, event, "error");
+            return 0;
+        }
+        command.arg("-I").arg(path).args(["hook", host, event]);
+        let Some(env) = &launch.environment else {
+            return 0;
+        };
+        command.env_clear().envs(env);
+    } else {
+        command.args(["-m", module, event]);
+    }
+    command.stdin(Stdio::piped());
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -308,7 +399,7 @@ fn run() -> i32 {
         }
         return 2;
     }
-    if args.len() != 5 || args[3] != "--python" {
+    if args.len() != 5 && args.len() != 7 {
         return 2;
     }
     let Some(host) = args[1].to_str() else {
@@ -317,11 +408,32 @@ fn run() -> i32 {
     if !["codex", "claude-code"].contains(&host) {
         return 2;
     }
-    let python = PathBuf::from(&args[4]);
-    if !python.is_absolute() || !python.is_file() {
-        return 2;
-    }
     let Some(event_arg) = args[2].to_str() else {
+        return 2;
+    };
+    let launch = if args.len() == 5 && args[3] == "--python" {
+        let python = PathBuf::from(&args[4]);
+        if !python.is_absolute() || !python.is_file() {
+            return 2;
+        }
+        Launch {
+            python,
+            environment: environment(),
+            guarded_launcher: None,
+        }
+    } else if args.len() == 7 && args[3] == "--profile" && args[5] == "--profile-sha256" {
+        let Some(digest) = args[6].to_str() else {
+            return 2;
+        };
+        let Some(launch) = profile(Path::new(&args[4]), digest, host) else {
+            diagnostic(host, event_arg, "error");
+            if host == "codex" && event_arg == "Stop" {
+                println!("{{\"continue\":true}}");
+            }
+            return 0;
+        };
+        launch
+    } else {
         return 2;
     };
     let mut raw = Vec::new();
@@ -360,10 +472,10 @@ fn run() -> i32 {
         .ok()
         .and_then(|path| path.into_os_string().into_string().ok())
     else {
-        return fallback(&python, host, &event, &raw);
+        return fallback(&launch, host, &event, &raw);
     };
-    match request(host, &event, payload, &cwd) {
-        Outcome::Fallback => fallback(&python, host, &event, &raw),
+    match request(host, &event, payload, &cwd, launch.environment.as_ref()) {
+        Outcome::Fallback => fallback(&launch, host, &event, &raw),
         Outcome::Handled(value) => {
             if value.get("degraded").and_then(Value::as_bool) == Some(true) {
                 diagnostic(host, &event, "degraded");
