@@ -665,9 +665,15 @@ def _claude_result(node: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def parse_claude_tool_records(
-    records: Sequence[Mapping[str, Any]], *, provenance: TraceProvenance
+    records: Sequence[Mapping[str, Any]],
+    *,
+    provenance: TraceProvenance,
+    tool_prefix: str = _CLAUDE_PREFIX,
 ) -> tuple[NativeToolCall, ...]:
-    """Correlate Claude assistant tool_use/tool_result JSONL records."""
+    """Correlate original Claude records in one explicitly bound MCP namespace."""
+
+    if tool_prefix not in {_CLAUDE_PREFIX, "mcp__mnemos__"}:
+        raise ValueError("Unsupported Claude Mnemos prefix")
 
     pending: dict[str, tuple[str, str, dict[str, Any]]] = {}
     issued: set[tuple[str, str]] = set()
@@ -711,9 +717,11 @@ def parse_claude_tool_records(
                     raise ValueError("duplicate Claude provider call ID")
                 response_ids.add(provider_id)
                 raw_name = node.get("name")
-                if not isinstance(raw_name, str) or not raw_name.startswith(_CLAUDE_PREFIX):
+                if not isinstance(raw_name, str) or not raw_name.startswith(tool_prefix):
                     raise ValueError("Claude tool name is not the verified Mnemos prefix")
-                name = _tool_name(raw_name)
+                name = raw_name[len(tool_prefix) :]
+                if name not in _RAW_TOOLS:
+                    raise ValueError(f"unsupported native tool: {name}")
                 arguments = _arguments(node.get("input"))
                 if (response_id, provider_id) in issued or provider_id in pending:
                     raise ValueError("duplicate or ambiguous Claude provider call ID")
