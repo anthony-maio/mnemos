@@ -206,6 +206,7 @@ These checks prepare a new attempt; they do not establish native acceptance.
 
 The separate Claude validation login remains pending. Supported-answer quality,
 fresh evaluation, extraction evaluation, native tokenizer compatibility and the
-two-week/two-project pilot remain open. A fresh full-suite run is also open;
-collection found 2,728 tests, which is not an execution result. Nothing in this
-checkpoint establishes publication or satisfaction of all pilot entry gates.
+two-week/two-project pilot remain open. The subsequent
+[full regression run](full-regression-3446220c.md) passed 2,724 tests with four
+environment-specific skips. Nothing in this checkpoint establishes publication
+or satisfaction of all pilot entry gates.

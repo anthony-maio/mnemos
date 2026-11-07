@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "source_commit": "3446220cf48d03d24df06b292d9e8aefe66d177e",
+  "started_at": "2026-11-07T00:39:21.8723267Z",
+  "finished_at": "2026-11-07T00:48:10.2538664Z",
+  "tests_collected": 2728,
+  "passed": 2724,
+  "skipped": [
+    {
+      "node": "tests.test_bridge::test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "node": "tests.test_bridge::test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "node": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "node": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    }
+  ],
+  "failures": 0,
+  "errors": 0,
+  "duration_seconds": 524.171,
+  "exit_code": 0,
+  "temporary_projects": "fresh external directory, outside all Git checkouts",
+  "dependencies": {
+    "pytest": "9.2.0",
+    "pytest-asyncio": "1.4.1.post1",
+    "mcp": "1.30.0",
+    "fastembed": "0.9.1",
+    "numpy": "2.2.6"
+  },
+  "pytest_log_sha256": "4b4eea84a12d986ba1429e4e686f315e301feabe8944bc130144deaa9d619af9",
+  "junit_xml_sha256": "578d31f1e2aad16f1a9147471990096bacd923ce4e95616eb530f2e01d52b2cb",
+  "private_archive_sha256": "79401f7d75259c1475d68b1f36cff0533a40bc88a21522062a76fc312c593cac",
+  "private_archive_bytes": 59519,
+  "verified_members": 9,
+  "earlier_attempt": {
+    "status": "aborted_wrong_basetemp",
+    "observed_test_marks": 549,
+    "observed_failures": 6,
+    "reason": "In-checkout temporary projects inherited one Git project identity; isolated probe reproduced collision and external path resolved it."
+  }
+}

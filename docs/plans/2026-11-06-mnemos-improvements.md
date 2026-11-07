@@ -167,6 +167,11 @@ No historical archive is removed or rewritten.
   cleanup passed. The [receipt](../validation/2026-11-06/native-codex-v6-receipt.json)
   binds 776 verified private archive members. This is one synthetic scenario,
   not pilot use, a general reliability rate or a quality improvement.
-- The current suite collects 2,728 tests. Fresh full-suite execution, semantic
-  support development, separate extraction/fresh evaluation, native tokenizer
-  integration, pilot preparation/use and consistent delivery remain open.
+- The full suite at `3446220c` passed: 2,724 passed, four environment-specific
+  skips, no failures or errors. The [regression receipt](../validation/2026-11-06/full-regression-3446220c.json)
+  preserves an earlier aborted run whose in-checkout temporary paths caused
+  fixture scope collisions, plus the complete corrected external-directory run.
+- Semantic support development, separate extraction/fresh evaluation, native
+  tokenizer integration, pilot preparation/use and consistent delivery remain
+  open. The next prospective development comparison holds retrieval inputs and
+  support prompts fixed while comparing the prepared 4B and 14B local models.
