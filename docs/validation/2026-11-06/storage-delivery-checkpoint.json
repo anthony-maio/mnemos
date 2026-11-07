@@ -1,0 +1,164 @@
+{
+  "stage": "local-delivery-preparation",
+  "recorded_at": "2026-11-07T02:01:22.337997+00:00",
+  "integration": {
+    "stage": "local-integration",
+    "status": "committed",
+    "checked_at": "2026-11-07T01:50:54.559267+00:00",
+    "public_branch_url": "https://github.com/anthony-maio/mnemos/tree/master",
+    "public_head": "866444378e5a42598bba0548f6460d07adcded10",
+    "local_parent": "86c5d676d935a202d3d2d589615c1f7b2936056e",
+    "merge_commit": "7fcca905b780b8d9326423a1e71ede16a8f5dbba",
+    "merge_tree_before_resolution": "fafaefa3282d3a9b3d40b9358a53f4c3b6a08784",
+    "conflicts": [
+      "mnemos/utils/storage.py"
+    ],
+    "resolved_storage_blob": "ba335bb67773a533159706c9487ad4c74bb2e511",
+    "resolved_tree": "8df301e62d1677b92db527ca591d5bcac75f729d",
+    "local_parent_tree": "8df301e62d1677b92db527ca591d5bcac75f729d",
+    "resolved_tree_matches_local": true,
+    "public_head_is_ancestor": true,
+    "worktree_clean": true,
+    "frozen_experiment_source_files_unchanged": 129,
+    "new_product_behavior": false,
+    "public_branch_changed": false,
+    "published": false,
+    "fast_forward_output": "Updating 86c5d676..7fcca905\nFast-forward"
+  },
+  "backport": {
+    "branch": "wt/mnemos-storage-backport",
+    "base_commit": "866444378e5a42598bba0548f6460d07adcded10",
+    "source_commit": "d8a5e64789b9d71bba2d7edb8626dd224979c868",
+    "files_changed": [
+      "CHANGELOG.md",
+      "mnemos/utils/storage.py",
+      "tests/test_storage_graph_writes.py"
+    ],
+    "baseline_storage_tests": {
+      "passed": 8
+    },
+    "new_tests_before_fix": {
+      "passed": 1,
+      "failed": 4
+    },
+    "focused_tests": {
+      "passed": 62,
+      "seconds": 3.03
+    },
+    "full_suite": {
+      "passed": 316,
+      "seconds": 19.14
+    },
+    "black": {
+      "passed": true,
+      "files": 65
+    },
+    "mypy_full": {
+      "passed": false,
+      "baseline_same_diagnostics": true,
+      "errors": 4,
+      "files": [
+        "mnemos/settings.py",
+        "mnemos/utils/embeddings.py"
+      ]
+    },
+    "mypy_changed_module": {
+      "passed": true,
+      "strict": true,
+      "follow_imports": "silent"
+    },
+    "patch_sha256": "10e5c7e64077c120ee08e827954ba8e87553d8ad48bce17847df02cc2c9e775c",
+    "published": false,
+    "installed_package_or_native_verification": false
+  },
+  "private_archive_sha256": "8bbd995d6b1da31659ac2f1ada7fbf57659f4e6fd04ec6b5f51eb9cc4883b0c0",
+  "private_archive_bytes": 23044,
+  "verified_members": 21,
+  "files": {
+    "backport-baseline-full-types.txt": {
+      "sha256": "04c8e3f29000199197084fc28dfdf6ab794085eab4b6054370b4128186a0377f",
+      "bytes": 483
+    },
+    "backport-baseline.txt": {
+      "sha256": "e605a9a45a0d67a59fb5fb2de2b31a42d1e8b129c66462604ed2616160bc3d4c",
+      "bytes": 100
+    },
+    "backport-engine.txt": {
+      "sha256": "e8eef9d2c18c035d73e10f16ab8a7e7a67b9959543416c0c0086758290d37a29",
+      "bytes": 101
+    },
+    "backport-formatting.txt": {
+      "sha256": "83abf4b47e6b6e216d698b30f1f030922562c86836a54764d86a0e463467807e",
+      "bytes": 70
+    },
+    "backport-full-formatting.txt": {
+      "sha256": "c35b09a4d00727fa1bc8013a0e2cfbcdbf59504cd845b04028716c4e215693c0",
+      "bytes": 71
+    },
+    "backport-full-types.txt": {
+      "sha256": "04c8e3f29000199197084fc28dfdf6ab794085eab4b6054370b4128186a0377f",
+      "bytes": 483
+    },
+    "backport-full.txt": {
+      "sha256": "70b0f736912251cb09b8ec3277b71ef602ab8456aa2da392581718e31c07a27f",
+      "bytes": 427
+    },
+    "backport-green.txt": {
+      "sha256": "5927004d4ee4cb49cb3ccbc5930b159cef9c0fd0212e740398d2b06e4596414d",
+      "bytes": 101
+    },
+    "backport-pr.md": {
+      "sha256": "d8e06699211bc3a7bb739b5a39cc6e4220d7df4958786f3f6ca65cde607d7da1",
+      "bytes": 2516
+    },
+    "backport-red.txt": {
+      "sha256": "14346fa476730651f76d70dca8c76ef76c81d35d2dd1a75356db3ea498c37d63",
+      "bytes": 2594
+    },
+    "backport-source/CHANGELOG.md": {
+      "sha256": "c6ac111827eeb91dc522007e95dafee376287a7f5f9bb3b0cff98097c201c5d9",
+      "bytes": 5323
+    },
+    "backport-source/mnemos/utils/storage.py": {
+      "sha256": "0d4297ef5ae5f03316db0608e52fa2f810a40be1323cb5b8c6f27e7c15bfcafa",
+      "bytes": 39885
+    },
+    "backport-source/tests/test_storage_graph_writes.py": {
+      "sha256": "45879736f4a7a4249efd161b6b581e7e60a6d9a84e3cf2bf121252cff99a8e81",
+      "bytes": 4840
+    },
+    "backport-types.txt": {
+      "sha256": "8e63ae22e8213e327a5e9cbd584067681681bd8ef7f25c869877887ccdcfc4ff",
+      "bytes": 43
+    },
+    "backport.json": {
+      "sha256": "0badb90f9db5dc3f53e55da89b1c789e76c10cf0326d3bd929e6ed5d6dd49999",
+      "bytes": 1076
+    },
+    "commit-message.txt": {
+      "sha256": "4c44a5e6dec78df61cab674def0b26c5a88236da644e19c6fb52dca945c03f80",
+      "bytes": 352
+    },
+    "graph-transaction-backport.patch": {
+      "sha256": "10e5c7e64077c120ee08e827954ba8e87553d8ad48bce17847df02cc2c9e775c",
+      "bytes": 11962
+    },
+    "integration.json": {
+      "sha256": "8c1051c8eed532eea11d54569ea6cd84813e2e507344aad6f40c8c9be361e1af",
+      "bytes": 1037
+    },
+    "merge-tree.stderr.txt": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "merge-tree.txt": {
+      "sha256": "f1e7694ac5ca7de9dbc63d4fc604e73287fdf76c7aa56d7ad5fd5547db922242",
+      "bytes": 170
+    },
+    "verification/integrate-public-pr5.py": {
+      "sha256": "80b9867c30a1727e93b9a38afdfb8e236177484be7f64a809af8ae1d0ada060c",
+      "bytes": 3425
+    }
+  },
+  "limits": "Local integration and source backport only. No public branch update, pull request, package release, live installation or website deployment."
+}

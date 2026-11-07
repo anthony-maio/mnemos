@@ -1,0 +1,592 @@
+{
+  "status": "failed",
+  "source_commit": "929c44a44100592dd46e52b7f77b402f84beb9e3",
+  "runner_commit": "93ff6bb4765a2c51b6f98d35f20b169b086a601a",
+  "wheel_sha256": "298b20ec0cc7dd1c348cc55db45a4774ef979642f491fca1ade93ee511175fc9",
+  "host_version": "2.1.191 (Claude Code)",
+  "host_executable_sha256": "83397a6a029c7da663fb1ce27211e05174a3546d8b151e42451bf4590b8343d7",
+  "model": "claude-sonnet-4-6",
+  "started_at": "2026-11-07T01:58:30.976905+00:00",
+  "finished_at": "2026-11-07T02:03:09.548893+00:00",
+  "error_type": "ValueError",
+  "error": "tool result was unsuccessful",
+  "cleanup": "passed",
+  "live_configuration_changed": false,
+  "phases": [
+    {
+      "phase": "teach",
+      "status": "passed",
+      "tool_count": 3,
+      "reported_cost_usd": 0.0533781
+    },
+    {
+      "phase": "recall-v1",
+      "status": "passed",
+      "tool_count": 2,
+      "reported_cost_usd": 0.0450972
+    },
+    {
+      "phase": "correct",
+      "status": "passed",
+      "tool_count": 5,
+      "reported_cost_usd": 0.0767433
+    },
+    {
+      "phase": "recall-v2",
+      "status": "passed",
+      "tool_count": 2,
+      "reported_cost_usd": 0.0527838
+    },
+    {
+      "phase": "forget",
+      "status": "failed",
+      "tool_count": null,
+      "reported_cost_usd": 0.43177350000000003
+    }
+  ],
+  "validation_source_unchanged": true,
+  "normal_auth_bytes_unchanged": true,
+  "copied_auth_removed": true,
+  "descriptor_removed": true,
+  "owned_processes_absent": true,
+  "sqlite_integrity": "ok",
+  "sqlite_foreign_key_errors": 0,
+  "final_replay_recall_attempted": false,
+  "private_archive_sha256": "b29568eef22864b0fe429f63856233dff8000a6ff76229aaaae8a08f76a1dd15",
+  "private_archive_bytes": 710932,
+  "verified_members": 133,
+  "files": {
+    ".mnemos/mnemos.toml": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "arrivals.jsonl": {
+      "sha256": "9a0d2e9a4e067c0fb9e939c6c5c74131b3380137c56bfbd26d97f1dbc8866bfd",
+      "bytes": 43618
+    },
+    "controller/control.json": {
+      "sha256": "cf808987c4b0107ea274ac48f8e4e77f9183dd6d29c6a29a04232e91fab292c9",
+      "bytes": 1846
+    },
+    "controller/owned-pids.json": {
+      "sha256": "d75d671c227b15bb164b8e6ace0515999abb73402aaf8ba0703583dbc226ab68",
+      "bytes": 56
+    },
+    "controller/run-native-claude-v2.py": {
+      "sha256": "6244b6c971f6b16b46cfb435064cce6f93a4f1b68d13242fb66fea1acf6d79fa",
+      "bytes": 2733
+    },
+    "controller/runner.log": {
+      "sha256": "fe7b6f3e7741332fc6b2f3bd850ee2860605101bed2f3826427d5e7cb8cf8d28",
+      "bytes": 1635
+    },
+    "correct/checkpoints/1498661fa49d09c7fcaa6771de3a6b6114ce268beb85dbad56262cbf99fffeb2.json": {
+      "sha256": "add0b6ec40b7450ad1ca769d1890497cbf733ad881b69dfc408045af6306c3d1",
+      "bytes": 2032
+    },
+    "correct/claude-home/.claude.json": {
+      "sha256": "1ac0484478d7500744303df4fe0db9ce70746c0a8d4a87e1782e8ff9583ba18a",
+      "bytes": 62775
+    },
+    "correct/claude-home/.last-cleanup": {
+      "sha256": "e05dcf1c722b64f33a025f05b29690e52d8653e28e840b3b1a815170ba753c53",
+      "bytes": 24
+    },
+    "correct/claude-home/backups/.claude.json.backup.1794016779547": {
+      "sha256": "0b43af286447d4261c990ae56d29f607ccf13fcf572d712aff5a17d1d34a7b3a",
+      "bytes": 50
+    },
+    "correct/claude-home/projects/C--Users-Ant-AppData-Local-Temp-mnemos-improvement-checks-20261106-native-claude-v2-929c44a4-project/b8233110-679e-497a-b356-6b57c918cc4c.jsonl": {
+      "sha256": "e8464e1f165227e9c603b5c79677de525be854067ebebd012b193a1e1de5eecb",
+      "bytes": 75108
+    },
+    "correct/normalized-calls.json": {
+      "sha256": "c55b55145c08e4aab4fe0ca9361dae3c8c71c4d4517afa644d765c1b547fba3c",
+      "bytes": 13358
+    },
+    "correct/process.json": {
+      "sha256": "3754735de751e63bf72c77c2fec478cc590ddae550ccfa84b86749e8c251999f",
+      "bytes": 2092
+    },
+    "correct/prompt.txt": {
+      "sha256": "98559f17dc03dfb7656ec110529c03bdc2e23fe688321e587fdcf580833879d5",
+      "bytes": 550
+    },
+    "correct/state.json": {
+      "sha256": "3feed406a672fa8e3f984c8da32e6a7866b03ca040a1e1d5eba6c74903f1bdfb",
+      "bytes": 79772
+    },
+    "correct/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "correct/stdout.jsonl": {
+      "sha256": "6f5461326d47a941d8ceb42d6561ee2c7130ab92fa2fd98e3447c7e3ed47c2ab",
+      "bytes": 84236
+    },
+    "foreign/.git/HEAD": {
+      "sha256": "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10",
+      "bytes": 23
+    },
+    "foreign/.git/config": {
+      "sha256": "05becdb83bb897f6103c8d91439e2e9092144edf5b3955a746fce4975c12bfdc",
+      "bytes": 130
+    },
+    "foreign/.git/description": {
+      "sha256": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee",
+      "bytes": 73
+    },
+    "foreign/.git/hooks/applypatch-msg.sample": {
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+      "bytes": 478
+    },
+    "foreign/.git/hooks/commit-msg.sample": {
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+      "bytes": 896
+    },
+    "foreign/.git/hooks/fsmonitor-watchman.sample": {
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+      "bytes": 4726
+    },
+    "foreign/.git/hooks/post-update.sample": {
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+      "bytes": 189
+    },
+    "foreign/.git/hooks/pre-applypatch.sample": {
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+      "bytes": 424
+    },
+    "foreign/.git/hooks/pre-commit.sample": {
+      "sha256": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+      "bytes": 1649
+    },
+    "foreign/.git/hooks/pre-merge-commit.sample": {
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+      "bytes": 416
+    },
+    "foreign/.git/hooks/pre-push.sample": {
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+      "bytes": 1374
+    },
+    "foreign/.git/hooks/pre-rebase.sample": {
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+      "bytes": 4898
+    },
+    "foreign/.git/hooks/pre-receive.sample": {
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+      "bytes": 544
+    },
+    "foreign/.git/hooks/prepare-commit-msg.sample": {
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+      "bytes": 1492
+    },
+    "foreign/.git/hooks/push-to-checkout.sample": {
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+      "bytes": 2783
+    },
+    "foreign/.git/hooks/sendemail-validate.sample": {
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+      "bytes": 2308
+    },
+    "foreign/.git/hooks/update.sample": {
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+      "bytes": 3650
+    },
+    "foreign/.git/info/exclude": {
+      "sha256": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1",
+      "bytes": 240
+    },
+    "foreign/.mnemos/mnemos.toml": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "forget/checkpoints/3ca055b3c952b7e9fb2eb745964c685d312f7c557b9a43d8105e3bfe3f54b56c.json": {
+      "sha256": "8b93583249bb35386f079e74fa59854cb8e459177ee139a318a82742998ddec0",
+      "bytes": 2030
+    },
+    "forget/claude-home/.claude.json": {
+      "sha256": "606cba582d44c897ce8def145446d7ac68977847f3c61ca6ff16352d64185e44",
+      "bytes": 62776
+    },
+    "forget/claude-home/.last-cleanup": {
+      "sha256": "62fb502559cb66a44f1bf5bbef5d87a5a4cb5b323c8c6091e82a392060725d99",
+      "bytes": 24
+    },
+    "forget/claude-home/backups/.claude.json.backup.1794016851353": {
+      "sha256": "1114526b6a97d285a8273991f730318bd792a6a45c1981520b2e9f1b3f957f23",
+      "bytes": 50
+    },
+    "forget/claude-home/backups/.claude.json.backup.1794016914169": {
+      "sha256": "2d5caa1c3e08015227d078c22eb01b34dcb1d23102e41579fb16be396a47cf31",
+      "bytes": 62775
+    },
+    "forget/claude-home/backups/.claude.json.backup.1794016987706": {
+      "sha256": "5b5767cd8efb28f306616df7459f2b44efb719adf785ab4f4942f3cc34393c44",
+      "bytes": 62776
+    },
+    "forget/claude-home/projects/C--Users-Ant-AppData-Local-Temp-mnemos-improvement-checks-20261106-native-claude-v2-929c44a4-project/6e017d87-5f71-4342-adef-fd0f2c2acda4.jsonl": {
+      "sha256": "d1f56efa4e2ab425d10f2bb839377f637ddfad633aa06706c7d4674951fddb91",
+      "bytes": 367921
+    },
+    "forget/process.json": {
+      "sha256": "72a51d795d98433601691d86558ff4d8c207edcec13a1a37645ec5303c7817b1",
+      "bytes": 2010
+    },
+    "forget/prompt.txt": {
+      "sha256": "8f802046f5269bbaf63cde028d027e7e9c42e2ed7b8da026f79402db3c8d626b",
+      "bytes": 613
+    },
+    "forget/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "forget/stdout.jsonl": {
+      "sha256": "caf5bc492c3c2a6d922a60a19dc6a82cf9e67d451e3865133226150c5bbc7407",
+      "bytes": 489739
+    },
+    "frozen-inputs/benchmarks/native_hosts/native_processes.py": {
+      "sha256": "7f343e2619dfc1e92eb7bcc1ae41665b4fac43fd83b9111e747898423ee8689d",
+      "bytes": 30367
+    },
+    "frozen-inputs/benchmarks/native_hosts/shared_trace.py": {
+      "sha256": "e837266e5473607213fa4cf127bbc04d49e942c53792410b86dea2926ba40a6c",
+      "bytes": 34714
+    },
+    "frozen-inputs/benchmarks/native_hosts/three_host_contract.py": {
+      "sha256": "bd7bea89b747e7b1e22f7e00a094ed60fc824b4216f5812e87ea0c71ab8ec7f0",
+      "bytes": 18877
+    },
+    "frozen-inputs/docs/plans/2026-11-06-native-claude-explicit-v2.md": {
+      "sha256": "10e61ee0c1c701c20d7d13f5316ed83d1fe9597a1dc08c29947dbf68e06d315a",
+      "bytes": 2420
+    },
+    "frozen-inputs/docs/plans/2026-11-06-native-explicit-auth-v2.md": {
+      "sha256": "08c1c9f278d6172a7620f0bf2f2cde12c83ba94989acf3be37859c7505390098",
+      "bytes": 2144
+    },
+    "frozen-inputs/docs/plans/2026-11-06-native-explicit-memory.md": {
+      "sha256": "ca7aa6898cba2787f86837b4ca4a907b5252e42e7e669a344990473ab8b0d953",
+      "bytes": 5381
+    },
+    "frozen-inputs/examples/restart_recall.py": {
+      "sha256": "e6fe872fb05b4381eefbe04ea8890ed3589b27c65464e4aca10f20b4ad3fc21e",
+      "bytes": 12797
+    },
+    "frozen-inputs/scripts/check-native-explicit.py": {
+      "sha256": "f9952b6ea453d62d2c82657372339f1c1902b604dcbf7a42a4f2ca33c634b25f",
+      "bytes": 33966
+    },
+    "memory.sqlite": {
+      "sha256": "22ea92860b9f0a96659798db35b9b4b665acc8c9ded20bc9f52a74a9e1954c12",
+      "bytes": 2248704
+    },
+    "memory.sqlite-shm": {
+      "sha256": "fd4c9fda9cd3f9ae7c962b0ddf37232294d55580e1aa165aa06129b8549389eb",
+      "bytes": 32768
+    },
+    "memory.sqlite-wal": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "outbox.json.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "plugin-snapshot/.claude-plugin/__pycache__/run_mnemos_mcp.cpython-312.pyc": {
+      "sha256": "ddb1d7d64ba881f6c6450c566790e8f2bbf876528c16413f5a4df765bcd43c0e",
+      "bytes": 12370
+    },
+    "plugin-snapshot/.claude-plugin/marketplace.json": {
+      "sha256": "4d2becf04a03e0306f49c3c5efa790937fb7999d45864efdac6f3ea4d70ff3d5",
+      "bytes": 728
+    },
+    "plugin-snapshot/.claude-plugin/plugin.json": {
+      "sha256": "3ecefd3f1f19fffa5767b6a21e322ebfa255f3e0ec53c728ab20f673b4f7cca4",
+      "bytes": 915
+    },
+    "plugin-snapshot/.claude-plugin/run_mnemos_hook.py": {
+      "sha256": "e87f2144ebe9ddc9f9b91bb52ea347dd85d53c93fae4a40f3a51a5714cf6929c",
+      "bytes": 2519
+    },
+    "plugin-snapshot/.claude-plugin/run_mnemos_mcp.py": {
+      "sha256": "ff51150e6dc89fa360222739486861408228e2853e74f58429400d5a203fb749",
+      "bytes": 8115
+    },
+    "plugin-snapshot/agents/memory-orchestrator.md": {
+      "sha256": "b484a0290b0f45eb649d155aab25a6ffe483d7d581c8a0565a490e4cc90fe0c7",
+      "bytes": 954
+    },
+    "plugin-snapshot/agents/mnemos-curator.md": {
+      "sha256": "96fbd87fb219df44131dedadc09f4cad9cfb171d9ea7b6420e40676f17295510",
+      "bytes": 1908
+    },
+    "plugin-snapshot/agents/mnemos-recall.md": {
+      "sha256": "55658bbd4ef2d8c985a79a34632aa4167d97aa3d6a2efe0fd21049fe4765afae",
+      "bytes": 1432
+    },
+    "plugin-snapshot/commands/mnemos/consolidate.md": {
+      "sha256": "be07c5e5e48134e1d97c4d41e431dcbf6f409458842d748c2a5ebc8061852c1c",
+      "bytes": 414
+    },
+    "plugin-snapshot/commands/mnemos/prime.md": {
+      "sha256": "44707019c32ac059d9e72e91cde6ffc043f600d547088676a70ba6b3e58a4db3",
+      "bytes": 803
+    },
+    "plugin-snapshot/hooks/hooks.json": {
+      "sha256": "8cc551fd65acb4a605d20d09acac3e4b12a0a6a229e3622176b1c202d9066873",
+      "bytes": 1776
+    },
+    "plugin-snapshot/skills/mnemos-codex/SKILL.md": {
+      "sha256": "873f96ec47df79802b9d77834b8230de4f6e405bd3dd0447f1656c9d126a4e16",
+      "bytes": 2567
+    },
+    "plugin-snapshot/skills/mnemos-codex/references/install.md": {
+      "sha256": "21779d53766ca1afe97820658374ee6fdab2eacc773b231aff72999f263d5871",
+      "bytes": 1907
+    },
+    "plugin-snapshot/skills/mnemos-codex/references/operations.md": {
+      "sha256": "e21f7ff573a008e3f3ad692f572d3ef3a54c07544fdb4bbd7cfd15d684346e76",
+      "bytes": 3063
+    },
+    "plugin-snapshot/skills/mnemos-memory/SKILL.md": {
+      "sha256": "8f6430f1d40bef55c24c4cc5c33815b816c89ecff85128742a3e3f436484d775",
+      "bytes": 2803
+    },
+    "plugin-snapshot/skills/mnemos-memory/references/hosts.md": {
+      "sha256": "0025a938eda7ed62c93130ef75ae1c708d54c580913b2973407f63b00f73b93e",
+      "bytes": 2021
+    },
+    "plugin-snapshot/skills/mnemos-memory/references/operations.md": {
+      "sha256": "03b6fb72bfef9f2ddd2b68eacf362e8a4dd0081ea3da8e99b34cbce463e8d7dc",
+      "bytes": 2232
+    },
+    "project/.git/HEAD": {
+      "sha256": "f6f2b945f6c411b02ba3da9c7ace88dcf71b6af65ba2e0d89aa82900042b5a10",
+      "bytes": 23
+    },
+    "project/.git/config": {
+      "sha256": "05becdb83bb897f6103c8d91439e2e9092144edf5b3955a746fce4975c12bfdc",
+      "bytes": 130
+    },
+    "project/.git/description": {
+      "sha256": "85ab6c163d43a17ea9cf7788308bca1466f1b0a8d1cc92e26e9bf63da4062aee",
+      "bytes": 73
+    },
+    "project/.git/hooks/applypatch-msg.sample": {
+      "sha256": "0223497a0b8b033aa58a3a521b8629869386cf7ab0e2f101963d328aa62193f7",
+      "bytes": 478
+    },
+    "project/.git/hooks/commit-msg.sample": {
+      "sha256": "1f74d5e9292979b573ebd59741d46cb93ff391acdd083d340b94370753d92437",
+      "bytes": 896
+    },
+    "project/.git/hooks/fsmonitor-watchman.sample": {
+      "sha256": "e0549964e93897b519bd8e333c037e51fff0f88ba13e086a331592bf801fa1d0",
+      "bytes": 4726
+    },
+    "project/.git/hooks/post-update.sample": {
+      "sha256": "81765af2daef323061dcbc5e61fc16481cb74b3bac9ad8a174b186523586f6c5",
+      "bytes": 189
+    },
+    "project/.git/hooks/pre-applypatch.sample": {
+      "sha256": "e15c5b469ea3e0a695bea6f2c82bcf8e62821074939ddd85b77e0007ff165475",
+      "bytes": 424
+    },
+    "project/.git/hooks/pre-commit.sample": {
+      "sha256": "57185b7b9f05239d7ab52db045f5b89eb31348d7b2177eab214f5eb872e1971b",
+      "bytes": 1649
+    },
+    "project/.git/hooks/pre-merge-commit.sample": {
+      "sha256": "d3825a70337940ebbd0a5c072984e13245920cdf8898bd225c8d27a6dfc9cb53",
+      "bytes": 416
+    },
+    "project/.git/hooks/pre-push.sample": {
+      "sha256": "ecce9c7e04d3f5dd9d8ada81753dd1d549a9634b26770042b58dda00217d086a",
+      "bytes": 1374
+    },
+    "project/.git/hooks/pre-rebase.sample": {
+      "sha256": "4febce867790052338076f4e66cc47efb14879d18097d1d61c8261859eaaa7b3",
+      "bytes": 4898
+    },
+    "project/.git/hooks/pre-receive.sample": {
+      "sha256": "a4c3d2b9c7bb3fd8d1441c31bd4ee71a595d66b44fcf49ddb310252320169989",
+      "bytes": 544
+    },
+    "project/.git/hooks/prepare-commit-msg.sample": {
+      "sha256": "e9ddcaa4189fddd25ed97fc8c789eca7b6ca16390b2392ae3276f0c8e1aa4619",
+      "bytes": 1492
+    },
+    "project/.git/hooks/push-to-checkout.sample": {
+      "sha256": "a53d0741798b287c6dd7afa64aee473f305e65d3f49463bb9d7408ec3b12bf5f",
+      "bytes": 2783
+    },
+    "project/.git/hooks/sendemail-validate.sample": {
+      "sha256": "44ebfc923dc5466bc009602f0ecf067b9c65459abfe8868ddc49b78e6ced7a92",
+      "bytes": 2308
+    },
+    "project/.git/hooks/update.sample": {
+      "sha256": "8d5f2fa83e103cf08b57eaa67521df9194f45cbdbcb37da52ad586097a14d106",
+      "bytes": 3650
+    },
+    "project/.git/info/exclude": {
+      "sha256": "6671fe83b7a07c8932ee89164d1f2793b2318058eb8b98dc5c06ee0a5a3b0ec1",
+      "bytes": 240
+    },
+    "project/.mnemos/mnemos.toml": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "recall-v1/checkpoints/96287bf738aceb28d161ecf3502f662181aadb70b982d2bb162a534385ae3cf2.json": {
+      "sha256": "f1d7982084d12384a8fdb71cdda9e93af629006993fcdbc2327d304010d0a262",
+      "bytes": 2040
+    },
+    "recall-v1/claude-home/.claude.json": {
+      "sha256": "c1d71350936604e3c58348974ed835cc45979d3964afb9e43481f27d3ef1d080",
+      "bytes": 62775
+    },
+    "recall-v1/claude-home/.last-cleanup": {
+      "sha256": "56009246852b8be65399dfe2b76387a5efe56344c708f0e9b06695c93cbbcccd",
+      "bytes": 24
+    },
+    "recall-v1/claude-home/backups/.claude.json.backup.1794016758954": {
+      "sha256": "174302cdd62578314b67f1444def82d03f09dc1c4c730fa26902dbd9c730596c",
+      "bytes": 50
+    },
+    "recall-v1/claude-home/projects/C--Users-Ant-AppData-Local-Temp-mnemos-improvement-checks-20261106-native-claude-v2-929c44a4-project/b66c6b16-865c-4104-a94a-26b2f2a69dda.jsonl": {
+      "sha256": "edde362dcd90538193163e27d63d968dcfbba8d7e9b41e16df5cf7475ff288f7",
+      "bytes": 50201
+    },
+    "recall-v1/normalized-calls.json": {
+      "sha256": "91935291142e20a65a0f1b15bcfde655cb24c427f81bc97d117db823ea9f3048",
+      "bytes": 9398
+    },
+    "recall-v1/process.json": {
+      "sha256": "d60dc7ff9d540ac4f63b402228c90645cd0f4a7204547f3f89b28faebb542700",
+      "bytes": 1775
+    },
+    "recall-v1/prompt.txt": {
+      "sha256": "eaa49a963b1b445d746b9a4439f7fac3c4e0197c4b0f72cb2e4efa77e1ab9bdd",
+      "bytes": 337
+    },
+    "recall-v1/state.json": {
+      "sha256": "5965010ae27a6b9d4d3585c7d0b270537281c01f43b8909a20dd004ec6d454de",
+      "bytes": 48949
+    },
+    "recall-v1/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "recall-v1/stdout.jsonl": {
+      "sha256": "cee5310792f9d10c131acc396ac4767efddc902c5b7a5f41c6e653fb00935c4a",
+      "bytes": 54857
+    },
+    "recall-v2/checkpoints/61d6b116ebb6f962d97ae737f7778c24285cd65c741048bdcce2dccd4019dfba.json": {
+      "sha256": "ac41e5a7e89630909bf7c88d2dc2b74c07129146200c1d0c1d4f37c9bd452c57",
+      "bytes": 2040
+    },
+    "recall-v2/claude-home/.claude.json": {
+      "sha256": "a5e6e4cf963919f08c356fc1ed1bc67e3b97490c63ec533ee712949cc3ec6e12",
+      "bytes": 62772
+    },
+    "recall-v2/claude-home/.last-cleanup": {
+      "sha256": "ceaba757f553cd6936556e485366248f07e8b2d41186a1a202755a1f8bf807e8",
+      "bytes": 24
+    },
+    "recall-v2/claude-home/backups/.claude.json.backup.1794016817752": {
+      "sha256": "9e3d5fea81c3622a992ba65ebb7d196ec37ddc53709b8a61f54872ad7e10f0a4",
+      "bytes": 50
+    },
+    "recall-v2/claude-home/projects/C--Users-Ant-AppData-Local-Temp-mnemos-improvement-checks-20261106-native-claude-v2-929c44a4-project/d3fa1379-a643-4fbb-bf33-60288e8e5403.jsonl": {
+      "sha256": "1b58386c12853bd7165324ef7b4b1d91cdfe436cd7afa51e4818072d6470f8d4",
+      "bytes": 56370
+    },
+    "recall-v2/normalized-calls.json": {
+      "sha256": "44106e7019e76465d7ed14b1417ea3df85fb1057b96a05fcfe601a55c1e8a190",
+      "bytes": 10810
+    },
+    "recall-v2/process.json": {
+      "sha256": "109a3e5b2a7ee1788275be75d0f615dea40ea6a0d2d259996eec66c4dc375a08",
+      "bytes": 1776
+    },
+    "recall-v2/prompt.txt": {
+      "sha256": "eaa49a963b1b445d746b9a4439f7fac3c4e0197c4b0f72cb2e4efa77e1ab9bdd",
+      "bytes": 337
+    },
+    "recall-v2/state.json": {
+      "sha256": "09d7aa261b40c25bfe9b96283d1c271134dcadc4ae0d45c66dad2e8e950ef055",
+      "bytes": 97022
+    },
+    "recall-v2/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "recall-v2/stdout.jsonl": {
+      "sha256": "e2411983ae398c1e37d0d1086c814d38564449464703916761ad29f0ecf8d7ff",
+      "bytes": 72551
+    },
+    "report.json": {
+      "sha256": "17b25f0fbbb7058cd861ce7da8fef02f8883b9012e149f646dae03fcf1a51406",
+      "bytes": 13238
+    },
+    "runtime.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "scopes.json": {
+      "sha256": "3b06d88df0696648e7043eb51c8c83df6dc01c1a1931a6b3e145819923f7f40b",
+      "bytes": 723
+    },
+    "service.log": {
+      "sha256": "06dffc971d9d4c179dff383cf1798d6ad496945c2240bc803233a564ee888234",
+      "bytes": 3979
+    },
+    "settings.toml": {
+      "sha256": "97e50e9ede8639ab11647a22699f22ebdbf9fa1e8d6f54df8cd500ac4f7f5509",
+      "bytes": 233
+    },
+    "teach/checkpoints/7b497abd4cf79ca0909c712cea7bc68d5134bca5e0746ba0997ec459f2b7f0a1.json": {
+      "sha256": "9165258075657200a9195575e06d4c3ef6a8627beeed51be363439f8332a1fc2",
+      "bytes": 2024
+    },
+    "teach/claude-home/.claude.json": {
+      "sha256": "0ba3dd9dea61d5536961c59e8ae130faa76b73ecd600e76212b67ec29a9f62b4",
+      "bytes": 62775
+    },
+    "teach/claude-home/.last-cleanup": {
+      "sha256": "5d64c7c901d29a96a11b94dc66d512507831f91b54a1e7ae0c0de4743053dd47",
+      "bytes": 24
+    },
+    "teach/claude-home/backups/.claude.json.backup.1794016731797": {
+      "sha256": "e3fb830638efe6f320b4bc5dfabf3c9b19c965feea81a04bf1db67d0e97875ad",
+      "bytes": 50
+    },
+    "teach/claude-home/projects/C--Users-Ant-AppData-Local-Temp-mnemos-improvement-checks-20261106-native-claude-v2-929c44a4-project/a7a9ade0-5c27-4798-be6f-73724e6e2927.jsonl": {
+      "sha256": "f8ecd96413607f49fbde3686fc3674bf5705e6560aceb0cff9c10c9a835899e6",
+      "bytes": 29848
+    },
+    "teach/normalized-calls.json": {
+      "sha256": "e9acc93edcda8ec1098fa8d98e0b2d3827e090ff878bdd99b5af56472c3aa4dd",
+      "bytes": 3918
+    },
+    "teach/process.json": {
+      "sha256": "2778f4685fd2f84f78777e9984506c17dc7c4409783d96b23bda005934cd12a4",
+      "bytes": 1882
+    },
+    "teach/prompt.txt": {
+      "sha256": "557d6859cdf135ca68647a61825f4775c7f1cf185a67c10fc4eb9e2610a6fa15",
+      "bytes": 456
+    },
+    "teach/state.json": {
+      "sha256": "19b042da0091934467a660ed7d9b3b2e88b8665446fbc03de6cc7efbb9b23d42",
+      "bytes": 30963
+    },
+    "teach/stderr.log": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "teach/stdout.jsonl": {
+      "sha256": "193543384696bab5a0f3213681520370ed9abbb3200fedfdf71b8ac6f98fc408",
+      "bytes": 27700
+    }
+  }
+}

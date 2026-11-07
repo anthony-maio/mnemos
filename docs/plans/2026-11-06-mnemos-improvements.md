@@ -8,12 +8,12 @@ No release, live configuration change, or pilot completion is implied.
 
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
-| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public PR #5 now merged, but broader rollback and caller-transaction protections remain local; integration preflight prepared |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V3's 14B checkpoint improves development abstention to 10/10; temporal support option implemented at c320c3ef and paired v4 comparison started; results and fresh evaluation open |
+| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V4 completed 352 observations: hybrid temporal support retained 24/27 answerable hits but abstained on 11/17 versus baseline 14/17; no promotion; failure review and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP checks and all six native Codex phases passed at product 929c44a4 / runner f15bf9f5; actual two-week/two-project pilot and its remaining entry gates open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed; Claude v2 passed four phases then failed during forgetting, cleanup passed; private pilot projects selected, entry gates and actual use remain open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
-| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed; correct website delivery source verified against live bytes; local README and compatibility summary updated; integration and publication open |
+| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
@@ -208,3 +208,35 @@ No historical archive is removed or rewritten.
   and 352 planned observations over 44 development questions. Source, labels,
   thresholds and timeout limits remain fixed during the run. Its results are
   pending and will be reported separately from implementation validation.
+- Public `master` was rechecked at `86644437` and integrated locally at
+  `7fcca905` with an identical file tree. A separate minimal backport at
+  `d8a5e647` passes the full 316-test public suite and all formatting checks.
+  Its four full-mypy diagnostics were reproduced unchanged on the public
+  baseline. The [storage delivery checkpoint](../validation/2026-11-06/storage-delivery-checkpoint.md)
+  records the patch, PR draft, verification and publication limits.
+- The account holder selected two projects for a private pilot. Their identities
+  and privacy condition are retained outside tracked files. Raw pilot memory
+  and activity logs must remain private. Selection does not authorize activation
+  or satisfy the entry checks; no pilot days have occurred.
+- After fresh sign-in to the isolated Claude validation profile, metadata passed
+  the one-hour lifetime guard and the CLI matched version 2.1.191. Runner
+  `93ff6bb4` binds a new Claude attempt to the already verified product `929c44a4`
+  wheel. Forty-eight focused runner/process tests and strict runner types passed.
+  Native results remain pending until all phases and cleanup are verified.
+- The [v4 temporal comparison](../validation/2026-11-06/answer-support-temporal-v4.md)
+  finished all 352 observations. Hybrid answerable hits were 24/27 for both
+  treatments, while correct abstention fell from 14/17 to 11/17 with temporal
+  comparison context. Both had three timeouts in that arm. All 129 source
+  hashes, 176 paired groups, 22 stores and 620-request/609-response accounting
+  verified. Cleanup passed. No promotion or fresh-evaluation claim is justified.
+- [Claude v2](../validation/2026-11-06/native-claude-v2-checkpoint.md) authenticated
+  and passed teaching, restart recall, correction and version-two recall. The
+  strict parser rejected an unsuccessful tool result during forgetting; final
+  replay/recall was not attempted. The failed run is preserved. Owned processes,
+  the service descriptor and copied credentials were removed; source credentials
+  were unchanged. Investigation remains open.
+- At the account holder's requested stopping point, both runs are terminal and
+  their owned processes are absent. No new long run was started. Resume with
+  the Claude forgetting failure and temporal failure audit, then continue the
+  original fresh/extraction/context/pilot/delivery obligations. The goal has not
+  been marked complete or paused by the runner.
