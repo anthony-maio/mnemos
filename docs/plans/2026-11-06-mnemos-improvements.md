@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; v2 repairs most format failures but still fails semantic support and abstention; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart checks passed at 6d46aa1a; Codex v5 completed initial memory calls but failed a model script cell; tool guidance repaired; new artifact, complete native lifecycle and pilot open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP restart checks passed at 929c44a4 with repaired tool guidance; Codex v5 failed a model script cell; complete native lifecycle and pilot open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
 
@@ -154,3 +154,8 @@ No historical archive is removed or rewritten.
   that attempt. The failure is archived; MCP descriptions and operating guidance
   now distinguish aggregate maintenance from per-job completion. A new artifact
   and native attempt must establish any improvement from that repair.
+- Product `929c44a4` built from its source distribution and passed Twine and
+  a fresh installed CLI/MCP restart smoke check with real embeddings. The
+  installed tool catalog contains the repaired descriptions. V6 binds that
+  artifact and makes the original job-ID source explicit in the two write
+  prompts, preserving the failed-cell and other lifecycle gates.

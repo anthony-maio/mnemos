@@ -244,6 +244,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             "docs/plans/2026-11-06-native-codex-code-mode-v3.md",
             "docs/plans/2026-11-06-native-codex-trace-v4.md",
             "docs/plans/2026-11-06-native-codex-dispatch-v5.md",
+            "docs/plans/2026-11-06-native-codex-job-guidance-v6.md",
         )
         if host == "codex"
         else ()
@@ -551,7 +552,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             calls = phase(
                 "teach",
                 base
-                + f"Explicitly remember exactly this user fact: {scenario.old} Call mnemos_store once, mnemos_consolidate, then mnemos_job_status for that returned job_id. Report completion only when the job is completed.",
+                + f"Explicitly remember exactly this user fact: {scenario.old} Call mnemos_store once and retain its returned job_id. Call mnemos_consolidate, then mnemos_job_status for the job_id from mnemos_store. Consolidation returns aggregate maintenance status, not a job_id. Report completion only when the original job is completed.",
                 {"mnemos_store", "mnemos_consolidate", "mnemos_job_status"},
             )
             contract.require_teach(calls, scenario.old)
@@ -591,7 +592,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     calls = phase(
                         "correct",
                         base
-                        + f'First retrieve query "{scenario.target_query}" and inspect the asserted fact. Correct that same ID at its inspected version to exactly: {scenario.new} Call mnemos_consolidate, then mnemos_job_status for the correction job. Report completion only after that job is completed.',
+                        + f'First retrieve query "{scenario.target_query}" and inspect the asserted fact. Correct that same ID at its inspected version to exactly: {scenario.new} Retain the job_id returned by mnemos_correct. Call mnemos_consolidate, then mnemos_job_status for that original correction job_id. Consolidation returns aggregate maintenance status, not a job_id. Report completion only after that job is completed.',
                         {
                             "mnemos_retrieve",
                             "mnemos_inspect",

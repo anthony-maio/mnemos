@@ -1,0 +1,51 @@
+{
+  "status": "passed",
+  "wheel": "mnemos_memory-0.7.0b1-py3-none-any.whl",
+  "wheel_sha256": "298b20ec0cc7dd1c348cc55db45a4774ef979642f491fca1ade93ee511175fc9",
+  "installation": {
+    "version": "0.7.0b1",
+    "mcp_version": "1.30.0",
+    "fastembed_version": "0.9.1",
+    "console_scripts": {
+      "mnemos": "mnemos.cli:main",
+      "mnemos-benchmark": "mnemos.benchmark:main",
+      "mnemos-cli": "mnemos.cli:main",
+      "mnemos-mcp": "mnemos.mcp_server:main"
+    },
+    "hermes_entrypoint": "mnemos.adapters.hermes:register",
+    "experimental_module_defaults": {
+      "surprisal": false,
+      "mutable_rag": false,
+      "affective": false,
+      "sleep": false,
+      "spreading": false
+    },
+    "bundled_benchmark_documents": {
+      "contradiction-update-v1": 8,
+      "preference-drift-v1": 8,
+      "cross-project-scope-v1": 6
+    }
+  },
+  "example": {
+    "status": "passed",
+    "version": "0.7.0b1",
+    "fact": "The sample notebook project keeps release checklists in docs/release.md.",
+    "query": "Where does the sample notebook project keep its release checklist?",
+    "fact_id": "b39f3361-3f0e-4327-a694-27ca72dc4e9d",
+    "embedding": "FastEmbed BAAI/bge-small-en-v1.5 (384 dimensions)",
+    "experimental_modules": "disabled",
+    "hosted_llm_calls": "not required",
+    "checks": {
+      "cli_remember": true,
+      "service_restart": true,
+      "cli_recall_same_id": true,
+      "mcp_stdio_initialize": true,
+      "mcp_tools_discovered": 18,
+      "mcp_recall_and_inspect": true,
+      "other_project_empty": true,
+      "hermes_entrypoint_loaded": true,
+      "service_stopped": true
+    },
+    "limits": "Explicit fact persistence only; no automatic extraction, ranking-quality or native Hermes acceptance claim."
+  }
+}

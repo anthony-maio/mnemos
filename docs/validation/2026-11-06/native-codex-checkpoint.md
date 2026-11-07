@@ -20,6 +20,15 @@ same fact ID and evidence, a negative foreign-project query, package resources
 and entrypoints, and service cleanup. MCP was 1.30.0 and FastEmbed was 0.9.1.
 Loading the Hermes entrypoint is not native Hermes acceptance.
 
+Product `929c44a44100592dd46e52b7f77b402f84beb9e3` then added the job-completion
+guidance described under v5. Its new wheel, built from its source distribution,
+has SHA-256 `298b20ec0cc7dd1c348cc55db45a4774ef979642f491fca1ade93ee511175fc9`.
+Both artifacts passed Twine, and the
+[new installed receipt](installed-smoke-929c44a4.json) passed the same real
+FastEmbed CLI/MCP restart, evidence, scope and cleanup checks. A separate fresh
+native environment outside the checkout exposes all four updated descriptions;
+its MCP server bytes match the wheel. Complete native acceptance remains open.
+
 ## Attempt v1: older CLI
 
 Runner `5741ffb1` used the installed npm Codex CLI 0.146.0 and `gpt-6-astra`
