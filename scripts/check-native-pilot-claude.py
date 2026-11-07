@@ -7,7 +7,6 @@ import asyncio
 from datetime import datetime, timezone
 import hashlib
 import json
-import os
 from pathlib import Path
 import runpy
 import sqlite3
@@ -171,6 +170,18 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "wheel_sha256": WHEEL_SHA,
         "input_hashes": {name: sha(ROOT / name) for name in INPUTS},
         "launcher_sha256": sha(root / "launch.py"),
+        "generated_configuration_hashes": {
+            name: sha(root / name)
+            for name in (
+                "launch.py",
+                "settings.toml",
+                "scopes.json",
+                ".mnemos/mnemos.toml",
+                "project/.mnemos/mnemos.toml",
+                "project/.mcp.json",
+                "project/.claude/settings.local.json",
+            )
+        },
         "private_plan_sha256": sha(args.patches / "plan.json"),
         "authentication_preflight": authentication,
         "project_id": context.project_id,
@@ -241,7 +252,12 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
 
                     stored = await call("mnemos_store", {"content": FACT})
                     await call("mnemos_consolidate", {})
-                    job = (await call("mnemos_job_status", {"job_id": stored["job_id"]}))["job"]
+                    deadline = time.monotonic() + 120
+                    while True:
+                        job = (await call("mnemos_job_status", {"job_id": stored["job_id"]}))["job"]
+                        if job["status"] in {"completed", "failed"} or time.monotonic() >= deadline:
+                            break
+                        await asyncio.sleep(0.25)
                     if job["status"] != "completed" or len(job["result"]["fact_ids"]) != 1:
                         raise ValueError("Controller seed did not complete")
                     record["seed_fact_id"] = job["result"]["fact_ids"][0]
@@ -249,6 +265,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                     record["catalog"] = [tool.name for tool in catalog.tools]
                     remember_owner()
         stop_service()
+        save(report, record)
         phase = root / "native"
         phase.mkdir()
         home = phase / "claude-home"
@@ -429,8 +446,15 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             stop_service()
         except Exception as error:
             cleanup_errors.append(type(error).__name__)
-        if any(sha(path) != digest for path, digest in watched.items()):
+        if any(not path.is_file() or sha(path) != digest for path, digest in watched.items()):
             cleanup_errors.append("WatchedFileChanged")
+        if any(
+            not (root / name).is_file() or sha(root / name) != digest
+            for name, digest in record["generated_configuration_hashes"].items()
+        ):
+            cleanup_errors.append("GeneratedConfigurationChanged")
+        if any(sha(ROOT / name) != digest for name, digest in record["input_hashes"].items()):
+            cleanup_errors.append("AcceptanceInputChanged")
         if (
             list(root.rglob(".credentials.json"))
             or (pilot / "memory.sqlite").exists()
