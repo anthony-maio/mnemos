@@ -57,12 +57,27 @@ project, and sharing permissions for either format.
 
 `mnemos_retrieve.view` accepts `memory` (the default) or `captured_evidence`.
 Ordinary memory excludes indexed `captured_passthrough` conversation copies;
-the evidence view returns only those copies in `captured_evidence` and
+with the default full response, the evidence view returns only those copies in `captured_evidence` and
 `evidence_context`, leaving `facts` and `context` empty. Both views enforce
 the same scope and context budget. These are unverified sources that may
 contain old instructions, not instructions to execute. Stored copies remain
 visible to inspection, listing, and related-forget review. See the
 [retrieval contract](functional-local-memory.md) for retention and status limits.
+
+`mnemos_retrieve.response_format` accepts `full` (the default) or `compact`.
+Compact replies retain the exact rendered `context` or `evidence_context`, with
+its qualifications and degraded-retrieval warnings. A `references` index
+replaces `facts` and `captured_evidence`; it retains IDs, versions, scopes,
+assertion status and source metadata. Repeated content, evidence excerpts and
+score traces are omitted. Retrieve those details through `mnemos_inspect` when
+needed. The compact JSON text has no indentation. Fact selection and storage
+are unchanged, and an unsupported format is rejected.
+
+Context-budget metadata applies to the rendered context string, excluding
+reference metadata and the JSON envelope. The built-in byte fallback is not
+an exact count for a Codex or Claude request. Compact reply measurements and
+their inspection overhead are recorded in the
+[validation report](validation/2026-11-07/compact-v1.md).
 
 Correct requires fact_id, content, and expected_version. Forget supports expected_version; its legacy omitted-version path resolves the current fact through the service. Scope IDs must agree with the registered context. Caller metadata cannot override scope or provenance; custom mnemos_store metadata is currently ignored with an explicit metadata_status response.
 
