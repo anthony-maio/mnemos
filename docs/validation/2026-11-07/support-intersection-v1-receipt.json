@@ -1,0 +1,117 @@
+{
+  "status": "completed_posthoc",
+  "stage": "reused_development",
+  "source_commit": "632b2f062ab84641b1b0e9beebc83cde84918d43",
+  "created_at": "2026-11-07T12:32:37.592363+00:00",
+  "decision_rule": "whole_fact_id_intersection_in_baseline_order",
+  "qa_repetition_selected": 1,
+  "qa_repetitions_stable": 3,
+  "qwen_observations_per_question": 1,
+  "shared_snapshots_verified": 44,
+  "summary": {
+    "qa": {
+      "questions": 44,
+      "answerable": 27,
+      "hits": 25,
+      "clean_hits": 23,
+      "absent": 17,
+      "correct_abstentions": 16,
+      "unsupported_selections": 4,
+      "selected_count": 29,
+      "expected_id_selection_precision": 0.8620689655172413,
+      "operational_failures": 0
+    },
+    "contrast": {
+      "questions": 44,
+      "answerable": 27,
+      "hits": 27,
+      "clean_hits": 27,
+      "absent": 17,
+      "correct_abstentions": 12,
+      "unsupported_selections": 5,
+      "selected_count": 32,
+      "expected_id_selection_precision": 0.84375,
+      "operational_failures": 0
+    },
+    "intersection": {
+      "questions": 44,
+      "answerable": 27,
+      "hits": 25,
+      "clean_hits": 25,
+      "absent": 17,
+      "correct_abstentions": 16,
+      "unsupported_selections": 1,
+      "selected_count": 26,
+      "expected_id_selection_precision": 0.9615384615384616,
+      "operational_failures": 0
+    }
+  },
+  "model_calls": 0,
+  "retrieval_calls": 0,
+  "production_source_changed": false,
+  "fresh_support_evaluation": false,
+  "combined_runtime_implemented": false,
+  "combined_latency_measured": false,
+  "quality_gate_claimed": false,
+  "historical_component_medians_ms": {
+    "qa": 223.07774994987994,
+    "contrast": 2735.974350012839
+  },
+  "independent_audit": {
+    "status": "verified",
+    "unique_questions": 44,
+    "counts": {
+      "hits": 25,
+      "clean_hits": 25,
+      "abstentions": 16,
+      "unsupported": 1,
+      "selected": 26
+    },
+    "removed_supported_vs_qa": 0,
+    "removed_unsupported_vs_qa": 3,
+    "qa_repetitions_stable": 3,
+    "qwen_observations_per_question": 1,
+    "intervals": {
+      "answerable": {
+        "estimate": 0.9259259259259259,
+        "lower": 0.7663040731697686,
+        "upper": 0.9794453459390113,
+        "sample_count": 27,
+        "confidence": 0.95,
+        "method": "wilson_descriptive_posthoc"
+      },
+      "no_answer": {
+        "estimate": 0.9411764705882353,
+        "lower": 0.730179693624246,
+        "upper": 0.9895395990150022,
+        "sample_count": 17,
+        "confidence": 0.95,
+        "method": "wilson_descriptive_posthoc"
+      }
+    },
+    "interval_limit": "Descriptive post-hoc intervals; questions and families can be dependent. Not fresh acceptance.",
+    "model_calls": 0,
+    "retrieval_calls": 0,
+    "audit_sha256": "4802523c5eb7e3f350b812325cd0f9415bbbe7ac645455170fa43498e4dce3e4"
+  },
+  "private_archive_sha256": "8b0fcce951dee59f05a06b41c855b1bac140a9c0840eb9b9f9805de42273dc99",
+  "private_archive_bytes": 145438,
+  "verified_archive_members": 15,
+  "input_bindings": {
+    ".venv/answer-support-contrast-v6/observations.jsonl": "185610b2d1fde36775e14274a846f65942eb42dd2971b91a177655bfaa3c7ced",
+    ".venv/extractive-support-v1-inputs/inputs.json": "87af4a70b776e56eedcb8ae9a5cb56244ddcddae2da3403e98fb2db4cce9b195",
+    ".venv/extractive-support-v1-inputs/labels.json": "07efc92860812ac9848dbcb91c1b24f1d53af50d08431b92500cab510a8f89b1",
+    ".venv/extractive-support-v1-inputs/manifest.json": "e3df8261c1719a4967aee248eba9c23c2d692750c17beecd3b9418f6c106c5dc",
+    ".venv/extractive-support-v2/audit.json": "ec0f4e1432a1d10249f65a7270a2159ae3a6412f6e26d01b5c41e63ad7cf953f",
+    ".venv/extractive-support-v2/observations.jsonl": "eb2d546e0d06b5658b7954b5dd762163e82e0bfc6c283394860d875fb3879f45",
+    ".venv/extractive-support-v1/observations.jsonl": "b5126d0a783fa8010676711ce09e3a01d3184ef43e3c3b4fe20e456a9fffaa30",
+    "docs/validation/2026-11-07/answer-support-contrast-v6-receipt.json": "708bb88f58fc7fd5ac9d547ed896b662086d4d4d867ae58eb3986e7b237b16e8",
+    "docs/plans/2026-11-07-support-intersection-diagnostic-v1.md": "e6258779f9dfc6d4681b6a01b9dddf889f6f4784b06b047c996c77acfbd6025e",
+    ".venv/analyze-support-intersection-v1.py": "688857176fdedeba2c8a1b8e7910ee51bfdf37100311290a55968c30cb383e56"
+  },
+  "remaining_failure_keys": [
+    "support/temporal-expired/during",
+    "support/temporal-unmarked-conflict/duration",
+    "support/temporal-unmarked-conflict/reviewer"
+  ]
+}
