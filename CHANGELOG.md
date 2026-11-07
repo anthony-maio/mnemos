@@ -2,6 +2,7 @@
 
 ## Unreleased improvements -- 2026-11-06
 
+- Large MCP forget previews now return lossless pages capped at 12,000 bytes including the native JSON string wrapper. Digest-bound short fact/source references reduce ID transcription errors; existing storage deletion guards still apply. Native acceptance of the paged workflow remains pending.
 - Related-forget descriptions now distinguish additional selectable source events from the target-linked cleanup already included in deletion. MCP parameter schemas and operating guidance identify the eligible preview fields. Preview and deletion checks are unchanged.
 
 - Graph writes now check source existence inside the write transaction. Neighbor replacement uses a savepoint so failures restore prior edges and preserve caller transactions. Regression coverage includes independent processes sharing SQLite.

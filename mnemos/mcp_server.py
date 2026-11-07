@@ -81,6 +81,7 @@ if TYPE_CHECKING:
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .contracts import ForgetPreviewRequest, ForgetRelatedRequest
+from .forget_review import render_forget_review, resolve_review_selections
 from .engine import MnemosEngine
 from .client import MnemosClient
 from .health import run_health_checks
@@ -714,6 +715,11 @@ def _register_service_tools(mcp: Any) -> None:
         expected_version: StrictInt,
         limit: StrictInt = 100,
         ctx: Context[Any, Any, Any] | None = None,
+        *,
+        cursor: Annotated[
+            str | None,
+            Field(description="Copy review.next_cursor to read the next page of the same preview."),
+        ] = None,
     ) -> str:
         """Read-only preview of related facts and source events before a reviewed forget.
 
@@ -733,8 +739,14 @@ def _register_service_tools(mcp: Any) -> None:
         cleanup already included with the target; do not copy those source IDs
         into selected_source_event_ids. Include each selected candidate's
         required_source_event_ids from the eligible top-level source events.
-        Null apply_preconditions means the preview is incomplete and cannot
-        be applied.
+        Large previews return lossless fragments with paths into the snapshot
+        and character offsets for long text. Read every page in order by passing
+        review.next_cursor with the same fact_id, expected_version and limit.
+        Changed snapshots reject the cursor; restart the review. Only the last
+        page exposes apply_preconditions, and an incomplete snapshot never does.
+        Prefer candidates' f-prefixed selection_ref values and eligible sources'
+        s-prefixed selection_ref values when applying. Required source refs must
+        also be reviewed and explicitly selected. References belong to this digest.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
         if service_context.scope.project_id is None:
@@ -747,10 +759,11 @@ def _register_service_tools(mcp: Any) -> None:
                 "limit": _strict_positive_int(limit, "limit"),
             }
         )
-        return _service_json(
+        return render_forget_review(
             await _service_request(
                 service_context, "forget_preview", request.model_dump(mode="json")
-            )
+            ),
+            cursor=cursor,
         )
 
     @mcp.tool(annotations=durable_update)
@@ -781,6 +794,19 @@ def _register_service_tools(mcp: Any) -> None:
             ),
         ] = None,
         ctx: Context[Any, Any, Any] | None = None,
+        *,
+        selected_fact_refs: Annotated[
+            list[str] | None,
+            Field(
+                description="Reviewed candidate selection_ref values such as f1; use instead of selected_fact_ids."
+            ),
+        ] = None,
+        selected_source_refs: Annotated[
+            list[str] | None,
+            Field(
+                description="Reviewed eligible source selection_ref values such as s1; use instead of selected_source_event_ids."
+            ),
+        ] = None,
     ) -> str:
         """Apply reviewed related-forget selections with stale checks.
 
@@ -793,6 +819,11 @@ def _register_service_tools(mcp: Any) -> None:
         Copy the preview's apply_preconditions fields unchanged: fact_id,
         expected_version, preview_digest, and preview_limit. Then add the
         explicitly reviewed fact and source selections.
+        For large previews, read all pages before applying. Prefer the short
+        selected_fact_refs and selected_source_refs to avoid retyping long IDs.
+        Do not mix refs and IDs within one selection type. Required sources are
+        never selected automatically. Short refs resolve against this exact
+        digest and the service still checks every original deletion guard.
         selected_source_event_ids must come from the preview's top-level
         source_events with selection_allowed=true. The target's linked source
         cleanup is already included; target.source_event_ids and
@@ -818,6 +849,34 @@ def _register_service_tools(mcp: Any) -> None:
                 ),
             }
         )
+        fact_refs = _strict_id_list(selected_fact_refs, "selected_fact_refs")
+        source_refs = _strict_id_list(selected_source_refs, "selected_source_refs")
+        if (fact_refs and request.selected_fact_ids) or (
+            source_refs and request.selected_source_event_ids
+        ):
+            raise ValueError("Use either refs or IDs within each selection type")
+        if fact_refs or source_refs:
+            preview_request = ForgetPreviewRequest(
+                context=request.context,
+                fact_id=request.fact_id,
+                expected_version=request.expected_version,
+                limit=request.preview_limit,
+            )
+            preview = await _service_request(
+                service_context, "forget_preview", preview_request.model_dump(mode="json")
+            )
+            fact_ids, source_ids = resolve_review_selections(
+                preview, request.preview_digest, fact_refs, source_refs
+            )
+            request = ForgetRelatedRequest.model_validate(
+                {
+                    **request.model_dump(mode="json"),
+                    "selected_fact_ids": fact_ids if fact_refs else request.selected_fact_ids,
+                    "selected_source_event_ids": (
+                        source_ids if source_refs else request.selected_source_event_ids
+                    ),
+                }
+            )
         return _service_json(
             await _service_request(
                 service_context, "forget_related", request.model_dump(mode="json")

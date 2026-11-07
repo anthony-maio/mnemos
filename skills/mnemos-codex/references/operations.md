@@ -28,6 +28,14 @@ new content and advanced version. A batch count alone does not prove that job
 completed.
 
 For related forgetting, inspect the target and call `mnemos_forget_preview`.
+If `review.next_cursor` is present, read every page with that cursor and the
+same target, version and limit. Fragments retain exact fields and long text
+at the reported paths and offsets. Restart if the snapshot changes. Only the
+last page of a complete snapshot provides apply preconditions. Prefer the
+reviewed `selection_ref` values in `selected_fact_refs` and
+`selected_source_refs`; include each chosen candidate's `required_source_refs`.
+Use the underlying fact IDs to inspect selected candidates. Do not mix refs
+and IDs within one selection type or infer that required sources were selected.
 Copy `apply_preconditions` unchanged. Select additional facts from `candidates`
 and additional sources only from the top-level `source_events` entries with
 `selection_allowed=true`. Include each selected candidate's

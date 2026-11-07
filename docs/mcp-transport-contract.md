@@ -78,7 +78,14 @@ including the `required_source_event_ids` of each selected candidate. The
 target and its linked source cleanup are already included. Do not copy
 `target.source_event_ids` or `target.affected_sources` into
 `selected_source_event_ids`; they are not additional selectable source events.
-An incomplete preview returns null preconditions and cannot be applied.
+Large MCP previews use the [paged review contract](forget-review-pages.md).
+Follow `review.next_cursor` until the final page; apply preconditions appear
+only there. An incomplete storage preview returns null preconditions on every
+page and cannot be applied. Small previews retain their existing structure.
+Candidate `selection_ref` values can be passed as `selected_fact_refs`, and
+eligible source refs as `selected_source_refs`, instead of retyping long IDs.
+Do not mix refs and IDs within one selection type. Required sources must still
+be reviewed and explicitly selected.
 The object does not select records, grant permission, or bypass fresh scope,
 version, digest, and dependency checks. Existing request fields remain valid.
 
