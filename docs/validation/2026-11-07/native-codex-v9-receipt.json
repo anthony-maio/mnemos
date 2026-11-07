@@ -1,0 +1,110 @@
+{
+  "status": "failed",
+  "source_commit": "cddf8adc0a451b1483956eb4296a438a6320f0fc",
+  "runner_commit": "a2fb3043c530e4c615a03404f10ea47e03bec114",
+  "wheel_sha256": "c6f6ff3ddf260a2a736867f01ce923879d68e2dd91ff44abbf0f7a22e1e6982f",
+  "host_version": "codex-cli 0.164.0-alpha.11.1",
+  "host_executable_sha256": "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098",
+  "code_mode_executable_sha256": "2727abaa2b30eb4afbe64b1da51a26cb594dd18dda82c6292b5373b15a758257",
+  "model": "gpt-6-astra",
+  "started_at": "2026-11-07T18:21:45.336860+00:00",
+  "finished_at": "2026-11-07T18:22:57.701300+00:00",
+  "cleanup": "passed",
+  "live_configuration_changed": false,
+  "phases": [
+    {
+      "phase": "teach",
+      "status": "passed",
+      "tool_count": 3,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 124377,
+        "cached_input_tokens": 112128,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 346,
+        "reasoning_output_tokens": 26
+      },
+      "session_sha256": "022b12d91935a4a4b65d11b6e9dfbb92e5870a18b18819b40d7c74b6640f5871",
+      "rollout_trace_hashes_sha256": "2af98d106026d8757f1e988b87ed91285822d27ed7ebcdf09c78ddd72300e5e8",
+      "tool_inventory_verified": true,
+      "tool_inventory_sha256": "6a45c751a2ae40c5c61d9cdb5e0a55c9ce36a09ced4de28a4f004f33658c0da6",
+      "lifecycle_prompt_sha256": "557d6859cdf135ca68647a61825f4775c7f1cf185a67c10fc4eb9e2610a6fa15"
+    },
+    {
+      "phase": "recall-v1",
+      "status": "failed",
+      "tool_count": null,
+      "correlation": null,
+      "reported_usage": {
+        "input_tokens": 114643,
+        "cached_input_tokens": 91648,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 441,
+        "reasoning_output_tokens": 0
+      },
+      "session_sha256": "f96c0f2eaa408a89e2c6bfbe5a60b4aeee0d42190cb4c30e7bd9f18fe82f0af7",
+      "rollout_trace_hashes_sha256": null,
+      "tool_inventory_verified": null,
+      "tool_inventory_sha256": null,
+      "lifecycle_prompt_sha256": "eaa49a963b1b445d746b9a4439f7fac3c4e0197c4b0f72cb2e4efa77e1ab9bdd"
+    }
+  ],
+  "source_replay_count": 0,
+  "normal_auth_bytes_unchanged": true,
+  "normal_config_unchanged": true,
+  "model_assets_unchanged": true,
+  "descriptor_removed": true,
+  "copied_auth_removed": true,
+  "recorded_process_identities_absent": true,
+  "process_ids_checked": 6,
+  "reused_pids": [],
+  "sqlite_integrity": "ok",
+  "sqlite_foreign_key_errors": 0,
+  "independent_audit": null,
+  "additional_protocol": "docs/plans/2026-11-07-native-codex-inventory-v9.md",
+  "additional_protocol_sha256": "7c5fd925d2ed96c2b5d5671a2de70f8975a11b857a1e450b83f443401b2a43b9",
+  "installed_dependency_versions_matched": 57,
+  "private_archive_sha256": "9b5320cc5dc4ccd2604e1812dbc050d7976609b7f19112fcec43d36d6d01aeb6",
+  "private_archive_bytes": 1719229,
+  "verified_file_count": 340,
+  "limits": "One synthetic native lifecycle attempt on the named installed artifact and pinned Codex runtime. No opt-in resident hook launcher, automatic capture, pilot configuration, quality improvement, reliability rate, pilot day or publication claim.",
+  "error": "Codex result was unsuccessful",
+  "failure_audit": {
+    "status": "failure_verified",
+    "phases": [
+      {
+        "phase": "teach",
+        "status": "verified",
+        "calls": 3,
+        "inventory_attempts": 2
+      },
+      {
+        "phase": "recall-v1",
+        "status": "failed_response_confirmed",
+        "native_tool_calls": 3,
+        "failed_tool": "mnemos_inspect",
+        "supplied_identifier_field": "fact_id",
+        "required_identifier_field": "chunk_id",
+        "subsequent_corrected_call_succeeded": true,
+        "failure_payload_sha256": "ec0358cc5ee50404fbc1127961d775e8bc6cce3715630eadaaed74a3f72f7aa1",
+        "strict_rejection_preserved": true
+      }
+    ],
+    "unrun_phases": [
+      "correct",
+      "recall-v2",
+      "forget",
+      "recall-forgotten"
+    ],
+    "audit_model_calls": 0,
+    "database_sha256": "71b773a18b8ffe4197c5431b5047a5be1eb32c0b0d908c6c30cf338ed868cb30",
+    "sqlite_integrity": "ok",
+    "sqlite_foreign_key_errors": 0,
+    "original_fact_retained_at_version": 1,
+    "native_attempt_repeated": false
+  },
+  "inventory_required": true,
+  "focused_checks_passed": 179,
+  "new_inventory_checks": 34,
+  "native_attempt_repeated": false
+}

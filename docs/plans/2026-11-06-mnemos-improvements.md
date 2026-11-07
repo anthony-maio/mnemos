@@ -735,3 +735,13 @@ No historical archive is removed or rewritten.
   records do not prove the complete advertised tool set. This is an observation
   gap to address explicitly in the next validation. The current wheel also
   passes full installed CLI/MCP restart recall; no actual pilot days accrued.
+- [Codex v9](../validation/2026-11-07/native-codex-v9.md) adds a complete
+  inventory observation with 34 new checks and 179 focused passes. Its fresh
+  native attempt fails during first restart recall: `fact_id` is rejected by
+  MCP inspection, which requires `chunk_id`. The host's corrected call succeeds,
+  but the strict failed-response rejection remains. Four later phases are unrun;
+  the failure and cleanup are archived. Product `acc7a317` adds `fact_id` as a
+  compatible alias, rejects conflicting IDs and retains host-resolved scope.
+  All 39 focused MCP checks, strict type checking and formatting pass. This
+  product change still needs installed and native validation; the earlier full
+  suite remains bound to its original source. The pilot remains inactive.

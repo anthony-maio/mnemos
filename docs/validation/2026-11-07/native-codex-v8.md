@@ -4,8 +4,9 @@ The current installed artifact passes the six-phase explicit-memory workflow
 with 19 correlated native tool calls. The complete v8 protocol remains
 incomplete: its requirement to verify the exact advertised tool set is not
 established by the retained logs. Configured permissions and observed calls
-are verified, but each tool-discovery query filtered for the requested
-operations, so it cannot rule out additional advertised tools.
+are verified, but some phases only retained discovery queries filtered for
+the requested operations. Later queries in three phases covered the Mnemos
+namespace; the full inventory remains unverified across all six phases.
 
 The attempt ran once on product `cddf8adc`, wheel SHA-256
 `c6f6ff3ddf260a2a736867f01ce923879d68e2dd91ff44abbf0f7a22e1e6982f`.
