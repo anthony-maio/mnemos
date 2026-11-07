@@ -72,9 +72,9 @@ from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, cast, TYPE_CHECKING
+from typing import Annotated, Any, Literal, cast, TYPE_CHECKING
 
-from pydantic import StrictInt
+from pydantic import Field, StrictInt
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import Context
@@ -727,6 +727,12 @@ def _register_service_tools(mcp: Any) -> None:
         other facts are deleted automatically.
         Copy the returned apply_preconditions fields unchanged into
         mnemos_forget_related, then add explicitly reviewed selections.
+        Select additional facts from candidates and additional source events
+        only from the top-level source_events entries with selection_allowed
+        set to true. target.source_event_ids and target.affected_sources describe
+        cleanup already included with the target; do not copy those source IDs
+        into selected_source_event_ids. Include each selected candidate's
+        required_source_event_ids from the eligible top-level source events.
         Null apply_preconditions means the preview is incomplete and cannot
         be applied.
         """
@@ -753,8 +759,27 @@ def _register_service_tools(mcp: Any) -> None:
         expected_version: StrictInt,
         preview_digest: str,
         preview_limit: StrictInt = 100,
-        selected_fact_ids: list[str] | None = None,
-        selected_source_event_ids: list[str] | None = None,
+        selected_fact_ids: Annotated[
+            list[str] | None,
+            Field(
+                description=(
+                    "Additional reviewed fact IDs from the preview's candidates. "
+                    "The target fact is already included. Include each chosen candidate's "
+                    "required_source_event_ids in the eligible additional source selection."
+                )
+            ),
+        ] = None,
+        selected_source_event_ids: Annotated[
+            list[str] | None,
+            Field(
+                description=(
+                    "Only additional reviewed source_event_id values from the preview's "
+                    "top-level source_events entries with selection_allowed=true. "
+                    "Do not copy target.source_event_ids or target.affected_sources here: "
+                    "their cleanup is already included with the target."
+                )
+            ),
+        ] = None,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
         """Apply reviewed related-forget selections with stale checks.
@@ -768,6 +793,10 @@ def _register_service_tools(mcp: Any) -> None:
         Copy the preview's apply_preconditions fields unchanged: fact_id,
         expected_version, preview_digest, and preview_limit. Then add the
         explicitly reviewed fact and source selections.
+        selected_source_event_ids must come from the preview's top-level
+        source_events with selection_allowed=true. The target's linked source
+        cleanup is already included; target.source_event_ids and
+        target.affected_sources are not additional source selections.
         Report the returned deletion_coverage rather than inferring complete
         erasure from committed status. Its retained exact/advisory fact and
         eligible source counts cover only the reviewed preview. Zero counts

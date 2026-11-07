@@ -2,6 +2,8 @@
 
 ## Unreleased improvements -- 2026-11-06
 
+- Related-forget descriptions now distinguish additional selectable source events from the target-linked cleanup already included in deletion. MCP parameter schemas and operating guidance identify the eligible preview fields. Preview and deletion checks are unchanged.
+
 - Graph writes now check source existence inside the write transaction. Neighbor replacement uses a savepoint so failures restore prior edges and preserve caller transactions. Regression coverage includes independent processes sharing SQLite.
 - Python integrations can provide an identified host tokenizer for complete-context packing. Invalid counters fall back to the UTF-8 byte bound; native host adapters still use that fallback. Oversized facts are skipped whole, and changed revisions are omitted before returning context.
 - Added a development-only answer-support checker with retained source evidence, scope and revision checks, separate failure accounting, and prospective model comparisons. The larger local model improved development abstention, but temporal false support and operational failures remain. The checker stays outside production retrieval pending fresh evaluation.

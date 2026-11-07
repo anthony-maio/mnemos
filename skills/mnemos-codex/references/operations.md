@@ -27,6 +27,15 @@ completion. For a correction, inspect the fact again to verify the same ID,
 new content and advanced version. A batch count alone does not prove that job
 completed.
 
+For related forgetting, inspect the target and call `mnemos_forget_preview`.
+Copy `apply_preconditions` unchanged. Select additional facts from `candidates`
+and additional sources only from the top-level `source_events` entries with
+`selection_allowed=true`. Include each selected candidate's
+`required_source_event_ids`. The target's linked source cleanup is already
+included: do not add `target.source_event_ids` or `target.affected_sources` to
+`selected_source_event_ids`. Report the returned deletion coverage and any
+retained records; committed status alone does not prove complete erasure.
+
 ## Recall workflow
 
 At task start, ask: what durable repo memory would reduce re-explaining or repeated mistakes here?

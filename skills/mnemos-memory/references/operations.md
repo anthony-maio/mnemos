@@ -28,6 +28,15 @@ result. Inspect a corrected fact again to verify its ID, content and version.
 - SQLite: the shipped persistent store and the recommended setup.
 - `sqlite-vec` and FTS5 already cover semantic and full-text retrieval inside the same local database.
 
+For related forgetting, inspect the target and call `mnemos_forget_preview`.
+Copy `apply_preconditions` unchanged. Select additional facts from `candidates`
+and additional sources only from the top-level `source_events` entries with
+`selection_allowed=true`. Include each selected candidate's
+`required_source_event_ids`. The target's linked source cleanup is already
+included: do not add `target.source_event_ids` or `target.affected_sources` to
+`selected_source_event_ids`. Report the returned deletion coverage and any
+retained records; committed status alone does not prove complete erasure.
+
 ## Retrieval quality guidance
 
 - Use a real embedding provider for production quality.

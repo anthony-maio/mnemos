@@ -72,6 +72,12 @@ Correct requires fact_id, content, and expected_version. Forget supports expecte
 `apply_preconditions` with `fact_id`, `expected_version`, `preview_digest`,
 and `preview_limit` under the exact names accepted by `mnemos_forget_related`.
 Copy these fields unchanged, then add explicitly reviewed fact/source IDs.
+Choose additional fact IDs from `candidates`. Choose additional source IDs only
+from the top-level `source_events` entries with `selection_allowed=true`,
+including the `required_source_event_ids` of each selected candidate. The
+target and its linked source cleanup are already included. Do not copy
+`target.source_event_ids` or `target.affected_sources` into
+`selected_source_event_ids`; they are not additional selectable source events.
 An incomplete preview returns null preconditions and cannot be applied.
 The object does not select records, grant permission, or bypass fresh scope,
 version, digest, and dependency checks. Existing request fields remain valid.
