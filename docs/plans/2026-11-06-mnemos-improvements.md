@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V4 completed 352 observations: hybrid temporal support retained 24/27 answerable hits but abstained on 11/17 versus baseline 14/17; failure review identifies missing-value, temporal and conflict errors; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed; Claude v3 passed four phases then failed on a large forget preview and incomplete cleanup; private pilot projects selected, entry gates and actual use remain open |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP and all six native Codex phases passed on their named artifacts; Claude v5 now passes all six phases on 6d0e5ba6 with complete deletion and ten suppressed replays; private pilot projects selected, remaining entry gates and actual use open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
@@ -314,3 +314,20 @@ No historical archive is removed or rewritten.
   binds the new wheel, matching native dependencies, offline page reconstruction
   and prospective protocol. Full regression and native validation are the next
   checks; none of this reclassifies v4 or starts the pilot.
+
+- The [v5 full regression](../validation/2026-11-06/full-regression-review-selection-v5.md)
+  passed 2,820 tests with four platform-specific skips at `15229fb7`. Source,
+  all 208 restored fixtures and the explicitly selected canonical website were
+  unchanged. The private archive and all six members verified.
+- [Claude v5](../validation/2026-11-06/native-claude-v5-checkpoint.md) then passed
+  all six phases on product `6d0e5ba6`. The 29 correlated calls used exact phase
+  tool catalogs, completed reviewed deletion and suppressed ten exact original
+  source replays. Final recall, retained controls, SQLite checks and cleanup
+  passed; source credentials were unchanged. All 158 archive members verified.
+  This supplies one synthetic native pass, not a reliability rate or pilot day.
+- The [three-check offline preflight](../validation/2026-11-06/support-three-checks-v5-preflight.md)
+  measured 78 candidate requests over the 44 reused development questions.
+  The largest rendered prompt was 4,210 bytes and the largest per-query typed
+  request total was 9,591 bytes, within existing limits. No provider call or
+  new quality score occurred. Production integration and prospective model
+  comparison remain next development work.

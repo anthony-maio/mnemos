@@ -1,0 +1,70 @@
+{
+  "status": "offline_budget_passed",
+  "source_commit": "15229fb75c0520966e9a7124fcb6efc4a9d9c865",
+  "prototype_sha256": "e6e7d4c8336d55a00a4dd6d6eb780214e8b8fafc6424fc5cc14d7618e4524707",
+  "counts": {
+    "cases": 22,
+    "questions": 44,
+    "answerable": 27,
+    "candidate_requests": 78,
+    "no_answer": 17
+  },
+  "maxima": {
+    "single_prompt": {
+      "bytes": 4210,
+      "case_id": "temporal-quoted-future",
+      "query_id": "future",
+      "candidate_index": 0
+    },
+    "operation_requests": {
+      "bytes": 9591,
+      "case_id": "temporal-unmarked-conflict",
+      "query_id": "duration"
+    }
+  },
+  "dataset_sha256": {
+    "benchmarks/local_memory/fixtures/answer-support-development-v1.json": "2c388cb8a603d4a1463496e0a8243a0a22496026c2a0e1d42dca640ad05d9aef",
+    "benchmarks/local_memory/fixtures/answer-support-temporal-development-v1.json": "9adc7a464e4387802e2a76e2f63e4d8572ba398da7969f2cc84b15855bc8a807"
+  },
+  "provider_calls": 0,
+  "new_scores": false,
+  "candidate_visibility": "All eligible fixture facts, a conservative size check rather than a retrieval run.",
+  "proposed_combination": "Support only when value=present, source selects own evidence, and cohort=clear, with each selected probability at least 0.8. Any operational failure receives no abstention credit.",
+  "not_implemented": [
+    "Production integration",
+    "Result combination and adversarial tests",
+    "Dependency fence integration",
+    "Prospective model comparison",
+    "Fresh evaluation"
+  ],
+  "limits": "Reused development inputs. This measures request size and typed schema construction only, not quality, calibration, latency, token counts or runtime acceptance.",
+  "private_archive_sha256": "79ab66064dc5ccf671a33399a4ee3e262cb474a75c6d230701f14717b482fbf2",
+  "private_archive_bytes": 26236,
+  "verified_members": 6,
+  "files": {
+    "archive-selection-v5-prechecks.py": {
+      "sha256": "df3edb4fa7d1ec44a23703a8f828efee562a52f4eca34d8c41cd26ca1763bc35",
+      "bytes": 4802
+    },
+    "benchmarks/local_memory/fixtures/answer-support-development-v1.json": {
+      "sha256": "2c388cb8a603d4a1463496e0a8243a0a22496026c2a0e1d42dca640ad05d9aef",
+      "bytes": 6732
+    },
+    "benchmarks/local_memory/fixtures/answer-support-temporal-development-v1.json": {
+      "sha256": "9adc7a464e4387802e2a76e2f63e4d8572ba398da7969f2cc84b15855bc8a807",
+      "bytes": 8306
+    },
+    "preflight-support-three-checks-v5.py": {
+      "sha256": "e6e7d4c8336d55a00a4dd6d6eb780214e8b8fafc6424fc5cc14d7618e4524707",
+      "bytes": 9288
+    },
+    "report.json": {
+      "sha256": "9c92f73ed3413c1c3ef2d079f10602b03450ee89068056de1af70562a577b230",
+      "bytes": 1727
+    },
+    "requests.json": {
+      "sha256": "bdd1b4f89d146d59bb804ce47665748d44551689a237c01a7a5a45d3f270139a",
+      "bytes": 602233
+    }
+  }
+}

@@ -12,21 +12,24 @@ passed. This is one synthetic scenario and one run, with experimental modules
 disabled. The earlier failed attempts remain recorded.
 
 The same product passed isolated installed CLI/MCP checks. The later
-[full source suite](validation/2026-11-06/full-regression-review-pages-v2.md)
-at `7f5aec4b` passed 2,806 tests with four platform-specific skips.
+[full source suite](validation/2026-11-06/full-regression-review-selection-v5.md)
+at `15229fb7` passed 2,820 tests with four platform-specific skips and the
+canonical website explicitly selected.
 
-[Claude v4](validation/2026-11-06/native-claude-v4-checkpoint.md) used installed
-product `5de1844f` with bounded forget-review pages. The first four phases passed.
-Forgetting failed after an unapproved extraction-review request; the saved
-trace also shows incomplete deletion. All five pages arrived intact, but the
-selected subset omitted an advisory copy and two eligible source-only captures.
-Final restart/replay was not attempted. Cleanup passed and the failed run remains
-preserved. This result does not transfer the earlier Codex pass to the new wheel.
+[Claude v5](validation/2026-11-06/native-claude-v5-checkpoint.md) passed all six
+phases on installed product `6d0e5ba6`, with runner `15229fb7`, Claude Code
+2.1.191 and `claude-sonnet-4-6`. All 29 calls passed native correlation and
+result checks. Each startup advertised exactly the permitted tools. Complete
+reviewed deletion, ten exact original-source replay suppressions, final
+restarted recall, retained controls and cleanup passed. Both credential sources
+were unchanged. The earlier failed attempts remain preserved.
 
-Current-candidate Claude and Hermes native acceptance, automatic extraction,
-broader reliability, native tokenizer compatibility and actual pilot use remain
-open. Earlier host results below apply to their named products and environments;
-they do not transfer automatically to this installed candidate.
+This is one synthetic run on the named wheel. Its forget phase used $0.4962732
+of the $0.50 phase allowance; the pass does not establish a comfortable cost
+margin or broader reliability. Current-candidate Hermes acceptance, automatic
+extraction, native tokenizer compatibility and actual pilot use remain open.
+The earlier Codex pass retains its own product binding and does not transfer
+automatically to later wheels.
 
 ## Earlier checkpoints
 
