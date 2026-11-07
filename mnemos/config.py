@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
-from .retrieval import RetrievalConfig
+from .retrieval_config import RetrievalConfig
 
 
 class SurprisalConfig(BaseModel):

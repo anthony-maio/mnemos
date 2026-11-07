@@ -5,8 +5,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
+from .retrieval_config import RetrievalConfig as RetrievalConfig
 from .types import CognitiveState, MemoryChunk
 
 
@@ -23,21 +24,6 @@ class RetrievedChunks(list[MemoryChunk]):
         super().__init__(chunks)
         self.diagnostics = dict(diagnostics)
         self.context_budget = dict(context_budget or {})
-
-
-class RetrievalConfig(BaseModel):
-    profile: Literal["baseline", "biomimetic"] = "baseline"
-    affective_enabled: bool = True
-    spreading_enabled: bool = True
-    relevance_floor: float = Field(default=0.2, ge=0, le=1)
-    graph_weight: float = Field(default=0.1, ge=0, le=1)
-    max_candidates: int = Field(default=100, ge=1, le=1000)
-    # Where the biomimetic profile gets the query's cognitive state.
-    # classify: ask the affective classifier per query (today's behaviour).
-    # recent_state: the partition's last encoded state, no model call; the
-    # runtime selects this when the judge is hosted, so recall never waits
-    # on a round trip. none: no state match.
-    query_state_source: Literal["classify", "recent_state", "none"] = "classify"
 
 
 class ScoreBreakdown(BaseModel):

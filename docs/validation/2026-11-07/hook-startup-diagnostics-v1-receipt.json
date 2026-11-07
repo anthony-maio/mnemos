@@ -1,0 +1,79 @@
+{
+  "status": "diagnostics_verified",
+  "candidate_source": "749f1213381848a0d6040bf8a241829b18b655a1",
+  "wheel_sha256": "2884c412f10ce130aed0afad0910c461ba945657f465f73ec604def78ab3ba2e",
+  "startup_samples_per_case": 7,
+  "startup_summaries": {
+    "interpreter": {
+      "median_ms": 79.85410001128912,
+      "minimum_ms": 74.60559997707605,
+      "maximum_ms": 510.61390014365315
+    },
+    "settings_import": {
+      "median_ms": 416.5527999866754,
+      "minimum_ms": 413.02999993786216,
+      "maximum_ms": 631.4050999935716
+    },
+    "client_import": {
+      "median_ms": 610.7183999847621,
+      "minimum_ms": 600.4272999707609,
+      "maximum_ms": 615.9295998513699
+    },
+    "launcher_probe": {
+      "median_ms": 464.6295001730323,
+      "minimum_ms": 458.1912001594901,
+      "maximum_ms": 475.97209992818534
+    },
+    "empty_hook": {
+      "median_ms": 669.5380001328886,
+      "minimum_ms": 654.7692001331598,
+      "maximum_ms": 682.774200104177
+    }
+  },
+  "startup_model_calls": 0,
+  "unprofiled_captures": {
+    "n": 7,
+    "median_ms": 985.7111999299377
+  },
+  "profiled_captures": 1,
+  "durable_captures": 8,
+  "profile_cumulative_times_overlap": true,
+  "profile_selected_functions": [
+    {
+      "module": "mnemos/settings.py",
+      "function": "load_settings",
+      "cumulative_ms": 27.2119
+    },
+    {
+      "module": "mnemos/client.py",
+      "function": "_dispatch_http",
+      "cumulative_ms": 164.0217
+    },
+    {
+      "module": "mnemos/service.py",
+      "function": "_protect_private_path",
+      "cumulative_ms": 8.924700000000001
+    },
+    {
+      "module": "mnemos/scopes.py",
+      "function": "canonical_project_root",
+      "cumulative_ms": 66.70779999999999
+    },
+    {
+      "module": "mnemos/client.py",
+      "function": "_loopback_http_client",
+      "cumulative_ms": 92.1726
+    }
+  ],
+  "capture_maintenance": "Normal service maintenance enabled; embedding count not instrumented.",
+  "baseline_database_unchanged": true,
+  "database_unchanged_by_audit": true,
+  "owned_services_stopped": true,
+  "runtime_descriptor_absent": true,
+  "performance_acceptance_claimed": false,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "archive_sha256": "90962fbf8936ab1956bed1873be2e7649331ba5136f773ee045aac6cb2d42986",
+  "archive_members": 126,
+  "archive_bytes": 67846004
+}

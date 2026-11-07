@@ -54,3 +54,32 @@ def test_public_exports_keep_class_identity_and_star_import_contract() -> None:
         assert exported[name] is getattr(mnemos, name)
     with pytest.raises(AttributeError, match="no_such_public_export"):
         getattr(mnemos, "no_such_public_export")
+
+
+@pytest.mark.parametrize("module", ["mnemos.settings", "mnemos.client", "mnemos.adapters.codex"])
+def test_capture_imports_without_retrieval_domain_models(module: str, tmp_path: Path) -> None:
+    source = Path(__file__).resolve().parents[1]
+    script = """
+import importlib
+import importlib.abc
+import sys
+
+class NoRetrievalModels(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname in {'mnemos.types', 'mnemos.engine', 'fastembed', 'numpy'}:
+            raise RuntimeError('Capture startup imported ' + fullname)
+        return None
+
+sys.path.insert(0, sys.argv[1])
+sys.meta_path.insert(0, NoRetrievalModels())
+importlib.import_module(sys.argv[2])
+"""
+    result = subprocess.run(
+        [sys.executable, "-I", "-c", script, str(source), module],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr

@@ -15,7 +15,7 @@ from typing import Any, Literal, Mapping, cast
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 from .config import JudgmentConfig, MemoryGovernanceConfig, MemorySafetyConfig, ModuleConfig
-from .retrieval import RetrievalConfig
+from .retrieval_config import RetrievalConfig
 
 if sys.version_info >= (3, 11):
     import tomllib
