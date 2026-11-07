@@ -7,7 +7,6 @@ After sending a request, a lost or malformed reply is an unknown outcome.
 from __future__ import annotations
 
 import hashlib
-from http.client import HTTPConnection
 import io
 import json
 import os
@@ -23,6 +22,41 @@ WORKER_DESCRIPTOR_ENV = "MNEMOS_HOOK_WORKER_DESCRIPTOR"
 
 class HookOutcomeUnknown(RuntimeError):
     """A worker may have captured the event; do not blindly dispatch it again."""
+
+
+def _post_http(port: int, token: str, wire: bytes, timeout: float) -> bytes | None:
+    from http.client import HTTPConnection
+
+    connection = HTTPConnection("127.0.0.1", port, timeout=timeout)
+    try:
+        try:
+            connection.connect()
+        except OSError:
+            return None
+        connection.request(
+            "POST",
+            "/v1/dispatch",
+            body=wire,
+            headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"},
+        )
+        response = connection.getresponse()
+        raw = response.read(MAX_FRAME_BYTES + 1)
+        if response.status != 200 or len(raw) > MAX_FRAME_BYTES:
+            raise ValueError("Invalid worker response")
+        return raw
+    finally:
+        connection.close()
+
+
+def _post(port: int, token: str, wire: bytes, timeout: float) -> bytes | None:
+    if sys.platform == "win32":
+        from ._winhttp_hook import WinHTTPUnavailable, post
+
+        try:
+            return post(port, token, wire, timeout=timeout, limit=MAX_FRAME_BYTES)
+        except WinHTTPUnavailable:
+            pass  # Only preparation failure permits another transport.
+    return _post_http(port, token, wire, timeout)
 
 
 def environment_fingerprint(env: Mapping[str, str] | None = None) -> str:
@@ -73,50 +107,32 @@ def request_hook(
     wire = json.dumps({"schema_version": 1, "operation": "hook", "payload": envelope}).encode()
     if len(wire) > MAX_FRAME_BYTES:
         return None
-    connection = HTTPConnection("127.0.0.1", descriptor["port"], timeout=timeout)
     try:
-        try:
-            connection.connect()
-        except OSError:
-            return None  # No request bytes have been sent.
-        try:
-            connection.request(
-                "POST",
-                "/v1/dispatch",
-                body=wire,
-                headers={
-                    "Authorization": "Bearer " + descriptor["token"],
-                    "Content-Type": "application/json",
-                },
-            )
-            response = connection.getresponse()
-            raw = response.read(MAX_FRAME_BYTES + 1)
-            if response.status != 200 or len(raw) > MAX_FRAME_BYTES:
-                raise ValueError("Invalid worker response")
-            value = json.loads(raw)
-            if (
-                not isinstance(value, dict)
-                or type(value.get("hook_protocol")) is not int
-                or value["hook_protocol"] != HOOK_PROTOCOL
-                or value.get("request_id") != identifier
-                or value.get("host") != host
-                or value.get("environment_sha256") != envelope["environment_sha256"]
-            ):
-                raise ValueError("Unbound worker response")
-            if value.get("status") == "declined" and value.get("dispatched") is False:
-                return None
-            if (
-                value.get("status") != "handled"
-                or value.get("dispatched") is not True
-                or not isinstance(value.get("output"), dict)
-                or not isinstance(value.get("adapter_status"), str)
-            ):
-                raise ValueError("Invalid worker acknowledgement")
-            return value
-        except Exception as exc:
-            raise HookOutcomeUnknown("Hook worker outcome is unknown") from exc
-    finally:
-        connection.close()
+        raw = _post(descriptor["port"], descriptor["token"], wire, timeout)
+        if raw is None:
+            return None  # No request bytes were sent.
+        value = json.loads(raw)
+        if (
+            not isinstance(value, dict)
+            or type(value.get("hook_protocol")) is not int
+            or value["hook_protocol"] != HOOK_PROTOCOL
+            or value.get("request_id") != identifier
+            or value.get("host") != host
+            or value.get("environment_sha256") != envelope["environment_sha256"]
+        ):
+            raise ValueError("Unbound worker response")
+        if value.get("status") == "declined" and value.get("dispatched") is False:
+            return None
+        if (
+            value.get("status") != "handled"
+            or value.get("dispatched") is not True
+            or not isinstance(value.get("output"), dict)
+            or not isinstance(value.get("adapter_status"), str)
+        ):
+            raise ValueError("Invalid worker acknowledgement")
+        return value
+    except Exception as exc:
+        raise HookOutcomeUnknown("Hook worker outcome is unknown") from exc
 
 
 def _fallback(host: str, raw: str, event: str) -> int:
