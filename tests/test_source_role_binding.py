@@ -71,9 +71,13 @@ def branch_for(schema: dict[str, Any], source_id: str) -> dict[str, Any]:
 def test_schema_binds_user_and_nonuser_kinds_per_source() -> None:
     events = [source("user", "user"), source("assistant", "assistant")]
     schema = build_source_role_binding_schema(events)
-    user = branch_for(schema, "user")
+    user_branches = [
+        branch
+        for branch in schema["properties"]["selections"]["items"]["oneOf"]
+        if branch["properties"]["source_id"]["enum"] == ["user"]
+    ]
     assistant = branch_for(schema, "assistant")
-    user_kinds = set(user["properties"]["kind"]["enum"])
+    user_kinds = {kind for branch in user_branches for kind in branch["properties"]["kind"]["enum"]}
     assistant_kinds = set(assistant["properties"]["kind"]["enum"])
     assert user_kinds == {
         "asserted_fact",
@@ -97,7 +101,7 @@ def test_schema_binds_user_and_nonuser_kinds_per_source() -> None:
         "unrequested_speculation",
     }
 
-    user_validator = Draft202012Validator(user)
+    user_validator = Draft202012Validator({"oneOf": user_branches})
     assistant_validator = Draft202012Validator(assistant)
     assert user_validator.is_valid(selection("user", "user_preference"))
     assert assistant_validator.is_valid(selection("assistant", "attributed_history"))

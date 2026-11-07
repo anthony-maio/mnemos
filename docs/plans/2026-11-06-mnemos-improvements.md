@@ -9,10 +9,10 @@ No release, live configuration change, or pilot completion is implied.
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V5 completed 352 observations: hybrid hits were 27/27 for both treatments, but the candidate reduced clean hits from 26 to 19 and abstentions from 14/17 to 13/17; four candidate contract failures; no promotion; further development and fresh evaluation open |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
-| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
+| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
@@ -463,3 +463,13 @@ No historical archive is removed or rewritten.
   verified; the original packaging failure and cleanup warning remain retained.
   Both endpoints closed and all owned processes were absent. Native Codex and
   Claude counters, span compression, fresh quality and pilot use remain open.
+- The [isolated extraction check](../validation/2026-11-07/isolated-extraction-v1.md)
+  matched 14/15 quality cases and passed a separate pre-provider scope guard.
+  Nine emitted proposals matched annotations, but only eight of nine critical
+  facts survived: a correction carried a revision flag forbidden for its kind.
+  The decoder schema allowed that combination and the runtime rejected it.
+  All 25 responses, 132 source hashes and successful grades verified; all 156
+  private archive members passed readback. Seventy-seven focused checks passed.
+  The run performed no retrieval or accepted-fact commits. Model and owned
+  runtime cleanup passed. The failure is frozen before a schema repair; fresh
+  evaluation and actual pilot use remain open.
