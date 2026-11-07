@@ -1,0 +1,208 @@
+{
+  "status": "completed_and_audited",
+  "protocol_commit": "f4b7ddca905ca4b2eb62eb668a1cb8935667d1e6",
+  "probe_product_commit": "3d1866d50d6df4d46666155006792ad46a9c6f11",
+  "candidate_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+  "audit": {
+    "status": "verified",
+    "protocol_commit": "f4b7ddca905ca4b2eb62eb668a1cb8935667d1e6",
+    "git_observations": 114,
+    "git_timed_observations": 100,
+    "git_behavior_pairs": 57,
+    "git_processes_exited": 116,
+    "reused_git_pids": [],
+    "git_all_outputs_equal": true,
+    "evidence_observations": 740,
+    "evidence_timed_observations": 720,
+    "evidence_pairs": 370,
+    "evidence_all_rows_equal": true,
+    "equal_timestamp_order_preserved": true,
+    "post_index_insert_order_preserved": true,
+    "accepted_projection_unchanged": true,
+    "seed_unchanged": true,
+    "source_bindings_verified": 7,
+    "audit_model_calls": 0,
+    "services_started": 0,
+    "production_changed": false,
+    "live_configuration_changed": false,
+    "pilot_days": 0,
+    "git_summary": {
+      "scenarios": {
+        "plain": {
+          "selected": {
+            "observations": 10,
+            "median_ms": 58.88295,
+            "p95_ms": 234.2003549999999,
+            "maximum_ms": 281.4666
+          },
+          "direct": {
+            "observations": 10,
+            "median_ms": 40.90545,
+            "p95_ms": 153.44612999999998,
+            "maximum_ms": 155.4579
+          },
+          "paired": {
+            "pairs": 10,
+            "median_delta_ms": -16.97905,
+            "direct_faster_pairs": 8
+          }
+        },
+        "repository": {
+          "selected": {
+            "observations": 10,
+            "median_ms": 56.173649999999995,
+            "p95_ms": 58.412214999999996,
+            "maximum_ms": 58.6108
+          },
+          "direct": {
+            "observations": 10,
+            "median_ms": 38.07875,
+            "p95_ms": 148.4876,
+            "maximum_ms": 149.9519
+          },
+          "paired": {
+            "pairs": 10,
+            "median_delta_ms": -17.43235,
+            "direct_faster_pairs": 8
+          }
+        },
+        "subdirectory": {
+          "selected": {
+            "observations": 10,
+            "median_ms": 56.42165,
+            "p95_ms": 169.935965,
+            "maximum_ms": 171.2429
+          },
+          "direct": {
+            "observations": 10,
+            "median_ms": 38.13905,
+            "p95_ms": 150.362735,
+            "maximum_ms": 151.1771
+          },
+          "paired": {
+            "pairs": 10,
+            "median_delta_ms": -18.0605,
+            "direct_faster_pairs": 9
+          }
+        },
+        "worktree": {
+          "selected": {
+            "observations": 10,
+            "median_ms": 56.23195,
+            "p95_ms": 183.03556499999976,
+            "maximum_ms": 283.5927
+          },
+          "direct": {
+            "observations": 10,
+            "median_ms": 39.31615,
+            "p95_ms": 105.73754999999989,
+            "maximum_ms": 159.2844
+          },
+          "paired": {
+            "pairs": 10,
+            "median_delta_ms": -17.87705,
+            "direct_faster_pairs": 9
+          }
+        },
+        "bare": {
+          "selected": {
+            "observations": 10,
+            "median_ms": 58.14255,
+            "p95_ms": 176.023785,
+            "maximum_ms": 177.8727
+          },
+          "direct": {
+            "observations": 10,
+            "median_ms": 38.409,
+            "p95_ms": 102.62473999999989,
+            "maximum_ms": 154.1303
+          },
+          "paired": {
+            "pairs": 10,
+            "median_delta_ms": -19.975150000000006,
+            "direct_faster_pairs": 10
+          }
+        }
+      },
+      "observations": 114,
+      "timed_observations": 100,
+      "all_pairs_equal": true,
+      "all_controls_valid": true,
+      "owned_processes_exited": 116,
+      "fixture_bindings_unchanged": true
+    },
+    "evidence_summary": {
+      "kinds": {
+        "present": {
+          "baseline": {
+            "observations": 300,
+            "median_ms": 1.90055,
+            "p95_ms": 2.459320000000001,
+            "maximum_ms": 3.0876
+          },
+          "candidate": {
+            "observations": 300,
+            "median_ms": 0.0427,
+            "p95_ms": 0.06793500000000001,
+            "maximum_ms": 0.4537
+          },
+          "paired": {
+            "pairs": 300,
+            "median_delta_ms": -1.85435,
+            "candidate_faster_pairs": 300
+          }
+        },
+        "absent": {
+          "baseline": {
+            "observations": 60,
+            "median_ms": 1.8120500000000002,
+            "p95_ms": 2.6148049999999996,
+            "maximum_ms": 2.7062
+          },
+          "candidate": {
+            "observations": 60,
+            "median_ms": 0.022949999999999998,
+            "p95_ms": 0.039595,
+            "maximum_ms": 0.0481
+          },
+          "paired": {
+            "pairs": 60,
+            "median_delta_ms": -1.7926,
+            "candidate_faster_pairs": 60
+          }
+        }
+      },
+      "observations": 740,
+      "timed_observations": 720,
+      "pairs": 370,
+      "all_pairs_equal": true,
+      "index_build_ms": 7.9258,
+      "ordering_checks_passed": true
+    },
+    "database_sha256": {
+      "baseline.sqlite": "8936434bbd0f4d5f009987c587072e78017042da793d36518a544c949db0236f",
+      "candidate.sqlite": "8558e5e2528f1b25020c9b755313b588274117320f3861daffa902775bfd399e",
+      "ordering.sqlite": "20b55578b4f49acc15af56c57e6cba2eeac39490dc35334cec94ac9f9071a8b5"
+    }
+  },
+  "wall_seconds": 10.248785400064662,
+  "archive_sha256": "839f0a3753d18c6bc4099c27143a2e7ab5af6b16ff4e37f931262307e1fc9ce2",
+  "archive_members": 52,
+  "archive_logical_files": 57,
+  "archive_bytes": 135116438,
+  "content_addressed_archive": true,
+  "original_regression_failures": 3,
+  "focused_checks": 120,
+  "focused_skips": 0,
+  "strict_mypy": "passed",
+  "black": "passed",
+  "probe_product_changed": false,
+  "followup_product_source_changed": true,
+  "candidate_installed": false,
+  "git_executable_selection_changed": false,
+  "live_configuration_changed": false,
+  "native_host_run": false,
+  "complete_hook_comparison": false,
+  "pilot_days": 0,
+  "published": false
+}
