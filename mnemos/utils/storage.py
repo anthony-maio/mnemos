@@ -1378,6 +1378,12 @@ class SQLiteStore(MemoryStore):
     """
 
     _SCHEMA_VERSION = "10"
+    _CREATE_SCOPE_RANK_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_memory_chunks_scope_rank ON memory_chunks(
+            user_profile_id, json_extract(metadata, '$.scope'),
+            json_extract(metadata, '$.scope_id'), json_extract(metadata, '$.workspace_id'),
+            json_extract(metadata, '$.source'), id)
+    """
     _CHUNK_SELECT_COLUMNS = """
         id, content, embedding, metadata, salience, cognitive_state,
         created_at, updated_at,
@@ -1734,6 +1740,10 @@ class SQLiteStore(MemoryStore):
         self._conn.execute("""CREATE INDEX IF NOT EXISTS idx_memory_chunks_scope
             ON memory_chunks(user_profile_id, json_extract(metadata, '$.scope'),
                              json_extract(metadata, '$.scope_id'))""")
+        # Keep scope, membership and source-view predicates in the ranking index.
+        # SQLite maintains expression values atomically with the authoritative
+        # chunk, including writes from an already-open or older client.
+        self._conn.execute(self._CREATE_SCOPE_RANK_INDEX_SQL)
         self._conn.execute(
             "INSERT OR IGNORE INTO mnemos_meta(key, value) VALUES ('migration_5', 'applied')"
         )
@@ -2517,8 +2527,13 @@ class SQLiteStore(MemoryStore):
                     AND dimension=?), 0.0)"""
                 vector_bindings = [self._serialize_vec(query_embedding), len(query_embedding)]
                 rows = self._conn.execute(
-                    f"SELECT {self._CHUNK_SELECT_COLUMNS}, {distance} AS similarity "
-                    f"FROM memory_chunks WHERE {where} ORDER BY similarity DESC, id LIMIT ?",
+                    "WITH ranked AS ("
+                    f"SELECT rowid AS chunk_rowid, id, {distance} AS similarity "
+                    "FROM memory_chunks INDEXED BY idx_memory_chunks_scope_rank "
+                    f"WHERE {where} ORDER BY similarity DESC, id LIMIT ?) "
+                    f"SELECT {self._CHUNK_SELECT_COLUMNS_QUALIFIED}, ranked.similarity "
+                    "FROM ranked JOIN memory_chunks ON memory_chunks.rowid=ranked.chunk_rowid "
+                    "ORDER BY ranked.similarity DESC, ranked.id",
                     [*vector_bindings, *bindings, top_k],
                 ).fetchall()
             self.last_retrieval_backend = "sqlite_vec_scoped_exact_cosine"
@@ -2564,11 +2579,21 @@ class SQLiteStore(MemoryStore):
             return []
         columns = self._CHUNK_SELECT_COLUMNS_QUALIFIED
         with self._lock:
+            # Unary plus keeps the integer rowid unchanged, but prevents SQLite
+            # from turning IN into a separate FTS MATCH lookup per eligible row.
+            # Scan MATCH once and check the indexed scope set before the limit.
             rows = self._conn.execute(
-                f"SELECT {columns} FROM memory_fts "
+                "WITH ranked AS ("
+                "SELECT memory_fts.rowid AS chunk_rowid, memory_chunks.id AS id, "
+                "bm25(memory_fts) AS rank FROM memory_fts "
                 "JOIN memory_chunks ON memory_chunks.rowid=memory_fts.rowid "
-                f"WHERE {where} AND memory_fts MATCH ? "
-                "ORDER BY bm25(memory_fts), memory_chunks.id LIMIT ?",
+                "WHERE +memory_fts.rowid IN ("
+                "SELECT rowid FROM memory_chunks INDEXED BY idx_memory_chunks_scope_rank "
+                f"WHERE {where}) AND memory_fts MATCH ? "
+                "ORDER BY rank, memory_chunks.id LIMIT ?) "
+                f"SELECT {columns} FROM ranked "
+                "JOIN memory_chunks ON memory_chunks.rowid=ranked.chunk_rowid "
+                "ORDER BY ranked.rank, ranked.id",
                 [*bindings, match, top_k],
             ).fetchall()
         return [self._row_to_chunk(row) for row in rows]
