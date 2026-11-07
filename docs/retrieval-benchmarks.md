@@ -8,6 +8,12 @@ Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval qua
 - `MRR`: mean reciprocal rank of the first relevant result.
 - `p95 latency (ms)`: 95th percentile retrieval latency for retrieval path execution.
 
+Each result also includes `query_latencies_ms`, in dataset query order. These
+are the raw observations used for the mean and p95, including access-metadata
+persistence on the engine path. Keep them when investigating a failed gate;
+the scoped pack currently has only seven queries, so one slow query can have
+a large effect on p95.
+
 ## Quick Start
 
 ```bash

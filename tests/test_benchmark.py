@@ -8,6 +8,7 @@ import json
 import uuid
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from mnemos.benchmark import (
@@ -79,6 +80,10 @@ def test_run_retrieval_benchmark_memory_backend() -> None:
     assert "recall_at_k" in result
     assert "mrr" in result
     assert "latency_p95_ms" in result
+    assert len(result["query_latencies_ms"]) == result["query_count"]
+    assert result["latency_p95_ms"] == pytest.approx(
+        float(np.percentile(result["query_latencies_ms"], 95))
+    )
 
 
 def test_run_retrieval_benchmark_engine_mode() -> None:
