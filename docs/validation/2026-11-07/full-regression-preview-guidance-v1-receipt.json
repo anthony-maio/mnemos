@@ -1,0 +1,57 @@
+{
+  "status": "failure_verified",
+  "suite_status": "failed",
+  "source_commit": "6364a38a4f9aa90f079d0feed548c82bb6e55367",
+  "product_commit": "c80eb051a4e44d06d053f42d3a452e648e4eb99c",
+  "counts": {
+    "failure": 1,
+    "error": 0,
+    "skipped": 4,
+    "collected": 3552,
+    "passed": 3547
+  },
+  "junit_suite_seconds": 534.968,
+  "pytest_reported_seconds": 537.81,
+  "restored_fixture_files_verified": 208,
+  "website_unchanged": true,
+  "tracked_source_unchanged": true,
+  "measured_processes_absent": true,
+  "reused_pids": [],
+  "skips": [
+    {
+      "class": "tests.test_bridge",
+      "test": "test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "class": "tests.test_bridge",
+      "test": "test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "class": "tests.test_hosts",
+      "test": "test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "class": "tests.test_hosts",
+      "test": "test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    }
+  ],
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "wheel_sha256": "edbbbe35220770b800ae4afcc7ac79a305de6f962214ccd905aea3748194247f",
+  "wheel_verification_receipt": "native-codex-v11-receipt.json",
+  "failure": {
+    "class": "tests.test_service_competing_recovery",
+    "test": "test_competing_launcher_waits_past_dead_descriptor",
+    "error": "PermissionError: [WinError 5] during atomic runtime descriptor replacement",
+    "original_failure_preserved": true
+  },
+  "archive_sha256": "b4df757e88700ff77304459c7838911c1050d0c18f01700317d2f1139fe46e9d",
+  "archive_bytes": 87210,
+  "archive_members": 10
+}
