@@ -1,0 +1,379 @@
+{
+  "status": "verified",
+  "source_commit": "0bab5c0c4210a78ff5ec970e2d2255804a6caa06",
+  "protocol_sha256": "07eddeaf8b50f51b1d0690a28030b5933a6af829a02ad3e8d29286ed4e1e8e33",
+  "model_manifest_sha256": {
+    "qwen3": "857b6f8ff053ab1ad3b8bcb35c8535de93e2e980fe3f9f15c734abbe80e5593a",
+    "qwen35": "e3386ec6b28a081224871e0b278ffde7046a00046ab1f7f89e5dd0d89d23e7c9"
+  },
+  "audit_sha256": {
+    "qwen3": "2fd03dd5f844c99ec8112eadf3b8bf3e9e1ac22d9a6ab9ccd0a58fbe4fc82298",
+    "qwen35": "9e302d6ee0e379e7b07e6adbdade9ba34f24b2d0c04d083d37d10d50fb44b95e"
+  },
+  "private_archive_sha256": "3d38c40e75f0cfa7eefb8b0e27fa3578faf9569aac15384a64db5a1f57ebbcee",
+  "private_archive_members": 191,
+  "private_archive_bytes": 1284675,
+  "owned_pids_absent": [
+    2540,
+    6936,
+    27628,
+    34944,
+    73804,
+    79336,
+    90872,
+    93344
+  ],
+  "ports_closed": [
+    11437,
+    58966,
+    63063
+  ],
+  "original_cleanup_stop_codes": {
+    "server_stop": 255
+  },
+  "focused_tests": 175,
+  "documentation_tests": 12,
+  "new_tests": 17,
+  "strict_mypy_source_files": 4,
+  "black_files": 6,
+  "native_sampling_records_verified": 398,
+  "smoke_responses": 2,
+  "quality_responses": 396,
+  "results": {
+    "qwen3": {
+      "stability": {
+        "observations": 72,
+        "exact_operations": 57,
+        "correct_reviews": 21,
+        "expected_reviews": 30,
+        "wrong_targets": 3,
+        "wrong_additions": 12,
+        "operational_failures": 0,
+        "logical_calls": 198,
+        "raw_responses": 198,
+        "stop_reasons": {
+          "stop": 198
+        },
+        "median_ms": 3574.7416999656707,
+        "p95_ms": 6179.099400062114,
+        "max_native_input": 1554,
+        "max_provider_input": 1241,
+        "max_generated": 92,
+        "prompt_tokens": 219564,
+        "cached_tokens": 171069,
+        "output_tokens": 10707,
+        "final_characters": 40512,
+        "value_spans": 396,
+        "selected_spans": 305,
+        "invalid_spans": 0,
+        "runtime_replays": 72,
+        "verified_source_hashes": 140,
+        "relations": 198,
+        "correct_relations": 144,
+        "relation_exact_views": 42,
+        "combined_exact_views": 42,
+        "all_operations_correct_seeds": 9,
+        "all_combined_correct_seeds": 7,
+        "stability": {
+          "groups_expected": 12,
+          "groups_complete": 12,
+          "operation_stable": 11,
+          "relations_stable": 11,
+          "both_stable": 11
+        },
+        "groups": [
+          {
+            "base_id": "count-explicit",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "count-vague",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-different-audience",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-missing-environment",
+            "operation_stable": false,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-polarity",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-unrelated",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-vague-count",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "retention-paraphrase",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-basic",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-missing-environment",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-qualified",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-wrong-environment",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          }
+        ]
+      }
+    },
+    "qwen35": {
+      "stability": {
+        "observations": 72,
+        "exact_operations": 66,
+        "correct_reviews": 24,
+        "expected_reviews": 30,
+        "wrong_targets": 6,
+        "wrong_additions": 0,
+        "operational_failures": 0,
+        "logical_calls": 198,
+        "raw_responses": 198,
+        "stop_reasons": {
+          "stop": 198
+        },
+        "median_ms": 2952.869400032796,
+        "p95_ms": 4146.990399807692,
+        "max_native_input": 1572,
+        "max_provider_input": 1255,
+        "max_generated": 52,
+        "prompt_tokens": 222336,
+        "cached_tokens": 56292,
+        "output_tokens": 9257,
+        "final_characters": 36928,
+        "value_spans": 396,
+        "selected_spans": 284,
+        "invalid_spans": 0,
+        "runtime_replays": 72,
+        "verified_source_hashes": 140,
+        "relations": 198,
+        "correct_relations": 167,
+        "relation_exact_views": 53,
+        "combined_exact_views": 53,
+        "all_operations_correct_seeds": 11,
+        "all_combined_correct_seeds": 8,
+        "stability": {
+          "groups_expected": 12,
+          "groups_complete": 12,
+          "operation_stable": 12,
+          "relations_stable": 11,
+          "both_stable": 11
+        },
+        "groups": [
+          {
+            "base_id": "count-explicit",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "count-vague",
+            "operation_stable": true,
+            "relations_stable": false,
+            "both_stable": false,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-different-audience",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-missing-environment",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": false,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "requirement-polarity",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-unrelated",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "requirement-vague-count",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "retention-paraphrase",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-basic",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-missing-environment",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": false
+          },
+          {
+            "base_id": "schedule-qualified",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          },
+          {
+            "base_id": "schedule-wrong-environment",
+            "operation_stable": true,
+            "relations_stable": true,
+            "both_stable": true,
+            "all_operations_correct": true,
+            "all_combined_correct": true
+          }
+        ]
+      }
+    }
+  },
+  "matched": {
+    "stability": {
+      "operation": {
+        "both_correct": 54,
+        "qwen3_only": 3,
+        "qwen35_only": 12,
+        "both_wrong": 3
+      },
+      "combined": {
+        "both_wrong": 19,
+        "both_correct": 42,
+        "qwen35_only": 11
+      }
+    }
+  },
+  "historical_control": {
+    "qwen3": {
+      "operation": {
+        "both_correct": 43,
+        "pairwise_only": 14,
+        "both_wrong": 9,
+        "batched_only": 6
+      },
+      "combined": {
+        "both_wrong": 27,
+        "both_correct": 30,
+        "pairwise_only": 12,
+        "batched_only": 3
+      },
+      "unique_literal_pairs": 34,
+      "pairs_with_differing_valid_relations": 1
+    },
+    "qwen35": {
+      "operation": {
+        "both_correct": 51,
+        "both_wrong": 5,
+        "pairwise_only": 15,
+        "batched_only": 1
+      },
+      "combined": {
+        "both_wrong": 19,
+        "both_correct": 40,
+        "pairwise_only": 13
+      },
+      "unique_literal_pairs": 34,
+      "pairs_with_differing_valid_relations": 1
+    }
+  },
+  "historical_control_archive_sha256": "4b8e55b6e6f3e18ce61be75ca51926be721be6d4667649bcc85507fb372a569b",
+  "new_model_calls_during_audit": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "pilot_days": 0
+}

@@ -10,7 +10,7 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; matched Qwen3/Qwen3.5 comparison failed both gates, with five/eleven wrong corrections in the 72-view diagnostic; fresh quality and persisted extraction remain open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; isolated pairwise comparison improves Qwen3/Qwen3.5 to 57/72 and 66/72 operations, but three/six wrong corrections still fail both gates; fresh quality and persisted extraction remain open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter, byte fallback and opt-in compact replies implemented; real MCP transport and six native Codex sessions preserve complete context, with smaller replies and 48/48 correct answer fields; host counter inspection found no advertised arbitrary-text interface; semantic span compression, broader consumption and fresh quality remain open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
@@ -590,3 +590,14 @@ No historical archive is removed or rewritten.
   fresh retrieval-quality pass. All 122 checks, the independent trace/input audit
   and cleanup passed. The archive has 338 verified members. The pilot remains
   inactive with zero days; live configuration and publication remain unchanged.
+- The [isolated pairwise comparison](../validation/2026-11-07/pairwise-v8.md)
+  sends each literal pair with a constant local identity while the runtime keeps
+  actual storage IDs, versions and scope. All 198 planned requests are invariant
+  to ID aliases, order and distractors. Qwen3 improved to 57/72 operations and
+  144/198 relations; Qwen3.5 improved to 66/72 and 167/198. Three and six wrong
+  corrections remain. Qwen3.5's six wrong corrections all guess the production
+  environment from an unqualified requirement. Each model required 198 requests
+  instead of 72 and nearly doubled total input tokens. Neither passes the gate.
+  All 144 observations, 396 quality responses and 140 source hashes were audited.
+  The 187 checks and cleanup passed; the archive has 191 verified members. No
+  confirmation, promotion, fresh-quality pass or pilot day follows from this run.
