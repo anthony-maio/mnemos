@@ -27,6 +27,15 @@ also passed exact application/restore checks for all seven drafts and fourteen
 drift refusals on disposable copies. Nine live paths stayed unchanged. These
 results do not apply the draft, pass recovery/quality gates or start daily use.
 
+The [Codex pilot startup-outage check](validation/2026-11-07/native-pilot-codex-outage.md)
+then passed on the same installed wheel with normal auto-start enabled. A held
+runtime lock blocked startup during one native turn; both messages entered the
+outbox. Releasing the lock and making an ordinary health request drained them,
+and maintenance completed two unasserted raw chunks. Exact source replay and
+a second restart preserved the completed rows and explicit control. Cleanup
+passed. This covers one simulated startup fault; provider failure, mid-write
+crash, ordinary trust, quality and actual daily use remain open.
+
 ## November 6, 2026 checkpoint
 
 The [native Codex v7 check](validation/2026-11-06/native-codex-v7-checkpoint.md)

@@ -11,7 +11,7 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V5 completed 352 observations: hybrid hits were 27/27 for both treatments, but the candidate reduced clean hits from 26 to 19 and abstentions from 14/17 to 13/17; four candidate contract failures; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; both drafted pilot integrations and disposable configuration rollback pass bounded checks; Claude capture identity and normal Codex trust remain limited; recovery/quality gates and actual use open; pilot inactive |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; both drafted pilot integrations, disposable configuration rollback and one native Codex startup-outage recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; provider recovery, quality gates and actual use open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
@@ -417,3 +417,12 @@ No historical archive is removed or rewritten.
   configuration copies were removed and none entered the 17-member archive.
   Fresh activation backups, ordinary host trust, current-artifact recovery,
   quality gates and actual use remain open.
+- The [native Codex pilot startup outage](../validation/2026-11-07/native-pilot-codex-outage.md)
+  preserved two native messages while a held runtime lock blocked startup with
+  normal auto-start enabled. An ordinary health request drained them after the
+  lock was released; maintenance completed two unasserted raw chunks. Both
+  original payload replays and a second restart preserved completed rows and
+  the explicit control. All 141 private archive members verified, and cleanup
+  passed. The role-qualification and transient PID audit failures are retained;
+  no host retry occurred. Ninety-five focused checks passed. Provider outage,
+  mid-write crash, ordinary trust, quality and actual pilot use remain open.
