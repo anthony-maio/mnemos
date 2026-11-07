@@ -19,6 +19,14 @@ The unreleased local-memory checkout implements a Codex command-hook adapter. Ve
 4. Finish substantial work with `mnemos_consolidate`.
 5. Use `mnemos_inspect` if a retrieved memory looks wrong.
 
+Keep the `job_id` returned by `mnemos_store` or `mnemos_correct`. A committed
+event can still be pending. `mnemos_consolidate` returns aggregate maintenance
+counts and health; it does not return a job ID. Pass the original job ID to
+`mnemos_job_status` and check `job.status` and its result before reporting
+completion. For a correction, inspect the fact again to verify the same ID,
+new content and advanced version. A batch count alone does not prove that job
+completed.
+
 ## Recall workflow
 
 At task start, ask: what durable repo memory would reduce re-explaining or repeated mistakes here?

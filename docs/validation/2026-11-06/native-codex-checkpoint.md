@@ -1,8 +1,9 @@
 # Installed artifact and Codex checkpoint
 
 The new installed artifact passed its CLI/MCP restart checks. Complete native
-lifecycle acceptance is still open: all four Codex attempts stopped during the
-first phase. V4 completed three MCP calls but failed trace normalization. None
+lifecycle acceptance is still open: all five Codex attempts stopped during the
+first phase. V4 completed three MCP calls but failed trace normalization. V5
+completed three MCP calls but also recorded a failed model script cell. None
 completed the six-phase lifecycle. The older Claude authentication failure
 remains preserved.
 
@@ -101,6 +102,35 @@ all three saved v4 calls with native model correlation and hashes 41 evidence
 files. This offline check does not relabel v4 or complete its missing phases.
 All 118 focused checks passed after the new positive and missing-correlation
 regressions failed before repair.
+
+## Attempt v5: completed memory calls with a failed model script
+
+Runner `27acb835` correctly parsed successful dispatch events. The native model
+stored the fact, consolidated maintenance and observed its remember job as
+completed. Its consolidation script also tried to save `data.job_id` from the
+maintenance response. That field does not exist; the Code Mode cell failed
+while trying to store an undefined value. The model recovered by checking the
+job ID from the original store response, but the protocol requires completed
+cells and the attempt failed that gate. No later lifecycle phase ran.
+
+The [v5 receipt](native-codex-v5-receipt.json) records the failed attempt and
+189 verified private archive members. Cleanup passed, owned host and service
+processes stopped, and normal authentication bytes were unchanged. The failed
+cell remains a failure; no acceptance rule was relaxed to admit it.
+
+The production MCP descriptions previously omitted consolidation's response
+contract and the correction workflow. They now state which call returns the
+job ID, distinguish committed events from completed processing, explain that
+consolidation returns aggregate counts, and require checking the original job
+and inspecting a corrected fact. Both operating references carry the same
+guidance. This documentation repair needs a new installed artifact and native
+attempt before any claim that it improves host behavior.
+
+The guidance change passed 24 existing MCP runtime, annotation, scope, review,
+compatibility and provenance checks. The live tool catalog returned all four
+updated descriptions without starting a memory service. Formatting, strict
+mypy for the MCP server and the diff check passed. No new behavioral assertion
+is inferred from these documentation checks.
 
 ## Validation and next work
 

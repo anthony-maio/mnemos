@@ -18,6 +18,13 @@ Hard auto-capture remains host-dependent. Do not promise it for Codex, Cursor, O
 
 ## Storage guidance
 
+For explicit remember or correction, keep the `job_id` returned by
+`mnemos_store` or `mnemos_correct`. A committed event can still be pending.
+Call `mnemos_consolidate` to process maintenance, then check that original ID
+with `mnemos_job_status`. Consolidation returns aggregate counts and health,
+not a job ID. Report completion only after checking `job.status` and the job
+result. Inspect a corrected fact again to verify its ID, content and version.
+
 - SQLite: the shipped persistent store and the recommended setup.
 - `sqlite-vec` and FTS5 already cover semantic and full-text retrieval inside the same local database.
 

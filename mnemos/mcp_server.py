@@ -462,6 +462,10 @@ def _register_service_tools(mcp: Any) -> None:
         the content is stored as the user's own assertion. Use it only for
         something the user asked to keep. Evidence you noticed on your own
         belongs in ``mnemos_capture``.
+
+        A committed event may still be pending. Keep the ``job_id`` from this
+        response. After ``mnemos_consolidate``, pass that same ID to
+        ``mnemos_job_status`` and check ``job.status`` before claiming completion.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_store")
         checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
@@ -616,6 +620,13 @@ def _register_service_tools(mcp: Any) -> None:
 
     @mcp.tool(annotations=maintenance_write)
     async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:
+        """Process pending maintenance and return aggregate counts and health.
+
+        This response has no ``job_id``. To verify one remember or correction,
+        use the job ID returned by ``mnemos_store`` or ``mnemos_correct`` with
+        ``mnemos_job_status``. A batch completed count does not identify which
+        job completed.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_consolidate")
         return _service_json(await _service_request(service_context, "maintenance", {}))
 
@@ -624,7 +635,12 @@ def _register_service_tools(mcp: Any) -> None:
         job_id: str,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Return durable processing status without exposing job payloads."""
+        """Check the job ID returned by store or correction, not consolidation.
+
+        Read ``job.status``: queued/pending work is not completed. Inspect a
+        completed job's result for its outcome and fact IDs. This tool reads
+        durable status without exposing the original job payload.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_job_status")
         return _service_json(
             await _service_request(
@@ -642,6 +658,13 @@ def _register_service_tools(mcp: Any) -> None:
         source_ref: str | None = None,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
+        """Correct an inspected fact at its current version, preserving its ID.
+
+        Use ``fact_id`` and ``expected_version`` from ``mnemos_inspect``. When
+        the correction response includes ``job_id``, retain it, consolidate,
+        then check that ID with ``mnemos_job_status`` before claiming completion.
+        Inspect the fact again to verify its content and advanced version.
+        """
         service_context = _service_context_from_ctx(ctx, "mnemos_correct")
         payload = {
             "fact_id": fact_id,

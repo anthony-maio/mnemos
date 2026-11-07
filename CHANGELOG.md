@@ -2,6 +2,7 @@
 
 ## Unreleased improvements -- 2026-11-06
 
+- MCP tool descriptions and operating guidance now distinguish the job ID returned by store/correction from consolidation's aggregate maintenance response. Verify the original job's completed status before reporting success. This changes guidance, not job processing behavior.
 - Experimental module switches now default to off. Choosing a model provider does not enable automatic extraction, reconsolidation, state scoring or graph retrieval. Explicit module settings remain honored; omitted flags take the new defaults. No user configuration is rewritten.
 - The embedded Python API now honors disabled ingestion and consolidation switches. Explicit remember calls remain available. Starter SQLite explicitly disables experiments when selected; ordinary setup edits preserve existing module settings.
 - Research examples and comparison helpers opt in explicitly. Historical evaluation records remain unchanged. These changes have not been published or installed in a live host profile.
