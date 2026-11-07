@@ -13,15 +13,24 @@ The [complete installed comparison](validation/2026-11-07/fact-evidence-index-pe
 uses the same native launcher in both arms. All 160 output/context pairs match,
 all 208 captures survive restart, and every job completes. Indexed recall p95
 passes 500 ms at 104.92 ms. Complete Stop/prompt p95 is 321.73/365.53 ms; both
-fail the unchanged 100 ms limit. The earlier native-launcher and quality results
-retain their separate bindings.
+fail that experiment's whole-command 100 ms limit. The original requirement is
+100 ms for durable capture; direct acknowledgment timing remains unproven. The
+[prospective timing distinction](plans/2026-11-07-candidate-convergence.md) does
+not change the recorded failures. Earlier results retain their separate bindings.
 
-The latest [native Codex lifecycle](validation/2026-11-07/native-codex-v11.md)
-passes all six phases on `c80eb051`, including reviewed forgetting and suppression
-of original-source replay. Native Claude v5 remains bound to `6d0e5ba6`. Neither
-native result transfers to the new wheel or establishes acceptance of the
-experimental native launcher. The private daily-use pilot remains inactive at
-zero days; current quality, complete-hook latency and delivery gates remain open.
+The latest [native Codex lifecycle](validation/2026-11-07/native-codex-v12.md)
+passes all six phases on this same `f5a944ea` wheel, with 19 correlated calls,
+reviewed forgetting and suppressed original-source replay. All six inventories
+and installed guidance delivery verify. Hooks were disabled; no trust bypass
+was used. The earlier Codex v11 and Claude v5 results retain their own bindings.
+This pass does not establish automatic capture, normal hook trust, the complete
+pilot configuration or the experimental native launcher.
+
+The [refreshed private pilot preparation](validation/2026-11-07/persistent-pilot-v4.md)
+uses the same wheel. Its 96 installed package files, 57 dependency versions,
+four configuration probes and seven disposable application/rollback checks
+pass. Live settings remain unchanged. The pilot is inactive at zero days;
+quality, durable acknowledgment, normal hook trust and actual use remain open.
 
 ## November 7, 2026 pilot integration checkpoint
 

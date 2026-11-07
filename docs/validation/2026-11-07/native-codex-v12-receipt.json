@@ -1,0 +1,238 @@
+{
+  "status": "passed",
+  "source_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+  "runner_commit": "a666775f5c7878961295442bc0e05475ee2e8784",
+  "wheel_sha256": "07c5b424bc7731cacbebb45f44709b3f19509c2cde3150a6451c92d12b27e6ae",
+  "host_version": "codex-cli 0.164.0-alpha.11.1",
+  "host_executable_sha256": "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098",
+  "code_mode_executable_sha256": "2727abaa2b30eb4afbe64b1da51a26cb594dd18dda82c6292b5373b15a758257",
+  "model": "gpt-6-astra",
+  "started_at": "2026-11-07T23:03:45.603886+00:00",
+  "finished_at": "2026-11-07T23:07:22.188883+00:00",
+  "cleanup": "passed",
+  "live_configuration_changed": false,
+  "phases": [
+    {
+      "phase": "teach",
+      "status": "passed",
+      "tool_count": 3,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 125764,
+        "cached_input_tokens": 113280,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 362,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    },
+    {
+      "phase": "recall-v1",
+      "status": "passed",
+      "tool_count": 2,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 94947,
+        "cached_input_tokens": 80256,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 442,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    },
+    {
+      "phase": "correct",
+      "status": "passed",
+      "tool_count": 6,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 211414,
+        "cached_input_tokens": 193280,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 665,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    },
+    {
+      "phase": "recall-v2",
+      "status": "passed",
+      "tool_count": 2,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 96051,
+        "cached_input_tokens": 66944,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 495,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    },
+    {
+      "phase": "forget",
+      "status": "passed",
+      "tool_count": 4,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 150972,
+        "cached_input_tokens": 132608,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 469,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    },
+    {
+      "phase": "recall-forgotten",
+      "status": "passed",
+      "tool_count": 2,
+      "correlation": "native_model_id_to_cell_id_to_mcp_runtime_id",
+      "reported_usage": {
+        "input_tokens": 74044,
+        "cached_input_tokens": 49792,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 277,
+        "reasoning_output_tokens": 0
+      },
+      "tool_inventory_verified": true
+    }
+  ],
+  "source_replay_count": 1,
+  "independent_audit": {
+    "status": "verified",
+    "phases": [
+      {
+        "phase": "teach",
+        "calls": 3,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 2,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_consolidate",
+          "mcp__mnemos__mnemos_job_status",
+          "mcp__mnemos__mnemos_store"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "1bd72385ed943cbaf5fe9fc57afb992711fe7b2bad3537f8b52ef7fc57d8addc",
+        "prompt_text_sha256": "b98b791267681171f33d2367a0190fb57ec1e33c62414ab12fba41c8ee384e6e"
+      },
+      {
+        "phase": "recall-v1",
+        "calls": 2,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 1,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_inspect",
+          "mcp__mnemos__mnemos_retrieve"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "b2d12dfdff2d230212191e3f08a116a88be7d161eb1a045dbea955c3f944eb9b",
+        "prompt_text_sha256": "2f110b0cd9dd97d34901c0c279279b84cf94681194721f3ff9e7ac2e0665a399"
+      },
+      {
+        "phase": "correct",
+        "calls": 6,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 1,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_consolidate",
+          "mcp__mnemos__mnemos_correct",
+          "mcp__mnemos__mnemos_inspect",
+          "mcp__mnemos__mnemos_job_status",
+          "mcp__mnemos__mnemos_retrieve"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "8c20552bbc18c78191dad56cd617d6004437d2a917ee9681dd19b9f1b2c0a7d8",
+        "prompt_text_sha256": "d22fa7fc366799198a16dab5f8dd96801896a861db0b530a8bf96583591aed51"
+      },
+      {
+        "phase": "recall-v2",
+        "calls": 2,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 1,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_inspect",
+          "mcp__mnemos__mnemos_retrieve"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "b2d12dfdff2d230212191e3f08a116a88be7d161eb1a045dbea955c3f944eb9b",
+        "prompt_text_sha256": "2f110b0cd9dd97d34901c0c279279b84cf94681194721f3ff9e7ac2e0665a399"
+      },
+      {
+        "phase": "forget",
+        "calls": 4,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 1,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_forget_preview",
+          "mcp__mnemos__mnemos_forget_related",
+          "mcp__mnemos__mnemos_inspect",
+          "mcp__mnemos__mnemos_retrieve"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "71c693eafcb7396b84ecd53844e5a52910166dfb31f4714f290fbdca56c0bf94",
+        "prompt_text_sha256": "3ae4461db6e29dab2ccf16c91a8432a534d67fcf4ad1a5d60449854fa12a047e"
+      },
+      {
+        "phase": "recall-forgotten",
+        "calls": 2,
+        "native_correlation_reconstructed": true,
+        "complete_inventory_verified": true,
+        "inventory_attempts": 1,
+        "advertised_mnemos_names": [
+          "mcp__mnemos__mnemos_retrieve"
+        ],
+        "original_lifecycle_prompt_unchanged": true,
+        "installed_guidance_received": true,
+        "prompt_file_sha256": "fb7c7e0be55ca685fcdbd672e3374ac61a4c47d2b4bbdef7dcecc492c0293438",
+        "prompt_text_sha256": "7cd8d5ad3cae28b468c43800b5ba76e85c97629ec03ddf33bf74f7d5df8cbbaf"
+      }
+    ],
+    "fresh_sessions": 6,
+    "correlated_calls": 19,
+    "source_replays_suppressed": 1,
+    "retained_controls": 3,
+    "complete_inventories_verified": 6,
+    "original_lifecycle_prompts_unchanged": 6,
+    "installed_guidance_verified_phases": 6,
+    "installed_guidance_sha256": "2d11bfbc52aa5cf07938def9c6685850dc0cc636f7cd6b709746e9710380af42",
+    "database_sha256": "935deb1e9d07bd466c218038eb3dddc89d2eec5eb94a676effad49dce5f8cb8c",
+    "audit_model_calls": 0,
+    "sqlite_integrity": "ok",
+    "sqlite_foreign_key_errors": 0,
+    "inspection_identifier_fields": {
+      "fact_id": 5,
+      "chunk_id": 0,
+      "both": 0
+    }
+  },
+  "installed_package_files": 96,
+  "installed_dependency_versions": 57,
+  "original_credentials_and_configuration_unchanged": true,
+  "prepared_pilot_unchanged": true,
+  "pilot_days": 0,
+  "hooks_enabled": false,
+  "hook_trust_bypass": false,
+  "selected_pilot_configuration_accepted": false,
+  "recorded_process_identities_absent": true,
+  "process_ids_checked": 13,
+  "reused_pids": [],
+  "model_assets_unchanged": true,
+  "descriptor_removed": true,
+  "copied_auth_removed": true,
+  "sqlite_integrity": "ok",
+  "sqlite_foreign_key_errors": 0,
+  "archive_sha256": "7870e5591134c7f8e94892397fa8233363b9edc9a6e497cc56f1f9b532fce39c",
+  "archive_members": 810,
+  "archive_bytes": 3547761,
+  "limits": "One synthetic explicit MCP lifecycle on the frozen wheel. No normal hook trust, automatic capture, full pilot configuration, semantic quality, latency, daily use or publication acceptance."
+}
