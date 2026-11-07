@@ -28,6 +28,8 @@ def _host_label(host: AntigravityHost) -> str:
 
 def _workflow_lines() -> list[str]:
     return [
+        "Before the first use of each tool, read its current definition and required arguments. Tool names alone do not describe the call contract. Check an error response before trying to read a successful result from it.",
+        "",
         "1. At the start of every substantial user task, call `mnemos_retrieve` with a focused query tied to the task.",
         "2. Keep retrieval in the active provider's project scope. For MCP tools whose schema exposes `current_scope` and `allowed_scopes`, set both to `project`; for provider-owned tools without those fields, omit them and let the host inject scope. Let the client resolve the registered project identity; never use a folder basename as `scope_id`. Include global or workspace only when the active schema supports those scopes and the task needs them.",
         "3. During execution, use the active provider's durable-write tool, such as `mnemos_store` or `mnemos_remember`, only when the host exposes that tool and its schema supports the call, and only for durable facts:",
@@ -36,10 +38,17 @@ def _workflow_lines() -> list[str]:
         "   - environment and tooling facts that will matter again",
         "   - recurring bug patterns and their fixes",
         "4. Before finishing substantial work, call the active provider's consolidation tool only when the host exposes it and its schema supports the call, such as `mnemos_consolidate`; otherwise do not invent a tool call.",
-        "5. If a retrieved memory looks suspicious, call `mnemos_inspect`, then `mnemos_correct` with its fact ID and current expected_version. Use `mnemos_forget` for an explicit deletion.",
-        "6. Never store secrets, credentials, tokens, or one-off transient chatter.",
-        "7. If Mnemos tools are unavailable, continue normally without blocking work.",
+        "5. If a retrieved memory looks suspicious, call `mnemos_inspect`, then `mnemos_correct` with the inspected `fact.id` and `fact.version` as `fact_id` and `expected_version`.",
+        "6. Use `mnemos_forget` for an explicit fact deletion. To forget information and its retained copies, inspect the target first, then call `mnemos_forget_preview` with both `fact_id` and the inspected `fact.version` as the required `expected_version`. Read every preview page and inspect additional selected facts. Copy the complete preview's `apply_preconditions` unchanged into `mnemos_forget_related`, adding only explicitly reviewed fact and source selections. Report its returned deletion coverage. If the version or preview is stale, inspect again and review a fresh preview; never guess a version or reuse stale selections.",
+        "7. Never store secrets, credentials, tokens, or one-off transient chatter.",
+        "8. If Mnemos tools are unavailable, continue normally without blocking work.",
     ]
+
+
+_CODEX_DISCOVERY_GUIDANCE = (
+    "In Codex Code Mode, read the matching ALL_TOOLS entry, including its description, "
+    "before calling a discovered tool. Use that live definition to supply required arguments."
+)
 
 
 def build_antigravity_policy(host: AntigravityHost) -> str:
@@ -55,6 +64,7 @@ def build_antigravity_policy(host: AntigravityHost) -> str:
         intro.append(
             "Add this workflow to your repo-level `AGENTS.md` so Codex uses Mnemos via MCP consistently."
         )
+        intro.append(_CODEX_DISCOVERY_GUIDANCE)
     intro.append(
         "This is a soft-auto workflow built on MCP plus host instructions, not a promise of host-level hard auto-capture hooks."
     )
@@ -80,6 +90,7 @@ def _build_codex_agents_block() -> str:
         "## Mnemos Memory",
         "",
         "Use Mnemos memory tools automatically on every substantial coding task in this repository.",
+        _CODEX_DISCOVERY_GUIDANCE,
         "",
         *_workflow_lines(),
     ]

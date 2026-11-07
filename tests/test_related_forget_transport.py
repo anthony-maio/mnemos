@@ -89,8 +89,11 @@ def test_mcp_related_forget_tools_validate_and_inject_context() -> None:
         asyncio.run(mcp.tools["mnemos_forget_preview"]("fact-a", 2, 25, ctx=no_project))
 
 
-def test_fastmcp_call_tool_keeps_expected_version_strict(monkeypatch: pytest.MonkeyPatch) -> None:
-    """FastMCP's real argument model must reject bool before service dispatch."""
+@pytest.mark.parametrize("version", [None, True, False, 0, -1, "2", 2.5])
+def test_fastmcp_call_tool_keeps_expected_version_strict(
+    monkeypatch: pytest.MonkeyPatch, version: Any
+) -> None:
+    """The advertised parameter must remain required and strict before dispatch."""
     from mcp.server.fastmcp import Context, FastMCP
     from mcp.server.fastmcp.exceptions import ToolError
 
@@ -106,11 +109,15 @@ def test_fastmcp_call_tool_keeps_expected_version_strict(monkeypatch: pytest.Mon
     )
 
     async def invoke() -> None:
-        with pytest.raises(ToolError, match="valid integer"):
+        invalid = {"fact_id": "fact-a"}
+        if version is not None:
+            invalid["expected_version"] = version
+        with pytest.raises(ToolError):
             await server._tool_manager.call_tool(
                 "mnemos_forget_preview",
-                {"fact_id": "fact-a", "expected_version": True},
+                invalid,
             )
+        assert client.calls == []
         await server._tool_manager.call_tool(
             "mnemos_forget_preview",
             {

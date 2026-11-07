@@ -720,7 +720,15 @@ def _register_service_tools(mcp: Any) -> None:
     @mcp.tool(annotations=read_only)
     async def mnemos_forget_preview(
         fact_id: str,
-        expected_version: StrictInt,
+        expected_version: Annotated[
+            StrictInt,
+            Field(
+                description=(
+                    "Required current fact.version from mnemos_inspect. Copy it unchanged; "
+                    "if it is stale, inspect again before reviewing a fresh preview."
+                )
+            ),
+        ],
         limit: StrictInt = 100,
         ctx: Context[Any, Any, Any] | None = None,
         *,
@@ -730,6 +738,10 @@ def _register_service_tools(mcp: Any) -> None:
         ] = None,
     ) -> str:
         """Read-only review of related facts and raw source captures before forgetting.
+
+        First call mnemos_inspect for the target. Pass both fact_id and the
+        inspected fact.version as the required expected_version. A missing or
+        stale version rejects the preview; inspect again rather than guessing.
 
         Review candidates for the information the user asked to forget, including
         historical versions, paraphrases and formatted quotations. match_type is
