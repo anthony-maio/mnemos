@@ -247,7 +247,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             "docs/plans/2026-11-06-native-codex-job-guidance-v6.md",
         )
         if host == "codex"
-        else ()
+        else ("docs/plans/2026-11-06-native-claude-explicit-v2.md",)
     )
     for relative in inputs:
         committed = subprocess.check_output(
