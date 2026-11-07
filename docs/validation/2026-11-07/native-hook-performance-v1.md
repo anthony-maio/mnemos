@@ -95,7 +95,9 @@ Its [verification receipt](native-hook-portability-v1-receipt.json) records the
 separate artifact and archive. The performance numbers above remain bound to
 the unchanged `788766aa` wheel; the follow-up was not benchmarked again.
 
-Fresh answer-support quality, final source-wide regression/native acceptance,
+The [subsequent full suite](full-regression-native-hook-v1.md) passes 3,495
+checks with four platform skips on the portability follow-up. Fresh
+answer-support quality, current native acceptance, remaining context work,
 canonical delivery and the two-week private pilot remain open.
 
 - [Prospective protocol](../../plans/2026-11-07-native-hook-performance-v1.md)

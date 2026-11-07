@@ -1,0 +1,51 @@
+{
+  "status": "verified",
+  "source_commit": "9c84909f9aec7528edab2ba1f65137d26b683958",
+  "product_commit": "cddf8adc0a451b1483956eb4296a438a6320f0fc",
+  "counts": {
+    "failure": 0,
+    "error": 0,
+    "skipped": 4,
+    "collected": 3499,
+    "passed": 3495
+  },
+  "restored_fixture_files_verified": 208,
+  "website_unchanged": true,
+  "tracked_source_unchanged": true,
+  "measured_processes_absent": true,
+  "reused_pids": [],
+  "skips": [
+    {
+      "class": "tests.test_bridge",
+      "test": "test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "class": "tests.test_bridge",
+      "test": "test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "class": "tests.test_hosts",
+      "test": "test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "class": "tests.test_hosts",
+      "test": "test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    }
+  ],
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "wheel_sha256": "c6f6ff3ddf260a2a736867f01ce923879d68e2dd91ff44abbf0f7a22e1e6982f",
+  "wheel_verification_receipt": "native-hook-portability-v1-receipt.json",
+  "archive_sha256": "0d08d24786c341afa029800270b42d2c80e99ea2ed70175ef792c21f572036be",
+  "archive_bytes": 82415,
+  "archive_members": 10,
+  "junit_suite_seconds": 613.014,
+  "pytest_summary_seconds": 615.92,
+  "timing_note": "The archived audit uses pytest_wall_seconds for the JUnit suite time; this receipt distinguishes that value from the pytest console summary. No raw output or duration changed."
+}
