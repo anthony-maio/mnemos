@@ -8,12 +8,12 @@ No release, live configuration change, or pilot completion is implied.
 
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
-| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; delivery review and affected-user release open |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | Experimental checker implemented; v2 repairs most format failures but still fails semantic support and abstention; further development and fresh evaluation open |
+| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public PR #5 now merged, but broader rollback and caller-transaction protections remain local; integration preflight prepared |
+| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V3's 14B checkpoint improves development abstention to 10/10; temporal false support and two timeouts remain; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Accepted-fact development comparison completed; scope-fixture defect repaired; separate extraction and fresh evaluation open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Installed CLI/MCP checks and all six native Codex phases passed at product 929c44a4 / runner f15bf9f5; actual two-week/two-project pilot and its remaining entry gates open |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python host counter and whole-context packing implemented; native-host wiring, span compression and quality measurements open |
-| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public surfaces disagree; reconciliation open |
+| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed; correct website delivery source verified against live bytes; local README and compatibility summary updated; integration and publication open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
@@ -171,7 +171,29 @@ No historical archive is removed or rewritten.
   skips, no failures or errors. The [regression receipt](../validation/2026-11-06/full-regression-3446220c.json)
   preserves an earlier aborted run whose in-checkout temporary paths caused
   fixture scope collisions, plus the complete corrected external-directory run.
-- Semantic support development, separate extraction/fresh evaluation, native
-  tokenizer integration, pilot preparation/use and consistent delivery remain
-  open. The next prospective development comparison holds retrieval inputs and
-  support prompts fixed while comparing the prepared 4B and 14B local models.
+- The [capacity comparison](../validation/2026-11-06/answer-support-capacity-v3.md)
+  completed 320 observations over 80 frozen inputs and twenty reused questions.
+  Both 14B treatments abstained correctly on 10/10 no-answer questions in each
+  arm. Hybrid returned the expected answer on 9/10 questions, with 8/10 clean
+  hits, one historical-queue false support and one timeout per treatment. The
+  joint treatment was faster and is the leading development candidate. The 4B
+  joint treatment retained 5/10 abstention. No defaults changed.
+- The capacity audit verified 128 source hashes, all paired inputs, ten original
+  stores and snapshot hashes, and 567 requests against 565 retained responses.
+  Two missing responses belong to the two timeouts. An analysis lookup defect
+  initially hid that missing-ID list; the original output is preserved and the
+  corrected accounting leaves every selection metric unchanged. Cleanup passed.
+- The [delivery refresh](../validation/2026-11-06/delivery-state.md) found PR #5
+  merged at public `86644437`, while PyPI remains `0.6.0`. Disposable probes
+  confirmed that caller-transaction and partial-write rollback protections still
+  differ from the local fix. A private-index merge preflight found one storage
+  conflict; keeping the tested local implementation produces the exact local
+  tree. Public integration remains uncommitted.
+- The live site's three main evidence pages exactly match website delivery
+  source `08d393ee`. The older outer checkout and its edits remain untouched.
+  Local README, changelog and host compatibility guidance now identify the
+  newer native checkpoint and distinguish it from the installable public
+  preview. All 12 documentation consistency checks passed.
+- Next development work is temporal applicability over explicit replacement
+  evidence. Separate extraction/fresh evaluation, native tokenizer integration,
+  pilot preparation/use and consistent delivery remain open.

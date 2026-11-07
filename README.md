@@ -39,11 +39,15 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ## Current release posture
 
-Version `0.7.0b1` is an unpublished development candidate from the functional local memory branch. It includes a local service, scoped registry, durable jobs, and SQLite persistence. The October 26 release benchmark failed all six store/dataset comparisons, so this candidate is not published to PyPI. The complete real-host, retrieval-quality, performance, and long-running acceptance gates remain open. The default PyPI package remains `0.6.0` and does not contain this workflow.
+Version `0.7.0b1` is an unpublished development candidate from the functional local memory branch. It includes a local service, scoped registry, durable jobs, and SQLite persistence. The October 26 release benchmark failed all six store/dataset comparisons, so this candidate is not published to PyPI. Retrieval quality, broader host and performance coverage, and the two-week daily-use pilot remain open. The default PyPI package remains `0.6.0` and does not contain this workflow.
+
+The November 6 improvement checkpoint passed one complete [native Codex explicit-memory lifecycle](docs/validation/2026-11-06/native-codex-checkpoint.md): remember, inspect, restart recall, same-ID correction, reviewed forgetting, and absence after restart and original-source replay. That result binds one installed wheel and one synthetic scenario. The [full source suite](docs/validation/2026-11-06/full-regression-3446220c.md) passed 2,724 tests with four environment-specific skips. These local checks do not establish automatic extraction quality or complete the pilot. The [delivery inventory](docs/validation/2026-11-06/delivery-state.md) distinguishes this local checkpoint from the public development branch and PyPI.
 
 The latest recovered judged evaluation completed all 600 observations, including 60 corrections and 60 forget operations. Exact answerable recall was 38.5%; no-answer accuracy was 22.73%. The baseline's no-answer accuracy was 36.36%. The arms expose different candidate facts, so this comparison does not isolate ranking. It does not establish a benefit from the biomimetic modules. Read [the evaluation and recovery report](docs/validation/2026-10-26/recovery-and-evaluation.md) for the frozen scores, exclusions, and a separately labeled answer-span diagnostic.
 
-Start with the explicit-memory example below. It uses real local embeddings, disables experimental enrichment, and needs no hosted LLM. Native Hermes acceptance remains open; loading its Python provider entrypoint is only an installation check. The longer-term integration should keep this explicit memory capability optional and independently useful.
+A newer [development comparison](docs/validation/2026-11-06/answer-support-capacity-v3.md) held accepted facts and retrieval inputs fixed. The 14B support checker abstained correctly on all ten no-answer questions, but still accepted a historical fact for a current-time question and had two timeout observations. Those twenty reused questions are development evidence; they do not replace the older scores or establish fresh evaluation results. The checker remains outside production retrieval.
+
+Start with the explicit-memory example below. It uses real local embeddings, disables experimental enrichment, and needs no hosted LLM. The November 6 installed candidate has not been validated in native Hermes; loading its Python provider entrypoint is only an installation check. Earlier host results retain their own version bindings in the [compatibility matrix](docs/client-compatibility-matrix.md).
 
 Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
 
@@ -56,11 +60,11 @@ The intended setup path is:
 5. Apply Claude Code, Cursor, or Codex config from the UI
 6. Run the built-in smoke check before daily use
 
-If you are evaluating Mnemos quickly, the honest shortest path is:
+For a first evaluation:
 
 - start with **Starter SQLite**
-- treat **Claude Code** as the strongest current workflow
-- treat **Codex** and **Cursor** as documented, usable secondary setups
+- run the isolated restart example before connecting a real project
+- review the host-specific evidence and its tested source version in the compatibility matrix
 
 After saving the profile, enable the current repository explicitly:
 
@@ -78,6 +82,8 @@ Manual env-var setup is still supported for advanced users, but it is no longer 
 ---
 
 ## Quick Start
+
+This installs the public development preview. As of the November 6 inventory, it does not include the newer local improvement checkpoint described above.
 
 Use Python 3.10 or newer and Git. Start in a fresh virtual environment. Clone the development branch without downloading historical LFS captures, then install the checkout:
 

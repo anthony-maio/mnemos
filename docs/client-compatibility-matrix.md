@@ -1,5 +1,25 @@
 # Client compatibility and observed evidence
 
+## November 6, 2026 checkpoint
+
+The [native Codex v6 check](validation/2026-11-06/native-codex-checkpoint.md)
+passed all six explicit-memory phases on installed product `929c44a4` with
+runner `f15bf9f5`: teach and inspect, restarted recall, same-ID correction,
+corrected recall, reviewed forgetting, and final recall after restart and
+original-source replay. All 19 MCP calls completed with verified native call
+correlation. Source evidence, retained controls, scope isolation and cleanup
+passed. This is one synthetic scenario and one run, with experimental modules
+disabled. The earlier failed attempts remain recorded.
+
+The same product passed isolated installed CLI/MCP checks. The later full source
+suite at `3446220c` passed 2,724 tests with four environment-specific skips.
+Current-candidate Claude and Hermes native acceptance, automatic extraction,
+broader reliability, native tokenizer compatibility and actual pilot use remain
+open. Earlier host results below apply to their named products and environments;
+they do not transfer automatically to this installed candidate.
+
+## Earlier checkpoints
+
 The [Codex outage run](validation/2026-09-20/native-codex-outage-v1/README.md)
 passes one stopped-service raw-capture recovery on verified product `9722d92`.
 Two exact native messages remained buffered, then persisted after restart with
