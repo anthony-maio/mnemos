@@ -1,0 +1,203 @@
+{
+  "stage": "development",
+  "status": "screen_completed_not_promoted",
+  "original_source_commit": "2688dee5c9386549c487ebdd4ad5e275e67b958f",
+  "corrected_source_commit": "4f45720dbc286414f77b24e691fb0322b70ac691",
+  "model_repo": "deepset/deberta-v3-base-squad2",
+  "model_revision": "eea39c60cc305c2e4a9504f5ff117294bebb42db",
+  "model_safetensors_sha256": "aff8759009b728d7d35c1163cd3578b911a3e3e1fbd2522c2b4af398e523f92a",
+  "versions": {
+    "torch": "2.10.0+cpu",
+    "transformers": "4.57.6",
+    "safetensors": "0.8.0",
+    "tokenizers": "0.22.2",
+    "sentencepiece": "0.2.1",
+    "numpy": "2.5.4"
+  },
+  "device": "cpu",
+  "dtype": "float32",
+  "threads": 4,
+  "runner_sha256": "02fcffaeb4ae658dcdb145a68070e0d363670e369099a3b11a554a425ee76752",
+  "input_sha256": "87af4a70b776e56eedcb8ae9a5cb56244ddcddae2da3403e98fb2db4cce9b195",
+  "labels_sha256": "07efc92860812ac9848dbcb91c1b24f1d53af50d08431b92500cab510a8f89b1",
+  "dataset_sha256": {
+    "benchmarks/local_memory/fixtures/answer-support-development-v1.json": "2c388cb8a603d4a1463496e0a8243a0a22496026c2a0e1d42dca640ad05d9aef",
+    "benchmarks/local_memory/fixtures/answer-support-temporal-development-v1.json": "9adc7a464e4387802e2a76e2f63e4d8572ba398da7969f2cc84b15855bc8a807",
+    "benchmarks/local_memory/fixtures/accepted-retrieval-development-v1.json": "d915df29dcaad59455a890a365f8307a11805f315afc28521dfbcf0204ffeca7"
+  },
+  "original_summary": {
+    "accepted7": {
+      "observations": 21,
+      "unique_queries": 7,
+      "answerable": 12,
+      "hits": 12,
+      "clean_hits": 12,
+      "absent": 9,
+      "correct_abstentions": 9,
+      "unsupported_selections": 0,
+      "operational_failures": 0,
+      "query_ms_median": 323.3580000232905,
+      "query_ms_p95_nearest": 348.8203000742942
+    },
+    "support44": {
+      "observations": 132,
+      "unique_queries": 44,
+      "answerable": 81,
+      "hits": 66,
+      "clean_hits": 60,
+      "absent": 51,
+      "correct_abstentions": 48,
+      "unsupported_selections": 12,
+      "operational_failures": 0,
+      "query_ms_median": 223.7029999960214,
+      "query_ms_p95_nearest": 305.5416001006961
+    }
+  },
+  "corrected_summary": {
+    "accepted7": {
+      "observations": 21,
+      "unique_queries": 7,
+      "answerable": 12,
+      "hits": 12,
+      "clean_hits": 12,
+      "absent": 9,
+      "correct_abstentions": 9,
+      "unsupported_selections": 0,
+      "operational_failures": 0
+    },
+    "support44": {
+      "observations": 132,
+      "unique_queries": 44,
+      "answerable": 81,
+      "hits": 75,
+      "clean_hits": 69,
+      "absent": 51,
+      "correct_abstentions": 48,
+      "unsupported_selections": 12,
+      "operational_failures": 0
+    }
+  },
+  "original_unique_questions": {
+    "accepted7": {
+      "observations": 7,
+      "unique_queries": 7,
+      "answerable": 4,
+      "hits": 4,
+      "clean_hits": 4,
+      "absent": 3,
+      "correct_abstentions": 3,
+      "unsupported_selections": 0,
+      "operational_failures": 0,
+      "query_ms_median": 328.85529985651374,
+      "query_ms_p95_nearest": 348.8203000742942
+    },
+    "support44": {
+      "observations": 44,
+      "unique_queries": 44,
+      "answerable": 27,
+      "hits": 22,
+      "clean_hits": 20,
+      "absent": 17,
+      "correct_abstentions": 16,
+      "unsupported_selections": 4,
+      "operational_failures": 0,
+      "query_ms_median": 223.07774994987994,
+      "query_ms_p95_nearest": 305.5416001006961
+    }
+  },
+  "corrected_unique_questions": {
+    "accepted7": {
+      "observations": 7,
+      "unique_queries": 7,
+      "answerable": 4,
+      "hits": 4,
+      "clean_hits": 4,
+      "absent": 3,
+      "correct_abstentions": 3,
+      "unsupported_selections": 0,
+      "operational_failures": 0
+    },
+    "support44": {
+      "observations": 44,
+      "unique_queries": 44,
+      "answerable": 27,
+      "hits": 25,
+      "clean_hits": 23,
+      "absent": 17,
+      "correct_abstentions": 16,
+      "unsupported_selections": 4,
+      "operational_failures": 0
+    }
+  },
+  "historical_same_candidate_comparison": {
+    "qwen3-14b-contrast": {
+      "queries": 44,
+      "answerable": 27,
+      "hits": 27,
+      "clean_hits": 27,
+      "absent": 17,
+      "correct_abstentions": 12,
+      "unsupported_selections": 5
+    },
+    "qwen3-14b-joint": {
+      "queries": 44,
+      "answerable": 27,
+      "hits": 27,
+      "clean_hits": 26,
+      "absent": 17,
+      "correct_abstentions": 13,
+      "unsupported_selections": 7
+    }
+  },
+  "raw_model_calls": 291,
+  "repetitions": 3,
+  "distinct_queries": 51,
+  "query_observations": 153,
+  "source_pairs_per_repetition": 97,
+  "stable_pair_groups": 97,
+  "max_input_tokens": 68,
+  "raw_logit_reconstructions": 291,
+  "tokenization_reconstructions": 291,
+  "post_hoc_decoder_correction": true,
+  "corrected_reconstructions": 291,
+  "correction_model_calls": 0,
+  "changed_selections": 9,
+  "unique_changed_query_keys": [
+    "support/attribution/reporter",
+    "support/ownership/cache",
+    "support/scope/billing"
+  ],
+  "runtime_failures_during_model_screen": 0,
+  "bootstrap_failure": {
+    "error": "ModuleNotFoundError: pydantic",
+    "model_calls": 0,
+    "cause": "Benchmark package initializer imported an unrelated dependency in the isolated QA environment.",
+    "repair": "Load the standalone decoder directly; preserve the failed script and log.",
+    "script_sha256": "477d78e266d235268941ab5f30572fcde3c9ec8ae5e94250c7f2d3e09df541c5",
+    "log_sha256": "e13b152f58e6d80fda668b626096c1f7aaf2347ff58ca3c4be4ca5134c245258"
+  },
+  "model_load_ms": 949.0050999447703,
+  "pair_ms_median": 112.15199995785952,
+  "wall_seconds": 42.3195035001263,
+  "original_archive": {
+    "archive_sha256": "35dc6af4d93a2913701f20faba86a710b656ad0c782baf2512ff179e31f2ce19",
+    "members_verified": 30,
+    "bytes": 490496
+  },
+  "combined_archive_sha256": "02318cfa7f0ece77ae0721cab7e4281c32db4552c0aadf415e4f0743bbb0049a",
+  "combined_archive_members": 11,
+  "combined_archive_bytes": 515572,
+  "original_outputs_sha256": {
+    "control.json": "ef2a6f00616a35041a31a07cd8a6542c4dc73eb78417d7bdf3b940e9a224f226",
+    "observations.jsonl": "b5126d0a783fa8010676711ce09e3a01d3184ef43e3c3b4fe20e456a9fffaa30",
+    "pairs.jsonl": "2d251369d146cef7cceb36d09a4b13f40986bc91c1bda89116e6d69fe88cb1ac"
+  },
+  "corrected_outputs_sha256": {
+    "pairs.jsonl": "359eb1474b56f2f6f4b40c8661fdcd39a0ac391c05297ec15df499190cc4fcad",
+    "observations.jsonl": "eb2d546e0d06b5658b7954b5dd762163e82e0bfc6c283394860d875fb3879f45"
+  },
+  "quality_gate_claimed": false,
+  "fresh_evaluation_run": false,
+  "production_changes": false,
+  "pilot_days": 0
+}
