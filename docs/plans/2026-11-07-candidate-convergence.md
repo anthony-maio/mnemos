@@ -15,9 +15,11 @@ the package under that identity. The next review bundle must prove its package
 tree matches this product and include the later verification reports.
 
 This is a tested delivery candidate, not a pilot-ready configuration. Installed
-CLI/MCP checks cover this wheel. The complete native Codex lifecycle remains
-bound to `c80eb051`; the old pilot remains bound to `6d0e5ba6`. Those passes do
-not transfer by renaming a receipt. The native launcher is a development
+CLI/MCP checks and the [native Codex v12 lifecycle](../validation/2026-11-07/native-codex-v12.md)
+cover this wheel. The [refreshed inactive pilot](../validation/2026-11-07/persistent-pilot-v4.md)
+uses the same artifact. Native v12 had hooks disabled; normal hook review is
+[prepared and awaiting the user](../validation/2026-11-07/native-codex-hook-review-v1.md).
+Earlier passes retain their original artifact bindings. The native launcher is a development
 experiment and is not part of this wheel's supported installation.
 
 Prepare and verify the small storage backport independently. Public master was
@@ -147,7 +149,9 @@ or semantic-quality obligations. It is not the default action of this plan.
 2. Verify the minimal backport package and prepare its exact PR body/patch.
    Completed; see the [installed check](../validation/2026-11-07/storage-backport-package-v1.md).
 3. Refresh one delivery bundle on the frozen product, then refresh the private
-   pilot drafts and validate the selected native host on that artifact.
+   pilot drafts and validate the selected native host on that artifact. Bundle,
+   pilot drafts and explicit MCP lifecycle are complete. Normal hook review and
+   full-configuration execution remain pending.
 4. Execute the single bounded end-to-end quality increment and the prospective
    timing protocol. Do not launch unrelated tuning experiments in parallel.
 5. If entry passes, request activation on concrete reviewed files and observe
