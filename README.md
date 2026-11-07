@@ -657,6 +657,39 @@ config = MnemosConfig(
 engine = MnemosEngine(config=config)
 ```
 
+### Sleep consolidation settings
+
+CLI and MCP processes read `[sleep]` from the global `mnemos.toml` or a project's
+`.mnemos/mnemos.toml`. Use `MNEMOS_CONFIG_PATH` to select a different global file.
+Project settings override global settings; environment variables override both.
+
+```toml
+[sleep]
+consolidation_interval_seconds = 3600
+min_episodes_before_consolidation = 10
+max_episodes_per_consolidation = 100
+enable_proceduralization = false
+recall_gated_plasticity_enabled = true
+recall_min_supporting_episodes = 2
+recall_similarity_threshold = 0.82
+```
+
+Recall gating remains off by default. The example enables it so extracted facts
+need support from at least two episodes before consolidation stores them.
+Check `mnemos stats` under `sleep_daemon.recall_gated_plasticity_enabled` to confirm
+the effective setting.
+
+Every `SleepConfig` field also has an environment override: prefix its uppercase
+name with `MNEMOS_SLEEP_`. For example,
+`MNEMOS_SLEEP_RECALL_GATED_PLASTICITY_ENABLED=true` enables recall gating, and
+`MNEMOS_SLEEP_MIN_EPISODES_BEFORE_CONSOLIDATION=5` changes the buffer threshold.
+Empty environment values are ignored; invalid values fail configuration validation.
+
+The interval must be nonnegative, episode counts must be positive, and the recall
+similarity threshold must be between -1 and 1. The optional `consolidation_prompt`
+and `proceduralization_prompt` fields accept TOML strings, including multiline
+strings. Keep the `{episodes}` placeholder in custom prompts.
+
 ### Key Options
 
 | Module | Parameter | Default | Description |

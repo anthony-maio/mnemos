@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Fixed
+- All sleep consolidation settings now load from `[sleep]` in `mnemos.toml` or `MNEMOS_SLEEP_*` environment variables and reach the engine, including recall gating, timing, episode limits, and prompts (#4).
+- Sleep settings use the engine's validation rules, and saving settings preserves multiline prompts in valid TOML.
+- MCP extras now require the supported 1.x SDK, preventing fresh installs from selecting the incompatible 2.x API.
+- Updated NumPy normalization and provider type narrowing for current type checkers.
+- Retrieval metadata updates no longer rewrite SQLite's full-text index. Existing databases receive the narrower trigger when opened.
+- Benchmark document timestamps now preserve dataset order independently of clock resolution and ingestion speed, eliminating timing-dependent recency results.
+
 ## 0.6.0 — 2026-03-31
 
 Beta update focused on making SQLite the only shipped persistence path and exposing recall-gated plasticity on the live runtime.
