@@ -27,6 +27,9 @@ while the original retrieval evaluation was still running.
 V1 subsequently stopped at the service's embedding-identity guard before any
 timed requests. See the [failure and fixture repair](installed-performance-v1-failure.md).
 
+The subsequent [V3 result](installed-performance-v3.md) completes the workload:
+warm recall meets its target, while both complete hook commands miss theirs.
+
 No timing result, new model inference, pilot day or readiness claim follows
 from this preparation. Run only after the fresh retrieval comparison reaches a
 terminal state and its audit and archive are complete. The installed checkpoint

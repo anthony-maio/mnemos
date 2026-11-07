@@ -31,6 +31,10 @@ authenticated shutdown, then confirm both processes exit and the descriptor
 is removed. A different PID alone is insufficient authority to stop a process.
 The original workload, complete command timers and latency thresholds remain.
 
+The subsequent [V3 result](installed-performance-v3.md) verifies that ownership
+repair and completes the workload. Warm recall meets its target; both complete
+hook commands miss the unchanged 100 ms requirement.
+
 - [Failure receipt](installed-performance-v2-failure-receipt.json)
 - [V2 fixture identity amendment](../../plans/2026-11-07-installed-performance-v2.md)
 - [V1 failure](installed-performance-v1-failure.md)

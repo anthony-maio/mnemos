@@ -892,12 +892,20 @@ mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack cla
 Gate output fields live under `gates.production_replacement.*`.
 That historical field name does not change the current negative evaluation or the open quality acceptance gates. The small named dataset packs ship with the package; the larger research harness and frozen archives remain in the source repository.
 
-The current isolated 10,000-fact validation is recorded in
+The earlier isolated 10,000-fact validation is recorded in
 [performance-10k.md](docs/validation/2026-09-16/performance-10k.md). With
 real Ollama query embeddings and a synthetic vector fixture, warm retrieval
 p95 is 506.111 ms against the 500 ms gate, while durable loopback capture p95
 is 68.228 ms against the 100 ms gate. Semantic retrieval quality and real-host
 latency remain NOT RUN.
+
+The [installed BGE performance check](docs/validation/2026-11-07/installed-performance-v3.md)
+uses 10,000 real document embeddings with source-backed synthetic facts.
+Warm recall p95 is 403.37 ms against the 500 ms requirement. Complete capture
+and prompt hook commands take 2089.01 and 2103.02 ms p95, exceeding the 100 ms
+requirement; all 102 captures and durable jobs survive restart. These hook
+timers include interpreter startup and configuration checks. The run uses
+synthetic adapter payloads and does not establish native-host latency or quality.
 Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
 ## Release Checklist
