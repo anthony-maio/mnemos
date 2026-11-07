@@ -1,0 +1,15 @@
+[package]
+name = "mnemos-native-hook-experiment"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+serde_json = { version = "=1.0.149", features = ["arbitrary_precision"] }
+sha2 = "=0.10.9"
+uuid = { version = "=1.20.0", features = ["v4"] }
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
