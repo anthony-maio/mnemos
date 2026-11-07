@@ -1,0 +1,319 @@
+{
+  "status": "prepared",
+  "recorded_at": "2026-11-07T04:30:03.253272+00:00",
+  "wheel_sha256": "ecd11eb7ecbb9cc4f14552d9a7253dead7a8348879c35063411bb850abe06036",
+  "installed_package_files_match_wheel": 86,
+  "launcher_sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+  "failed_v1": {
+    "status": "failed",
+    "cleanup": "passed",
+    "failed_assertion": "All memory_chunks rows equal one; this incorrectly counted an unaccepted raw capture as an automatic accepted fact.",
+    "read_only_diagnosis": {
+      "status": "read_only_failure_diagnosis",
+      "fact_rows": 2,
+      "source_categories": {
+        "explicit_remember": 1,
+        "captured_passthrough": 1
+      },
+      "assertion_categories": {
+        "asserted": 1,
+        "unknown": 1
+      },
+      "event_count": 3,
+      "call_count": 8,
+      "original_report_sha256": "5ff9fdd18a581dc93bdf5a6807ee58d8ee8211df9c9eabd79acfaab61d1a7b70"
+    }
+  },
+  "passed_v2": {
+    "status": "passed",
+    "started_at": "2026-11-07T04:25:50.846053+00:00",
+    "finished_at": "2026-11-07T04:26:26.288548+00:00",
+    "checks": {
+      "mcp_catalog_size": 18,
+      "explicit_store_and_completed_job": true,
+      "real_local_embeddings": true,
+      "restart_same_id_recall": true,
+      "second_project_empty": true,
+      "raw_hook_captures": 2,
+      "automatic_accepted_facts_from_hooks": 0,
+      "unaccepted_raw_chunks": 1,
+      "conflicting_inherited_settings_ignored": true,
+      "sqlite_integrity": "ok",
+      "sqlite_foreign_key_errors": 0
+    },
+    "cleanup": "passed",
+    "limits": "Installed launcher exercised by a Python MCP client and synthetic hook payloads, not a native model or actual host launch. No daily-use or provider-recovery claim."
+  },
+  "owned_service_pids_absent": 8,
+  "service_descriptors_removed": 2,
+  "host_patches": {
+    "status": "UNAPPLIED_DRAFT",
+    "count": 7,
+    "project_count": 2,
+    "hosts": [
+      "codex",
+      "claude-code"
+    ],
+    "codex_hook_events": [
+      "SessionStart",
+      "UserPromptSubmit",
+      "PreCompact",
+      "PostCompact",
+      "Stop",
+      "SessionEnd"
+    ],
+    "claude_hook_events": [
+      "SessionStart",
+      "UserPromptSubmit",
+      "Stop",
+      "PreCompact",
+      "PostCompact"
+    ],
+    "unrelated_codex_semantics_preserved": true,
+    "existing_project_instruction_bytes_preserved": true,
+    "existing_global_mnemos_plugin_disabled": true,
+    "live_files_rechecked": 9
+  },
+  "persistent_runtime_installed": false,
+  "activation_authorized": false,
+  "live_configuration_changed": false,
+  "pilot_days": 0,
+  "patch_receipt_repair": "V1 declared LF text hashes before Windows wrote CRLF files. V2 binds actual stored bytes; patch bytes and proposed target changes are identical. Both plans and the prearchive failure are preserved.",
+  "private_archive_sha256": "e41d863d312407a35280825b368a8852dd2082a017df488b679923f9d41e3530",
+  "verified_members": 58,
+  "files": {
+    "failed-v1/hook-claude-code.json": {
+      "sha256": "468acada26436c9947d7afc720c8c9244e3f750a75a9ba5671acc8efcef00e44",
+      "bytes": 714
+    },
+    "failed-v1/hook-codex.json": {
+      "sha256": "4d8e05bcfe720e07fb88a4fccc2760cbe30c0ab5e3ca9dac09314fcfe0341ac5",
+      "bytes": 602
+    },
+    "failed-v1/launch.py": {
+      "sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+      "bytes": 3999
+    },
+    "failed-v1/mcp-claude-code-project-a.log": {
+      "sha256": "8deac5389e173c8e15b318a1951f65c9892fd6da598206daf6c4cc30a90c9d47",
+      "bytes": 279
+    },
+    "failed-v1/mcp-codex-project-a.log": {
+      "sha256": "22360de4f629b91fbcfbad962482606266bc38347c694ee1f0429c8064d8332b",
+      "bytes": 630
+    },
+    "failed-v1/mcp-codex-project-b.log": {
+      "sha256": "deb5a5466e8741bc2df8d45270aa9f5988b8ceed1de5d00acefeaa34129203fe",
+      "bytes": 162
+    },
+    "failed-v1/memory.sqlite": {
+      "sha256": "635707cc52495216533394620ec34c04f341d77f0c1f98bab7bb1b6fc4a8f992",
+      "bytes": 1830912
+    },
+    "failed-v1/memory.sqlite-shm": {
+      "sha256": "45300d34be6cf531b0deac4095240df53643b223694952c5e3ec41566d134901",
+      "bytes": 32768
+    },
+    "failed-v1/memory.sqlite-wal": {
+      "sha256": "7f18c5c5c7b3ffdd963470e19beb6d9562ec5948162b9f02376e4b204532e02f",
+      "bytes": 230752
+    },
+    "failed-v1/report.json": {
+      "sha256": "5ff9fdd18a581dc93bdf5a6807ee58d8ee8211df9c9eabd79acfaab61d1a7b70",
+      "bytes": 15209
+    },
+    "failed-v1/runtime/claude-checkpoints/154eea7d60ca9c141ecc1044d6ff6eac7fa4ec3f0e56c1d12075a408511b96dd.json": {
+      "sha256": "802c780a4053dcb7259babdc5262b0c94e66766ee4e6d4d11b7a959f0181e15a",
+      "bytes": 427
+    },
+    "failed-v1/runtime/outbox.json.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "failed-v1/runtime/runtime.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "failed-v1/runtime/service.log": {
+      "sha256": "cb61ad27ba40c10b2157a09192a7f62046bf9973699a92c402fe0d945d417f9f",
+      "bytes": 1955
+    },
+    "failed-v1/scopes.json": {
+      "sha256": "fa99e9db34e288ae1bfecaa76ccef1c859d503517ccc04510e7414154b69a51a",
+      "bytes": 701
+    },
+    "failed-v1/settings.toml": {
+      "sha256": "a6cba7455f113891b766cc07c0bf14ff3e95f9462b45808972636023c9fdfb5d",
+      "bytes": 710
+    },
+    "host-diffs-v1/codex-config.patch": {
+      "sha256": "50ad58462ac749a776ad9538eb0817e3c1a4abff02d5a488fc67610de27c4e27",
+      "bytes": 2115
+    },
+    "host-diffs-v1/plan.json": {
+      "sha256": "d85a4b7459338f4bb0f99fc67ffcc461736e99484190391d9cb6982d8e0298cd",
+      "bytes": 4513
+    },
+    "host-diffs-v1/project-1-agents.patch": {
+      "sha256": "3eeceb1e2d5a6be3a5f4bc6acc4bf9cc6d8e778f3cb121eae6276b6c800960cc",
+      "bytes": 1763
+    },
+    "host-diffs-v1/project-1-claude-hooks.patch": {
+      "sha256": "bc046a65fe1a27a134ab8e3f876504b8b722ed70c65d5c597e970859749f6b4b",
+      "bytes": 1985
+    },
+    "host-diffs-v1/project-1-mcp.patch": {
+      "sha256": "7c933bda88f435485e3cbef43761fd8f534d0bb943283cd2e5258993d3ed2229",
+      "bytes": 468
+    },
+    "host-diffs-v1/project-2-agents.patch": {
+      "sha256": "172a44d5ad4f01bb969d2712d9ad0d031f082aeb89ecd61002167b4bb6fbe120",
+      "bytes": 1764
+    },
+    "host-diffs-v1/project-2-claude-hooks.patch": {
+      "sha256": "862338fda19e64a9026691946d5f89330a32df3d50db2086e8be5e137db429ec",
+      "bytes": 1991
+    },
+    "host-diffs-v1/project-2-mcp.patch": {
+      "sha256": "4c6659138e66ae03a8ce33f80370ac59eba41dc6828b05522ce10f084364557d",
+      "bytes": 474
+    },
+    "host-diffs-v2/codex-config.patch": {
+      "sha256": "50ad58462ac749a776ad9538eb0817e3c1a4abff02d5a488fc67610de27c4e27",
+      "bytes": 2115
+    },
+    "host-diffs-v2/plan.json": {
+      "sha256": "dc333b62e93a246152543f371cb2d2e8d1c3746ce2523736864f5e15974d7180",
+      "bytes": 4734
+    },
+    "host-diffs-v2/project-1-agents.patch": {
+      "sha256": "3eeceb1e2d5a6be3a5f4bc6acc4bf9cc6d8e778f3cb121eae6276b6c800960cc",
+      "bytes": 1763
+    },
+    "host-diffs-v2/project-1-claude-hooks.patch": {
+      "sha256": "bc046a65fe1a27a134ab8e3f876504b8b722ed70c65d5c597e970859749f6b4b",
+      "bytes": 1985
+    },
+    "host-diffs-v2/project-1-mcp.patch": {
+      "sha256": "7c933bda88f435485e3cbef43761fd8f534d0bb943283cd2e5258993d3ed2229",
+      "bytes": 468
+    },
+    "host-diffs-v2/project-2-agents.patch": {
+      "sha256": "172a44d5ad4f01bb969d2712d9ad0d031f082aeb89ecd61002167b4bb6fbe120",
+      "bytes": 1764
+    },
+    "host-diffs-v2/project-2-claude-hooks.patch": {
+      "sha256": "862338fda19e64a9026691946d5f89330a32df3d50db2086e8be5e137db429ec",
+      "bytes": 1991
+    },
+    "host-diffs-v2/project-2-mcp.patch": {
+      "sha256": "4c6659138e66ae03a8ce33f80370ac59eba41dc6828b05522ce10f084364557d",
+      "bytes": 474
+    },
+    "passed-v2/hook-claude-code.json": {
+      "sha256": "802e831f92f92d6f14255c1292dd5ae5355440dc20eb5052915c89388499a48f",
+      "bytes": 714
+    },
+    "passed-v2/hook-codex.json": {
+      "sha256": "c61617cdc7b58531a6b068dd27945fd6206f6d65b7df277942ba026610e8ce47",
+      "bytes": 602
+    },
+    "passed-v2/launch.py": {
+      "sha256": "ab2818b0935320e70dbfd35401735ed11b49eb82d4d36668c6e54f4a547ee459",
+      "bytes": 3999
+    },
+    "passed-v2/mcp-claude-code-project-a.log": {
+      "sha256": "5de1cbfc7521f2e6dbaf27b18c482e28c411b06cc90574ca90c262e20b696623",
+      "bytes": 279
+    },
+    "passed-v2/mcp-codex-project-a.log": {
+      "sha256": "d55f6d5f0008b10e6596a020dbb7c40d0814b6c055dfd4a509afbfaf884656ba",
+      "bytes": 630
+    },
+    "passed-v2/mcp-codex-project-b.log": {
+      "sha256": "bc9a10dafd324a562d5a4103b13902d277c049c85109a9dcd2a04436f44cac60",
+      "bytes": 162
+    },
+    "passed-v2/memory.sqlite": {
+      "sha256": "abda13db3e969a59888985bfabb8e338bfd5663b1b425accc5fe6789cc16ead0",
+      "bytes": 1839104
+    },
+    "passed-v2/report.json": {
+      "sha256": "20c6575eb0176cf530561721af9b5548db5752e1474c7450013de050d575bdb3",
+      "bytes": 15772
+    },
+    "passed-v2/runtime/claude-checkpoints/140fbfc074caa8e7c0d6d9cb132f1cd45b0ef45520fe4a07747c5f7df9798d3e.json": {
+      "sha256": "edad3bc23cb10703c0cc717c1e61691c20cff9518bfe7f1b53a94e5daad09477",
+      "bytes": 427
+    },
+    "passed-v2/runtime/outbox.json.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "passed-v2/runtime/runtime.lock": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "passed-v2/runtime/service.log": {
+      "sha256": "61d692c129fb230c462a2eff33860f8eb919585e25d119d5a21a086d028c2f03",
+      "bytes": 1956
+    },
+    "passed-v2/scopes.json": {
+      "sha256": "414981d919fe9b93008aefcb9842afe783d5240d1a8abbac7a2438891cd28b78",
+      "bytes": 701
+    },
+    "passed-v2/settings.toml": {
+      "sha256": "a6cba7455f113891b766cc07c0bf14ff3e95f9462b45808972636023c9fdfb5d",
+      "bytes": 710
+    },
+    "preparation/archive-pilot-launcher-v2.py": {
+      "sha256": "7b94f4d17fe6beb0fd446dcbd16a537c816cf914e1a693a75ea82fbd01aecadf",
+      "bytes": 6110
+    },
+    "preparation/check-pilot-launcher-mcp-v1.py": {
+      "sha256": "0ff39c2d8c9ee969aa4816adb9c963235d485ef0933fd1716ffd3777ff7a53b8",
+      "bytes": 8855
+    },
+    "preparation/check-pilot-launcher-mcp-v2.py": {
+      "sha256": "bc72e474f2b599eaa9cda651cc9ef4912ab2d2dce72d815ea76b40350f81ef00",
+      "bytes": 9739
+    },
+    "preparation/diagnose-pilot-launcher-v1.py": {
+      "sha256": "978dedcac63f1f50b2d25e72716e1d1f21e33977fd5432718e8340b4b94175c2",
+      "bytes": 2001
+    },
+    "preparation/fix-pilot-patch-byte-receipts-v2.py": {
+      "sha256": "e050586af129beeb002ec2474f571e6a76efaef861cda0bccd78c2f8e71275a9",
+      "bytes": 1584
+    },
+    "preparation/pilot-host-diff-v1-hash-failure.json": {
+      "sha256": "a81bd4ccdacba7464a38607103fcf2d8d97024e6c8b1c780ac9ad6881fa75e3e",
+      "bytes": 2373
+    },
+    "preparation/pilot-launcher-mcp-v1.txt": {
+      "sha256": "6447ab5dd1f528b2c28ee795aa89c28e920a4daa0a4176f9dcbb244bd19ca16e",
+      "bytes": 492
+    },
+    "preparation/pilot-launcher-mcp-v2.txt": {
+      "sha256": "7a4c206be10f958191560e3c0a2a4c13a9ce8e1e60140c5c3a91122ac2d45dcb",
+      "bytes": 495
+    },
+    "preparation/pilot-launcher-v1-diagnosis-private.json": {
+      "sha256": "be26e80466177f6af2b4c1b2eee5f459bff68c76437741a00e9eb8b5b43e2d6a",
+      "bytes": 2353
+    },
+    "preparation/pilot-launcher-v1-diagnosis.json": {
+      "sha256": "52e2b5da05bfd50d5445f2b0b255baf3eaea6f5f39ce340cf1eb180e3bcab6cf",
+      "bytes": 371
+    },
+    "preparation/prepare-pilot-host-diffs-v1.py": {
+      "sha256": "49c3605362058418fb96ee874fc301141a4d5ad7b70254ab38a1911458ff37fb",
+      "bytes": 7061
+    },
+    "preparation/prepare-pilot-launcher-probe-v2.py": {
+      "sha256": "66da2e39fc399ecb45158e8c9d5424e0856343778266d20f4de40524beaf01b1",
+      "bytes": 1491
+    }
+  },
+  "limits": "Installed launcher/transport checks and private host-patch preparation. Neither native host applied these patches. Current participating-host coverage, persistent installation, rollback application checks, quality/provider-recovery gates and actual pilot use remain open."
+}

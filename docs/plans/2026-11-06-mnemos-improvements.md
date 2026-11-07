@@ -346,3 +346,10 @@ No historical archive is removed or rewritten.
   against conflicting inherited settings; no service started. Seven live paths
   remain unchanged. Exact host diffs, persistent runtime, real launcher/MCP/hook
   checks, quality/provider-recovery gates and actual pilot use remain open.
+- The [installed launcher check and private host patches](../validation/2026-11-06/private-pilot-launcher-and-diffs-v2.md)
+  now cover MCP store/job completion, restart recall, project isolation and
+  both synthetic hook captures on the verified `6d0e5ba6` wheel. A failed probe
+  assertion and a patch line-ending hash mismatch are preserved alongside
+  their corrected receipts. All 58 archive members verified. Seven patches
+  are prepared but unapplied; nine live paths remain unchanged. Native-host
+  application, persistent installation, rollback and pilot gates remain open.
