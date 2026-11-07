@@ -241,6 +241,8 @@ class OllamaProvider(LLMProvider):
         max_tokens: Maximum tokens to generate per response.
         think: Optional Ollama reasoning mode. ``None`` leaves the model default
             unchanged; booleans and documented reasoning levels are supported.
+        force_chat: Use the chat route even without structured reasoning.
+            False preserves automatic route selection.
     """
 
     supports_structured_output = True
@@ -256,13 +258,17 @@ class OllamaProvider(LLMProvider):
         response_observer: Callable[[dict[str, Any]], None] | None = None,
         *,
         think: bool | Literal["low", "medium", "high", "max"] | None = None,
+        force_chat: bool = False,
     ) -> None:
+        if type(force_chat) is not bool:
+            raise ValueError("force_chat must be a boolean")
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.think = _validate_ollama_think(think)
+        self.force_chat = force_chat
         self.response_observer = response_observer
         self._default_trust_context: ssl.SSLContext | None = None
         self._trust_context_lock = threading.Lock()
@@ -302,12 +308,17 @@ class OllamaProvider(LLMProvider):
         temperature = kwargs.get("temperature", self.temperature)
         max_tokens = kwargs.get("max_tokens", self.max_tokens)
         think = _validate_ollama_think(kwargs.get("think", self.think))
+        force_chat = kwargs.get("force_chat", self.force_chat)
+        if type(force_chat) is not bool:
+            raise ValueError("force_chat must be a boolean")
         response_format = kwargs.get("format")
         # On reasoning models, generate can constrain the reasoning channel
         # itself and terminate without a final answer. Chat keeps the final
         # structured response separate. Preserve the existing route when
         # reasoning is disabled or left to the model's unspecified default.
-        use_chat = response_format is not None and think is not None and think is not False
+        use_chat = force_chat or (
+            response_format is not None and think is not None and think is not False
+        )
 
         payload = {
             "model": _request_model(self.model, kwargs),

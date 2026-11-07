@@ -118,7 +118,7 @@ def grade_reconciliation(
 
 async def run(args: argparse.Namespace) -> dict[str, Any]:
     treatments = getattr(args, "treatments", "prompt_v1")
-    if treatments not in {"prompt_v1", "identity_v2"}:
+    if treatments not in {"prompt_v1", "identity_v2", "reasoning_v3"}:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
     if treatments == "identity_v2":
@@ -127,6 +127,20 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             "direct_full": ("direct", False),
             "identity_v1": None,
         }
+    if treatments == "reasoning_v3":
+        arms = {
+            "direct_generate_off": ("direct", False),
+            "direct_chat_off": ("direct", False),
+            "direct_chat_on": ("direct", False),
+        }
+    provider_options = {
+        arm: {"think": arm == "direct_chat_on", "force_chat": arm.startswith("direct_chat_")}
+        for arm in arms
+    }
+    output_allowance = 4096 if treatments == "reasoning_v3" else 2048
+    input_allowance = 8192 - output_allowance - 512
+    provider_timeout = 90 if treatments == "reasoning_v3" else 30
+    case_timeout = 120 if treatments == "reasoning_v3" else 60
     for endpoint in (args.endpoint, args.tokenizer_url):
         url = urlsplit(endpoint)
         if (
@@ -178,11 +192,12 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "model": MODEL,
         "model_digest": MODEL_DIGEST,
         "temperature": 0,
-        "think": False,
+        "provider_options": provider_options,
         "context_length": 8192,
-        "max_output_tokens": 2048,
-        "max_counted_input_tokens": 5632,
-        "case_timeout_seconds": 60,
+        "max_output_tokens": output_allowance,
+        "max_counted_input_tokens": input_allowance,
+        "provider_timeout_seconds": provider_timeout,
+        "case_timeout_seconds": case_timeout,
         "repetitions": args.repetitions,
         "arms": arms,
         "treatments": treatments,
@@ -195,7 +210,14 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "shuffle_seed": 2026110701,
     }
     write(output / "manifest.json", manifest)
-    provider = RecordedProvider(args.endpoint, args.tokenizer_url, output)
+    provider = RecordedProvider(
+        args.endpoint,
+        args.tokenizer_url,
+        output,
+        timeout=provider_timeout,
+        max_tokens=output_allowance,
+        max_input_tokens=input_allowance,
+    )
     observations = []
     try:
         order = [
@@ -212,6 +234,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         for repetition, case, arm in order:
             source = case.source
             provider.case_id, provider.repetition = source.case_id + "/" + arm, repetition
+            provider.think = provider_options[arm]["think"]
+            provider.force_chat = provider_options[arm]["force_chat"]
             before_calls = provider.call_id
             snapshot = {
                 "events": [event.model_dump(mode="json") for event in source.events],
@@ -240,7 +264,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         prompt_style=style,
                         relevant_revision_flag=relevant,
                     )
-                result = await asyncio.wait_for(reconciliation, timeout=60)
+                result = await asyncio.wait_for(reconciliation, timeout=case_timeout)
             except Exception as exc:
                 error = type(exc).__name__ + ": " + str(exc)
             observation = {
@@ -289,7 +313,9 @@ def main() -> None:
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--source-root", default=".")
     parser.add_argument("--repetitions", type=int, choices=(1, 3), default=3)
-    parser.add_argument("--treatments", choices=("prompt_v1", "identity_v2"), default="prompt_v1")
+    parser.add_argument(
+        "--treatments", choices=("prompt_v1", "identity_v2", "reasoning_v3"), default="prompt_v1"
+    )
     asyncio.run(run(parser.parse_args()))
 
 

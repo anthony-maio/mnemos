@@ -102,13 +102,26 @@ def load_cases(path: Path) -> tuple[dict[str, Any], list[ExtractionCase]]:
 
 
 class RecordedProvider(OllamaProvider):
-    def __init__(self, endpoint: str, tokenizer_url: str, output: Path) -> None:
+    def __init__(
+        self,
+        endpoint: str,
+        tokenizer_url: str,
+        output: Path,
+        *,
+        timeout: float = 30,
+        max_tokens: int = 2048,
+        max_input_tokens: int = 5632,
+    ) -> None:
+        if any(type(value) is not int or value < 1 for value in (max_tokens, max_input_tokens)):
+            raise ValueError("Study input and output allowances must be positive integers")
+        if max_input_tokens + max_tokens + 512 > 8192:
+            raise ValueError("Input, output and template allowances exceed the study context")
         super().__init__(
             model=MODEL,
             base_url=endpoint,
-            timeout=30,
+            timeout=timeout,
             temperature=0,
-            max_tokens=2048,
+            max_tokens=max_tokens,
             think=False,
             response_observer=self.observe,
         )
@@ -118,6 +131,7 @@ class RecordedProvider(OllamaProvider):
         self.case_id = ""
         self.repetition = 0
         self.stage = ""
+        self.max_input_tokens = max_input_tokens
 
     def observe(self, response: dict[str, Any]) -> None:
         append(
@@ -149,13 +163,28 @@ class RecordedProvider(OllamaProvider):
             "stage": self.stage,
             "prompt": prompt,
             "kwargs": kwargs,
+            "provider_settings": {
+                "think": kwargs.get("think", self.think),
+                "force_chat": kwargs.get("force_chat", self.force_chat),
+                "max_tokens": kwargs.get("max_tokens", self.max_tokens),
+                "timeout": self.timeout,
+                "max_input_tokens": self.max_input_tokens,
+            },
         }
         append(self.output / "provider-requests.jsonl", record)
         # Count prompt plus decoder schema conservatively; the schema is not an
-        # instruction to the model. Reserve 2,048 output and 512 template tokens.
+        # instruction to the model. Reserve the frozen output allowance and
+        # 512 template tokens; all experiment arms share those allowances.
         counting_text = prompt + json.dumps(kwargs.get("format", {}), ensure_ascii=True)
         started = time.perf_counter()
         try:
+            requested_output = kwargs.get("max_tokens", self.max_tokens)
+            if (
+                type(requested_output) is not int
+                or requested_output < 1
+                or self.max_input_tokens + requested_output + 512 > 8192
+            ):
+                raise ValueError("Requested output exceeds the reserved study context")
             async with httpx.AsyncClient(trust_env=False, timeout=10) as client:
                 response = await client.post(
                     self.tokenizer_url + "/tokenize",
@@ -177,7 +206,7 @@ class RecordedProvider(OllamaProvider):
                     "parse_special": False,
                 },
             )
-            if len(token_ids) > 5632:
+            if len(token_ids) > self.max_input_tokens:
                 raise ValueError("Prompt and schema exceed the prospective input allowance")
             value = await super().predict(prompt, **kwargs)
         except BaseException as exc:

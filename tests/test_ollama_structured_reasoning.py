@@ -126,3 +126,54 @@ async def test_other_requests_keep_generate_contract(
     assert await OllamaProvider(think=think).predict("extract", format=output_format) == "answer"
     assert requests[0][0].endswith("/api/generate")
     assert requests[0][1]["prompt"] == "extract"
+
+
+@pytest.mark.asyncio
+async def test_forced_chat_can_disable_reasoning_and_preserve_final_channel(monkeypatch) -> None:
+    raw = {"message": {"content": ' {"ok":true} ', "thinking": "separate trace"}}
+    requests = install_client(monkeypatch, raw)
+    observed = []
+    provider = OllamaProvider(think=False, force_chat=True, response_observer=observed.append)
+    schema = {"type": "object"}
+    assert await provider.predict("same prompt", format=schema, max_tokens=4096) == '{"ok":true}'
+    assert requests == [
+        (
+            "http://localhost:11434/api/chat",
+            {
+                "model": "llama3",
+                "stream": False,
+                "messages": [{"role": "user", "content": "same prompt"}],
+                "think": False,
+                "format": schema,
+                "options": {"temperature": 0.1, "num_predict": 4096},
+            },
+        )
+    ]
+    assert observed == [raw]
+
+
+@pytest.mark.asyncio
+async def test_per_call_chat_override_does_not_change_provider_default(monkeypatch) -> None:
+    provider = OllamaProvider(think=False)
+    requests = install_client(monkeypatch, {"message": {"content": "answer"}})
+    assert await provider.predict("same prompt", force_chat=True) == "answer"
+    assert requests[0][0].endswith("/api/chat")
+    assert provider.force_chat is False
+    requests = install_client(monkeypatch, {"response": "answer"})
+    assert await provider.predict("same prompt") == "answer"
+    assert requests[0][0].endswith("/api/generate")
+
+
+@pytest.mark.parametrize("value", [None, "false", 0, 1, [], {}])
+def test_invalid_forced_chat_constructor_fails_before_network(value) -> None:
+    with pytest.raises(ValueError, match="force_chat must be a boolean"):
+        OllamaProvider(force_chat=value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("value", [None, "false", 0, 1, [], {}])
+async def test_invalid_forced_chat_override_fails_before_network(value, monkeypatch) -> None:
+    requests = install_client(monkeypatch, {"response": "answer"})
+    with pytest.raises(ValueError, match="force_chat must be a boolean"):
+        await OllamaProvider().predict("prompt", force_chat=value)
+    assert requests == []
