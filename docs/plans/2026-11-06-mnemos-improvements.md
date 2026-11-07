@@ -659,3 +659,14 @@ No historical archive is removed or rewritten.
   The 125-member private archive verifies. Both owned services exited cleanly.
   These installed adapter checks use synthetic payloads; native-host latency,
   semantic quality and actual daily use remain separate obligations.
+- The [hook startup diagnosis](../validation/2026-11-07/hook-startup-diagnostics-v1.md)
+  identifies configuration imports as a substantial cost before dispatch.
+  Retrieval settings now live separately from memory and cognitive-state models,
+  with the existing import path preserved. The three new boundary checks fail
+  before the change; 37 configuration/retrieval and 68 adapter/client/service
+  checks pass afterward, with three shared cases. The candidate wheel at
+  `3e137634` builds and passes Twine; installed files match the wheel and source.
+  The [forty-observation comparison](../validation/2026-11-07/hook-import-comparison-v1.md)
+  finds a -24.12 ms median paired empty-hook difference, with one much slower
+  candidate sample. Empty-command startup still has a 689.58 ms median. The
+  full hook gate remains open; no native acceptance or pilot upgrade occurred.

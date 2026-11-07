@@ -42,6 +42,10 @@ adapter, client, service and import checks, with three shared cases. Black and
 strict mypy pass for the changed source. This establishes the dependency repair;
 it does not yet measure a speedup or meet the complete hook requirement.
 
+The subsequent [installed wheel comparison](hook-import-comparison-v1.md)
+measures a small median paired startup reduction with a slower candidate
+outlier. It leaves the complete hook requirement open.
+
 The diagnostics and original inputs are preserved in a verified 126-member
 private archive, SHA-256
 `90962fbf8936ab1956bed1873be2e7649331ba5136f773ee045aac6cb2d42986`.
