@@ -1,0 +1,56 @@
+{
+  "status": "passed",
+  "source_commit": "7f5aec4b587599ccf0592af236cc5b8d0fc2a5eb",
+  "started_at": "2026-11-07T03:08:39.6565358Z",
+  "finished_at": "2026-11-07T03:16:32.3221898Z",
+  "exit_code": 0,
+  "counts": {
+    "failure": 0,
+    "error": 0,
+    "skipped": 4,
+    "collected": 2810,
+    "passed": 2806
+  },
+  "skips": [
+    {
+      "test": "tests.test_bridge::test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_bridge::test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "test": "tests.test_hosts::test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    }
+  ],
+  "tracked_source_unchanged": true,
+  "private_archive_sha256": "4a3d5cadab4ad306f20f974c77ae8456bbf449cafae9cac8fb46cba0c5164419",
+  "private_archive_bytes": 58084,
+  "verified_members": 4,
+  "files": {
+    "archive-regression-review-pages.py": {
+      "sha256": "792246636de5f9a05800df55078860d3fb684c8947c85c6bc0ce0329f2fc9b16",
+      "bytes": 2683
+    },
+    "control.json": {
+      "sha256": "0e3a46aa3c78c7e17df0a66679fdcd09d8d00e43d28d4f94f2182506217ee2ba",
+      "bytes": 258
+    },
+    "junit.xml": {
+      "sha256": "5b80b5cadc1db33569f09e6d1d5ff24d440cfa4bda5788b2f47aa20e113f2d4f",
+      "bytes": 391183
+    },
+    "pytest.txt": {
+      "sha256": "31bd3df1d00c232d72cff70a7880e559b63df69408b3d0933391b87cd5059f33",
+      "bytes": 3672
+    }
+  },
+  "prior_failed_run": "full-regression-5de1844f-missing-fixtures.json",
+  "limits": "Fresh full regression after restoring unchanged archived fixtures. Does not reclassify the prior failed run or establish a native host pass, pilot readiness or publication."
+}

@@ -278,3 +278,29 @@ No historical archive is removed or rewritten.
   fixture files match Git bytes, and the affected files pass all 50 checks.
   The original failure is archived. A fresh full suite and the next native
   attempt remain pending; the private pilot has no recorded days.
+- The fresh [full regression](../validation/2026-11-06/full-regression-review-pages-v2.md)
+  at `7f5aec4b` passed 2,806 tests with four platform-specific skips and no source
+  changes during execution. Its archive is verified; the prior fixture failure
+  remains failed.
+- [Claude v4](../validation/2026-11-06/native-claude-v4-checkpoint.md) passed the
+  first four phases, then failed on an unapproved extraction-review request.
+  Its five forget-preview pages arrived intact and reconstructed completely.
+  One explicit short-ref selection committed, but omitted an advisory copy and
+  two source-only captures. One fact, three source rows and one evidence row
+  retained forgotten labels. Final restart/replay did not run. Both original
+  and diagnostic archives verified; cleanup and source-credential preservation
+  passed. Tool discovery and complete selection remain repair work.
+- [Private pilot preparation](../validation/2026-11-06/private-pilot-preparation.md)
+  now includes a read-only setup inventory and inactive configuration draft for
+  both selected projects. It separates the proposed local runtime from existing
+  provider/store settings. Both draft configurations parse. No live host changes,
+  activation approval, pilot days or publication are claimed. Original quality,
+  recovery and actual-use requirements remain open.
+- A final explicit website check exposed an obsolete preset-label assertion.
+  The default test could also discover the older ancestor website checkout.
+  The check now requires the canonical path explicitly and verifies the actual
+  install commands, SQLite guidance and published/development distinction.
+  All twelve documentation checks, formatting and strict test-module types pass.
+  The [receipt](../validation/2026-11-06/canonical-website-check.json) preserves
+  the initial 11-pass/1-failure result. This test-only repair postdates the full
+  regression; product and native-runner code are unchanged.

@@ -5,8 +5,10 @@ tests/test_docs_consistency.py — Keep docs aligned with runtime behavior.
 from __future__ import annotations
 
 import ast
+from html import unescape
 import os
 import re
+import shlex
 from pathlib import Path
 
 import pytest
@@ -18,14 +20,7 @@ README_PATH = ROOT / "README.md"
 WEBSITE_INDEX_PATH = (
     Path(os.environ["MNEMOS_WEBSITE_INDEX"]).resolve()
     if os.environ.get("MNEMOS_WEBSITE_INDEX")
-    else next(
-        (
-            parent / "web" / "index.html"
-            for parent in ROOT.parents
-            if (parent / "web" / "index.html").is_file()
-        ),
-        ROOT.parent / "web" / "index.html",
-    )
+    else None
 )
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
@@ -237,12 +232,21 @@ def test_readme_quick_start_is_sqlite_first() -> None:
 
 
 def test_website_quick_start_is_sqlite_first_when_available() -> None:
-    if not WEBSITE_INDEX_PATH.is_file() and not os.environ.get("MNEMOS_WEBSITE_INDEX"):
-        pytest.skip("The separately maintained website is not present in this checkout")
+    if WEBSITE_INDEX_PATH is None:
+        pytest.skip("Set MNEMOS_WEBSITE_INDEX to the canonical website checkout")
     website = WEBSITE_INDEX_PATH.read_text(encoding="utf-8")
-
-    assert "Starter SQLite" in website
-    assert "mnemos ui" in website
+    setup = re.search(r'<section\b[^>]*\bid="get-started"[^>]*>(.*?)</section>', website, re.S)
+    assert setup is not None, "The website must identify its current setup instructions"
+    section = setup.group(1)
+    visible = " ".join(unescape(re.sub(r"<[^>]+>", " ", section)).split())
+    commands = [
+        [shlex.split(line) for line in unescape(block).splitlines() if line.strip()]
+        for block in re.findall(r"<code>(.*?)</code>", section, re.S)
+    ]
+    assert [["pip", "install", "mnemos-memory[mcp]"], ["mnemos", "ui"]] in commands
+    assert "SQLite path" in visible
+    assert "separate development candidate" in visible
+    assert "results should not be treated as a test of the PyPI release" in visible
     assert "Move to Qdrant only when" not in website
 
 

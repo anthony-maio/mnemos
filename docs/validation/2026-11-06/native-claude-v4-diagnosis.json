@@ -1,0 +1,198 @@
+{
+  "source_trace_sha256": "5f23edea670f228258f1259e2331d5678aae6363990287a39b9af9d7007f4055",
+  "native_gate": "failed",
+  "native_error": "unsupported native tool: mnemos_reviews",
+  "advertised_tool_count": 18,
+  "allowed_tool_count": 4,
+  "reviews_advertised_but_not_allowed": true,
+  "forget_phase_tool_results": 15,
+  "tool_counts": {
+    "mnemos_retrieve": 1,
+    "mnemos_reviews": 1,
+    "mnemos_inspect": 7,
+    "mnemos_forget_preview": 5,
+    "mnemos_forget_related": 1
+  },
+  "tool_errors": [
+    {
+      "name": "mnemos_reviews",
+      "request_line": 25,
+      "response_line": 26,
+      "is_error": true,
+      "result": {
+        "unparsed_text": "Claude requested permissions to use mcp__plugin_mnemos-memory_mnemos__mnemos_reviews, but you haven't granted it yet."
+      }
+    }
+  ],
+  "pages": [
+    {
+      "request_line": 60,
+      "response_line": 61,
+      "inline_bytes": 11745,
+      "review": {
+        "format": "json_fragments_v1",
+        "snapshot_digest": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977",
+        "first_fragment": 0,
+        "total_fragments": 64,
+        "last_page": false,
+        "next_cursor": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977:21",
+        "instructions": "Read all pages in order. Paths locate exact snapshot fields; text fragments continue at character offsets. Nothing is summarized. Copy next_cursor into mnemos_forget_preview with the same fact_id, expected_version and limit. Only the last page provides apply_preconditions for a complete snapshot. Use reviewed f/s selection_ref values to avoid retyping long IDs."
+      },
+      "has_apply_preconditions": false
+    },
+    {
+      "request_line": 86,
+      "response_line": 87,
+      "inline_bytes": 10909,
+      "review": {
+        "format": "json_fragments_v1",
+        "snapshot_digest": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977",
+        "first_fragment": 21,
+        "total_fragments": 64,
+        "last_page": false,
+        "next_cursor": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977:39",
+        "instructions": "Read all pages in order. Paths locate exact snapshot fields; text fragments continue at character offsets. Nothing is summarized. Copy next_cursor into mnemos_forget_preview with the same fact_id, expected_version and limit. Only the last page provides apply_preconditions for a complete snapshot. Use reviewed f/s selection_ref values to avoid retyping long IDs."
+      },
+      "has_apply_preconditions": false
+    },
+    {
+      "request_line": 99,
+      "response_line": 100,
+      "inline_bytes": 11859,
+      "review": {
+        "format": "json_fragments_v1",
+        "snapshot_digest": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977",
+        "first_fragment": 39,
+        "total_fragments": 64,
+        "last_page": false,
+        "next_cursor": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977:47",
+        "instructions": "Read all pages in order. Paths locate exact snapshot fields; text fragments continue at character offsets. Nothing is summarized. Copy next_cursor into mnemos_forget_preview with the same fact_id, expected_version and limit. Only the last page provides apply_preconditions for a complete snapshot. Use reviewed f/s selection_ref values to avoid retyping long IDs."
+      },
+      "has_apply_preconditions": false
+    },
+    {
+      "request_line": 108,
+      "response_line": 109,
+      "inline_bytes": 11982,
+      "review": {
+        "format": "json_fragments_v1",
+        "snapshot_digest": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977",
+        "first_fragment": 47,
+        "total_fragments": 64,
+        "last_page": false,
+        "next_cursor": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977:61",
+        "instructions": "Read all pages in order. Paths locate exact snapshot fields; text fragments continue at character offsets. Nothing is summarized. Copy next_cursor into mnemos_forget_preview with the same fact_id, expected_version and limit. Only the last page provides apply_preconditions for a complete snapshot. Use reviewed f/s selection_ref values to avoid retyping long IDs."
+      },
+      "has_apply_preconditions": false
+    },
+    {
+      "request_line": 121,
+      "response_line": 122,
+      "inline_bytes": 3148,
+      "review": {
+        "format": "json_fragments_v1",
+        "snapshot_digest": "e72af9834401073fecbac74d1e97f898f3cd250a68067e80b2629d79d173a977",
+        "first_fragment": 61,
+        "total_fragments": 64,
+        "last_page": true,
+        "next_cursor": null,
+        "instructions": "Read all pages in order. Paths locate exact snapshot fields; text fragments continue at character offsets. Nothing is summarized. Copy next_cursor into mnemos_forget_preview with the same fact_id, expected_version and limit. Only the last page provides apply_preconditions for a complete snapshot. Use reviewed f/s selection_ref values to avoid retyping long IDs."
+      },
+      "has_apply_preconditions": true
+    }
+  ],
+  "paging_only_diagnostic": {
+    "complete_reconstruction": true,
+    "candidates": 18,
+    "additional_sources": 22
+  },
+  "attempts": [
+    {
+      "request_line": 662,
+      "response_line": 663,
+      "status": "committed",
+      "committed": true,
+      "selected_fact_refs": [
+        "f1",
+        "f2",
+        "f3",
+        "f4",
+        "f5",
+        "f6"
+      ],
+      "selected_source_refs": [
+        "s1",
+        "s3",
+        "s4",
+        "s6",
+        "s7",
+        "s8"
+      ],
+      "selected_additional_fact_id_count": 0,
+      "selected_additional_source_id_count": 0,
+      "deletion_coverage": {
+        "retained_advisory_fact_count": 12,
+        "retained_eligible_source_event_count": 16,
+        "retained_exact_fact_count": 0,
+        "selection": "reviewed_selection",
+        "semantic_erasure_proven": false
+      },
+      "selection_only_diagnostic": {
+        "passed": true
+      }
+    }
+  ],
+  "final_database_label_scan": {
+    "memory_chunks": {
+      "rows": 15,
+      "rows_with_forgotten_label": 1
+    },
+    "episodic_events": {
+      "rows": 31,
+      "rows_with_forgotten_label": 3
+    },
+    "fact_evidence": {
+      "rows": 17,
+      "rows_with_forgotten_label": 1
+    },
+    "fact_revisions": {
+      "rows": 0,
+      "rows_with_forgotten_label": 0
+    },
+    "memory_jobs": {
+      "rows": 39,
+      "rows_with_forgotten_label": 0
+    }
+  },
+  "omitted_preview_fact_refs": [
+    "f7"
+  ],
+  "omitted_preview_sources": [
+    {
+      "selection_ref": "s2",
+      "status": "deferred",
+      "match_type": "exact_assertion",
+      "selection_allowed": true,
+      "derived_fact_ids": []
+    },
+    {
+      "selection_ref": "s5",
+      "status": "deferred",
+      "match_type": "exact_assertion",
+      "selection_allowed": true,
+      "derived_fact_ids": []
+    },
+    {
+      "selection_ref": "s9",
+      "status": "consolidated",
+      "match_type": "linked_capture_source",
+      "selection_allowed": true,
+      "derived_fact_ids": [
+        "8cdf88db-00a9-42f5-b19d-3b6eb1d58467"
+      ]
+    }
+  ],
+  "remaining_label_detail_sha256": "8a60c0e0c48fb5a4f1e2f155cbd9d6a1ea01cf16e7999ac2c39abc44f68f62f4",
+  "final_restart_replay_attempted": false,
+  "limits": "Read-only diagnostics of the failed attempt. Component checks do not reclassify its native result or establish final restart/replay."
+}
