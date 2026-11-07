@@ -1,0 +1,354 @@
+{
+  "status": "completed_and_audited",
+  "protocol_commit": "40f41fc1a7c6f04d64277b85a28319a42a65f24a",
+  "product_commit": "3d1866d50d6df4d46666155006792ad46a9c6f11",
+  "native_binary_sha256": "ec52c79a0ae613ae336836b3e82ddf853a601a0de3f7cd3aa0047318d06ee12b",
+  "audit": {
+    "status": "verified",
+    "protocol_commit": "40f41fc1a7c6f04d64277b85a28319a42a65f24a",
+    "product_commit": "3d1866d50d6df4d46666155006792ad46a9c6f11",
+    "observations": 20,
+    "timed_observations": 15,
+    "worker_dispatches": 12,
+    "service_dispatches": 18,
+    "real_prompt_embeddings": 6,
+    "captures_survived_restart": 12,
+    "completed_jobs": 12,
+    "prior_complete_outputs_equal": 20,
+    "accepted_snapshot_unchanged": true,
+    "source_bindings_verified": 145,
+    "model_assets_verified": 17,
+    "package_files_verified": 96,
+    "measured_processes_absent": true,
+    "process_ids_checked": 21,
+    "reused_pids": [],
+    "audit_model_calls": 0,
+    "instrumented": true,
+    "acceptance_comparison": false,
+    "nested_durations_overlap": true,
+    "native_host_acceptance": false,
+    "pilot_days": 0,
+    "published": false,
+    "summary": {
+      "Stop": {
+        "complete_command": {
+          "samples": 5,
+          "median_ms": 134.37429978512228,
+          "p95_ms": 227.67490013502538,
+          "maximum_ms": 250.52890018559992
+        },
+        "worker.adapter_capture": {
+          "samples": 5,
+          "median_ms": 34.3207,
+          "p95_ms": 35.17094,
+          "maximum_ms": 35.3085
+        },
+        "worker.adapter_context": {
+          "samples": 5,
+          "median_ms": 61.0473,
+          "p95_ms": 151.41232,
+          "maximum_ms": 173.4592
+        },
+        "worker.canonical_project_root": {
+          "samples": 5,
+          "median_ms": 61.0021,
+          "p95_ms": 151.36387999999997,
+          "maximum_ms": 173.4063
+        },
+        "worker.client._descriptor": {
+          "samples": 5,
+          "median_ms": 0.29,
+          "p95_ms": 0.33772,
+          "maximum_ms": 0.3423
+        },
+        "worker.client._dispatch_http": {
+          "samples": 5,
+          "median_ms": 12.5179,
+          "p95_ms": 14.03836,
+          "maximum_ms": 14.3663
+        },
+        "worker.client.capture": {
+          "samples": 5,
+          "median_ms": 34.24,
+          "p95_ms": 35.0993,
+          "maximum_ms": 35.2354
+        },
+        "worker.client.replay_outbox": {
+          "samples": 5,
+          "median_ms": 3.5355,
+          "p95_ms": 4.168,
+          "maximum_ms": 4.2693
+        },
+        "worker.outbox._write": {
+          "samples": 5,
+          "median_ms": 6.3929,
+          "p95_ms": 6.82788,
+          "maximum_ms": 6.9169
+        },
+        "worker.outbox.acknowledge": {
+          "samples": 5,
+          "median_ms": 8.2225,
+          "p95_ms": 9.38934,
+          "maximum_ms": 9.6149
+        },
+        "worker.outbox.append": {
+          "samples": 5,
+          "median_ms": 8.7209,
+          "p95_ms": 9.42776,
+          "maximum_ms": 9.6044
+        },
+        "worker.outbox.pending": {
+          "samples": 5,
+          "median_ms": 3.5159000000000002,
+          "p95_ms": 4.15256,
+          "maximum_ms": 4.254300000000001
+        },
+        "worker.outbox.sanitize": {
+          "samples": 5,
+          "median_ms": 0.2296,
+          "p95_ms": 0.28562,
+          "maximum_ms": 0.286
+        },
+        "worker.settings_fingerprint": {
+          "samples": 5,
+          "median_ms": 2.6213,
+          "p95_ms": 3.29038,
+          "maximum_ms": 3.4228
+        },
+        "worker.subprocess.run": {
+          "samples": 5,
+          "median_ms": 58.9504,
+          "p95_ms": 148.95242,
+          "maximum_ms": 171.0184
+        },
+        "worker.dispatch.hook": {
+          "samples": 5,
+          "median_ms": 100.3573,
+          "p95_ms": 188.68468,
+          "maximum_ms": 210.7364
+        },
+        "service.service.capture": {
+          "samples": 5,
+          "median_ms": 2.8585,
+          "p95_ms": 3.3023599999999997,
+          "maximum_ms": 3.3849
+        },
+        "service.store.capture_event_and_job": {
+          "samples": 5,
+          "median_ms": 2.5943,
+          "p95_ms": 3.03292,
+          "maximum_ms": 3.1168
+        },
+        "service.dispatch.capture": {
+          "samples": 5,
+          "median_ms": 2.9031,
+          "p95_ms": 3.3498799999999997,
+          "maximum_ms": 3.4322
+        }
+      },
+      "UserPromptSubmit": {
+        "complete_command": {
+          "samples": 5,
+          "median_ms": 263.3962999098003,
+          "p95_ms": 764.0077200252562,
+          "maximum_ms": 863.9624000061303
+        },
+        "worker.adapter_capture": {
+          "samples": 5,
+          "median_ms": 35.4296,
+          "p95_ms": 42.18522,
+          "maximum_ms": 42.6251
+        },
+        "worker.adapter_context": {
+          "samples": 5,
+          "median_ms": 70.1201,
+          "p95_ms": 437.8454999999999,
+          "maximum_ms": 515.8574
+        },
+        "worker.adapter_retrieve": {
+          "samples": 5,
+          "median_ms": 104.8647,
+          "p95_ms": 112.21028,
+          "maximum_ms": 113.5183
+        },
+        "worker.canonical_project_root": {
+          "samples": 5,
+          "median_ms": 70.0817,
+          "p95_ms": 437.81185999999997,
+          "maximum_ms": 515.8246
+        },
+        "worker.client._descriptor": {
+          "samples": 5,
+          "median_ms": 0.6787000000000001,
+          "p95_ms": 0.9147399999999999,
+          "maximum_ms": 0.9666999999999999
+        },
+        "worker.client._dispatch_http": {
+          "samples": 5,
+          "median_ms": 119.51010000000001,
+          "p95_ms": 125.7484,
+          "maximum_ms": 127.2912
+        },
+        "worker.client.capture": {
+          "samples": 5,
+          "median_ms": 35.3167,
+          "p95_ms": 42.11208,
+          "maximum_ms": 42.552
+        },
+        "worker.client.replay_outbox": {
+          "samples": 5,
+          "median_ms": 3.8472,
+          "p95_ms": 4.05018,
+          "maximum_ms": 4.0908
+        },
+        "worker.client.retrieve": {
+          "samples": 5,
+          "median_ms": 104.8224,
+          "p95_ms": 112.17352,
+          "maximum_ms": 113.4811
+        },
+        "worker.outbox._write": {
+          "samples": 5,
+          "median_ms": 6.7282,
+          "p95_ms": 7.63556,
+          "maximum_ms": 7.7514
+        },
+        "worker.outbox.acknowledge": {
+          "samples": 5,
+          "median_ms": 9.2001,
+          "p95_ms": 12.11868,
+          "maximum_ms": 12.1615
+        },
+        "worker.outbox.append": {
+          "samples": 5,
+          "median_ms": 9.0565,
+          "p95_ms": 10.855319999999999,
+          "maximum_ms": 11.1349
+        },
+        "worker.outbox.pending": {
+          "samples": 5,
+          "median_ms": 3.8307,
+          "p95_ms": 4.03282,
+          "maximum_ms": 4.0735
+        },
+        "worker.outbox.sanitize": {
+          "samples": 5,
+          "median_ms": 0.1619,
+          "p95_ms": 0.22624,
+          "maximum_ms": 0.2339
+        },
+        "worker.settings_fingerprint": {
+          "samples": 5,
+          "median_ms": 2.8649,
+          "p95_ms": 3.07016,
+          "maximum_ms": 3.1204
+        },
+        "worker.subprocess.run": {
+          "samples": 5,
+          "median_ms": 67.6425,
+          "p95_ms": 435.18247999999994,
+          "maximum_ms": 513.2278
+        },
+        "worker.dispatch.hook": {
+          "samples": 5,
+          "median_ms": 221.542,
+          "p95_ms": 584.26086,
+          "maximum_ms": 659.2535
+        },
+        "service.embedding.vectors": {
+          "samples": 5,
+          "median_ms": 4.557,
+          "p95_ms": 4.9298,
+          "maximum_ms": 5.0189
+        },
+        "service.engine.retrieve": {
+          "samples": 5,
+          "median_ms": 81.6486,
+          "p95_ms": 87.48482,
+          "maximum_ms": 88.9257
+        },
+        "service.service.capture": {
+          "samples": 5,
+          "median_ms": 2.7138,
+          "p95_ms": 3.46768,
+          "maximum_ms": 3.4996
+        },
+        "service.service.original_source_status": {
+          "samples": 5,
+          "median_ms": 0.4472,
+          "p95_ms": 0.52196,
+          "maximum_ms": 0.5274
+        },
+        "service.service.retrieve": {
+          "samples": 5,
+          "median_ms": 93.4863,
+          "p95_ms": 99.55278,
+          "maximum_ms": 100.8515
+        },
+        "service.store.capture_event_and_job": {
+          "samples": 5,
+          "median_ms": 2.3459,
+          "p95_ms": 3.12296,
+          "maximum_ms": 3.1344
+        },
+        "service.store.get": {
+          "samples": 5,
+          "median_ms": 0.9741,
+          "p95_ms": 1.01918,
+          "maximum_ms": 1.0196
+        },
+        "service.store.get_episodic_event": {
+          "samples": 5,
+          "median_ms": 0.4143,
+          "p95_ms": 0.48022,
+          "maximum_ms": 0.4863
+        },
+        "service.store.list_fact_evidence": {
+          "samples": 5,
+          "median_ms": 11.3194,
+          "p95_ms": 11.8435,
+          "maximum_ms": 11.918800000000001
+        },
+        "service.store.retrieve": {
+          "samples": 5,
+          "median_ms": 32.0372,
+          "p95_ms": 36.35584,
+          "maximum_ms": 37.3622
+        },
+        "service.store.retrieve_lexical": {
+          "samples": 5,
+          "median_ms": 30.6829,
+          "p95_ms": 32.30978,
+          "maximum_ms": 32.5653
+        },
+        "service.dispatch.capture": {
+          "samples": 5,
+          "median_ms": 2.7641,
+          "p95_ms": 3.51552,
+          "maximum_ms": 3.5475
+        },
+        "service.dispatch.retrieve": {
+          "samples": 5,
+          "median_ms": 93.5258,
+          "p95_ms": 99.59586,
+          "maximum_ms": 100.8953
+        }
+      }
+    }
+  },
+  "wall_seconds": 100.88082790002227,
+  "archive_sha256": "097bbaccc6d31b5a569976d49671eb00b9d13b3c2ff5f85ee7141539b0a1ae27",
+  "archive_members": 162,
+  "archive_logical_files": 183,
+  "archive_bytes": 134770439,
+  "content_addressed_archive": true,
+  "wrapper_contract_checks": 8,
+  "rendered_entry_preflight": "passed",
+  "instrumented": true,
+  "acceptance_comparison": false,
+  "production_changed": false,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "published": false,
+  "live_configuration_changed": false
+}
