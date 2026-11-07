@@ -2,7 +2,12 @@
 
 Status: NOT STARTED. This protocol prepares the two-week, two-project pilot
 required by the functional-local-memory plan. It is not evidence of daily use.
-The current extraction and provider-recovery failures remain entry blockers.
+Entry remains open. The [current configuration audit](../validation/2026-11-07/pilot-entry-audit-v1.md)
+records an explicit-memory pilot with model extraction disabled. Its bounded
+native lifecycle, startup recovery and embedding recovery checks now have
+evidence; applicable retrieval quality, normal host trust and activation remain
+open. Failed automatic-extraction experiments still constrain enrichment and
+the broader improvement goal. They do not execute in this pilot configuration.
 A local personal pilot does not satisfy the separate external pilot requirement
 in the release checklist.
 

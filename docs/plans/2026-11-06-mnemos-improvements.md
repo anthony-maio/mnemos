@@ -11,9 +11,9 @@ No release, live configuration change, or pilot completion is implied.
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; isolated pairwise comparison improves Qwen3/Qwen3.5 to 57/72 and 66/72 operations, but three/six wrong corrections still fail both gates; fresh quality and persisted extraction remain open |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
+| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; pilot integrations, rollback and bounded startup/embedding recovery have evidence; fresh entry audit verifies unchanged installation and patch preconditions, with extraction disabled; applicable retrieval quality, normal host trust, Claude capture identity limits and actual use remain open; pilot inactive |
 | 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter, byte fallback and opt-in compact replies implemented; real MCP transport and six native Codex sessions preserve complete context, with smaller replies and 48/48 correct answer fields; host counter inspection found no advertised arbitrary-text interface; semantic span compression, broader consumption and fresh quality remain open |
-| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
+| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Source 749f1213 passes 3,221 tests with four platform skips, builds checked artifacts and passes installed CLI/MCP recall with real embeddings; new wheel bytes and 57 dependency versions verified; pilot remains on native-tested 6d0e5ba6; final integration, site update and publication open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
@@ -610,3 +610,19 @@ No historical archive is removed or rewritten.
   remained in the denominator. The 219 checks and cleanup passed, and the
   174-member archive verified. V8 remains the stronger experimental baseline;
   no quality gate, confirmation, default change or pilot day is implied.
+- The [pilot entry audit](../validation/2026-11-07/pilot-entry-audit-v1.md)
+  verifies all 86 installed files, 57 dependency versions, four configuration
+  probes and the seven unapplied patch preconditions. The prepared pilot uses
+  explicit writes with model extraction disabled. Failed automatic comparators
+  remain experimental; their path does not execute in this configuration.
+  Retrieval quality still needs separate fresh evaluation on accepted facts.
+  The original thresholds remain, normal host trust is unverified, and the pilot
+  has zero days. All thirteen watched paths stayed unchanged; no service started.
+- The [749f1213 checkpoint](../validation/2026-11-07/checkpoint-749f1213.md)
+  passes the full suite with 3,221 tests and four platform skips, plus build,
+  Twine and installed CLI/MCP restart-recall checks using real embeddings.
+  Ninety installed package files match the new wheel; 83 sources also match
+  the source archive and checkout. The compact response option is available
+  with full responses still the default. All 22 archived members verify. The
+  pilot retains its older native-tested artifact; no live upgrade or release
+  occurred. Neither checkpoint supplies fresh quality or actual daily use.
