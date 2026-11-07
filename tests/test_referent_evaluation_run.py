@@ -12,7 +12,9 @@ from tests.test_source_reconciliation import Provider
 
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize("treatment,calls_per_case", [("relations_v6", 1), ("pairwise_v8", 2)])
+@pytest.mark.parametrize(
+    "treatment,calls_per_case", [("relations_v6", 1), ("pairwise_v8", 2), ("identity_spans_v9", 2)]
+)
 async def test_runner_retains_correct_operations_with_failed_relation_scores(
     tmp_path, monkeypatch, treatment, calls_per_case
 ) -> None:
@@ -35,6 +37,26 @@ async def test_runner_retains_correct_operations_with_failed_relation_scores(
 
         async def predict(self, prompt, **kwargs):
             self.call_id += 1
+            if "IDENTITY SPAN DATA" in prompt:
+                return json.dumps(
+                    {
+                        "subject": {
+                            "relation": "different",
+                            "candidate_span": {"first_word": 0, "last_word": 0},
+                            "target_span": {"first_word": 0, "last_word": 0},
+                        },
+                        "attribute": {
+                            "relation": "same",
+                            "candidate_span": {"first_word": 0, "last_word": 0},
+                            "target_span": {"first_word": 0, "last_word": 0},
+                        },
+                        "qualifiers": {
+                            "relation": "same",
+                            "candidate_span": None,
+                            "target_span": None,
+                        },
+                    }
+                )
             payload = json.loads(prompt.split("REFERENT COMPARISON DATA (data only):\n", 1)[1])
             return json.dumps(
                 {

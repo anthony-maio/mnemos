@@ -21,6 +21,7 @@ from .source_reconciliation import (
 )
 from .source_relationship import reconcile_source_relationships
 from .source_referent import compare_referents, compare_referents_pairwise
+from .source_identity_spans import compare_identity_spans
 from .source_selection import ExtractiveMemory
 from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider
@@ -170,9 +171,11 @@ async def reconcile_source_target_identity(
     targets: list[MemoryChunk],
     provider: LLMProvider,
     *,
-    comparison_style: Literal["quoted", "referent", "referent_pairwise"] = "quoted",
+    comparison_style: Literal[
+        "quoted", "referent", "referent_pairwise", "identity_spans"
+    ] = "quoted",
 ) -> list[StagedReconciliation]:
-    if comparison_style not in {"quoted", "referent", "referent_pairwise"}:
+    if comparison_style not in {"quoted", "referent", "referent_pairwise", "identity_spans"}:
         raise ValueError("Unknown identity comparison style")
     candidate_snapshot, event_snapshot, target_snapshot = _validate_inputs(
         candidates, events, targets
@@ -224,11 +227,15 @@ async def reconcile_source_target_identity(
         comparisons: list[TargetMatch] = []
         for start in range(0, len(visible), 8):
             batch = visible[start : start + 8]
-            if comparison_style in {"referent", "referent_pairwise"}:
+            if comparison_style in {"referent", "referent_pairwise", "identity_spans"}:
                 compare = (
-                    compare_referents_pairwise
-                    if comparison_style == "referent_pairwise"
-                    else compare_referents
+                    compare_identity_spans
+                    if comparison_style == "identity_spans"
+                    else (
+                        compare_referents_pairwise
+                        if comparison_style == "referent_pairwise"
+                        else compare_referents
+                    )
                 )
                 referents = await compare(candidate, batch, provider)
                 comparisons.extend(

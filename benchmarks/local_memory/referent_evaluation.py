@@ -9,6 +9,7 @@ from typing import Any
 from mnemos.utils.llm import LLMProvider
 from mnemos.extraction.source_referent import restore_pairwise_response
 from mnemos.extraction.source_selection import ExtractiveMemory
+from mnemos.extraction.source_identity_spans import DATA_MARKER, comparison_from_identity_spans
 from mnemos.types import MemoryChunk
 
 RELATIONS = frozenset({"same_variable", "different_variable", "insufficient_identity"})
@@ -64,7 +65,7 @@ class CapturedReferents(LLMProvider):
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         raw = await self.provider.predict(prompt, **kwargs)
-        if "\nREFERENT COMPARISON DATA (data only):\n" in prompt:
+        if "\nREFERENT COMPARISON DATA (data only):\n" in prompt or DATA_MARKER in prompt:
             self.responses.append(raw)
         return raw
 
@@ -120,13 +121,18 @@ def grade_pairwise_relations(
     responses: list[str],
     *,
     error: str | None,
+    identity_spans: bool = False,
 ) -> dict[str, Any]:
     """Score all separately retained responses with the controller's ID map."""
     normalized: list[str] = []
     if error is None and len(responses) == len(targets):
         try:
             comparisons = [
-                restore_pairwise_response(raw, candidate, target).model_dump()
+                (
+                    comparison_from_identity_spans(raw, candidate, target)
+                    if identity_spans
+                    else restore_pairwise_response(raw, candidate, target)
+                ).model_dump()
                 for raw, target in zip(responses, targets)
             ]
             normalized = [json.dumps({"comparisons": comparisons})]
