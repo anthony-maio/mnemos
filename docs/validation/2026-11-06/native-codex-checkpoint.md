@@ -1,7 +1,7 @@
 # Installed artifact and Codex checkpoint
 
 The new installed artifact passed its CLI/MCP restart checks. Complete native
-lifecycle acceptance is still open: both Codex attempts stopped during the first
+lifecycle acceptance is still open: the first three Codex attempts stopped during the first
 phase, before a memory tool completed. Neither is a successful teach, correct or
 forget result. The older Claude authentication failure remains preserved.
 
@@ -62,6 +62,23 @@ descriptor and credential cleanup passed, and the normal credential file's
 bytes remained unchanged. The archives retain raw session evidence privately;
 no live memory database or host configuration was changed.
 
+## Attempt v3: Code Mode and recorded dispatch
+
+Runner `9dc0aa91` enabled the pinned Code Mode host and its private built-in
+rollout trace. The model requested store and consolidate through Code Mode.
+Both were rejected before dispatch because the host required MCP approval
+while the phase's interactive approval policy was `never`. No memory operation
+completed. The old session normalizer then rejected the missing MCP records;
+those records now live in the separate native rollout trace.
+
+The [v3 receipt](native-codex-v3-receipt.json) binds the failed attempt to a
+verified private archive of 177 files, including the frozen runner inputs.
+Reported usage was 85,213 input tokens, 75,264 cached input tokens, 266 output
+tokens and 31 reasoning output tokens. These are host-reported fields, not a
+billing statement. The owned host and service processes stopped, the runtime
+descriptor and copied authentication were removed, and the normal credential
+file's bytes remained unchanged.
+
 ## Validation and next work
 
 The new runner first passed 86 focused checks for process isolation, timeouts,
@@ -71,12 +88,20 @@ failed before repair; all 88 checks then passed. Strict mypy and formatting
 checks also passed. These are harness checks, not a native acceptance result or
 a fresh full-suite run.
 
-The next protocol must enable the transport required by the current native
-model and verify the relationship between model requests and completed MCP
-calls using recorded host evidence. Do not infer direct model-call correlation
-from JavaScript text, timing or the assistant's final claim. Preserve the exact
+The [v4 amendment](../../plans/2026-11-06-native-codex-trace-v4.md) configures
+only the authorized tools on the disposable server and validates the native
+model-call, runtime-cell and MCP-call identities. It preserves the exact
 single-prompt lifecycle checks, inspected versions, completed-job observations,
-scope controls, original-source replay and cleanup requirements.
+scope controls, original-source replay and cleanup requirements. V3 remains
+failed regardless of subsequent parser repairs or native attempts.
+
+Before v4, 114 focused tests passed, including 26 new Code Mode trace cases.
+The permission regression failed before the per-tool configuration change.
+The new adapter rejects the original v3 trace specifically at the failed native
+MCP runtime. Strict mypy passed for all three helpers. The pinned executable
+accepted the disposable permission configuration with `--strict-config` and
+`--print-startup-config`, without starting an app server or using authentication.
+These checks prepare a new attempt; they do not establish native acceptance.
 
 The separate Claude validation login remains pending. Supported-answer quality,
 fresh evaluation, extraction evaluation, native tokenizer compatibility and the

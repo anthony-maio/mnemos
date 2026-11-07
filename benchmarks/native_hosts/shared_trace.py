@@ -213,6 +213,306 @@ def _codex_result(payload: Mapping[str, Any]) -> dict[str, Any]:
     return _result(structured_value)
 
 
+def parse_codex_code_mode_trace(
+    directory: Path, *, provenance: TraceProvenance, model: str
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str]]:
+    """Bind model -> cell -> MCP through native IDs in a schema-1 rollout.
+
+    The controller owns the host process and private trace directory. Hashes
+    bind the evidence read here; they do not authenticate an arbitrary file.
+    JavaScript equality is an integrity check, never a source of parent IDs.
+    Streaming may start a cell before its inference-completed record arrives.
+    """
+    if provenance.host != "codex" or directory.is_symlink():
+        raise ValueError("Expected an owned Codex trace directory")
+    root = directory.resolve(strict=True)
+    hashes: dict[str, str] = {}
+    raw_files: dict[str, bytes] = {}
+
+    def read(relative: str) -> bytes:
+        path = root / relative
+        if path.is_symlink() or not path.resolve(strict=True).is_relative_to(root):
+            raise ValueError("Trace payload escapes its directory")
+        raw = path.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if relative in hashes and hashes[relative] != digest:
+            raise ValueError("Trace payload bytes changed")
+        hashes[relative], raw_files[relative] = digest, raw
+        return raw
+
+    manifest = _object(json.loads(read("manifest.json")), "rollout manifest")
+    session_id = provenance.session_id
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("rollout_id") != session_id
+        or manifest.get("root_thread_id") != session_id
+        or manifest.get("raw_event_log") != "trace.jsonl"
+        or manifest.get("payloads_dir") != "payloads"
+    ):
+        raise ValueError("Rollout manifest differs from native session")
+    log_raw = read("trace.jsonl")
+    log_provenance = TraceProvenance(
+        "codex", provenance.process_id, session_id, str(root / "trace.jsonl"), hashes["trace.jsonl"]
+    )
+    records = load_source_records(root / "trace.jsonl", provenance=log_provenance)
+    session = load_source_records(Path(provenance.source_file), provenance=provenance)
+    if [r["payload"].get("id") for r in session if r.get("type") == "session_meta"] != [session_id]:
+        raise ValueError("Native session identity differs")
+    model_calls: dict[str, str] = {}
+
+    def model_call(item: dict[str, Any], target: dict[str, str]) -> None:
+        if item.get("type") == "function_call":
+            raise ValueError("Direct calls are outside this Code Mode protocol")
+        if item.get("type") != "custom_tool_call":
+            return
+        identity = item.get("call_id")
+        code = item.get("input")
+        if (
+            item.get("name") != "exec"
+            or not isinstance(identity, str)
+            or not identity
+            or identity in target
+            or not isinstance(code, str)
+            or not code
+        ):
+            raise ValueError("Missing, duplicate or unsupported model call")
+        target[identity] = code
+
+    for entry in session:
+        if entry.get("type") == "response_item":
+            model_call(_object(entry.get("payload"), "model item"), model_calls)
+    turns = [r["payload"] for r in records if r["payload"].get("type") == "codex_turn_started"]
+    if len(turns) != 1 or not isinstance(turns[0].get("codex_turn_id"), str):
+        raise ValueError("Exactly one native turn is required")
+    turn_id = turns[0]["codex_turn_id"]
+    groups: dict[str, dict[str, dict[str, Any]]] = {}
+    references: dict[str, tuple[str, str]] = {}
+    payload_cache: dict[str, dict[str, Any]] = {}
+    ordinary = {
+        "rollout_started",
+        "rollout_ended",
+        "thread_started",
+        "thread_ended",
+        "codex_turn_started",
+        "codex_turn_ended",
+        "protocol_event_observed",
+    }
+    keyed = {
+        "inference_started": "inference_call_id",
+        "inference_completed": "inference_call_id",
+        "code_cell_started": "runtime_cell_id",
+        "code_cell_initial_response": "runtime_cell_id",
+        "code_cell_ended": "runtime_cell_id",
+        "tool_call_started": "tool_call_id",
+        "tool_call_runtime_started": "tool_call_id",
+        "tool_call_runtime_ended": "tool_call_id",
+        "tool_call_ended": "tool_call_id",
+    }
+
+    def payload(ref: Any, expected_kind: str) -> dict[str, Any]:
+        value = _object(ref, "raw payload reference")
+        identity, relative = value.get("raw_payload_id"), value.get("path")
+        if not isinstance(identity, str) or not identity.startswith("raw_payload:"):
+            raise ValueError("Invalid raw payload ID")
+        suffix = identity[len("raw_payload:") :]
+        if (
+            not suffix.isascii()
+            or not suffix.isdigit()
+            or int(suffix) < 1
+            or relative != f"payloads/{suffix}.json"
+            or value.get("kind") != {"type": expected_kind}
+        ):
+            raise ValueError("Invalid raw payload path or kind")
+        previous = references.setdefault(identity, (relative, expected_kind))
+        if previous != (relative, expected_kind):
+            raise ValueError("Raw payload reference was reused inconsistently")
+        if identity not in payload_cache:
+            payload_cache[identity] = _object(json.loads(read(relative)), "raw payload")
+        return payload_cache[identity]
+
+    reference_kinds = {
+        "metadata_payload": "session_metadata",
+        "event_payload": "protocol_event",
+        "request_payload": "inference_request",
+        "invocation_payload": "tool_invocation",
+        "runtime_payload": "tool_runtime_event",
+        "result_payload": "tool_result",
+    }
+    for number, row in enumerate(records, 1):
+        if (
+            row.get("schema_version") != 1
+            or row.get("seq") != number
+            or row.get("rollout_id") != session_id
+            or row.get("thread_id") not in (None, session_id)
+            or row.get("codex_turn_id") not in (None, turn_id)
+        ):
+            raise ValueError("Rollout identity or event sequence differs")
+        event = _object(row.get("payload"), "rollout event")
+        kind = event.get("type")
+        if kind not in ordinary and kind not in keyed:
+            raise ValueError("Unknown rollout event")
+        if event.get("thread_id") not in (None, session_id) or event.get("codex_turn_id") not in (
+            None,
+            turn_id,
+        ):
+            raise ValueError("Event crosses native thread or turn")
+        if kind in keyed:
+            if row.get("thread_id") != session_id or row.get("codex_turn_id") != turn_id:
+                raise ValueError("Operational event lacks native ownership")
+            identity = event.get(keyed[kind])
+            if not isinstance(identity, str) or not identity:
+                raise ValueError("Operational event lacks an ID")
+        else:
+            identity = str(number) if kind == "protocol_event_observed" else "only"
+        group = groups.setdefault(kind, {})
+        if identity in group:
+            raise ValueError("Duplicate native event ID")
+        group[identity] = row
+        for field, value in event.items():
+            if field.endswith("_payload"):
+                expected = reference_kinds.get(field)
+                if field == "response_payload":
+                    expected = (
+                        "inference_response" if kind == "inference_completed" else "tool_result"
+                    )
+                if expected is None:
+                    raise ValueError("Unknown payload reference")
+                payload(value, expected)
+    for kind in ordinary - {"protocol_event_observed"}:
+        if len(groups.get(kind, {})) != 1:
+            raise ValueError("Native rollout lifecycle is incomplete")
+    for kind in ("rollout_ended", "thread_ended", "codex_turn_ended"):
+        if groups[kind]["only"]["payload"].get("status") != "completed":
+            raise ValueError("Native rollout did not complete")
+    if (
+        records[0]["payload"].get("type") != "rollout_started"
+        or records[-1]["payload"].get("type") != "rollout_ended"
+    ):
+        raise ValueError("Native rollout endpoints differ")
+    if groups["rollout_started"]["only"]["payload"].get("trace_id") != manifest.get("trace_id"):
+        raise ValueError("Native trace ID differs")
+
+    def pairs(start: str, end: str) -> list[tuple[str, dict[str, Any], dict[str, Any]]]:
+        left, right = groups.get(start, {}), groups.get(end, {})
+        if set(left) != set(right):
+            raise ValueError("Native event pair is incomplete")
+        result = []
+        for identity, first in left.items():
+            last = right[identity]
+            if first["seq"] >= last["seq"]:
+                raise ValueError("Native event pair is out of order")
+            result.append((identity, first, last))
+        return result
+
+    observed_calls: dict[str, str] = {}
+    for _, start, end in pairs("inference_started", "inference_completed"):
+        if start["payload"].get("model") != model:
+            raise ValueError("Inference used a different model")
+        response = payload(end["payload"].get("response_payload"), "inference_response")
+        if response.get("response_id") != end["payload"].get("response_id"):
+            raise ValueError("Inference response identity differs")
+        items = response.get("output_items")
+        if not isinstance(items, list):
+            raise ValueError("Inference output is missing")
+        for item in items:
+            model_call(_object(item, "inference item"), observed_calls)
+    if not model_calls or observed_calls != model_calls:
+        raise ValueError("Rollout and session model calls differ")
+    cells = {}
+    for identity, start, end in pairs("code_cell_started", "code_cell_ended"):
+        event = start["payload"]
+        call_id = event.get("model_visible_call_id")
+        if (
+            call_id not in model_calls
+            or event.get("source_js") != model_calls[call_id]
+            or end["payload"].get("status") != "completed"
+        ):
+            raise ValueError("Code cell does not match its completed model call")
+        cells[identity] = (call_id, start["seq"], end["seq"])
+    if len(cells) != len(model_calls) or {v[0] for v in cells.values()} != set(model_calls):
+        raise ValueError("Model calls and cells do not match one-to-one")
+    for identity, initial in groups.get("code_cell_initial_response", {}).items():
+        if identity not in cells or not cells[identity][1] < initial["seq"] < cells[identity][2]:
+            raise ValueError("Code cell initial response has no active parent")
+    pairs("tool_call_started", "tool_call_runtime_started")
+    pairs("tool_call_runtime_started", "tool_call_runtime_ended")
+    pairs("tool_call_runtime_ended", "tool_call_ended")
+    calls = []
+    local_ids: set[tuple[str, str]] = set()
+    for identity, start, end in pairs("tool_call_started", "tool_call_ended"):
+        event = start["payload"]
+        requester = _object(event.get("requester"), "tool requester")
+        cell_id = requester.get("runtime_cell_id")
+        if requester.get("type") != "code_cell" or cell_id not in cells:
+            raise ValueError("MCP call lacks its recorded parent cell")
+        model_id, cell_start, cell_end = cells[cell_id]
+        local_id = event.get("code_mode_runtime_tool_id")
+        if not isinstance(local_id, str) or not local_id or (cell_id, local_id) in local_ids:
+            raise ValueError("Missing or duplicate cell-local tool ID")
+        local_ids.add((cell_id, local_id))
+        if (
+            event.get("model_visible_call_id") is not None
+            or not cell_start < start["seq"] < end["seq"] < cell_end
+        ):
+            raise ValueError("MCP call does not lie within its parent cell")
+        invocation = payload(event.get("invocation_payload"), "tool_invocation")
+        function = _object(invocation.get("payload"), "function invocation")
+        name = _tool_name(invocation.get("tool_name"))
+        args = _arguments(function.get("arguments"))
+        if invocation.get("tool_namespace") != "mcp__mnemos" or function.get("type") != "function":
+            raise ValueError("Call is outside the Mnemos MCP namespace")
+        runtime_end = None
+        for kind in ("tool_call_runtime_started", "tool_call_runtime_ended"):
+            record = groups[kind][identity]["payload"]
+            runtime = payload(record.get("runtime_payload"), "tool_runtime_event")
+            observed_id, observed_name, observed_args = _codex_invocation(runtime)
+            if (observed_id, observed_name, observed_args, runtime.get("turn_id")) != (
+                identity,
+                name,
+                args,
+                turn_id,
+            ):
+                raise ValueError("Runtime invocation differs from recorded dispatch")
+            if kind == "tool_call_runtime_ended":
+                if record.get("status") != "completed":
+                    raise ValueError("Native MCP runtime failed")
+                runtime_end = runtime
+        assert runtime_end is not None
+        result = _codex_result(runtime_end)
+        returned = payload(end["payload"].get("result_payload"), "tool_result")
+        visible = _result(returned.get("value"))
+        if (
+            end["payload"].get("status") != "completed"
+            or returned.get("type") != "code_mode_response"
+            or visible.get("content") != runtime_end["result"]["Ok"]["content"]
+        ):
+            raise ValueError("Code Mode result differs from native MCP result")
+        calls.append(
+            NativeToolCall(
+                identity,
+                name,
+                _frozen_object(args),
+                _frozen_object(result),
+                log_provenance,
+                end["line"],
+                end["line_sha256"],
+                model_id,
+                True,
+            )
+        )
+    if not calls:
+        raise ValueError("Rollout contains no completed native MCP calls")
+    # Detect a concurrent edit while joining records. Keep every consumed raw
+    # payload hash, including requests, for the private evidence receipt.
+    if log_raw != raw_files["trace.jsonl"]:
+        raise ValueError("Trace changed while loading")
+    for relative, raw in raw_files.items():
+        if (root / relative).read_bytes() != raw:
+            raise ValueError("Trace changed while parsing")
+    load_source_records(Path(provenance.source_file), provenance=provenance)
+    return tuple(calls), hashes
+
+
 def parse_codex_mcp_records(
     records: Sequence[Mapping[str, Any]], *, provenance: TraceProvenance
 ) -> tuple[NativeToolCall, ...]:

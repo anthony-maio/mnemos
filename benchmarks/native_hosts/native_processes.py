@@ -558,6 +558,13 @@ def run_codex_exec_phase(
         'model_reasoning_effort="high"',
         "-c",
         "mcp_servers.mnemos.enabled_tools=" + json.dumps(sorted(allowed_tools)),
+        "-c",
+        'mcp_servers.mnemos.default_tools_approval_mode="prompt"',
+        *(
+            value
+            for tool in sorted(allowed_tools)
+            for value in ("-c", f'mcp_servers.mnemos.tools.{tool}.approval_mode="approve"')
+        ),
         "exec",
         "--sandbox",
         "read-only",

@@ -71,6 +71,11 @@ def test_codex_exec_requires_terminal_identity_and_removes_auth(
             for feature in ("shell_tool", "apps", "multi_agent", "memories"):
                 assert command[command.index(feature) - 1] == "--disable"
             assert 'mcp_servers.mnemos.enabled_tools=["mnemos_retrieve"]' in command
+            approval_overrides = [arg for arg in command if ".approval_mode=" in arg]
+            assert approval_overrides == [
+                'mcp_servers.mnemos.tools.mnemos_retrieve.approval_mode="approve"'
+            ]
+            assert 'mcp_servers.mnemos.default_tools_approval_mode="prompt"' in command
             assert 'cli_auth_credentials_store="file"' in command
             assert (home / "auth.json").read_text() == "synthetic credential"
             session = home / "sessions" / "one.jsonl"

@@ -242,6 +242,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
             "docs/plans/2026-11-06-native-codex-explicit-v1.md",
             "docs/plans/2026-11-06-native-codex-runtime-v2.md",
             "docs/plans/2026-11-06-native-codex-code-mode-v3.md",
+            "docs/plans/2026-11-06-native-codex-trace-v4.md",
         )
         if host == "codex"
         else ()
@@ -471,14 +472,21 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
             provenance = trace.TraceProvenance(
                 bound["host"], result["pid"], result["session_id"], str(source), sha(source)
             )
-            parse = (
-                trace.parse_codex_mcp_records
-                if bound["host"] == "codex"
-                else trace.parse_claude_tool_records
-            )
-            calls = parse(
-                trace.load_source_records(source, provenance=provenance), provenance=provenance
-            )
+            if bound["host"] == "codex":
+                trace_root = Path(result["rollout_trace_root"])
+                traces = list(trace_root.iterdir())
+                if len(traces) != 1 or not traces[0].is_dir():
+                    raise ValueError("Exactly one owned native rollout trace is required")
+                calls, trace_hashes = trace.parse_codex_code_mode_trace(
+                    traces[0], provenance=provenance, model=CODEX_MODEL
+                )
+                save(directory / "rollout-trace-hashes.json", trace_hashes)
+                row["rollout_trace_hashes_sha256"] = sha(directory / "rollout-trace-hashes.json")
+                row["correlation"] = "native_model_id_to_cell_id_to_mcp_runtime_id"
+            else:
+                calls = trace.parse_claude_tool_records(
+                    trace.load_source_records(source, provenance=provenance), provenance=provenance
+                )
             normalized = [
                 {
                     "name": call.name,
@@ -486,6 +494,9 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     "result": dict(call.result),
                     "model_call_correlated": call.model_call_correlated,
                     "call_id": call.call_id,
+                    "provider_call_id": call.provider_call_id,
+                    "trace_file": call.provenance.source_file,
+                    "trace_sha256": call.provenance.source_file_sha256,
                     "line": call.line_number,
                     "line_sha256": call.line_sha256,
                 }
