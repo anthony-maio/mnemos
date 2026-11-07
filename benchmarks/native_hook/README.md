@@ -11,7 +11,7 @@ checkpoint. Dependencies are pinned in `Cargo.lock`.
 ```powershell
 cargo build --locked --release --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build
 $env:MNEMOS_NATIVE_HOOK_EXE = (Resolve-Path .venv/native-hook-build/release/mnemos-native-hook-experiment.exe).Path
-python -m pytest tests/test_native_hook_launcher.py tests/test_native_hook_profile.py
+python -m pytest tests/test_native_hook_launcher.py tests/test_native_hook_profile.py tests/test_native_hook_environment.py
 cargo test --locked --manifest-path benchmarks/native_hook/Cargo.toml --target-dir .venv/native-hook-build
 ```
 
@@ -46,7 +46,10 @@ decline. There is no ordinary-adapter fallback from a guarded profile.
 
 The protocol remains version 1. Environment hashing matches Python's sorted
 ASCII JSON representation, with Windows environment keys normalized as CPython
-does. Integer payloads retain arbitrary precision. The transport uses one TCP
+does. Windows hidden drive-directory entries such as `=C:` are omitted, matching
+Python's `os.environ` even when an implicit child environment retains them.
+Ordinary environment mismatches still refuse dispatch. Integer payloads retain
+arbitrary precision. The transport uses one TCP
 connection to literal loopback, with no proxy, redirect, authentication
 negotiation or automatic retry. The response must bind the request ID, host,
 protocol and environment, and contain the original typed acknowledgement.

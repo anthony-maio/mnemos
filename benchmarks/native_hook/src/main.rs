@@ -136,6 +136,13 @@ fn environment() -> Option<BTreeMap<String, String>> {
     let mut values = BTreeMap::new();
     for (key, value) in std::env::vars_os() {
         let key = key.into_string().ok()?;
+        // Windows keeps hidden drive-directory entries such as "=C:" in
+        // the process environment. CPython omits them from os.environ,
+        // including when an env=None subprocess still inherits them.
+        #[cfg(windows)]
+        if key.starts_with('=') {
+            continue;
+        }
         // CPython's os.environ normalizes Windows keys to uppercase. Keep
         // distinct names on case-sensitive platforms.
         #[cfg(windows)]
