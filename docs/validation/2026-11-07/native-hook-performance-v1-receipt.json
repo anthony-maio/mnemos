@@ -1,0 +1,333 @@
+{
+  "status": "completed_and_audited",
+  "source_commit": "788766aae7cc6c63e813fe1a911fcb0ed17d2564",
+  "baseline_commit": "5735c502febbf495cda3e8c336a8b7069a298738",
+  "candidate_wheel_sha256": "527f07d69047e1f933609217e4d70c06e784fa93b7e74dba2331141b7a10e834",
+  "baseline_wheel_sha256": "ec9f6927afe9297c893ef017bdb6ddd95519f00ffa6d27520c07a95dda1bce26",
+  "protocol_commit": "5157e37a7f2c3e26ad109b58c0b2a7418eb10929",
+  "summary": {
+    "recall": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 138.3417999604717,
+        "p95_ms": 183.9237400563432,
+        "maximum_ms": 249.964099843055,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 123.37734992615879,
+        "p95_ms": 179.35578500619155,
+        "maximum_ms": 360.60049990192056,
+        "limit_ms": 500,
+        "gate": "PASS"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -10.692000039853156,
+        "candidate_faster_pairs": 36,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "Stop": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 402.42749999742955,
+        "p95_ms": 607.9902350553309,
+        "maximum_ms": 1131.9001000374556,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 324.1853001527488,
+        "p95_ms": 549.1236549220046,
+        "maximum_ms": 1151.895800139755,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -81.81364997290075,
+        "candidate_faster_pairs": 40,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "UserPromptSubmit": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 637.6212999457493,
+        "p95_ms": 1162.0531350257802,
+        "maximum_ms": 1474.7303000185639,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 639.6821499802172,
+        "p95_ms": 1162.7408150816327,
+        "maximum_ms": 1437.4991001095623,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -2.2391999373212457,
+        "candidate_faster_pairs": 26,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "blocks": {
+      "baseline-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 141.8751000892371,
+          "p95_ms": 232.68216010183087,
+          "maximum_ms": 249.964099843055,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 404.346999945119,
+          "p95_ms": 626.2886600103227,
+          "maximum_ms": 1109.1838998254389,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 656.1320999171585,
+          "p95_ms": 1324.6199999004589,
+          "maximum_ms": 1474.7303000185639,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 143.22840003296733,
+          "p95_ms": 201.96537985466415,
+          "maximum_ms": 360.60049990192056,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 330.27049992233515,
+          "p95_ms": 564.3892799504099,
+          "maximum_ms": 1151.895800139755,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 598.6438000109047,
+          "p95_ms": 930.113959964364,
+          "maximum_ms": 1413.9374000951648,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 117.09289997816086,
+          "p95_ms": 122.06175997853279,
+          "maximum_ms": 122.65919987112284,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 321.3619999587536,
+          "p95_ms": 498.9827599376439,
+          "maximum_ms": 1021.0386000107974,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 715.1079000905156,
+          "p95_ms": 1236.32496013306,
+          "maximum_ms": 1437.4991001095623,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "baseline-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 133.6967998649925,
+          "p95_ms": 142.98477987758815,
+          "maximum_ms": 144.4945998955518,
+          "limit_ms": 500,
+          "gate": "PASS"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 394.5758000481874,
+          "p95_ms": 520.0144399423152,
+          "maximum_ms": 1131.9001000374556,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 624.9490999616683,
+          "p95_ms": 1058.181420015171,
+          "maximum_ms": 1236.4731000270694,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      }
+    },
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "native_host_run": false,
+    "pilot_days": 0
+  },
+  "audit": {
+    "status": "verified",
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "blocks": [
+      {
+        "block": "baseline-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 126,
+        "package_files": 94,
+        "command_transport": "http.client",
+        "command_transport_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "a0d18849a13770ad3eb6468af5c890abebab0cc8289b388b91bf144d285df01d",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 127,
+        "package_files": 95,
+        "command_transport": "winhttp",
+        "command_transport_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "41321f547ebf5ca3281368a5cf7b697c6ab0eb5451cbdea52bed8b2870cd074c",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 127,
+        "package_files": 95,
+        "command_transport": "winhttp",
+        "command_transport_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "e2da29196ff312da90c4c2f7c730ea01c772d0bce9e84707f072114ad47729bc",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "baseline-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 126,
+        "package_files": 94,
+        "command_transport": "http.client",
+        "command_transport_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "e55531e0804a97cbc55c63de8d0bc5e65be990279b25aae23757973e97e9464e",
+        "accepted_snapshot_unchanged": true
+      }
+    ],
+    "audit_revision": 2,
+    "measured_processes_absent": true,
+    "process_ids_checked": 238,
+    "numeric_process_ids_absent": 237,
+    "reused_pids": [
+      {
+        "pid": 22880,
+        "name": "conhost.exe",
+        "created_at": "2026-11-07T17:27:48.3179480Z"
+      }
+    ],
+    "process_identity_check_at": "2026-11-07T17:38:03.405248+00:00",
+    "seed_unchanged": true,
+    "audit_model_calls": 0,
+    "settings_values_recorded": false
+  },
+  "wall_seconds": 657.1521930999588,
+  "archive_sha256": "4cdff5ff97be839140bd9945d786da97043e3ca57f19852e9b46f6199e4873e0",
+  "archive_members": 201,
+  "archive_logical_files": 366,
+  "archive_bytes": 335992957,
+  "content_addressed_archive": true,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "all_owned_processes_stopped": true,
+  "documentation_checks": 12,
+  "new_native_checks": 40,
+  "related_existing_checks": 48,
+  "source_checks_total": 88,
+  "black": "passed",
+  "strict_mypy": "Windows passed; Linux API lookup follow-up required",
+  "linux_type_errors_at_measured_source": 3,
+  "build_backend": "hatchling 1.33.0",
+  "twine": "passed",
+  "initial_truncated_reply_failure_preserved": true,
+  "audit_revision": 2,
+  "initial_pid_reuse_audit_failure_preserved": true,
+  "audit_correction": "Check creation times when a recorded numeric process ID is reused; original run unchanged"
+}
