@@ -928,7 +928,7 @@ class LocalMemoryService:
             )
         rendered = "".join(render_context_chunk(chunk) for chunk in chunks)
         reviewing_capture = request.view == "captured_evidence"
-        return {
+        result = {
             "schema_version": 1,
             "profile": request.profile or self.engine.config.retrieval.profile,
             **(
@@ -945,6 +945,11 @@ class LocalMemoryService:
             "context_token_upper_bound": len(rendered.encode("utf-8")),
             **(chunks.context_budget if isinstance(chunks, RetrievedChunks) else {}),
         }
+        if request.response_format == "compact":
+            from .retrieval_response import compact_retrieval_response
+
+            return compact_retrieval_response(result)
+        return result
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
         if operation == "resolve_review":

@@ -212,6 +212,7 @@ class RetrievalRequest(BaseModel):
     # None applies the configured retrieval profile; hosts do not choose one.
     profile: Literal["baseline", "biomimetic"] | None = None
     view: Literal["memory", "captured_evidence"] = "memory"
+    response_format: Literal["full", "compact"] = "full"
 
 
 class ForgetPreviewRequest(BaseModel):

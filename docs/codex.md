@@ -48,6 +48,19 @@ Review older instruction packs before applying them. Scoped requests use the reg
 
 Use mnemos_retrieve to recall supported facts, mnemos_store for an explicit durable assertion the user made, mnemos_capture for evidence you noticed yourself (it is attributed to the assistant unless you pass a role), and mnemos_inspect to review evidence and revision history. Use mnemos_correct with the current expected_version to revise the same fact, and mnemos_forget with the current expected_version to suppress replay. mnemos_consolidate requests maintenance; mnemos_job_status distinguishes pending processing from completed facts.
 
+For concise recall, pass `response_format: "compact"` to `mnemos_retrieve`.
+The reply keeps the same complete `context` text and returns a `references`
+index with fact IDs, versions, scopes, assertion status and source references.
+It omits repeated fact content, source excerpts and retrieval scores. Use
+`mnemos_inspect` with a referenced fact ID when you need those details.
+The default `full` response is unchanged. The captured-evidence view still
+uses `evidence_context` and retains its unverified-source warnings.
+
+Context token metadata describes the rendered context, not the entire JSON
+reply or the host's complete request. Built-in adapters use the conservative
+UTF-8 byte fallback unless an embedding application supplies a compatible,
+identified `HostTokenizer`; a model name alone does not establish compatibility.
+
 Retrieval updates access metadata, so its MCP annotation correctly reports a
 write effect. Codex supports server and per-tool approval policies, including
 a mode that prompts for tools without a read-only annotation. See the
