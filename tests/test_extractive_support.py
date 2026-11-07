@@ -127,3 +127,47 @@ def test_malformed_tokens_raise(field, index, value):
     values[field][index] = value
     with pytest.raises(ValueError):
         decode_source_span(**values)
+
+
+@pytest.mark.parametrize("prefix,suffix", [("\n", ""), (" \t", "\n"), ("", " ")])
+def test_opt_in_clips_only_boundary_whitespace(prefix, suffix):
+    context = prefix + "Lem" + suffix
+    values = dict(
+        context=context,
+        source_region=(len(prefix), len(prefix) + 3),
+        offsets=[(0, 0), (0, len(context))],
+        sequence_ids=[None, 1],
+        attention_mask=[1, 1],
+        start_logits=[0, 5],
+        end_logits=[0, 6],
+        cls_index=0,
+    )
+    assert not decode_source_span(**values).selected
+    result = decode_source_span(**values, clip_boundary_whitespace=True)
+    assert result.selected and result.best_span.text == "Lem"
+    assert result.best_span.start == len(prefix) and result.best_span.end == len(prefix) + 3
+    assert span_matches_fact(result, "Lem owns the service.")
+
+
+@pytest.mark.parametrize("prefix,suffix", [("x\n", ""), ("", " x"), (":", "")])
+def test_clipping_never_admits_nonwhitespace_outside_source(prefix, suffix):
+    context = prefix + "Lem" + suffix
+    result = decode_source_span(
+        context,
+        (len(prefix), len(prefix) + 3),
+        [(0, 0), (0, len(context))],
+        [None, 1],
+        [1, 1],
+        [0, 5],
+        [0, 6],
+        cls_index=0,
+        clip_boundary_whitespace=True,
+    )
+    assert not result.selected
+
+
+def test_clipping_does_not_repair_malformed_offsets():
+    values = inputs()
+    values["offsets"][7] = (29, 99)
+    with pytest.raises(ValueError):
+        decode_source_span(**values, clip_boundary_whitespace=True)

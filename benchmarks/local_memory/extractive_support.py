@@ -41,13 +41,16 @@ def decode_source_span(
     cls_index: int,
     max_answer_tokens: int = 30,
     null_margin: float = 0.0,
+    clip_boundary_whitespace: bool = False,
 ) -> ExtractiveDecision:
     """Select a contiguous source span only when it strictly beats CLS.
 
     Scores are raw start/end logit sums, not calibrated probabilities. Ties
     between spans choose the earliest start and then earliest end. A tie with
     CLS abstains. Question, prefix, special and padding tokens cannot supply
-    an answer. Malformed input raises instead of earning abstention credit.
+    an answer. Optional boundary clipping removes only whitespace outside the
+    source region from a context token's offsets. Malformed input raises
+    instead of earning abstention credit. The default preserves the v1 screen.
     """
     size = len(offsets)
     if not size or any(
@@ -60,6 +63,8 @@ def decode_source_span(
         raise ValueError("Invalid CLS index")
     if not math.isfinite(null_margin):
         raise ValueError("Null margin must be finite")
+    if type(clip_boundary_whitespace) is not bool:
+        raise ValueError("Boundary clipping flag must be boolean")
     if any(not math.isfinite(value) for value in (*start_logits, *end_logits)):
         raise ValueError("Logits must be finite")
     lo, hi = source_region
@@ -72,6 +77,7 @@ def decode_source_span(
     if sequence_ids[cls_index] is not None or attention_mask[cls_index] != 1:
         raise ValueError("CLS must be an attended special token")
     eligible = []
+    source_offsets = []
     previous = (0, 0)
     for index, (start, end) in enumerate(offsets):
         if type(start) is not int or type(end) is not int or start < 0 or end < start:
@@ -80,6 +86,15 @@ def decode_source_span(
             if end > len(context) or start < previous[0] or end < previous[1]:
                 raise ValueError("Context offsets must be ordered and within context")
             previous = (start, end)
+            if clip_boundary_whitespace and start < hi and end > lo:
+                # Some tokenizers include preceding whitespace in a word's
+                # offsets. Preserve its source characters without importing
+                # any non-whitespace prefix or suffix into the evidence.
+                if start < lo and context[start:lo].isspace():
+                    start = lo
+                if end > hi and context[hi:end].isspace():
+                    end = hi
+        source_offsets.append((start, end))
         eligible.append(
             sequence_ids[index] == 1 and attention_mask[index] == 1 and lo <= start < end <= hi
         )
@@ -93,7 +108,7 @@ def decode_source_span(
         for end_token in range(start_token, min(size, start_token + max_answer_tokens)):
             if not eligible[end_token]:
                 break
-            start, end = offsets[start_token][0], offsets[end_token][1]
+            start, end = source_offsets[start_token][0], source_offsets[end_token][1]
             text = context[start:end]
             if not text.strip():
                 continue
