@@ -10,9 +10,9 @@ No release, live configuration change, or pilot completion is implied.
 | --- | --- | --- | --- |
 | 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; review package prepared, publication pending |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | V6 candidate returns 27/27 clean hybrid answers but only 12/17 correct abstentions, versus 26/27 and 13/17 for joint; no promotion; further development and fresh evaluation open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; the stronger referent diagnostic yields 49/72 correct operations, 110/198 correct relations and only 3/12 stable seed groups, with five wrong corrections and eleven wrong additions; Qwen3.5 empty-load setup verified separately; model comparison, fresh quality and persisted extraction open |
+| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | Independent studies completed; extraction v2 remains 14/15 exact with 8/9 critical facts; matched Qwen3/Qwen3.5 comparison failed both gates, with five/eleven wrong corrections in the 72-view diagnostic; fresh quality and persisted extraction remain open |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Codex v7 and Claude v5 pass all six phases on 6d0e5ba6; drafted pilot integrations, configuration rollback, native Codex startup recovery and injected embedding-error recovery pass bounded checks; Claude capture identity and normal Codex trust remain limited; broader recovery, quality gates and actual use open; pilot inactive |
-| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter and byte fallback implemented; local Qwen counts, density, recall and packing latency measured on development data; native Codex/Claude wiring, span compression, fresh quality and end-to-end benefit open |
+| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Optional Python counter, byte fallback and opt-in compact replies implemented; real MCP transport and six native Codex sessions preserve complete context, with smaller replies and 48/48 correct answer fields; host counter inspection found no advertised arbitrary-text interface; semantic span compression, broader consumption and fresh quality remain open |
 | 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Public state refreshed and history integrated locally; website delivery source verified against live bytes; local claims updated; final artifacts, site update and publication open |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
@@ -567,3 +567,26 @@ No historical archive is removed or rewritten.
   members, and all setup processes stopped. It has no semantic-quality result;
   sampling defaults and native tokenizer compatibility must be bound before a
   model comparison. Production defaults and the inactive pilot remain unchanged.
+- The [matched model comparison](../validation/2026-11-07/model-v7.md) completed
+  the original 20 cases and 72 diagnostic views for each model with explicit
+  sampling controls. Qwen3 scored 18/20 and Qwen3.5 scored 17/20. On the diagnostic,
+  they scored 49/72 and 52/72 operations, but accepted five and eleven wrong
+  correction targets respectively. Combined operation/relation scores were 33/72
+  and 40/72. Neither model passes its gate; no confirmation or adoption followed.
+  All 184 observations were retained and audited. The 228 checks and cleanup
+  passed; the archive has 204 verified members. Earlier scores remain unchanged.
+- The [compact transport measurement](../validation/2026-11-07/compact-v1.md)
+  preserved all 36 returned fact occurrences across 18 paired retrievals. Actual
+  compact reply text was 55.82% smaller across six cases; inspecting every
+  reference made the combined reply larger than full recall. The opt-in format
+  keeps literal context, scope, versions, status and source references. It does
+  not change retrieval or summarize away qualifications. Sixty-four checks passed.
+- The [native compact screen](../validation/2026-11-07/native-compact-v1.md) then
+  passed all eight typed answer fields in six fresh Codex sessions. Complete
+  context reached the model every time, and compact MCP replies were 58.67%
+  smaller for this fixture. Total input tokens fell in all three pairs, but
+  discovery steps, cache behavior and output formatting also varied. This is
+  bounded native-consumption evidence, not a general token-saving percentage or
+  fresh retrieval-quality pass. All 122 checks, the independent trace/input audit
+  and cleanup passed. The archive has 338 verified members. The pilot remains
+  inactive with zero days; live configuration and publication remain unchanged.
