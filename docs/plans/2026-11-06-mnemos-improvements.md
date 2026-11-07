@@ -330,4 +330,11 @@ No historical archive is removed or rewritten.
   The largest rendered prompt was 4,210 bytes and the largest per-query typed
   request total was 9,591 bytes, within existing limits. No provider call or
   new quality score occurred. Production integration and prospective model
-  comparison remain next development work.
+  comparison remained next development work at that checkpoint.
+- Product `e5373791` subsequently adds optional `checked_v4` with three typed
+  decisions and the existing comparison dependency checks. The checker stays
+  outside production retrieval. Its [preparation](../validation/2026-11-06/answer-support-checked-v5-preparation.md)
+  records 79 distinct passing checks, preserved red cases, formatting and strict
+  types. Actual requests fit the existing budgets at 4,473 bytes per prompt and
+  10,383 per query. Runner `64045705` and the prospective v5 protocol are frozen
+  before model comparison. No new model result or default promotion is implied.
