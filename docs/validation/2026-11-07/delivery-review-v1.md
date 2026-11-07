@@ -47,12 +47,14 @@ rechecked those artifact bytes and patch application; it did not rerun that suit
 or transfer its claims to later code.
 
 The README now names that package checkpoint, the newer negative QA development
-result and the in-progress fresh retrieval-only comparison. Its twelve existing
+result and the then-in-progress fresh retrieval-only comparison. Its twelve existing
 documentation consistency checks pass with the explicitly selected website
 delivery source. The website remains at its preserved `08d393ee` checkout, and
 its installation example retains its original source binding.
 
-Fresh retrieval evaluation is still running. Answer-support acceptance, the
+At preparation, fresh retrieval evaluation was still running. Its
+[completed result](fresh-accepted-v1.md) now records a failed abstention threshold.
+Answer-support acceptance, the
 full-module comparison, remaining native/scale checks, final delivery alignment
 and actual two-week pilot remain open. The pilot remains on its earlier
 installation and is inactive at zero days. No live configuration, public branch,

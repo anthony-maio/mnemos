@@ -618,8 +618,13 @@ sessions, 700 critical facts, 200 answerable queries, 220 no-answer queries and
 80 matched state pairs. One hundred ranking pools have six current facts.
 Repeated families and short sessions limit generalization; graph benefit is
 not established. That preparation made no evaluated-model calls. The November 7
-[retrieval-only comparison](../validation/2026-11-07/fresh-accepted-v1.md) is now
-running on declared accepted states; no completed audited result is available yet.
+[retrieval-only comparison](../validation/2026-11-07/fresh-accepted-v1.md) completed
+and audited 5,220 observations on declared accepted states. Vector/hybrid
+Recall@5 was 100%, lexical 93.5%; all three had 50% clean hits and 22.7% correct
+abstention. Every correct abstention had zero eligible facts, while none of the
+170 unique no-answer questions with available candidates produced abstention.
+The original 90% abstention threshold fails. Extraction, human acceptance and
+the full-module comparison remain separate obligations.
 Source c1e2217 passes 22 replay tests and 78 combined focused checks; full
 source/package verification passes all six checks with 2,081 tests and four skips
 in the [replay checkpoint](../validation/2026-09-20/evaluation-replay-v6-source-checkpoint-v1/README.md). Original model outcomes
