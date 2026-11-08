@@ -4,6 +4,8 @@ Status: design selected for data and computational feasibility preparation only.
 
 Preparation progress: [the serializer and retained tokenizer contract](../validation/2026-11-08/joint-support-frame-v1.md) now pass. Input IDs are built in fixed body/marker segments, with trusted token positions and target IDs recorded during construction. Padding/head behavior, grouped data, capacity and training remain open.
 
+Data-audit implementation: [grouped split and label-binding checks](../validation/2026-11-08/joint-support-data-audit-v1.md) are implemented and tested. This is audit machinery, not a completed corpus or semantic label review. It always reports training readiness as false; a separate reviewed corpus and the remaining feasibility gates are required.
+
 ## Decision and inference path
 
 The retained Qwen3-Reranker-0.6B checkpoint is a Qwen3ForCausalLM backbone, not an encoder. Its generic relevance objective failed support precision. Its previous per-witness scoring also repeated the complete candidate context. The new hypothesis changes both supervision and inference: one shared backbone pass over the query and complete retrieved cohort, with a shared binary classification head at one decision position per target fact. No generated text or sequential model calls.
