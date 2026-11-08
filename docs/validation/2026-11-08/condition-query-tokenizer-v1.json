@@ -1,0 +1,48 @@
+{
+  "status": "tokenizer_cost_check_passed",
+  "semantic_calls": 0,
+  "actual_query_cases": 16,
+  "authored_reference_replies": 16,
+  "groups": {
+    "authored_reference_reply": {
+      "items": 16,
+      "minimum": 15,
+      "maximum": 29,
+      "median": 28.0
+    },
+    "condition_prompt": {
+      "items": 16,
+      "minimum": 316,
+      "maximum": 437,
+      "median": 429.5
+    }
+  },
+  "prompt_pairs": [],
+  "control": {
+    "status": "passed",
+    "completion_requests": 0,
+    "requests": 32,
+    "min_tokens": 15,
+    "max_tokens": 437,
+    "model_unloaded": true,
+    "stop_exit": 0,
+    "server_exit": 1,
+    "process_absent": true,
+    "port_closed": true,
+    "native_absent": true,
+    "native_port_closed": true,
+    "bindings_unchanged": true,
+    "prepared_unchanged": true
+  },
+  "evidence": {
+    "control.json": "0d1692fa48cb25d95856a8877423e2150b7b185cefd9f4025799354816adfd32",
+    "freeze.json": "a047fa068b312aa1ffb018cca8dddc2bf340b3d05014ab4acdcb497965494b27",
+    "token-journal.jsonl": "30bc7551c1b64081a72ec058d04549f40ab242ab0a85ef61a5457683a8559a8e"
+  },
+  "limitations": [
+    "All 16 authored development cases; source interpretations are supplied.",
+    "Reference replies are authored examples, not model answers.",
+    "Reply-body token counts use no special tokens and may differ from contextual generation.",
+    "Token counts do not establish semantic accuracy, latency or fresh acceptance."
+  ]
+}
