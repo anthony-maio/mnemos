@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Any, Literal, TypedDict
+from typing import Any, Callable, Literal, TypedDict
 from uuid import uuid4
 
 from .contracts import (
@@ -55,9 +55,16 @@ class _ProposalSuppressed(Exception):
 class LocalMemoryService:
     """No host-provided metadata can override resolved scope or write policy."""
 
-    def __init__(self, engine: MnemosEngine, registry: ScopeRegistry) -> None:
+    def __init__(
+        self,
+        engine: MnemosEngine,
+        registry: ScopeRegistry,
+        *,
+        registry_loader: Callable[[], ScopeRegistry] | None = None,
+    ) -> None:
         self.engine = engine
         self.registry = registry
+        self._registry_loader = registry_loader
         self.engine._scope_registry = registry
         self.engine._require_scope_context = True
         self.firewall = MemoryWriteFirewall(engine.config.safety)
@@ -65,6 +72,13 @@ class LocalMemoryService:
             engine.store, self.process_job, after_batch=engine.rebuild_graph_batch
         )
         self._cognition_probe: dict[str, Any] = {"status": "not_observed"}
+
+    def _refresh_registry(self) -> None:
+        """Reload file-owned authorization before using an earlier context."""
+        if self._registry_loader is not None:
+            registry = self._registry_loader()
+            self.registry = registry
+            self.engine._scope_registry = registry
 
     async def close(self) -> None:
         """Release engine resources after the owner has drained pending tasks."""
@@ -116,6 +130,7 @@ class LocalMemoryService:
         correction: dict[str, Any] | None = None,
         review_resolution: ReviewResolutionReference | None = None,
     ) -> dict[str, Any]:
+        self._refresh_registry()
         self.registry.validate_context(event.context)
         scope = scope or event.scope
         if not self.engine._capture_channel_allowed("manual" if explicit else "hook"):
@@ -456,6 +471,7 @@ class LocalMemoryService:
 
     async def process_job(self, job: DurableJob) -> None:
         """Model work happens outside the transaction that accepts its results."""
+        self._refresh_registry()
         if job.kind == "reconsolidate_review":
             await self.engine.mutable_rag.process_job(job)
             chunk = self.engine.store.get(job.payload["target_fact_id"])
@@ -952,6 +968,7 @@ class LocalMemoryService:
         return result
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        self._refresh_registry()
         if operation == "resolve_review":
             resolution_request = ReviewResolutionRequest.model_validate(payload)
             context = self.registry.validate_context(resolution_request.context)

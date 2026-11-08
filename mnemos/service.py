@@ -700,12 +700,15 @@ class MnemosService:
             default_store_type="sqlite", cwd=default_runtime_directory()
         )
         registry_path = default_registry_path()
-        registry = (
-            ScopeRegistry.load(registry_path)
-            if registry_path and Path(registry_path).exists()
-            else ScopeRegistry()
-        )
-        return LocalMemoryService(engine, registry)
+
+        def load_registry() -> ScopeRegistry:
+            return (
+                ScopeRegistry.load(registry_path)
+                if registry_path and Path(registry_path).exists()
+                else ScopeRegistry()
+            )
+
+        return LocalMemoryService(engine, load_registry(), registry_loader=load_registry)
 
     def _owner_main(self) -> None:
         loop = asyncio.new_event_loop()
