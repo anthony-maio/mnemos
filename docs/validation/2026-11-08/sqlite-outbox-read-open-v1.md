@@ -1,5 +1,7 @@
 # Existing outbox inspection avoids schema writes
 
+Follow-up: the fresh [v6 installation](sqlite-outbox-installed-v6.md) passed the focused installed checks. The source validation below remains bound to its original run.
+
 A fresh SQLiteOutbox instance previously started BEGIN IMMEDIATE and rewrote user_version even after validating an existing schema. If another connection held a write transaction, pending() could therefore fail with database is locked despite WAL readers being able to inspect the committed backlog.
 
 The new regression commits one queued event, closes the original connection, then starts a separate uncommitted deletion. Before the patch, a newly opened reader fails at the schema write lock. After the patch, it sees the committed event while the deletion is uncommitted, then sees an empty queue after the writer commits. This verifies both concurrent inspection and isolation from uncommitted changes.
