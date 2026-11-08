@@ -1,4 +1,4 @@
-# Client compatibility for 0.6.1rc1
+# Client compatibility for 0.6.1rc2
 
 This legacy repair candidate is unpublished. Historical host tiers do not
 establish acceptance for a new artifact.

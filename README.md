@@ -39,7 +39,7 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ## Candidate status
 
-This checkout is the unpublished `0.6.1rc1` legacy repair candidate. It combines
+This checkout is the unpublished `0.6.1rc2` legacy repair candidate. It combines
 graph transaction rollback, content-recency and Windows plugin runtime fixes.
 The combined implementation passed 353 source tests before this metadata update;
 that result does not establish fresh quality, native-host acceptance or daily use.
@@ -828,7 +828,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.6.1rc1},
+  version      = {0.6.1rc2},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

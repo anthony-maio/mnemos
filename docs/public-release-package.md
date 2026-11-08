@@ -1,6 +1,10 @@
-# 0.6.1rc1 release draft
+# 0.6.1rc2 release draft
 
 Status: local, unpublished, awaiting artifact validation and release review.
+
+This is a distinct candidate from the preserved 0.6.1rc1 artifact. It adds the
+bundled benchmark dataset repair, per-query evidence and temporal word-boundary
+fix. The earlier artifact and its failed benchmark are not replaced.
 
 ## Proposed change description
 
@@ -18,8 +22,12 @@ float32 array annotations without changing embedding calculations.
 
 Combined implementation b3508f6d passed 353 source tests on Windows Python
 3.11.13, plus strict typing and formatting in the recorded Python 3.12.11
-environment. The 0.6.1rc1 metadata and documentation checks are separate.
+environment. That historical result does not qualify this rc2 artifact.
 Older installed-artifact checks belong to their exact earlier commits.
+
+The rc2 source suite passes 401 tests on Windows Python 3.12.11. Strict mypy
+passes 31 source files and Black passes 66 Python files. Exact artifact checks
+remain separate from these source results.
 
 The controlled content-recency comparison is development evidence on known
 questions. It does not establish general answer support or abstention. The
@@ -40,5 +48,5 @@ backup after new writes or forget requests can lose or resurrect information.
 No tag, release, package upload, marketplace update or host configuration change
 has occurred. Artifact validation and the [review checklist](release-checklist.md)
 remain required. This candidate is separate from canonical 0.7 development and
-its inactive pilot. Any final announcement must name the exact published version
+its original pilot requirements. Any final announcement must name the exact published version
 and link to its actual verification evidence.

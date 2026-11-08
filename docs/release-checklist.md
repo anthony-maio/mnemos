@@ -1,11 +1,14 @@
-# 0.6.1rc1 review checklist
+# 0.6.1rc2 review checklist
 
 This is a local prerelease candidate, not an approved or published release.
 
 - [x] Preserve graph rollback and caller-owned transactions.
 - [x] Integrate content-recency and Windows plugin interpreter repairs.
 - [x] Verify combined source at b3508f6d: 353 tests; strict typing and formatting.
-- [x] Assign 0.6.1rc1 consistently to package, runtime and plugin manifests.
+- [x] Assign 0.6.1rc2 consistently to package, runtime and plugin manifests.
+- [x] Include named benchmark fixtures and per-query evidence.
+- [x] Repair accidental recency matching with fresh fixed-snapshot regressions.
+- [x] Run the full rc2 source suite: 401 passed on Windows Python 3.12.11.
 - [x] Document schema-3 incompatibility and rollback limits.
 - [ ] Build and verify the exact prerelease source archive and wheel.
 - [ ] Verify installed migration, transaction behavior and MCP roundtrips.

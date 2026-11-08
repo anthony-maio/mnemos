@@ -1,4 +1,4 @@
-# Reviewing the 0.6.1rc1 legacy upgrade
+# Reviewing the 0.6.1rc2 legacy upgrade
 
 This candidate is unpublished. It includes the PR #7 base plus graph savepoints,
 content-recency tracking, explicit Windows plugin Python resolution and array
@@ -26,7 +26,7 @@ upgrade. A package reinstall alone does not reverse the schema change.
    copy only the main file while writers are running. Preserve the original
    backup unchanged and use a second copy for rehearsal.
 3. Install the reviewed wheel by its exact file and SHA-256 in a separate
-   environment. Confirm its runtime version is 0.6.1rc1. Do not replace a normal
+   environment. Confirm its runtime version is 0.6.1rc2. Do not replace a normal
    host environment or activate capture hooks during the rehearsal.
 4. Point only the isolated candidate at the rehearsal copy. Verify row counts,
    text, vectors, source metadata, graph edges, feedback and known/unknown revision

@@ -1,9 +1,14 @@
 # Changelog
 
-## 0.6.1rc1 (unreleased)
+## 0.6.1rc2 (unreleased)
 
 This local prerelease combines transaction rollback, content recency and Windows
 plugin interpreter repairs. It is not published or approved for live upgrade.
+
+Compared with the preserved rc1 artifact, rc2 bundles the named benchmark
+datasets, records per-query identities and timestamps, and prevents embedded
+word fragments from triggering recency reranking. The rc1 benchmark failure
+remains failed; these changes do not establish release readiness.
 
 - Separate known content revisions from access timestamps. Legacy schema 3 adds
   a nullable revision field; older clients cannot share an upgraded database.

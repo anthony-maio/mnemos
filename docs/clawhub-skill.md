@@ -10,7 +10,7 @@ What it does:
 - reinforces the `retrieve -> work -> store -> consolidate` loop
 - keeps host claims accurate by not promising hard auto-capture outside verified hook-capable hosts
 
-This checkout is an unpublished 0.6.1rc1 candidate. No ClawHub upload is prepared
+This checkout is an unpublished 0.6.1rc2 candidate. No ClawHub upload is prepared
 or authorized by package validation. Reconcile the skill's version and current
 host claims with the final reviewed release before publishing it.
 
