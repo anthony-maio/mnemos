@@ -1,5 +1,12 @@
 # Eight-layer learning recipe proposal
 
+Coverage update: [corpus-v3](../validation/2026-11-08/joint-support-contrasts-v1.md)
+adds the reviewed constructions required below. Review clears that specific
+coverage blocker for a bounded diagnostic attempt. Original training inputs,
+labels and weights are unchanged. Adapter/backward tests and exact execution,
+scaler and baseline bindings still precede training. The following v2 coverage
+assessment records why the correction was necessary.
+
 Status: preparation only. Capacity passed; data coverage and implementation review
 still control whether training can start. This proposal does not waive the
 existing restriction on sparse or ambiguous development categories. Record any
