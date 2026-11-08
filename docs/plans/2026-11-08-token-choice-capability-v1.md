@@ -1,0 +1,13 @@
+# Token-choice capability preflight
+
+The compact generated-probability experiments already failed their quality and latency checks. Do not repeat those formats or reopen their frozen comparisons. A different mechanism may avoid generating probability JSON: obtain observed next-token scores for fixed choice labels from the provider.
+
+Ollama's [generate API](https://docs.ollama.com/api/generate) documents `logprobs` and `top_logprobs`. The installed client reports 0.40.9. Documentation does not prove that this binary and the retained Qwen model return usable scores; runtime capability is unverified. No inference was run during preparation.
+
+The development-only `token_choice` decoder requires exactly one scored output token, an exact offered uppercase ASCII label, complete observations for all offered labels, finite nonpositive log probabilities, matching chosen-token scores, and consistent bytes when supplied. It rejects missing alternatives instead of assigning them zero mass. It preserves the reported probabilities without normalizing them over the offered choices. Thirteen model-free cases passed, including malformed replies and preservation of unassigned probability mass.
+
+These are reported token probabilities, not generated self-ratings or calibrated semantic confidence. Provider sampling and grammar transformations may affect what they mean. Do not feed them into the existing 0.8 self-rating threshold or claim the two quantities are interchangeable. No support selector or production path uses this decoder.
+
+Before any semantic experiment, use an owned isolated server and the already retained model assets. Freeze the executable, model, request, configuration, and decoder hashes. Make one unrelated deterministic two-choice capability request, with thinking disabled, one output token, and log probabilities requested. Preserve the complete raw response and provider timing, including failure. Verify token boundaries and the alternative list. Do not use closed support questions or their labels. Do not silently retry, change the prompt, switch models, or replace missing probabilities.
+
+A failure closes this exact capability attempt; document any proposed repair before a separate attempt. A pass establishes only API/decoder compatibility. Inspect the implementation's score semantics and sampling settings before defining a selection rule. Any later semantic candidate needs a prospective development protocol, separate labels, unchanged external acceptance requirements, complete latency measurement, and fresh acceptance data after development. Keep original failures, pilots, and production defaults unchanged.
