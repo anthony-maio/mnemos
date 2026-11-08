@@ -1,8 +1,18 @@
 # Mnemos improvement work
 
-Status: active. Started November 6, 2026 from delivery commit `9770c00` on
+Status: blocked pending user direction. Started November 6, 2026 from delivery commit `9770c00` on
 `wt/mnemos-improvements`. This goal resumes the work deferred on October 28.
 No release, live configuration change, or pilot completion is implied.
+
+The hosted TypeSafe/Jev versus strictly local support decision has remained
+unanswered through three consecutive goal turns. The configured key is still
+absent, and completed local configurations remain closed failures. Do not
+interpret automatic goal continuations as an answer or launch another sweep.
+The final independent release audit also rechecked PR #9: it remains draft/open
+at `b51b06c6`, with Desktop and daily-use requirements incomplete. Checked
+Sandbox/VM launchers remain unavailable. Source, failed evidence and backups
+are saved; no owned validation process remains running. Resume with the user's
+backend decision, preserving the full six-priority objective and all gates.
 
 Latest storage delivery state: [PRs #7 and #8 are merged into master at 588a190b](../validation/2026-11-08/storage-merged-pr8.md) after explicit approval and a passing hosted integration run. The repair is accepted upstream. Package publication remains outstanding; the newer functional candidate and optional pilot remain separate artifacts.
 
