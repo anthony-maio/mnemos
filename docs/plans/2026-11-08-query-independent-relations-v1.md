@@ -38,9 +38,19 @@ The contract allows at most 20 candidates and eight sources per candidate. Input
 
 The query and source boundary suites passed 87 tests in 1.51 seconds, recorded in `.venv/relation-query-v2.xml`. Checks include missing competitors, exact reply coverage, duplicate and stale replies, unresolved conditions, conflicting values, historical interval boundaries, revocation during generation, unsupported-claim visibility and invalid policy identity. The earlier 85-test run remains in `.venv/relation-query-v1.xml`.
 
+## Two-pass execution harness
+
+`relation_inventory_run.py` preflights every original source request before the first provider call. The run manifest binds all snapshots, source prompts, both producer identities and a fixed first/reuse pass schedule. Inputs must have unique lexical case keys, at most 200 cases and at most 256 distinct source requests, matching the fixed cache capacity. No labels enter this API.
+
+The first pass attempts each unique source inventory once before its first query. Later queries reuse that record, or remain unavailable if the original annotation failed. The reuse pass performs no source annotation. First-pass case timers include awaited source work and query processing. Query timers include inventory lookup and interpretation. Neither includes original retrieval, runtime startup or model warmup; they cannot establish the full retrieval latency target.
+
+The owner supplies the frozen transport and durable event sink. The harness emits exact unrendered prompts, complete provider replies, hashes, source results, query decisions, timings and unattempted query identifiers. A transport reply must confirm completion. Uncertain completion stops both passes without retry. A completed but malformed reply is retained as unavailable, and failed source requests are not retried later. Journal write failures abort the run; cancellation propagates. The owner must retain rendered prompts and wire metadata, enforce tokenizer limits and perform runtime cleanup.
+
+The harness and producer boundary suites passed 95 tests in 2.01 seconds, recorded in `.venv/relation-inventory-run-v1.xml`. Tests verify single source execution across both passes, complete prompt/reply retention, uncertain completion stops, malformed source retention without retry, preflight of later cases before any call, journal failure propagation, cancellation and manifest identity binding. These remain model-free tests.
+
 ## Remaining implementation and evaluation
 
-Build a bounded execution harness connecting the two producer boundaries, retaining raw requests, replies, unavailable results and actual timings. Source inventory completeness and normalization, whole-fact support, date resolution and condition applicability all require separate semantic grading. Unavailable results get no successful-abstention credit.
+Prepare the owner runtime wrapper, durable journal, tokenizer preflight, grading records and execution freeze. Source inventory completeness and normalization, whole-fact support, date resolution and condition applicability all require separate semantic grading. Unavailable results get no successful-abstention credit.
 
 Freeze the model/runtime identities, both prompts and response schemas, exact input cohort, decision rules, limits and request schedule before semantic evaluation. Grade source annotation accuracy separately from final precision, critical retention, recall and abstention. Reuse known development inputs only as development; fresh acceptance remains unopened until a complete candidate passes.
 
