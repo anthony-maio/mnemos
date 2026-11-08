@@ -1,5 +1,7 @@
 # Relation inventory v2 development execution
 
+Execution follow-up: the fixed run stopped on its first uncertain completion and failed the development screen. It is closed without retry or regrading. See `docs/validation/2026-11-08/relation-inventory-execution-v2.md` for results, completed-output review and cleanup evidence. The prospective protocol below is retained unchanged.
+
 Status: protocol fixed before semantic execution. V2 source tokenizer preflight passed all 127 prompts at 1,521-1,609 tokens with 2,048 output tokens reserved; no semantic calls were made during preflight. Its parent/native processes are absent, ports are closed and bindings are unchanged. Wrapper session 27068 ended with exit code zero. The independent audit verified the journal and all source token records; evidence hashes are in `docs/validation/2026-11-08/relation-inventory-tokenizer-v2.json`. Dynamic query token checks remain part of execution. The source/query harness passed 136 model-free checks. This run is development evidence and cannot satisfy fresh acceptance or actual pilot requirements.
 
 ## Frozen candidate and cohort
