@@ -1,0 +1,359 @@
+{
+  "source_commit": "0684c9839ff3c1a0cc76fcaa665cf9973ce0eb14",
+  "exit_code": 0,
+  "counts": {
+    "tests": 3842,
+    "errors": 0,
+    "failures": 0,
+    "skipped": 81
+  },
+  "passed": 3761,
+  "pytest_elapsed_seconds": 932.41,
+  "junit_suite_seconds": 923.101,
+  "skips": [
+    {
+      "test": "tests.test_bridge.test_real_wsl_bridge_invokes_windows_client",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_bridge.test_installed_hermes_provider_contract_in_isolated_wsl_process",
+      "reason": "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows"
+    },
+    {
+      "test": "tests.test_docs_consistency.test_website_quick_start_is_sqlite_first_when_available",
+      "reason": "Set MNEMOS_WEBSITE_INDEX to the canonical website checkout"
+    },
+    {
+      "test": "tests.test_hosts.test_codex_posix_hook_command_executes_quoted_interpreter_path[False]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "test": "tests.test_hosts.test_codex_posix_hook_command_executes_quoted_interpreter_path[True]",
+      "reason": "requires a POSIX executable and shell"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_python_child_inherits_hidden_drive_entry[False-codex]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_python_child_inherits_hidden_drive_entry[False-claude-code]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_python_child_inherits_hidden_drive_entry[True-codex]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_python_child_inherits_hidden_drive_entry[True-claude-code]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_ordinary_environment_mismatch_still_declines[codex]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_environment.test_ordinary_environment_mismatch_still_declines[claude-code]",
+      "reason": "Windows native launcher required"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_environment_fingerprint_matches_python[values0]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_environment_fingerprint_matches_python[values1]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_environment_fingerprint_matches_python[values2]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_environment_fingerprint_matches_python[values3]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_bound_response_preserves_input_and_host_output[codex]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_bound_response_preserves_input_and_host_output[claude-code]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes0]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes1]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes2]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes3]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes4]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes5]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes6]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes7]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes8]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_descriptor_falls_back_without_sending[changes9]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes0]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes1]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes2]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes3]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes4]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes5]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes6]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes7]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes8]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_unbound_or_invalid_reply_never_falls_back[changes9]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[lost]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[redirect]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[auth]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[server]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[truncated]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[large]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[missing_length]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[duplicate_length]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[negative_length]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[chunked]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[invalid_json]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_wire_failures_do_not_retry_or_fallback[large_header]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_explicit_bound_decline_allows_original_adapter",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_connection_refused_allows_original_adapter",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_missing_or_invalid_descriptor_allows_original_adapter[None]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_missing_or_invalid_descriptor_allows_original_adapter[not json]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_missing_or_invalid_descriptor_allows_original_adapter[raw2]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_oversized_frame_falls_back_with_complete_original_input",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_input_is_sanitized_without_dispatch[not json private text]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_invalid_input_is_sanitized_without_dispatch[\\xffprivate text]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_nonobject_input_dispatches_nothing[[]]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_nonobject_input_dispatches_nothing[null]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_nonobject_input_dispatches_nothing[123]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_launcher.test_real_worker_capture_survives_restart",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_profile_resets_inherited_selectors_before_worker_dispatch[codex]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_profile_resets_inherited_selectors_before_worker_dispatch[claude-code]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_profile_missing_worker_uses_guarded_launcher_with_original_input[codex]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_profile_missing_worker_uses_guarded_launcher_with_original_input[claude-code]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_bound_worker_decline_uses_guarded_launcher",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_lost_acknowledgement_never_runs_either_fallback",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[profile_hash]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[launcher_hash]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[launcher_changed]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[host]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[schema]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[python_relative]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[launcher_relative]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[descriptor_relative]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[foreign_env]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[descriptor_env]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[null_env]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_invalid_profile_dispatches_nothing_and_never_runs_fallback[nul_env]",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_native_hook_profile.test_launcher_change_during_decline_cannot_execute_replacement",
+      "reason": "Experimental native launcher is not configured"
+    },
+    {
+      "test": "tests.test_sqlite_outbox.test_replaced_open_path_never_acknowledges",
+      "reason": "Operating system prevents renaming this open SQLite database"
+    }
+  ],
+  "skip_reasons": {
+    "Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows": 2,
+    "Set MNEMOS_WEBSITE_INDEX to the canonical website checkout": 1,
+    "requires a POSIX executable and shell": 2,
+    "Windows native launcher required": 6,
+    "Experimental native launcher is not configured": 69,
+    "Operating system prevents renaming this open SQLite database": 1
+  },
+  "scope": "Full source suite; skipped checks are not passes; no fresh semantic acceptance or timing claim",
+  "files": {
+    "capture-delivery-full-v1.xml": "a1dc398028f2d637294d92cc5c2fd2ad6c14676aa809782a9479138dde22f73d",
+    "capture-delivery-full-v2.xml": "5d00bdcdb165a39c9fb52770a8ec05482b37e04fdbd03b67a9516368a40b45ec",
+    "capture-delivery-full-v2.log": "54745441ff3f732e5ddc9f23b5361ca399dbb107f7a26b7d7c13ab4bc5c19e8b",
+    "capture-full-validation-v1-base.txt": "52fe33e08d40f7b72a785f33fb97a5c76905db7a68a21965f6056a2ccac548e4",
+    "capture-full-validation-v1-lock.txt": "92d0d36a69c711cd743b04c3814385e221f5fb945cf8a50b3a18a5f49ae5e9fc",
+    "queued-capture-delivery-v1.patch": "a40d62447d91e77663b30b500ab437cba9a38171c535875c34f6680278631e3a",
+    "audit-capture-full-v2.py": "b4d8f7dc5ecd68ebe671675b5f224ebb5218e2b6c8915ad760bc908f55a99dae"
+  },
+  "archive_sha256": "6fa35925c3cfbd2e8c0728c6988ff00ede9591c12770eaf856a69483e08d3cb0",
+  "archive_members": 7
+}
