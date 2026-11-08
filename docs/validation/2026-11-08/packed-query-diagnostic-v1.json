@@ -1,0 +1,426 @@
+{
+  "kind": "offline-frozen-diagnostic",
+  "model_calls": 0,
+  "requests_verified": 16,
+  "semantic_claims": 28,
+  "relation_correct": 13,
+  "condition_correct": 11,
+  "unconditional_claims": 25,
+  "unconditional_A": 10,
+  "semantic_response_counts": {
+    "D20261108|MAMX": 7,
+    "S|MAUX": 2,
+    "U|MAUX": 1,
+    "D20261108|MXXU": 1,
+    "S|MXMX": 1,
+    "D20250403|MAMX": 1,
+    "S|MAMA": 1
+  },
+  "permutation_pairs": [
+    {
+      "left": "01-owner-first",
+      "right": "02-owner-last",
+      "temporal_same": false,
+      "judgments_same_by_fact": false,
+      "left_judgments": {
+        "owner": "MA",
+        "region": "MX"
+      },
+      "right_judgments": {
+        "region": "MA",
+        "owner": "UX"
+      }
+    },
+    {
+      "left": "03-region-first",
+      "right": "04-region-last",
+      "temporal_same": false,
+      "judgments_same_by_fact": false,
+      "left_judgments": {
+        "region": "MA",
+        "owner": "UX"
+      },
+      "right_judgments": {
+        "owner": "MA",
+        "region": "MX"
+      }
+    },
+    {
+      "left": "07-conflict",
+      "right": "08-conflict-reversed",
+      "temporal_same": true,
+      "judgments_same_by_fact": false,
+      "left_judgments": {
+        "owner": "MA",
+        "other-owner": "UX"
+      },
+      "right_judgments": {
+        "other-owner": "MX",
+        "owner": "MX"
+      }
+    }
+  ],
+  "rows": [
+    {
+      "key": "01-owner-first",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "01-owner-first",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "02-owner-last",
+      "position": 0,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": true
+    },
+    {
+      "key": "02-owner-last",
+      "position": 1,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "UX",
+      "expected": "MA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "03-region-first",
+      "position": 0,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "03-region-first",
+      "position": 1,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "UX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "04-region-last",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": true
+    },
+    {
+      "key": "04-region-last",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "05-no-field",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "05-no-field",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "XU",
+      "expected": "XA",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "06-other-subject",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": true
+    },
+    {
+      "key": "06-other-subject",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "07-conflict",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "07-conflict",
+      "position": 1,
+      "fact_id": "other-owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "UX",
+      "expected": "MA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "08-conflict-reversed",
+      "position": 0,
+      "fact_id": "other-owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "08-conflict-reversed",
+      "position": 1,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "09-condition-applies",
+      "position": 0,
+      "fact_id": "release-owner",
+      "group": "semantic",
+      "conditions": [
+        "only during release"
+      ],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "09-condition-applies",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "10-condition-excluded",
+      "position": 0,
+      "fact_id": "release-owner",
+      "group": "semantic",
+      "conditions": [
+        "only during release"
+      ],
+      "actual": "MA",
+      "expected": "MX",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "10-condition-excluded",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "11-condition-unknown",
+      "position": 0,
+      "fact_id": "release-owner",
+      "group": "semantic",
+      "conditions": [
+        "only during release"
+      ],
+      "actual": "MA",
+      "expected": "MU",
+      "relation_correct": true,
+      "condition_correct": false
+    },
+    {
+      "key": "11-condition-unknown",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "12-current-unanchored",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "12-current-unanchored",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "13-historical-unanchored",
+      "position": 0,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "13-historical-unanchored",
+      "position": 1,
+      "fact_id": "region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "14-unsupported",
+      "position": 0,
+      "fact_id": "unsupported-owner",
+      "group": "control",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "14-unsupported",
+      "position": 1,
+      "fact_id": "region",
+      "group": "control",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "15-unresolved-support",
+      "position": 0,
+      "fact_id": "unresolved-owner",
+      "group": "control",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    },
+    {
+      "key": "15-unresolved-support",
+      "position": 1,
+      "fact_id": "region",
+      "group": "control",
+      "conditions": [],
+      "actual": "MX",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": false
+    },
+    {
+      "key": "16-source-instruction",
+      "position": 0,
+      "fact_id": "injected-region",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "XA",
+      "relation_correct": false,
+      "condition_correct": true
+    },
+    {
+      "key": "16-source-instruction",
+      "position": 1,
+      "fact_id": "owner",
+      "group": "semantic",
+      "conditions": [],
+      "actual": "MA",
+      "expected": "MA",
+      "relation_correct": true,
+      "condition_correct": true
+    }
+  ],
+  "original_events_sha256": "7bace07fb5c68f0629b775ecb48599c74c020c7b647efbbb086da9a12f6b6571",
+  "original_grading_sha256": "59ddedbad6e1a9e8070bf5ccf57be950cc5d6ba6262e805dca58ccd6c0569955",
+  "limits": "Observed failures only; no causal attribution to codec, prompt, runtime or model. No repaired scores, inference or promotion."
+}
