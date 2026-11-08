@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+import logging
 import sqlite3
 import subprocess
 import sys
@@ -11,6 +13,64 @@ import pytest
 
 from mnemos.types import MemoryChunk
 from mnemos.utils.storage import SQLiteStore
+
+
+@pytest.mark.parametrize("outer_transaction", [False, True])
+def test_logging_failure_preserves_storage_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, outer_transaction: bool
+) -> None:
+    def broken_logger(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("logging handler unavailable")
+
+    store = SQLiteStore(str(tmp_path / "broken-logger.sqlite"))
+    try:
+        seed(store)
+        fail_second_edge(store)
+        before = store.get_graph_edges()
+        if outer_transaction:
+            store._conn.execute("BEGIN IMMEDIATE")
+        monkeypatch.setattr("mnemos.utils.storage.log_event", broken_logger)
+        with pytest.raises(sqlite3.IntegrityError, match="interrupted graph write"):
+            store.replace_graph_neighbors("source", {"target": 0.2, "other": 0.4})
+        assert store.get_graph_edges() == before
+        assert store._conn.in_transaction is outer_transaction
+    finally:
+        store.close()
+
+
+@pytest.mark.parametrize("outer_transaction", [False, True])
+def test_graph_failure_log_excludes_private_data(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, outer_transaction: bool
+) -> None:
+    store = SQLiteStore(str(tmp_path / "private-database.sqlite"))
+    try:
+        seed(store)
+        before = store.get_graph_edges()
+        store._conn.execute(
+            "CREATE TEMP TRIGGER private_failure BEFORE INSERT ON memory_edges "
+            "BEGIN SELECT RAISE(ABORT, 'private exception detail'); END"
+        )
+        store._conn.commit()
+        if outer_transaction:
+            store._conn.execute("BEGIN IMMEDIATE")
+        with caplog.at_level(logging.ERROR, logger="mnemos"):
+            with pytest.raises(sqlite3.IntegrityError, match="private exception detail"):
+                store.replace_graph_neighbors("source", {"target": 0.2})
+        events = [json.loads(record.message) for record in caplog.records]
+        assert len(events) == 1
+        event = events[0]
+        assert event.pop("timestamp")
+        assert event == {
+            "event": "mnemos.storage_failure",
+            "store_backend": "SQLiteStore",
+            "operation": "replace_graph_neighbors",
+            "error_type": "IntegrityError",
+            "replacement_rolled_back": True,
+        }
+        assert store.get_graph_edges() == before
+        assert store._conn.in_transaction is outer_transaction
+    finally:
+        store.close()
 
 
 def seed(store: SQLiteStore) -> None:

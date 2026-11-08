@@ -20,6 +20,7 @@ All backends implement the same interface, so you can swap them transparently.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from abc import ABC, abstractmethod
@@ -27,6 +28,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, cast
 
+from ..observability import log_event
 from ..types import CognitiveState, MemoryChunk, RetrievalFeedbackEvent
 from .embeddings import cosine_similarity
 
@@ -1002,9 +1004,21 @@ class SQLiteStore(MemoryStore):
                             )
 
                 self._conn.execute("RELEASE SAVEPOINT mnemos_graph_neighbors")
-            except BaseException:
+            except BaseException as exc:
                 self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_graph_neighbors")
                 self._conn.execute("RELEASE SAVEPOINT mnemos_graph_neighbors")
+                try:
+                    log_event(
+                        "mnemos.storage_failure",
+                        level=logging.ERROR,
+                        store_backend="SQLiteStore",
+                        operation="replace_graph_neighbors",
+                        error_type=type(exc).__name__,
+                        replacement_rolled_back=True,
+                    )
+                except Exception:
+                    # A diagnostic handler must not replace the storage error.
+                    pass
                 raise
 
     def get_stats(self) -> dict[str, Any]:
