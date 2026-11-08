@@ -6,6 +6,8 @@ Status: prepared for review, not integrated or published. The candidate is in `w
 
 The proposed integration consists of six files: `mnemos/adapters/codex.py`, `mnemos/client.py`, `mnemos/hook_worker.py`, `mnemos/outbox_replay.py`, `mnemos/service.py` and `mnemos/sqlite_outbox.py`. Include the nine corresponding queue, replay, response-completion and process-exit test files. Exclude `project_identity_cache.py` and its tests: that prototype still requires external Git-policy invalidation and is not connected to runtime routing.
 
+The prepared binary-safe patch is `.venv/queued-capture-delivery-v1.patch`, SHA256 a40d62447d91e77663b30b500ab437cba9a38171c535875c34f6680278631e3a. It compares delivery 2a2329a4b3ce1ebb470a7cb5bf4db56c57cf14d7 with candidate 0684c9839ff3c1a0cc76fcaa665cf9973ce0eb14 for exactly those 15 files. `git apply --check` passed against the clean delivery tree without applying changes. Recheck the target revision and patch before integration if either branch moves.
+
 Queued capture is opt-in and currently supports Codex only. Synchronous capture remains the default. The worker accepts `--queue-captures` and, with that flag, `--outbox-backend json` or `--outbox-backend sqlite`. JSON remains the default backend. SQLite without queued capture is rejected. These options do not install hooks or activate the explicit-memory pilot.
 
 ## Operation and receipts
