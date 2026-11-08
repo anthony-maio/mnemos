@@ -24,8 +24,13 @@ def _security_identity(path: Path, info: os.stat_result) -> object:
     from ctypes import wintypes
 
     api = ctypes.WinDLL("advapi32", use_last_error=True).GetFileSecurityW
-    api.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_void_p,
-                    wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
+    api.argtypes = [
+        wintypes.LPCWSTR,
+        wintypes.DWORD,
+        ctypes.c_void_p,
+        wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+    ]
     api.restype = wintypes.BOOL
     size = wintypes.DWORD()
     # OWNER | GROUP | DACL. The buffer is a self-relative descriptor, including
@@ -39,7 +44,7 @@ def _security_identity(path: Path, info: os.stat_result) -> object:
         raise ctypes.WinError(ctypes.get_last_error())
     if not 20 <= size.value <= len(buffer):
         raise ValueError("Invalid project security descriptor size")
-    return buffer.raw[:size.value]
+    return buffer.raw[: size.value]
 
 
 def _unsupported_git_environment() -> bool:
@@ -133,18 +138,40 @@ class ProjectIdentityCache:
     includes and system/global config. None disables caching. Cache entries
     contain identity only, never project enablement or workspace membership.
     Owners serialize calls. Any failed refresh discards the previous entry.
+    A live policy_probe samples external freshness before reuse and after
+    resolution. The legacy generation argument cannot detect an external
+    change during a call and is not sufficient for a mutable-policy owner.
     """
 
     def __init__(self, resolver: Callable[[str | Path], str] = canonical_project_root) -> None:
         self._resolver = resolver
         self._cached: tuple[object, str] | None = None
 
-    def resolve(self, path: str | Path, *, policy_generation: str | None = None) -> str:
+    def resolve(
+        self,
+        path: str | Path,
+        *,
+        policy_generation: str | None = None,
+        policy_probe: Callable[[], str | None] | None = None,
+    ) -> str:
         try:
+            if policy_probe is not None and policy_generation is not None:
+                raise ValueError("Supply a live policy probe or a generation, not both")
             root = Path(path).expanduser().resolve(strict=True)
             if not root.is_dir():
                 raise ValueError("A project root must be a directory")
-            if not policy_generation or _unsupported_git_environment():
+
+            def current_policy() -> str | None:
+                if policy_probe is None:
+                    return policy_generation
+                try:
+                    value = policy_probe()
+                except Exception:
+                    return None
+                return value if isinstance(value, str) and value.strip() else None
+
+            generation = current_policy()
+            if not generation or _unsupported_git_environment():
                 self._cached = None
                 return self._resolver(root)
             executable = shutil.which("git")
@@ -165,9 +192,16 @@ class ProjectIdentityCache:
             except (OSError, ValueError, UnicodeError):
                 self._cached = None
                 return self._resolver(root)
-            key = (str(root), policy_generation, execution, environment, before)
+            key = (str(root), generation, execution, environment, before)
             if self._cached is not None and self._cached[0] == key:
-                return self._cached[1]
+                if current_policy() == generation and environment == tuple(
+                    sorted(os.environ.items())
+                ):
+                    return self._cached[1]
+                # Policy changed during hit validation. Resolve authoritatively,
+                # but do not publish a cache entry from this mixed observation.
+                self._cached = None
+                return self._resolver(root)
             self._cached = None
             result = self._resolver(root)
             # Do not cache a result obtained while routing was changing.
@@ -175,7 +209,12 @@ class ProjectIdentityCache:
                 after = _routing_snapshot(root)
             except (OSError, ValueError, UnicodeError):
                 return result
-            if before == after and environment == tuple(sorted(os.environ.items())):
+            after_generation = current_policy()
+            if (
+                before == after
+                and environment == tuple(sorted(os.environ.items()))
+                and after_generation == generation
+            ):
                 self._cached = (key, result)
             return result
         except BaseException:
