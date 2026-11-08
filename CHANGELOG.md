@@ -2,9 +2,22 @@
 
 ## Unreleased
 
-- Make graph-neighbor replacement atomic. A failed insert restores the previous
-  edges, and success or failure preserves any caller-owned transaction. The
-  missing-source guard from PR #5 remains in place while the write lock is held.
+### 0.6.1 patch candidate
+
+- Make graph-neighbor replacement atomic. Statement-level insert failures restore
+  prior edges, and replacement preserves caller-owned commit/rollback control.
+  The missing-source guard from PR #5 remains under the write lock.
+- Require MCP SDK 1.x for the mcp, all and dev extras so FastMCP startup uses the
+  supported API.
+- Avoid full-text reindexing when only access counts or timestamps change;
+  existing databases receive the corrected content-update trigger.
+- Resolve explicit plugin Python command names against PATH before launch,
+  preserving virtual-environment selection on Windows.
+- Complete float32 embedding annotations and retain per-query benchmark timings.
+- Run existing CI jobs for stacked pull requests as well as master-targeted PRs.
+
+This candidate is not published. It does not establish the separate semantic
+quality, complete-command latency, interactive-host or two-week pilot gates.
 
 ## 0.6.0 — 2026-03-31
 
