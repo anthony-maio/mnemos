@@ -102,6 +102,23 @@ def pack_context(
             raise _CounterFailure("invalid_token_count")
         return count
 
+    def select_bytes() -> tuple[list[int], str, int]:
+        # UTF-8 sizes are additive. Re-encoding every growing prefix would make
+        # fallback packing quadratic in the amount of selected context.
+        indices: list[int] = []
+        count = 0
+        if max_tokens == 0 or top_k == 0:
+            return indices, "", count
+        for i, record in enumerate(rendered):
+            cost = len(record.encode("utf-8"))
+            if count + cost > max_tokens:
+                continue
+            indices.append(i)
+            count += cost
+            if len(indices) == top_k:
+                break
+        return indices, "".join(rendered[i] for i in indices), count
+
     method = "utf8_bytes_upper_bound"
     reason = None
     if tokenizer is not None:
@@ -110,9 +127,9 @@ def pack_context(
             method = "host_tokenizer"
         except _CounterFailure as exc:
             reason = str(exc)
-            indices, text, count = select(lambda value: len(value.encode("utf-8")))
+            indices, text, count = select_bytes()
     else:
-        indices, text, count = select(lambda value: len(value.encode("utf-8")))
+        indices, text, count = select_bytes()
     selected = set(indices)
     return ContextPack(
         chunks=tuple(records[i] for i in indices),
