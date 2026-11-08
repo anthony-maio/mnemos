@@ -1,0 +1,411 @@
+{
+  "status": "offline_exhaustive_bound",
+  "observations": 136,
+  "unique_questions": 68,
+  "expected_fact_observations": 80,
+  "absent_answer_observations": 56,
+  "states": {
+    "0": {
+      "expected": 2,
+      "unsupported": 144
+    },
+    "1": {
+      "expected": 6,
+      "unsupported": 12
+    },
+    "2": {
+      "expected": 0,
+      "unsupported": 14
+    },
+    "3": {
+      "expected": 72,
+      "unsupported": 4
+    }
+  },
+  "policies": [
+    {
+      "mask": 0,
+      "supported": 0,
+      "unsupported": 0,
+      "correct_abstention": 56,
+      "precision": 0,
+      "retention": 0.0,
+      "abstention": 1.0,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 1,
+      "supported": 2,
+      "unsupported": 144,
+      "correct_abstention": 4,
+      "precision": 0.0136986301369863,
+      "retention": 0.025,
+      "abstention": 0.07142857142857142,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 2,
+      "supported": 6,
+      "unsupported": 12,
+      "correct_abstention": 44,
+      "precision": 0.3333333333333333,
+      "retention": 0.075,
+      "abstention": 0.7857142857142857,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 3,
+      "supported": 8,
+      "unsupported": 156,
+      "correct_abstention": 2,
+      "precision": 0.04878048780487805,
+      "retention": 0.1,
+      "abstention": 0.03571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 4,
+      "supported": 0,
+      "unsupported": 14,
+      "correct_abstention": 48,
+      "precision": 0.0,
+      "retention": 0.0,
+      "abstention": 0.8571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 5,
+      "supported": 2,
+      "unsupported": 158,
+      "correct_abstention": 2,
+      "precision": 0.0125,
+      "retention": 0.025,
+      "abstention": 0.03571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 6,
+      "supported": 6,
+      "unsupported": 26,
+      "correct_abstention": 36,
+      "precision": 0.1875,
+      "retention": 0.075,
+      "abstention": 0.6428571428571429,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 7,
+      "supported": 8,
+      "unsupported": 170,
+      "correct_abstention": 0,
+      "precision": 0.0449438202247191,
+      "retention": 0.1,
+      "abstention": 0.0,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 8,
+      "supported": 72,
+      "unsupported": 4,
+      "correct_abstention": 52,
+      "precision": 0.9473684210526315,
+      "retention": 0.9,
+      "abstention": 0.9285714285714286,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 9,
+      "supported": 74,
+      "unsupported": 148,
+      "correct_abstention": 4,
+      "precision": 0.3333333333333333,
+      "retention": 0.925,
+      "abstention": 0.07142857142857142,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 10,
+      "supported": 78,
+      "unsupported": 16,
+      "correct_abstention": 40,
+      "precision": 0.8297872340425532,
+      "retention": 0.975,
+      "abstention": 0.7142857142857143,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 11,
+      "supported": 80,
+      "unsupported": 160,
+      "correct_abstention": 2,
+      "precision": 0.3333333333333333,
+      "retention": 1.0,
+      "abstention": 0.03571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 12,
+      "supported": 72,
+      "unsupported": 18,
+      "correct_abstention": 48,
+      "precision": 0.8,
+      "retention": 0.9,
+      "abstention": 0.8571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 13,
+      "supported": 74,
+      "unsupported": 162,
+      "correct_abstention": 2,
+      "precision": 0.3135593220338983,
+      "retention": 0.925,
+      "abstention": 0.03571428571428571,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 14,
+      "supported": 78,
+      "unsupported": 30,
+      "correct_abstention": 36,
+      "precision": 0.7222222222222222,
+      "retention": 0.975,
+      "abstention": 0.6428571428571429,
+      "meets_quality_points": false
+    },
+    {
+      "mask": 15,
+      "supported": 80,
+      "unsupported": 174,
+      "correct_abstention": 0,
+      "precision": 0.31496062992125984,
+      "retention": 1.0,
+      "abstention": 0.0,
+      "meets_quality_points": false
+    }
+  ],
+  "errors": [
+    {
+      "key": "support/temporal-unmarked-conflict/reviewer",
+      "repetition": 1,
+      "query": "Who reviews Hazel's audit-log retention changes?",
+      "expected": [
+        "retention-owner"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "retention-owner"
+      ],
+      "facts": {
+        "retention-owner": "The Hazel privacy team reviews audit-log retention changes.",
+        "long-retention": "Hazel currently retains audit logs for 90 days.",
+        "short-retention": "Hazel currently retains audit logs for 30 days."
+      }
+    },
+    {
+      "key": "support/temporal-expired/during",
+      "repetition": 1,
+      "query": "What was Elm's batch size on June 15, 2026?",
+      "expected": [
+        "trial-batch"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "trial-batch"
+      ],
+      "facts": {
+        "trial-batch": "For Elm's trial from June 1 through June 30, 2026, the batch size was 200. This setting applied only during that trial."
+      }
+    },
+    {
+      "key": "sparse/temporary-window/during",
+      "repetition": 1,
+      "query": "How many records were in a Merrow batch on September 10, 2026?",
+      "expected": [
+        "trial"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "trial"
+      ],
+      "facts": {
+        "trial": "During Merrow's trial from September 3 through September 18, 2026, each batch contained 64 records. That setting applied only during the trial."
+      }
+    },
+    {
+      "key": "sparse/unresolved-duration/duration",
+      "repetition": 1,
+      "query": "How long does Halcyon currently retain request logs?",
+      "expected": [],
+      "selected": [
+        "long"
+      ],
+      "qa": [
+        "long",
+        "short"
+      ],
+      "contrast": [
+        "long"
+      ],
+      "facts": {
+        "long": "Halcyon currently retains request logs for 45 days.",
+        "short": "Halcyon currently retains request logs for 14 days.",
+        "reviewer": "Halcyon's compliance group reviews requests to change log retention."
+      }
+    },
+    {
+      "key": "support/temporal-unmarked-conflict/duration",
+      "repetition": 1,
+      "query": "How long does Hazel currently retain audit logs?",
+      "expected": [],
+      "selected": [
+        "long-retention"
+      ],
+      "qa": [
+        "long-retention",
+        "short-retention"
+      ],
+      "contrast": [
+        "long-retention"
+      ],
+      "facts": {
+        "long-retention": "Hazel currently retains audit logs for 90 days.",
+        "short-retention": "Hazel currently retains audit logs for 30 days.",
+        "retention-owner": "The Hazel privacy team reviews audit-log retention changes."
+      }
+    },
+    {
+      "key": "sparse/owner-replacement/historical",
+      "repetition": 1,
+      "query": "Who owned Caldera's release checklist on February 2, 2026?",
+      "expected": [
+        "former"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [],
+      "facts": {
+        "successor": "Noel replaced Iris as Caldera's release-checklist owner on October 16, 2026 and is the current owner.",
+        "former": "Iris owned Caldera's release checklist from January 1 through October 15, 2026."
+      }
+    },
+    {
+      "key": "support/temporal-unmarked-conflict/reviewer",
+      "repetition": 2,
+      "query": "Who reviews Hazel's audit-log retention changes?",
+      "expected": [
+        "retention-owner"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "retention-owner"
+      ],
+      "facts": {
+        "retention-owner": "The Hazel privacy team reviews audit-log retention changes.",
+        "long-retention": "Hazel currently retains audit logs for 90 days.",
+        "short-retention": "Hazel currently retains audit logs for 30 days."
+      }
+    },
+    {
+      "key": "support/temporal-expired/during",
+      "repetition": 2,
+      "query": "What was Elm's batch size on June 15, 2026?",
+      "expected": [
+        "trial-batch"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "trial-batch"
+      ],
+      "facts": {
+        "trial-batch": "For Elm's trial from June 1 through June 30, 2026, the batch size was 200. This setting applied only during that trial."
+      }
+    },
+    {
+      "key": "sparse/temporary-window/during",
+      "repetition": 2,
+      "query": "How many records were in a Merrow batch on September 10, 2026?",
+      "expected": [
+        "trial"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [
+        "trial"
+      ],
+      "facts": {
+        "trial": "During Merrow's trial from September 3 through September 18, 2026, each batch contained 64 records. That setting applied only during the trial."
+      }
+    },
+    {
+      "key": "sparse/unresolved-duration/duration",
+      "repetition": 2,
+      "query": "How long does Halcyon currently retain request logs?",
+      "expected": [],
+      "selected": [
+        "long"
+      ],
+      "qa": [
+        "long",
+        "short"
+      ],
+      "contrast": [
+        "long"
+      ],
+      "facts": {
+        "long": "Halcyon currently retains request logs for 45 days.",
+        "short": "Halcyon currently retains request logs for 14 days.",
+        "reviewer": "Halcyon's compliance group reviews requests to change log retention."
+      }
+    },
+    {
+      "key": "support/temporal-unmarked-conflict/duration",
+      "repetition": 2,
+      "query": "How long does Hazel currently retain audit logs?",
+      "expected": [],
+      "selected": [
+        "long-retention"
+      ],
+      "qa": [
+        "long-retention",
+        "short-retention"
+      ],
+      "contrast": [
+        "long-retention"
+      ],
+      "facts": {
+        "long-retention": "Hazel currently retains audit logs for 90 days.",
+        "short-retention": "Hazel currently retains audit logs for 30 days.",
+        "retention-owner": "The Hazel privacy team reviews audit-log retention changes."
+      }
+    },
+    {
+      "key": "sparse/owner-replacement/historical",
+      "repetition": 2,
+      "query": "Who owned Caldera's release checklist on February 2, 2026?",
+      "expected": [
+        "former"
+      ],
+      "selected": [],
+      "qa": [],
+      "contrast": [],
+      "facts": {
+        "successor": "Noel replaced Iris as Caldera's release-checklist owner on October 16, 2026 and is the current owner.",
+        "former": "Iris owned Caldera's release checklist from January 1 through October 15, 2026."
+      }
+    }
+  ],
+  "source_hashes": {
+    "observations.jsonl": "e1136fafd6a65c1b9408545e3d803831fc4dbb8601b139e61e29c85e7bd6cab3",
+    "labels.json": "f2af04ad22b277dc096d9d084b85b871816e514814739673fcf52ed9f790e916",
+    "inputs.json": "095d769e1712c87c921673b76b0a59719c2219e03adf5dffa515c0a80065f2dd"
+  },
+  "helper_sha256": "69b4f48bfa7cfe80fff63cf212353e2f3c33a1d461d4cf3689fd388ee3b4b24d",
+  "new_model_calls": 0,
+  "fresh_acceptance": false
+}
