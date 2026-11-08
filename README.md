@@ -922,6 +922,16 @@ and prompt hook commands take 2089.01 and 2103.02 ms p95, exceeding the 100 ms
 requirement; all 102 captures and durable jobs survive restart. These hook
 timers include interpreter startup and configuration checks. The run uses
 synthetic adapter payloads and does not establish native-host latency or quality.
+Later measurements retain their own artifact and configuration bindings. The
+[installed pilot timing](docs/validation/2026-11-07/installed-pilot-command-timing-v1.md)
+fails recall and complete hook latency for both launchers. The
+[nine-phase optional explicit-memory validation](docs/validation/2026-11-07/explicit-learning-pilot-native-v2.md)
+passes on the frozen wheel, but activation is pending and actual use remains
+zero days. The subsequent
+[discriminative support screen](docs/validation/2026-11-07/discriminative-support-feasibility-v1.md)
+rejects all 40 supported answers and fails support-only latency. No quality,
+latency or daily-use acceptance follows from the native workflow pass.
+
 Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
 ## Release Checklist

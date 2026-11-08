@@ -1,16 +1,18 @@
 # Public Release Package
 
-Use this document when preparing the first broad public OSS release for Mnemos.
+Use this document when preparing a public release. The functional local-memory
+candidate remains unpublished. These are drafting limits, not publication approval.
 
 ## Recommended Release Framing
 
-Use one of these labels:
+For the current work, use:
 
-- public beta
-- release candidate
-- early production evaluation for solo coding-agent workflows
+- unpublished development candidate
+- locally validated explicit-memory workflow, with quality and timing gates open
 
-Do not frame Mnemos as the definitive replacement for every agent memory tool yet. The software is credible enough for public adoption, but stronger public launches should still clear the pilot gate defined below.
+Do not announce a released beta or production readiness for this candidate.
+The [release checklist](release-checklist.md) retains the required quality,
+latency, host and pilot evidence before publication.
 
 ## Approved Short Description
 
@@ -20,12 +22,17 @@ Mnemos is a local-first memory layer for coding agents. It keeps project, worksp
 
 Safe to claim today:
 
-- reliable scoped memory for solo coding-agent workflows
-- local-first persistence with a single SQLite database
-- biomimetic retrieval and consolidation under the hood
-- Tier 1 support for Claude Code, Claude Desktop, and generic MCP stdio hosts
-- documented Codex support through MCP + `AGENTS.md`
-- benchmark-gated retrieval improvements in the bundled claim-driving pack
+- local-first SQLite persistence with explicit project, workspace and global scope
+- remember, source inspection, restart recall, correction and reviewed forgetting
+  verified in the bounded native workflows listed in the compatibility matrix
+- MCP integration and documented host setup, with per-host evidence and limits
+- automatic enrichment and biomimetic modules available as experiments, disabled
+  in the validated explicit-memory pilot configuration
+- recorded negative quality and latency results; bundled synthetic mechanism
+  checks do not establish real-model improvement
+
+The optional proposal passed validation but remains inactive pending activation.
+Neither that pass nor the closed support experiments establish daily-use reliability.
 
 ## Claims To Avoid
 

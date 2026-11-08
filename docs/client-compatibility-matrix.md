@@ -23,8 +23,17 @@ The 160 matching output pairs and 208 recovered captures establish integrity
 for this run, not native-host timing or pilot reliability. All prior results
 retain their dates, artifacts and original pass/fail labels.
 
-The optional explicit-MCP learning proposal is inactive and unapproved. It
-cannot count toward the original two-week pilot or semantic-quality gates.
+The optional explicit-MCP learning proposal passed its separately authorized
+[nine-phase native validation](validation/2026-11-07/explicit-learning-pilot-native-v2.md)
+on the same frozen wheel. It remains inactive; activation is awaiting a separate
+decision. Validation does not count toward the original two-week pilot or
+semantic-quality gates. Both use counters remain zero.
+
+The subsequent [discriminative support screen](validation/2026-11-07/discriminative-support-feasibility-v1.md)
+also failed: it retained 0/40 supported answers and took 933.20 ms support-only
+p95. It is closed and outside defaults. Its component timing does not replace
+complete retrieval timing. Canonical source now also includes the locally tested
+IPv6 dispatch repair at `49667577`; the frozen pilot wheel does not include it.
 
 ## November 7, 2026 evidence-index checkpoint
 
