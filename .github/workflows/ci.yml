@@ -4,7 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
+    # Validate stacked changes against their prerequisite branch too.
 
 jobs:
   lint:
