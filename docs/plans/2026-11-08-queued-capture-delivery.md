@@ -4,6 +4,8 @@ Status: prepared for review, not integrated or published. The candidate is in `w
 
 Follow-up: the candidate full suite passed 3,761 tests; configured native/documentation follow-up passed 87. The prepared patch was applied to the local delivery branch, where 181 selected checks passed with one Windows open-SQLite rename skip. Delivery commit 42aad39b includes the six runtime files, nine tests and queued-capture documentation. It excludes the identity-cache prototype. Package rebuild and installed validation remain outstanding; nothing was published or activated. The original preparation details below remain as the revision-bound record.
 
+Package follow-up: [the delivery artifact built from 42aad39b](../validation/2026-11-08/canonical-queue-package-v1.md) passed 250 selected installed checks with one Windows skip. Exact source and installed parity passed. Rebuild and focused installed validation are complete; publication, live activation and the original quality/timing/pilot requirements are not.
+
 ## Runtime scope
 
 The proposed integration consists of six files: `mnemos/adapters/codex.py`, `mnemos/client.py`, `mnemos/hook_worker.py`, `mnemos/outbox_replay.py`, `mnemos/service.py` and `mnemos/sqlite_outbox.py`. Include the nine corresponding queue, replay, response-completion and process-exit test files. Exclude `project_identity_cache.py` and its tests: that prototype still requires external Git-policy invalidation and is not connected to runtime routing.
