@@ -1,6 +1,6 @@
 # Query-independent relation inventory development
 
-Status: an in-memory record boundary and source-only producer are implemented and tested. No model has produced inventories for this design, no latency gain is claimed, and nothing is connected to production retrieval or capture.
+Status: an in-memory record boundary, source-only producer and query interpretation boundary are implemented and tested. No model has produced inventories for this design, no latency gain is claimed, and nothing is connected to production retrieval or capture.
 
 The closed relational screen generated a complete source inventory during each query and exceeded its first 15-second deadline. It also exposed unreliable model-generated character offsets. This design separates query-independent source annotation from query interpretation and uses exact unique quotations for source locations. It is an architectural change requiring new evaluation; it does not reopen or regrade the failed screen.
 
@@ -26,9 +26,21 @@ The injected provider has a 15-second cooperative timeout. Cancellation propagat
 
 The producer and existing cache, quotation and qualification boundaries passed 73 tests in 1.93 seconds. JUnit is retained at `.venv/source-relation-producer-v2.xml`; the earlier 69-test run remains at `.venv/source-relation-producer-v1.xml`. Tests cover one-call reuse, request identity, foreign/stale replies, invalid quotations and fields, source changes during generation, provider failure/cancellation, denied cached lookup, unresolved reuse, timeout cleanup and oversized input rejection. These are model-free control-flow checks.
 
+## Query interpretation boundary
+
+`relation_query.py` uses the current snapshot and revision-bound cache. Any candidate without evidence, or any missing or unresolved source inventory, makes the whole query unavailable before inference. This conservatively preserves competing facts; it can reduce availability and must be counted in the evaluation. Complete inventories retain every claim, including unsupported and unresolved whole-fact assessments.
+
+The query request includes the complete original cohort, query, reference date and separate source/query policy identities. Its digest also binds the inventories. The strict response must cover every indexed claim exactly once and cannot change source annotations. It returns the requested date plus relation-match and condition-match assessments. These are fallible semantic decisions; unit tests do not establish their correctness.
+
+The deterministic decision step excludes unrelated claims and explicitly unsupported facts, preserves unresolved relevant judgments as unavailable, applies half-open validity intervals, and reports conflict for distinct matching normalized values. It retains all witnesses for a single value. Independently normalized synonyms can still create false conflicts; this needs semantic measurement. Multi-date or ambiguous questions must remain unresolved under the current single-date schema.
+
+The contract allows at most 20 candidates and eight sources per candidate. Input and output each have a 64,000-byte bound without truncation. Live fences surround lookup, provider execution and selection. The provider timeout is cooperative at 15 seconds. No provider is connected to a runtime and no production path uses this boundary.
+
+The query and source boundary suites passed 87 tests in 1.51 seconds, recorded in `.venv/relation-query-v2.xml`. Checks include missing competitors, exact reply coverage, duplicate and stale replies, unresolved conditions, conflicting values, historical interval boundaries, revocation during generation, unsupported-claim visibility and invalid policy identity. The earlier 85-test run remains in `.venv/relation-query-v1.xml`.
+
 ## Remaining implementation and evaluation
 
-Implement query interpretation and condition applicability separately, using every eligible original candidate and inventory, including unresolved and unsupported annotations. Conditions must be compared with the actual query; unresolved conditions get no successful-abstention credit. A missing inventory cannot silently remove a competing value. Query-specific conflict and historical-interval rules remain required.
+Build a bounded execution harness connecting the two producer boundaries, retaining raw requests, replies, unavailable results and actual timings. Source inventory completeness and normalization, whole-fact support, date resolution and condition applicability all require separate semantic grading. Unavailable results get no successful-abstention credit.
 
 Freeze the model/runtime identities, both prompts and response schemas, exact input cohort, decision rules, limits and request schedule before semantic evaluation. Grade source annotation accuracy separately from final precision, critical retention, recall and abstention. Reuse known development inputs only as development; fresh acceptance remains unopened until a complete candidate passes.
 
