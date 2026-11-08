@@ -1,0 +1,41 @@
+# Joint-cohort supervised support candidate
+
+Status: design selected for data and computational feasibility preparation only. No training, new inference, acceptance case or integration has occurred. This is a prospective amendment to the convergence reset, not a reopening of a failed prompt, threshold or cohort.
+
+## Decision and inference path
+
+The retained Qwen3-Reranker-0.6B checkpoint is a Qwen3ForCausalLM backbone, not an encoder. Its generic relevance objective failed support precision. Its previous per-witness scoring also repeated the complete candidate context. The new hypothesis changes both supervision and inference: one shared backbone pass over the query and complete retrieved cohort, with a shared binary classification head at one decision position per target fact. No generated text or sequential model calls.
+
+The input contains the exact query, reference date and ordered candidate list. Each candidate carries its opaque ID, full fact text, assertion status and its own retained sources. All target decision markers occur after the entire cohort, so each can attend to every source and competitor. Marker indices bind one-to-one to target IDs. Gather those hidden states and apply the same head to each; do not feed gold labels, predicted labels or previous decisions into later markers. The LM vocabulary head is not used.
+
+The trusted serializer records marker token positions and candidate IDs while constructing input IDs. Never rediscover them by searching source text for matching strings. Freeze tokenizer IDs, delimiters and the exact hidden-state position. Define zero through five candidates, padding masks and empty source inventories; padding never creates a selectable target. Use final-layer states only, without retaining every layer or producing vocabulary logits.
+
+The initial workload is the existing top-five retrieval configuration, including all retained source material within the prospectively fixed token bound. It does not reduce the original quality requirements. Extra candidates or oversized context must produce explicit unavailability, never silent truncation, source omission or an accepted partial decision. Such cases count against coverage/recall in evaluation. This experiment does not change product defaults or claim support for untested larger cohorts.
+
+Source ownership is part of the label policy: evidence attached to another candidate cannot establish the target's own support. Authorization, scope exclusion, source/revision binding, conflict eligibility and failure handling stay outside model authority. The final eligibility rule and score threshold must be frozen before a training run.
+
+Shared attention does not guarantee consistent joint decisions. Grade whole-cohort selections and candidate-order permutations, including incompatible selections and falsely established prerequisites. A negative score means not selected, not disproven. Operational unavailability remains separate from semantic abstention.
+
+## Supervised decision and data gate
+
+Label a target supported only if its own evidence supports its full claim, it answers the requested relation for the requested subject/time/circumstances, and no unresolved applicable contradiction in the cohort invalidates that answer. A topic match, partial entailment or quotation of a condition is insufficient. Missing query conditions remain unknown; explicitly requested hypotheticals can establish the requested scenario. Reports, examples, questions, foreign subjects and injected instructions cannot silently become adopted constraints.
+
+Record a reason alongside every binary target label: supported, wrong subject/relation, incomplete source support, attribution mismatch, unresolved condition, unmet condition, temporal mismatch, unresolved conflict or other specifically adjudicated failure. Reasons and gold labels live outside inference inputs. Preserve valid supported counterparts for negative cases; all-abstention must fail retention.
+
+Before augmentation, group all examples sharing source facts, scenario ancestry, templates, paraphrases, counterfactuals or cohort reorderings. Assign connected groups to training, tuning and development audit partitions. A source-only or row-random split is insufficient. Report independent family counts and category coverage rather than claiming that expanded rows imply diversity. Independently audit the written labels; previous failing model outputs are not gold. Previously inspected cases remain known material, regardless of filenames, and cannot become fresh acceptance.
+
+The grouped manifest and label audit are required before training. No arbitrary minimum row count is asserted here. A concrete corpus must justify positive/negative coverage of subject, relation, negation, conditions, hypotheticals, attribution, temporal changes, conflicting values, source ownership and adversarial text in independent development families. Sparse or ambiguous categories block the attempt rather than being dropped from the report.
+
+## Capacity and bounded attempt
+
+The retained checkpoint's 12 model-file bindings were reverified without loading weights for inference. Its safetensors headers contain 595,776,512 BF16 tensor elements. The existing private runtime has torch 2.10.0+cu128, transformers 4.57.6 and safetensors 0.8.0; peft and datasets are absent. Any added training dependency belongs in a new isolated environment, not the retained evaluation runtime.
+
+Historical support-only p95 375.64 ms covered at most three witnesses and excluded retrieval. The previous runner already used logits_to_keep=1. Neither that timing nor removing the vocabulary head establishes the new candidate's latency.
+
+Before training, freeze exact tokenization/marker construction, candidate count, full-source lengths, device, precision, batching and overflow behavior. Measure the intended one-pass backbone plus head at those bounds. An untrained head measures computation only. A failed capacity preflight ends this configuration before training; do not rescue it by silently shortening sources or the candidate set. No sum of historical percentiles can satisfy the complete 500 ms requirement.
+
+After data and capacity gates pass, freeze one low-rank adaptation recipe, objective and loss weighting, adapter targets/rank, seed, step/time budget, checkpoint rule and selection threshold before starting. Freeze the attention implementation and whether deployment merges adapters. Declare training memory separately from inference capacity, including gradients and optimizer state. Those numerical settings are not yet selected, so training is not ready to run. Permit one retained infrastructure repair; semantic failure does not justify a sweep of prompts, datasets, seeds or thresholds. A changed learning objective and changed inference topology must be reported separately from any observed gain.
+
+Compare the trained candidate and unchanged backbone on the same new grouped development audit, retaining all failures. Report precision, critical retention, answerable recall, no-answer abstention, unavailable/overflow cases and category errors. Passing development must be followed by actual installed retrieval-plus-support measurement at 10,000 accepted facts, then independent fresh acceptance. Original precision/critical retention 95%, recall/abstention 90%, complete warm retrieval 500 ms and all pilot/capture obligations remain unchanged. Verify original acceptance sample-size and repetition requirements against the controlling evaluation contract before freezing acceptance.
+
+This work cannot resolve the separate 100 ms capture failure. It does not authorize more cache diagnostics or refresh the optional pilot installation.
