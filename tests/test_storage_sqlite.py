@@ -21,6 +21,37 @@ def _make_chunk(chunk_id: str, scope_id: str = "repo-alpha") -> MemoryChunk:
     )
 
 
+def test_retrieval_metadata_does_not_rewrite_full_text_index(tmp_path: Path) -> None:
+    db_path = str(tmp_path / "metadata.sqlite")
+    store = SQLiteStore(db_path)
+    store.store(_make_chunk("alpha"))
+    # Recreate the old trigger so reopening also exercises existing databases.
+    store._conn.execute("DROP TRIGGER memory_chunks_au")
+    store._conn.execute(
+        "CREATE TRIGGER memory_chunks_au AFTER UPDATE ON memory_chunks BEGIN "
+        "INSERT INTO memory_fts(memory_fts, rowid, content) "
+        "VALUES ('delete', old.rowid, old.content); "
+        "INSERT INTO memory_fts(rowid, content) VALUES (new.rowid, new.content); END"
+    )
+    store._conn.commit()
+    store.close()
+
+    store = SQLiteStore(db_path)
+    try:
+        before = store._conn.total_changes
+        assert store.mark_retrieved("alpha") is True
+        assert store._conn.total_changes - before == 1
+        store._conn.execute("UPDATE memory_chunks SET content = 'replacement' WHERE id = 'alpha'")
+        assert store._conn.execute(
+            "SELECT rowid FROM memory_fts WHERE memory_fts MATCH 'replacement'"
+        ).fetchall()
+        assert not store._conn.execute(
+            "SELECT rowid FROM memory_fts WHERE memory_fts MATCH 'alpha'"
+        ).fetchall()
+    finally:
+        store.close()
+
+
 def test_sqlite_store_initializes_graph_schema_and_stats(tmp_path: Path) -> None:
     db_path = tmp_path / "mnemos_graph.sqlite"
     store = SQLiteStore(db_path=str(db_path))

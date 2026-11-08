@@ -208,11 +208,7 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
 def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
     return MnemosConfig(
         surprisal=SurprisalConfig(threshold=settings.runtime.surprisal_threshold),
-        sleep=SleepConfig(
-            recall_gated_plasticity_enabled=settings.sleep.recall_gated_plasticity_enabled,
-            recall_min_supporting_episodes=settings.sleep.recall_min_supporting_episodes,
-            recall_similarity_threshold=settings.sleep.recall_similarity_threshold,
-        ),
+        sleep=SleepConfig.model_validate(settings.sleep.model_dump(mode="python")),
         safety=MemorySafetyConfig.model_validate(settings.safety.model_dump(mode="python")),
         governance=MemoryGovernanceConfig.model_validate(
             settings.governance.model_dump(mode="python")

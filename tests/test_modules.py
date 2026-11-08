@@ -653,8 +653,13 @@ class TestSleepDaemon:
             ),
         )
 
-        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
-        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
+        timestamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        for _ in range(2):
+            daemon.add_episode(
+                Interaction(
+                    role="user", content="Team uses uv for Python tooling.", timestamp=timestamp
+                )
+            )
         daemon.add_episode(make_interaction("We reviewed release notes today."))
 
         result = await daemon.consolidate(llm, embedder)

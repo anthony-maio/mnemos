@@ -60,6 +60,7 @@ def compute_event_fingerprint(
     source: str,
     hook_event: str | None,
     occurred_at: datetime | None = None,
+    interaction_id: str | None = None,
 ) -> str:
     normalized = normalize_memory_text(content)
     scope_token = scope.strip().lower()
@@ -67,8 +68,11 @@ def compute_event_fingerprint(
     source_token = source.strip().lower()
     event_token = "" if hook_event is None else hook_event.strip().lower()
     occurrence_token = ""
-    if source_token != "claude_hook" and occurred_at is not None:
-        occurrence_token = occurred_at.isoformat()
+    if source_token != "claude_hook":
+        if interaction_id is not None:
+            occurrence_token = f"id:{interaction_id}"
+        elif occurred_at is not None:
+            occurrence_token = occurred_at.isoformat()
     payload = (
         f"{role.strip().lower()}|{scope_token}|{scope_id_token}|"
         f"{source_token}|{event_token}|{occurrence_token}|{normalized}"
@@ -825,7 +829,8 @@ class SQLiteStore(MemoryStore):
 
     _CREATE_FTS_UPDATE_TRIGGER_SQL = """
         CREATE TRIGGER IF NOT EXISTS memory_chunks_au
-        AFTER UPDATE ON memory_chunks
+        AFTER UPDATE OF content ON memory_chunks
+        WHEN old.content IS NOT new.content
         BEGIN
             INSERT INTO memory_fts(memory_fts, rowid, content)
             VALUES ('delete', old.rowid, old.content);
@@ -925,6 +930,8 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FTS_SQL)
         self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
+        # Upgrade the old trigger, which rewrote the index on metadata-only reads.
+        self._conn.execute("DROP TRIGGER IF EXISTS memory_chunks_au")
         self._conn.execute(self._CREATE_FTS_UPDATE_TRIGGER_SQL)
         self._conn.execute(
             """

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Fixed
+- All sleep consolidation settings now load from `[sleep]` in `mnemos.toml` or `MNEMOS_SLEEP_*` environment variables and reach the engine, including recall gating, timing, episode limits, and prompts (#4).
+- Sleep settings use the engine's validation rules, and saving settings preserves multiline prompts in valid TOML.
+- Distinct interactions with identical timestamps now remain separate episodes. Retrying the same interaction stays idempotent, and duplicate hooks no longer leave stale entries in the consolidation buffer.
+- MCP extras now require the supported 1.x SDK, preventing fresh installs from selecting the incompatible 2.x API.
+- Updated NumPy normalization and provider type narrowing for current type checkers. Standalone checkouts now skip only the website consistency test when the separate website repository is absent.
+- Retrieval metadata updates no longer rewrite SQLite's full-text index. Existing databases receive the narrower trigger when opened.
+- Benchmark document timestamps now preserve dataset order independently of clock resolution and ingestion speed, eliminating timing-dependent recency results.
+
 ## 0.7.0 -- 2026-04-21
 
 Closes the auto-memory loop in Claude Code: retrieval is now deterministic and invisible to the model, not dependent on the model choosing to prime itself.

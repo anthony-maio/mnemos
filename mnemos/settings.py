@@ -4,6 +4,7 @@ mnemos/settings.py — Canonical config loading, precedence, and persistence.
 
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -14,7 +15,7 @@ from typing import Any, Literal, Mapping, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .config import MemoryGovernanceConfig, MemorySafetyConfig
+from .config import MemoryGovernanceConfig, MemorySafetyConfig, SleepConfig
 
 try:
     import tomllib
@@ -295,6 +296,12 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     if debug is not None:
         _set_nested(overrides, ("runtime", "debug"), debug)
 
+    for name in SleepConfig.model_fields:
+        value = _env_value(env, f"MNEMOS_SLEEP_{name.upper()}")
+        if value is not None:
+            # Let SleepConfig apply the same types and bounds as TOML settings.
+            _set_nested(overrides, ("sleep", name), value)
+
     memory_safety_enabled = _env_bool(env, "MNEMOS_MEMORY_SAFETY_ENABLED")
     if memory_safety_enabled is not None:
         _set_nested(overrides, ("safety", "enabled"), memory_safety_enabled)
@@ -405,12 +412,8 @@ class RuntimeSettings(BaseModel):
     debug: bool = False
 
 
-class SleepSettings(BaseModel):
+class SleepSettings(SleepConfig):
     model_config = ConfigDict(extra="ignore")
-
-    recall_gated_plasticity_enabled: bool = False
-    recall_min_supporting_episodes: int = 2
-    recall_similarity_threshold: float = 0.82
 
 
 class OnboardingSettings(BaseModel):
@@ -437,10 +440,7 @@ class AppSettings(BaseModel):
     def apply_inferred_defaults(self) -> "AppSettings":
         if self.embedding.provider is None:
             if self.llm.provider in {"ollama", "openai", "openclaw", "openrouter"}:
-                self.embedding.provider = cast(
-                    Literal["ollama", "openai", "openclaw", "openrouter"],
-                    self.llm.provider,
-                )
+                self.embedding.provider = self.llm.provider
             else:
                 self.embedding.provider = "fastembed"
 
@@ -641,8 +641,7 @@ def _to_toml_value(value: Any) -> str:
         return str(value)
     if isinstance(value, list):
         return "[" + ", ".join(_to_toml_value(item) for item in value) + "]"
-    escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
+    return json.dumps(str(value), ensure_ascii=False)
 
 
 def _emit_toml_sections(

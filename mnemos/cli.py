@@ -500,6 +500,7 @@ def _persist_episodic_interaction(
             source=source,
             hook_event=hook_event,
             occurred_at=interaction.timestamp,
+            interaction_id=interaction.id,
         ),
         role=interaction.role,
         content=interaction.content,

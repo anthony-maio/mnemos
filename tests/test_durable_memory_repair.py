@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from argparse import Namespace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -10,10 +11,54 @@ import pytest
 import mnemos.cli as cli_module
 from mnemos.config import MnemosConfig, SleepConfig, SurprisalConfig
 from mnemos.engine import MnemosEngine
+from mnemos.modules.sleep import SleepDaemon
 from mnemos.types import Interaction, MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import LLMProvider, MockLLMProvider
-from mnemos.utils.storage import SQLiteStore
+from mnemos.utils.storage import InMemoryStore, SQLiteStore
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("backend", ["memory", "sqlite"])
+@pytest.mark.parametrize("source", ["manual", "claude_hook"])
+async def test_episode_identity_preserves_distinct_turns_and_deduplicates_retries(
+    tmp_path: Path, backend: str, source: str
+) -> None:
+    store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "events.db"))
+    config = SleepConfig(
+        recall_gated_plasticity_enabled=True,
+        recall_min_supporting_episodes=2,
+        recall_similarity_threshold=0.999,
+    )
+    timestamp = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    first = Interaction(
+        role="user",
+        content="Team uses uv for Python tooling.",
+        timestamp=timestamp,
+        metadata={"source": source, "hook_event": "UserPromptSubmit"},
+    )
+    second = Interaction(
+        role=first.role, content=first.content, timestamp=timestamp, metadata=first.metadata
+    )
+    daemon = SleepDaemon(store, config)
+    try:
+        daemon.add_episode(first)
+        daemon.add_episode(Interaction.model_validate_json(first.model_dump_json()))
+        daemon.add_episode(second)
+        expected_episodes = 2 if source == "manual" else 1
+        assert len(store.list_episodic_events(status="pending")) == expected_episodes
+
+        result = await daemon.consolidate(
+            MockLLMProvider(responses={"extract permanent facts": "1. " + first.content}),
+            SimpleEmbeddingProvider(dim=64),
+        )
+        assert result.facts_extracted == ([first.content] if source == "manual" else [])
+        assert result.chunks_pruned == expected_episodes
+        assert daemon.get_episode_count() == 0
+        assert SleepDaemon(store, config).get_episode_count() == 0
+    finally:
+        if isinstance(store, SQLiteStore):
+            store.close()
 
 
 class FailingLLM(LLMProvider):
