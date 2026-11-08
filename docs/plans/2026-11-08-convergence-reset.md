@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Patch native preparation: [the two-session runner and current CI state](../validation/2026-11-08/storage-native-preparation-v1.md) are recorded. All eight jobs pass on documentation head `fcf02a2e`. Harness review is resolved; actual Claude execution awaits a fresh isolated login. No native process was launched. Independent semantic/capture work can continue while authentication is pending.
+
 Patch CI and claims follow-up: [all eight jobs pass on runtime 1319e1c6](../validation/2026-11-08/storage-pr9-ci-and-claims.md). Documentation-only head `fcf02a2e` corrects automated-versus-native host claims and the storage event name; its own CI is pending. Avoid another unchanged runtime/package matrix. Next substantive patch acceptance work is an isolated actual-host check. The existing sdist needs the final documentation at release preparation, without transferring old artifact hashes.
 
 Installed patch follow-up: [package v2](../validation/2026-11-08/storage-merged-package-v2.md) verifies the rebuilt `1319e1c6` candidate, including the previously missing storage event. Fifteen installed storage tests, three automated MCP flows and isolated operational checks pass. Draft PR #9 is open; hosted CI, interactive acceptance and actual pilot requirements remain separate. No tag or publication occurred.
