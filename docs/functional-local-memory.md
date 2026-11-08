@@ -540,6 +540,19 @@ Experimental modules remain disabled by default; judged extraction still
 requires a configured judgment provider. These controls do not establish an
 extraction-quality benefit or change a queued job into a completed fact.
 
+For programmatic experimental sleep ingestion, preserve `Interaction.id` when
+retrying the same interaction, including across serialization and restart.
+New interactions receive distinct IDs even when their content and timestamp
+match. Sleep ingestion includes the profile in its event fingerprint and adds
+to its transient buffer only after the store inserts a new event. A failed
+write or duplicate does not leave a new buffered copy.
+
+Existing records are not rewritten. Reconstructing an old interaction without
+its ID creates a new identity; do not infer retry identity from equal text.
+The legacy `claude_hook` sleep path retains content-based deduplication within
+a profile. That compatibility behavior does not establish native occurrence
+identity or replace the functional capture/replay contract.
+
 ## Backups, restore, and reindex
 
 `mnemos backup <new-archive.zip>` takes a consistent snapshot through the owning service. It uses SQLite's backup API, includes the scope registry and a hashed manifest, and runs integrity checks. `mnemos restore <archive.zip> <new-database.sqlite>` restores to a new destination and merges current suppression records so an old snapshot does not silently resurrect a forgotten fact. Restore does not activate the new database or replace the registry. Keep the original until the restored copy passes integrity and identity checks.

@@ -204,26 +204,11 @@ class SleepDaemon:
             return
         interaction = interaction.model_copy(update={"content": safety.content})
         partition_key = _scope_partition_key(interaction)
-        self._episodic_buffer[partition_key].append(interaction)
         profile, scope, scope_id = partition_key
-        self._store.append_episodic_event(
-            EpisodicEvent(
-                event_fingerprint=compute_event_fingerprint(
-                    role=interaction.role,
-                    content=interaction.content,
-                    scope=scope,
-                    scope_id=scope_id,
-                    source=str(interaction.metadata.get("source", "manual")),
-                    hook_event=(
-                        str(interaction.metadata.get("hook_event"))
-                        if interaction.metadata.get("hook_event") is not None
-                        else None
-                    ),
-                    occurred_at=interaction.timestamp,
-                ),
+        event = EpisodicEvent(
+            event_fingerprint=compute_event_fingerprint(
                 role=interaction.role,
                 content=interaction.content,
-                normalized_content=normalize_memory_text(interaction.content),
                 scope=scope,
                 scope_id=scope_id,
                 source=str(interaction.metadata.get("source", "manual")),
@@ -232,10 +217,27 @@ class SleepDaemon:
                     if interaction.metadata.get("hook_event") is not None
                     else None
                 ),
-                metadata=dict(interaction.metadata),
                 occurred_at=interaction.timestamp,
-            )
+                interaction_id=interaction.id,
+                user_profile_id=profile,
+            ),
+            role=interaction.role,
+            content=interaction.content,
+            normalized_content=normalize_memory_text(interaction.content),
+            scope=scope,
+            scope_id=scope_id,
+            source=str(interaction.metadata.get("source", "manual")),
+            hook_event=(
+                str(interaction.metadata.get("hook_event"))
+                if interaction.metadata.get("hook_event") is not None
+                else None
+            ),
+            metadata=dict(interaction.metadata),
+            occurred_at=interaction.timestamp,
         )
+        persisted = self._store.append_episodic_event(event)
+        if persisted.id == event.id:
+            self._episodic_buffer[partition_key].append(interaction)
 
     def get_episode_count(self) -> int:
         """Return the number of interactions currently in the episodic buffer."""
@@ -392,6 +394,8 @@ class SleepDaemon:
                                     else None
                                 ),
                                 occurred_at=interaction.timestamp,
+                                interaction_id=interaction.id,
+                                user_profile_id=profile,
                             ),
                             role=interaction.role,
                             content=interaction.content,

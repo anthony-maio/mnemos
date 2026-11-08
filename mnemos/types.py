@@ -401,6 +401,11 @@ class Interaction(BaseModel):
     what was experienced, before consolidation into semantic long-term memory.
     """
 
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        min_length=1,
+        description="Persist this identity when retrying the same interaction.",
+    )
     role: str = Field(
         description="Speaker role: 'user', 'assistant', or 'system'.",
     )

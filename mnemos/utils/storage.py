@@ -107,6 +107,8 @@ def compute_event_fingerprint(
     source: str,
     hook_event: str | None,
     occurred_at: datetime | None = None,
+    interaction_id: str | None = None,
+    user_profile_id: str | None = None,
 ) -> str:
     normalized = normalize_memory_text(content)
     scope_token = scope.strip().lower()
@@ -114,8 +116,31 @@ def compute_event_fingerprint(
     source_token = source.strip().lower()
     event_token = "" if hook_event is None else hook_event.strip().lower()
     occurrence_token = ""
-    if source_token != "claude_hook" and occurred_at is not None:
-        occurrence_token = occurred_at.isoformat()
+    if source_token != "claude_hook":
+        if interaction_id is not None:
+            occurrence_token = f"id:{interaction_id}"
+        elif occurred_at is not None:
+            occurrence_token = occurred_at.isoformat()
+    if user_profile_id is not None or (
+        source_token != "claude_hook" and interaction_id is not None
+    ):
+        # New identities are opaque. Keep their case and field boundaries;
+        # retain the historical format only for callers without these selectors.
+        payload = json.dumps(
+            [
+                user_profile_id,
+                role.strip().lower(),
+                scope_token,
+                scope_id,
+                source_token,
+                event_token,
+                occurrence_token,
+                normalized,
+            ],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return hashlib.sha256(payload).hexdigest()
     payload = (
         f"{role.strip().lower()}|{scope_token}|{scope_id_token}|"
         f"{source_token}|{event_token}|{occurrence_token}|{normalized}"
