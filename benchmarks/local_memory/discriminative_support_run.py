@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 import time
 
-from benchmarks.local_memory.discriminative_support import select_supported
+# Run this file directly: importing the benchmark package also imports unrelated
+# service adapters whose dependencies are absent from the isolated model runtime.
+from discriminative_support import select_supported
 
 
 def digest(path):
