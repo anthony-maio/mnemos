@@ -1,0 +1,291 @@
+{
+  "status": "diagnostic_audit_passed",
+  "summary": {
+    "python": {
+      "observations": 50,
+      "min_ms": 281.3965999521315,
+      "p95_ms": 1029.2162999976426,
+      "max_ms": 1315.7186000607908,
+      "meets_command_100ms": false
+    },
+    "native": {
+      "observations": 50,
+      "min_ms": 160.65570013597608,
+      "p95_ms": 422.6275000255555,
+      "max_ms": 969.827099936083,
+      "meets_command_100ms": false
+    }
+  },
+  "completed_events": 110,
+  "completed_jobs": 110,
+  "native_host_dispatch_tested": false,
+  "scope": "Instrumented native and worker stage attribution; not acceptance timing or a causal speedup result.",
+  "stages": {
+    "python": {
+      "command": {
+        "samples": 50,
+        "min_ms": 281.3965999521315,
+        "median_ms": 333.37020012550056,
+        "p95_ms": 1029.2162999976426,
+        "max_ms": 1315.7186000607908
+      },
+      "outside_submit": {
+        "samples": 50,
+        "min_ms": 162.81839995644987,
+        "median_ms": 175.4930999595672,
+        "p95_ms": 366.8058000039309,
+        "max_ms": 1164.2772001214325
+      },
+      "dispatch_ms": {
+        "samples": 50,
+        "min_ms": 114.01639995165169,
+        "median_ms": 153.75550009775907,
+        "p95_ms": 304.7570998314768,
+        "max_ms": 814.1998001374304
+      },
+      "submit_ms": {
+        "samples": 50,
+        "min_ms": 114.3812001682818,
+        "median_ms": 154.17674998752773,
+        "p95_ms": 305.19780004397035,
+        "max_ms": 814.7130000870675
+      },
+      "before_dispatch_ms": {
+        "samples": 50,
+        "min_ms": 0.2041999250650406,
+        "median_ms": 0.25189993903040886,
+        "p95_ms": 0.39519998244941235,
+        "max_ms": 0.4409998655319214
+      },
+      "after_dispatch_ms": {
+        "samples": 50,
+        "min_ms": 0.08979998528957367,
+        "median_ms": 0.1284999307245016,
+        "p95_ms": 0.4632000345736742,
+        "max_ms": 2.91269994340837
+      },
+      "project_identity": {
+        "samples": 50,
+        "min_ms": 61.70399999246001,
+        "median_ms": 67.1141998609528,
+        "p95_ms": 225.90339998714626,
+        "max_ms": 681.0426998417825
+      },
+      "enqueue": {
+        "samples": 50,
+        "min_ms": 46.88600008375943,
+        "median_ms": 71.38320000376552,
+        "p95_ms": 100.96530010923743,
+        "max_ms": 116.93739984184504
+      },
+      "outbox_write": {
+        "samples": 50,
+        "min_ms": 44.60619995370507,
+        "median_ms": 68.48114996682853,
+        "p95_ms": 98.92779984511435,
+        "max_ms": 114.6772000938654
+      },
+      "fsync": {
+        "samples": 50,
+        "min_ms": 40.279399836435914,
+        "median_ms": 62.975000008009374,
+        "p95_ms": 92.33410004526377,
+        "max_ms": 94.81259994208813
+      }
+    },
+    "native": {
+      "command": {
+        "samples": 50,
+        "min_ms": 160.65570013597608,
+        "median_ms": 191.8193498859182,
+        "p95_ms": 422.6275000255555,
+        "max_ms": 969.827099936083
+      },
+      "outside_submit": {
+        "samples": 50,
+        "min_ms": 35.61179991811514,
+        "median_ms": 42.08734992425889,
+        "p95_ms": 79.03159991838038,
+        "max_ms": 162.55389992147684
+      },
+      "dispatch_ms": {
+        "samples": 50,
+        "min_ms": 120.40070001967251,
+        "median_ms": 146.9207500340417,
+        "p95_ms": 382.22470018081367,
+        "max_ms": 905.1033998839557
+      },
+      "submit_ms": {
+        "samples": 50,
+        "min_ms": 120.7385000307113,
+        "median_ms": 147.35700003802776,
+        "p95_ms": 382.58860004134476,
+        "max_ms": 905.506500042975
+      },
+      "before_dispatch_ms": {
+        "samples": 50,
+        "min_ms": 0.21500000730156898,
+        "median_ms": 0.2605500631034374,
+        "p95_ms": 0.32839993946254253,
+        "max_ms": 0.6661999505013227
+      },
+      "after_dispatch_ms": {
+        "samples": 50,
+        "min_ms": 0.09449990466237068,
+        "median_ms": 0.13890000991523266,
+        "p95_ms": 0.4290998913347721,
+        "max_ms": 0.5576000548899174
+      },
+      "project_identity": {
+        "samples": 50,
+        "min_ms": 59.58819994702935,
+        "median_ms": 66.85334991198033,
+        "p95_ms": 295.771999983117,
+        "max_ms": 698.1858999934047
+      },
+      "enqueue": {
+        "samples": 50,
+        "min_ms": 51.466000033542514,
+        "median_ms": 69.27759991958737,
+        "p95_ms": 177.20709997229278,
+        "max_ms": 309.85550000332296
+      },
+      "outbox_write": {
+        "samples": 50,
+        "min_ms": 48.730900045484304,
+        "median_ms": 66.94330007303506,
+        "p95_ms": 174.98870007693768,
+        "max_ms": 307.57740000262856
+      },
+      "fsync": {
+        "samples": 50,
+        "min_ms": 43.289100052788854,
+        "median_ms": 60.19810005091131,
+        "p95_ms": 124.70619985833764,
+        "max_ms": 301.9432998262346
+      },
+      "main_begin_to_launch_prepared": {
+        "samples": 50,
+        "min_ms": 0.177,
+        "median_ms": 0.19175,
+        "p95_ms": 0.24950000000000003,
+        "max_ms": 0.453
+      },
+      "launch_prepared_to_stdin_read": {
+        "samples": 50,
+        "min_ms": 0.022199999999999998,
+        "median_ms": 0.024599999999999997,
+        "p95_ms": 0.03779999999999997,
+        "max_ms": 0.07099999999999995
+      },
+      "stdin_read_to_payload_parsed": {
+        "samples": 50,
+        "min_ms": 0.0126,
+        "median_ms": 0.01344999999999999,
+        "p95_ms": 0.017600000000000005,
+        "max_ms": 0.022200000000000053
+      },
+      "payload_parsed_to_request_begin": {
+        "samples": 50,
+        "min_ms": 0.006499999999999978,
+        "median_ms": 0.006900000000000003,
+        "p95_ms": 0.009500000000000008,
+        "max_ms": 0.03959999999999997
+      },
+      "request_begin_to_descriptor_validated": {
+        "samples": 50,
+        "min_ms": 0.1938,
+        "median_ms": 0.20665,
+        "p95_ms": 0.28309999999999996,
+        "max_ms": 0.4094000000000001
+      },
+      "descriptor_validated_to_request_serialized": {
+        "samples": 50,
+        "min_ms": 0.015499999999999958,
+        "median_ms": 0.016699999999999993,
+        "p95_ms": 0.02639999999999998,
+        "max_ms": 0.03160000000000002
+      },
+      "request_serialized_to_connected": {
+        "samples": 50,
+        "min_ms": 1.6949999999999996,
+        "median_ms": 1.9158499999999998,
+        "p95_ms": 2.531,
+        "max_ms": 3.239
+      },
+      "connected_to_request_written": {
+        "samples": 50,
+        "min_ms": 0.040899999999999714,
+        "median_ms": 0.04664999999999986,
+        "p95_ms": 0.08840000000000003,
+        "max_ms": 0.2706999999999997
+      },
+      "request_written_to_response_first_byte": {
+        "samples": 50,
+        "min_ms": 122.2443,
+        "median_ms": 150.1401,
+        "p95_ms": 384.7498,
+        "max_ms": 928.1424
+      },
+      "response_first_byte_to_response_headers_read": {
+        "samples": 50,
+        "min_ms": 0.1226000000000056,
+        "median_ms": 0.12814999999999088,
+        "p95_ms": 0.19759999999999422,
+        "max_ms": 0.3386000000000138
+      },
+      "response_headers_read_to_response_read": {
+        "samples": 50,
+        "min_ms": 0.004500000000007276,
+        "median_ms": 0.00575000000002035,
+        "p95_ms": 0.011899999999997135,
+        "max_ms": 0.03879999999998063
+      },
+      "response_read_to_response_validated": {
+        "samples": 50,
+        "min_ms": 0.027899999999931424,
+        "median_ms": 0.03104999999999336,
+        "p95_ms": 0.03639999999998622,
+        "max_ms": 0.05879999999996244
+      },
+      "response_validated_to_run_finished": {
+        "samples": 50,
+        "min_ms": 0.07880000000000109,
+        "median_ms": 0.11794999999999334,
+        "p95_ms": 0.29759999999998854,
+        "max_ms": 0.47340000000002647
+      },
+      "outside_main_marks": {
+        "samples": 50,
+        "min_ms": 31.21679989376065,
+        "median_ms": 37.1719999121532,
+        "p95_ms": 72.62529999374749,
+        "max_ms": 158.18110008015037
+      },
+      "inside_main_marks": {
+        "samples": 50,
+        "min_ms": 124.93,
+        "median_ms": 152.93470000000002,
+        "p95_ms": 387.40790000000004,
+        "max_ms": 931.5006
+      }
+    }
+  },
+  "source_commit": "02d494981f669272cc4006bb66e765624ce08e02",
+  "all_terminal": true,
+  "independently_absent_pids": [
+    50664,
+    58936
+  ],
+  "private_archive_sha256": "9b2cc2bce53446959c8755b0c38487046110114e90806c895e65e1f504662f04",
+  "private_archive_members": 356,
+  "measurement_session": 58147,
+  "measurement_exit_code": 0,
+  "protocol_sha256": "861d44a7a6c387b4f94b1b781622bc80b3b6eed9ad98eaf37b348fcfd44f4200",
+  "native_sha256": "691005b8ca8a0e63200f80c4575fe270bcd3a0c54797ff6f1307733129fba4ab",
+  "installed_wheel_sha256": "cfe4e9b480fb8232453d53e928a6a2ba840d26bb3a7a9106dc6bdc1968fd4c2e",
+  "live_configuration_changed": false,
+  "published": false,
+  "pilot_days": 0,
+  "archive_verifier_note": "Initial member lookup used Windows separators; corrected verification normalizes to ZIP slash paths. All original member hashes pass; archive unchanged."
+}
