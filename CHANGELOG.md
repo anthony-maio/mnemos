@@ -3,6 +3,9 @@
 ## Unreleased
 
 ### Fixed
+- Make graph-neighbor replacement atomic. A failed insert restores the previous
+  edges, and success or failure preserves any caller-owned transaction. The
+  missing-source guard from PR #5 remains in place while the write lock is held.
 - All sleep consolidation settings now load from `[sleep]` in `mnemos.toml` or `MNEMOS_SLEEP_*` environment variables and reach the engine, including recall gating, timing, episode limits, and prompts (#4).
 - Sleep settings use the engine's validation rules, and saving settings preserves multiline prompts in valid TOML.
 - MCP extras now require the supported 1.x SDK, preventing fresh installs from selecting the incompatible 2.x API.
