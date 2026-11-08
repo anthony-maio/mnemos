@@ -194,7 +194,9 @@ async def exercise(root, target, runtime, owner, registry):
                 )
 
 
-def main():
+def main(
+    *, exercise_fn=None, kind="persistent MCP protocol integration, not native host acceptance"
+):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
     parser.add_argument("--packages", type=Path, required=True)
@@ -248,7 +250,7 @@ def main():
         source_commit=info["source_commit"],
         package=info,
         helper_sha256=sha(__file__),
-        kind="persistent MCP protocol integration, not native host acceptance",
+        kind=kind,
     )
     save(root / "result.json", record)
     owner = MnemosService()
@@ -260,7 +262,7 @@ def main():
         assert not any(owner._dispatcher.engine.config.modules.model_dump().values())
         record["owner_port"] = descriptor["port"]
         record["owner_thread_id"] = owner.owner_thread_id
-        asyncio.run(exercise(root, target, Path(sys.executable), owner, registry))
+        asyncio.run((exercise_fn or exercise)(root, target, Path(sys.executable), owner, registry))
         record["status"] = "passed"
     except BaseException as exc:
         record.update(status="failed", error_type=type(exc).__name__, error=str(exc))
