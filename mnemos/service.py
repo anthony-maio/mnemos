@@ -489,7 +489,7 @@ class _RequestHandler(BaseHTTPRequestHandler):
             self._write_json(400, {"schema_version": SCHEMA_VERSION, "error": "invalid_dispatch"})
             return
         try:
-            result = self.server.service.submit(operation.strip(), payload)
+            result = self.server.service.submit_http(operation.strip(), payload)
         except TimeoutError:
             self._write_json(504, {"schema_version": SCHEMA_VERSION, "error": "dispatch_timeout"})
             return
@@ -548,7 +548,11 @@ class _RequestHandler(BaseHTTPRequestHandler):
         except Exception:
             self._write_json(500, {"schema_version": SCHEMA_VERSION, "error": "dispatch_failed"})
             return
-        self._write_json(200, result)
+        try:
+            self._write_json(200, result)
+        finally:
+            # A failed socket write does not undo an already durable capture.
+            self.server.service.response_finished(operation.strip(), result)
 
 
 class MnemosService:
@@ -882,6 +886,13 @@ class MnemosService:
         except BaseException as exc:
             self._log_sqlite_failure("dispatch", exc)
             raise
+
+    def submit_http(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Dispatch with completion notification owned by the HTTP handler."""
+        return self.submit(operation, payload)
+
+    def response_finished(self, operation: str, result: dict[str, Any]) -> None:
+        """Optional notification after an HTTP response write attempt."""
 
     def health(self) -> dict[str, Any]:
         result: dict[str, Any] = {

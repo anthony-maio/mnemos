@@ -35,6 +35,7 @@ class Outbox:
 
     _path_locks: dict[str, Any] = {}
     _path_locks_guard = threading.Lock()
+    replay_ack_batch_size = 1
 
     def __init__(
         self,
@@ -127,13 +128,13 @@ class Outbox:
             except FileNotFoundError:
                 pass
 
-    def append(
+    def _prepare_entry(
         self,
         payload: Mapping[str, Any],
         *,
         event_id: str | None = None,
         operation: str = "capture",
-    ) -> str:
+    ) -> dict[str, Any]:
         sanitized = self._sanitize(payload)
         stable_id = str(event_id or sanitized.get("event_id") or uuid4())
         sanitized["event_id"] = stable_id
@@ -149,7 +150,17 @@ class Outbox:
                     ]
                 ).encode("utf-8")
             ).hexdigest()
-        entry = {"event_id": stable_id, "operation": operation, "payload": sanitized}
+        return {"event_id": stable_id, "operation": operation, "payload": sanitized}
+
+    def append(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        event_id: str | None = None,
+        operation: str = "capture",
+    ) -> str:
+        entry = self._prepare_entry(payload, event_id=event_id, operation=operation)
+        stable_id = str(entry["event_id"])
         with self._exclusive():
             entries = self._read()
             existing = next((item for item in entries if item.get("event_id") == stable_id), None)
@@ -181,6 +192,9 @@ class Outbox:
 
     def __len__(self) -> int:
         return len(self.pending())
+
+    def acknowledge_many(self, event_ids: list[str]) -> int:
+        return sum(self.acknowledge(event_id) for event_id in event_ids)
 
 
 class ServiceClientError(RuntimeError):
@@ -589,6 +603,7 @@ class MnemosClient:
     async def replay_outbox(self) -> dict[str, Any]:
         acknowledged = 0
         failed = 0
+        delivered: list[str] = []
         for entry in self.outbox.pending():
             payload = entry.get("payload")
             operation = entry.get("operation", "capture")
@@ -606,10 +621,14 @@ class MnemosClient:
             # Match the direct path: a committed or explicitly rejected reply
             # removes the entry; anything ambiguous keeps it for another replay.
             if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
-                if self.outbox.acknowledge(event_id):
-                    acknowledged += 1
+                delivered.append(event_id)
+                if len(delivered) >= self.outbox.replay_ack_batch_size:
+                    acknowledged += self.outbox.acknowledge_many(delivered)
+                    delivered.clear()
             else:
                 failed += 1
+        if delivered:
+            acknowledged += self.outbox.acknowledge_many(delivered)
         return {
             "schema_version": SCHEMA_VERSION,
             "acknowledged": acknowledged,
@@ -619,6 +638,35 @@ class MnemosClient:
 
     async def capture(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         return await self.request("capture", payload)
+
+    def enqueue_capture(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Persist a capture without startup, transport, or service-completion waits.
+
+        This receipt acknowledges only the local outbox. A caller must arrange
+        replay_outbox separately and must not present queued work as a completed
+        service job. Disk failures propagate without a success receipt.
+        """
+        try:
+            data = self.outbox.sanitize(payload)
+            data["event_id"] = str(data.get("event_id") or uuid4())
+            outbox_event_id = self.outbox.append(data, operation="capture")
+        except (TypeError, ValueError) as exc:
+            return {
+                "schema_version": SCHEMA_VERSION,
+                "status": "blocked",
+                "committed": False,
+                "durable_queued": False,
+                "error": str(exc),
+            }
+        self._outbox_drained = False
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "status": "queued",
+            "committed": False,
+            "durable_queued": True,
+            "event_id": data["event_id"],
+            "outbox_event_id": outbox_event_id,
+        }
 
     def begin_host_event(self) -> None:
         """Reset per-invocation attempts between serialized resident host events.
