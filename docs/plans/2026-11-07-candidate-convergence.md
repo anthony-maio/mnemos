@@ -277,3 +277,15 @@ finds that the prepared transaction backport conflicts with open PRs #6 and #7.
 Prepare local resolutions against their exact heads, preserve their unrelated
 changes, and verify the combined storage behavior before choosing a delivery
 order. Keep original source/test bindings and all failed product gates intact.
+
+Both [storage compatibility candidates](../validation/2026-11-07/storage-upstream-overlap-v1.md)
+are now prepared: `22a74b9d` on PR #6 and `e02c3951` on PR #7. Their selected
+storage/engine checks pass, including caller-owned full-text edits across graph
+failure; the broader typing check still reports three errors in unchanged
+embedding code. Exact patches and independent review drafts are saved. Neither
+upstream PR or release order has changed.
+
+The optional explicit-memory learning-pilot scope is now approved for native
+validation. Validate its prepared project configuration and guidance in
+isolation, keeping activation separate. This approval does not waive original
+quality/timing requirements or start either pilot clock.
