@@ -16,6 +16,35 @@ from typing import Callable
 from .scopes import canonical_project_root
 
 
+def _unsupported_git_environment() -> bool:
+    # Configuration overrides belong to the caller's external-policy generation.
+    # These routing overrides are explicitly stripped by canonical_project_root.
+    # Any other Git selector may name mutable resources outside our snapshot.
+    known = {
+        "GIT_DIR",
+        "GIT_COMMON_DIR",
+        "GIT_WORK_TREE",
+        "GIT_CEILING_DIRECTORIES",
+        "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        "GIT_CONFIG_NOSYSTEM",
+        "GIT_CONFIG_GLOBAL",
+        "GIT_CONFIG_SYSTEM",
+        "GIT_CONFIG_COUNT",
+        "GIT_CONFIG_PARAMETERS",
+    }
+    for key in os.environ:
+        upper = key.upper()
+        if not upper.startswith("GIT_") or upper in known:
+            continue
+        if any(
+            upper.startswith(prefix) and upper[len(prefix) :].isdigit()
+            for prefix in ("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_")
+        ):
+            continue
+        return True
+    return False
+
+
 def _entry(path: Path) -> tuple[object, ...]:
     """Read content for files; directory identity excludes ordinary child edits."""
     try:
@@ -89,7 +118,7 @@ class ProjectIdentityCache:
             root = Path(path).expanduser().resolve(strict=True)
             if not root.is_dir():
                 raise ValueError("A project root must be a directory")
-            if not policy_generation:
+            if not policy_generation or _unsupported_git_environment():
                 self._cached = None
                 return self._resolver(root)
             executable = shutil.which("git")

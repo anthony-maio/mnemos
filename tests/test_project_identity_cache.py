@@ -21,6 +21,9 @@ def git(*args):
 
 @pytest.fixture
 def repo(tmp_path, monkeypatch):
+    for key in list(os.environ):
+        if key.upper().startswith("GIT_"):
+            monkeypatch.delenv(key)
     monkeypatch.setenv("GIT_CONFIG_NOSYSTEM", "1")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "absent-global"))
     root = tmp_path / "repo"
@@ -160,3 +163,26 @@ def test_cached_identity_does_not_cache_membership(repo, monkeypatch):
     with pytest.raises(ScopeUnavailable):
         registry.resolve(repo, **args)
     assert len(calls) == 1
+
+
+def test_external_object_directory_loss_cannot_reuse_identity(repo, tmp_path, monkeypatch):
+    objects = tmp_path / "external-objects"
+    objects.mkdir()
+    monkeypatch.setenv("GIT_OBJECT_DIRECTORY", str(objects))
+    cache, calls = recorder()
+    cache.resolve(repo, policy_generation="unchanged-config-policy")
+    # Remove only an empty directory created by this test.
+    objects.rmdir()
+    with pytest.raises(ValueError):
+        canonical_project_root(repo)
+    with pytest.raises(ValueError):
+        cache.resolve(repo, policy_generation="unchanged-config-policy")
+
+
+def test_unknown_git_selector_bypasses_cache(repo, monkeypatch):
+    monkeypatch.setenv("GIT_FUTURE_ROUTING_OPTION", "external-resource")
+    cache, calls = recorder()
+    assert cache.resolve(repo, policy_generation="policy") == cache.resolve(
+        repo, policy_generation="policy"
+    )
+    assert len(calls) == 2 and cache._cached is None
