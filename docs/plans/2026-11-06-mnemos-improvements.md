@@ -6,14 +6,14 @@ No release, live configuration change, or pilot completion is implied.
 
 ## Scope and completion evidence
 
-| Priority | Work | Completion evidence | Current state |
-| --- | --- | --- | --- |
-| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 preserved; separate 0.6.1 candidate 9ea3852a repairs four baseline typing errors and aligns metadata. Its 316 source tests, five installed regressions, typing, formatting and packaging pass. Legacy benchmark fails both in-memory contradiction comparisons; all six SQLite comparisons pass. Exact review packet prepared; release readiness and publication remain open |
-| 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | The bounded installed retrieval/support comparison is complete: 272 observations, 68 known questions, 136 matching candidate/context pairs and no ranking misses or operational failures. The fixed QA/contrast treatment retains 72/80 expected facts, correctly abstains on 52/56 absent answers, selects four unsupported facts and reaches 94.74% precision. Retention at 90% and complete p95 at 8,641.48 ms fail the original gates. The adapter has 23 boundary checks and 71 focused passes. This comparison and the earlier codec series are closed; no rerun or fresh acceptance is justified by this result. Treatment stays outside defaults; semantic-quality and critical-fact acceptance remain open |
-| 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | First fresh retrieval-only comparison completed and audited: 200 sessions, 700 declared facts, 580 query strings and 5,220 observations. Vector/hybrid Recall@5 100%, lexical 93.5%; all have 50% clean hits and 22.7% correct abstention. Every successful abstention has zero eligible facts; none with available candidates. The 90% abstention requirement fails. Extraction, support and full-module comparisons remain separate |
-| 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Product f5a944ea passes installed CLI/MCP checks and all six native Codex v12 phases: 19 correlated calls, six complete inventories, installed guidance delivery and one suppressed original-source replay. The independent audit verifies original jobs, same-ID correction, reviewed deletion, final recall and retained controls. The refreshed pilot preparation now uses the same wheel and passes installation/configuration/rollback checks. Earlier incomplete/failed attempts and Claude/capture evidence retain their source bindings. Applicable quality, normal hook trust, complete pilot-configuration acceptance and actual use remain open; pilot inactive with zero days |
-| 5 | Improve context efficiency | Host tokenizer with conservative fallback, concise source-backed context, supported facts per token and recall/latency measurements | Host-tokenizer support with a conservative fallback is implemented; native tokenizer compatibility and fresh quality remain open. Product f5a944ea passes the audited 320-observation installed comparison using the same native launcher in both arms: recall median falls from 110.32 to 97.89 ms and prompt median from 257.89 to 245.86 ms. All 160 output/context pairs match and all 208 captures survive restart with completed jobs. Recall p95 passes 500 ms at 104.92 ms; complete Stop/prompt p95 remains 321.73/365.53 ms, failing the experiment's whole-command 100 ms bound. The prospective installed pilot command comparison is complete on the same f5 wheel. It retains 320 observations, 160 exact output pairs and 208 correlated persistence spans and recovered captures. Latest gates: recall: Python FAIL, native FAIL; Stop: Python FAIL, native FAIL; prompt: Python FAIL, native FAIL. Internal transaction and dispatch-to-commit timings remain diagnostics. Neither launcher exposes an early durable acknowledgment, and command stdout alone cannot prove capture success. Native-host acknowledgment acceptance remains unproven. The rejected sparse-support experiment remains disabled. The native launcher remains experimental; Git identity resolution, command startup, semantic span compression and broader consumption remain open |
-| 6 | Align code, installation and public claims | Reviewed canonical branch, verified artifact, matching README/site/package claims, separately recorded publication state | Product f5a944ea passes isolated real-BGE CLI/MCP restart recall, scope isolation and indexed evidence ordering. Its wheel verifies 96 installed package files, 85 committed Python files, 57 dependency versions and 17 unchanged model assets. Full regression on 1299ed9b passes 3,674 cases with four platform skips, including all 75 native-launcher subprocess tests. README and compatibility notes identify this artifact and preserve older native-host bindings. The refreshed delivery bundle reconstructs fb062fe3 and includes this unchanged wheel plus a source archive that reproduces all 101 wheel members. It remains unapplied. Canonical integration, website alignment, package delivery and publication remain open |
+| Priority | Completion evidence still required | Current evidence and remaining work |
+| --- | --- | --- |
+| 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior | Repair and installed regressions are implemented. The separate legacy 0.6.1rc2 candidate has package and Windows/Linux checks; canonical d9ab39ba has 418 installed Windows passes plus 49 Linux persistence passes. Publication/release acceptance is not established by these checks. |
+| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance | QA/contrast retrieval-support development failed. Subsequent packed, readable and condition-query probes also failed. Condition v1 has 26/30 correct states, 9/11 adequate witnesses, 3/4 applicable cases retained and provider p95 1781.68 ms before retrieval. Keep these experiments closed and disabled. No passing semantic candidate exists. |
+| 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation | The earlier frozen retrieval-only comparison remains evidence, including failed abstention. Supplied source annotations in later probes are not extraction results. No fresh cases should be consumed on the failed candidates. |
+| 4 | Exact installed/native configuration acceptance and actual two-week daily use | Earlier native lifecycle results retain their own artifact bindings. The separately approved explicit-memory learning pilot was activated on November 8; its activation receipt records zero use days. That artifact is distinct from current canonical code and cannot satisfy the original pilot. Original entry gates and actual days remain outstanding. Do not infer subsequent use from elapsed time. |
+| 5 | Context efficiency with supported facts per token, recall and complete timing | Host counting and fallback exist. Linear byte packing improves large-context stress behavior but did not materially improve ordinary top-five service timing. Async identity lookup improves event-loop responsiveness, not Git duration. Actual SQLite capture command p95 476.37 ms still fails 100 ms. No complete quality-qualified 10k recall pass exists. |
+| 6 | Consistent verified code/package/docs/site and explicit delivery state | Canonical source d9ab39ba has a newly verified private 0.7.0b1 wheel, SHA256 5182601cb4f8f4739bb8472e255e2e0ee019ae27362a65829d363e7df0464a6f. The local site and README record the failed condition probe. These are local commits and private artifacts, not publication or live activation. The active optional pilot remains separately bound. |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
@@ -23,22 +23,13 @@ host acceptance.
 
 ## Work order
 
-The November 7 adversarial review changes the order without reducing the six
-original goals. Follow the [candidate convergence plan](2026-11-07-candidate-convergence.md):
-
-1. Close and archive the completed codec series. No further output variants.
-2. Finish the minimal storage backport's installed-package review independently.
-3. Freeze product `f5a944ea`, refresh one canonical delivery bundle and the
-   private pilot drafts, and validate the selected native host on that wheel.
-4. Run one bounded retrieval-plus-support increment with at most one integration
-   repair/rerun. Fresh acceptance follows only a passing development candidate.
-5. Measure durable acknowledgment, warm recall and whole-command time separately
-   under a prospective protocol. Preserve the prior whole-command FAIL labels.
-6. Prepare exact pilot changes and rollback for activation only after entry
-   checks pass. Count actual daily use. Publication is a separate final decision.
-
-A manual MCP-only learning pilot is an alternative scope requiring an explicit
-prospective decision. It does not waive the original quality or pilot gates.
+The [November 8 convergence reset](2026-11-08-convergence-reset.md) controls
+next work. It preserves all six priorities and all original thresholds. The
+November 7 plan remains a historical decision record, but its artifact freeze,
+optional-pilot approval status and next-run instructions are superseded by the
+reset. Do not treat successful packaging or documentation work as a solution
+to semantic quality or latency. Do not refresh the activated pilot installation
+from a newer candidate without its own reviewed change and authorization.
 
 The worktree is initially sparse: historical `docs/validation` archives remain
 in Git and the preserved worktrees. Source, tests, benchmark code and datasets,

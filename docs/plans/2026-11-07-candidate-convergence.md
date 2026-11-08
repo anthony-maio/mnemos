@@ -1,5 +1,11 @@
 # Converge the improvement work on one candidate
 
+Current-work notice, November 8: the [convergence reset](2026-11-08-convergence-reset.md)
+supersedes this document's artifact freeze, pilot approval status and next-run
+instructions. Historical results and limits below remain intact. Later failed
+experiments did not satisfy the original stop condition's required design decision.
+
+
 The adversarial review found a real planning problem: useful repairs were spread
 across several validated checkpoints, while the daily-use configuration was
 old and inactive. Delivery and pilot preparation now use one frozen artifact.
