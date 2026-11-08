@@ -826,7 +826,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.6.0},
+  version      = {0.6.1},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

@@ -1,10 +1,12 @@
 # Changelog
 
-## Unreleased
+## 0.6.1 (unreleased)
 
 - Make graph-neighbor replacement atomic. A failed insert restores the previous
   edges, and success or failure preserves any caller-owned transaction. The
   missing-source guard from PR #5 remains in place while the write lock is held.
+- Complete NumPy array annotations and remove a redundant provider cast so the
+  storage patch passes the existing strict type check in its validation environment.
 
 ## 0.6.0 — 2026-03-31
 
