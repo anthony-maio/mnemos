@@ -1,0 +1,27 @@
+{
+  "status": "durability_passed_command_latency_failed",
+  "summary": {
+    "python": {
+      "observations": 50,
+      "min_ms": 305.58059993200004,
+      "p95_ms": 618.066499941051,
+      "max_ms": 662.4660999514163,
+      "meets_command_100ms": false
+    },
+    "native": {
+      "observations": 50,
+      "min_ms": 180.80469989217818,
+      "p95_ms": 687.0744000189006,
+      "max_ms": 763.4316000621766,
+      "meets_command_100ms": false
+    }
+  },
+  "completed_events": 110,
+  "completed_jobs": 110,
+  "native_host_dispatch_tested": false,
+  "scope": "Installed native versus Python queued command completion; shared worker-side observer, deterministic embeddings, empty backlog. No general latency or native-host acceptance.",
+  "all_terminal": true,
+  "private_archive_sha256": "bc1aafc689d015d9fd4decebadc9803ed69a8f97d655fcb96a5ccfc5be83e72b",
+  "report": "docs/validation/2026-11-08/native-queued-command-timing-v1.md",
+  "next_action": "Inspect native command stage costs before another frozen experiment; keep current failure and original quality, native-host, scale and pilot gates open."
+}
