@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Fixed-depth follow-up: the prospectively fixed eight-layer candidate [passes its necessary capacity screen](../validation/2026-11-08/reduced-depth-capacity-v1.md), with full-bound p95 241.01 ms and 237.40 ms on byte-identical workloads. No training or semantic acceptance occurred. Prepare the separate learning recipe and data review next; complete retrieval latency and every original quality gate remain open. The full-depth and portable-attention failures stay closed.
+
 Recovered episode integration: [identity and buffer consistency](../validation/2026-11-08/canonical-episode-identity-v1.md) are repaired in canonical `036357fe`, with 156 tests passing and review resolved. This completes the two missing source repairs identified in the recovered 0.7 inventory, not the final artifact or six-priority goal. Preserve legacy/native evidence boundaries. Next substantive semantic work should specify the reviewed fixed-depth joint-classifier hypothesis before any new capacity/training run; no unchanged package matrix is needed now.
 
 Recovered 0.7 integration follow-up: [complete sleep settings](../validation/2026-11-08/canonical-sleep-settings-v1.md) are now ported to canonical `7c6dd114`, with 94 relevant tests passing and review resolved. Experimental defaults, profiles and firewall behavior are preserved. The recovered episode identity/buffer fix remains next; existing wheels and live installs are unchanged.
