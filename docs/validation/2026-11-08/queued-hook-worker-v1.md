@@ -1,0 +1,11 @@
+# Opt-in queued Codex worker
+
+The isolated capture candidate now accepts `--queue-captures` for the resident Codex worker. It retains the synchronous default and rejects this option for the unimplemented Claude path. The runtime descriptor binds the capture mode, preventing a queued-mode launch from silently reusing a synchronous worker.
+
+The Codex adapter uses the explicit outbox receipt in this mode. Its internal worker response reports queued count, source-event IDs, and capture state; host stdout remains the existing documented shape. A dedicated replay client shares the same outbox and firewall but has separate transport and startup state. The service owner loop schedules replay at startup, including existing pending entries without a new hook request. Dispatcher shutdown cancels replay and closes both clients.
+
+Validation: 61 distinct checks passed across worker, queue receipt, replay pump, queued integration, Codex adapter, and capture coverage suites. Three changed runtime modules passed mypy; formatting and diff checks passed. The new integration test stalled delivery through a real local service transport, received the queued Stop response, stopped the worker with the event pending, and verified that a restarted worker replayed the original event without a new hook. Mode mismatch and unsupported-host rejection also passed.
+
+The integration dispatcher is a test double, and worker restart occurs within the test process. These results do not prove real memory-service job completion, operating-system process restart, power-loss durability, native Codex behavior, or installed timing. UserPromptSubmit still waits for requested recall; queued capture does not remove that work. Concurrent replay from ordinary retrieval and the dedicated pump must be checked against real service idempotence before adoption.
+
+No live configuration, installed pilot, canonical runtime, or production default changed. Next validate real memory-service commit/job state, duplicate-delivery idempotence, correction/forget suppression, and a separate process restart on this exact candidate. Then measure complete installed and native-host acknowledgment boundaries; the original 100 ms target and prior failed measurements remain unchanged.
