@@ -12,6 +12,7 @@ This wrapper makes the plugin self-contained for Claude Code installs:
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 import venv
 from pathlib import Path
@@ -87,7 +88,24 @@ def _ensure_runtime(venv_dir: Path, plugin_root: Path, env: dict[str, str]) -> P
 def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
     explicit_python = env.get("MNEMOS_PLUGIN_PYTHON", "").strip()
     if explicit_python:
-        return explicit_python
+        if os.path.dirname(explicit_python):
+            return explicit_python
+        # Resolve PATH here so Windows cannot substitute the base interpreter
+        # from the launching application's directory. Preserve venv symlinks.
+        names = [explicit_python]
+        if _is_windows():
+            extensions = env.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(os.pathsep)
+            if not any(explicit_python.lower().endswith(ext.lower()) for ext in extensions if ext):
+                names.extend(explicit_python + ext for ext in extensions if ext)
+        for directory in env.get("PATH", os.defpath).split(os.pathsep):
+            for name in names:
+                candidate = os.path.join(os.path.abspath(directory), name)
+                resolved = shutil.which(candidate)
+                if resolved:
+                    return os.path.abspath(resolved)
+        raise FileNotFoundError(
+            f"MNEMOS_PLUGIN_PYTHON command is not available on PATH: {explicit_python}"
+        )
 
     venv_dir = plugin_root / ".claude-plugin" / ".venv"
     return str(_ensure_runtime(venv_dir, plugin_root, env))
