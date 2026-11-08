@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from mnemos.contracts import CaptureEvent
+from mnemos.contracts import CaptureEvent, RetrievalRequest
 from mnemos.scopes import ScopeRegistry
 from mnemos.service import MnemosService
 from tests.test_memory_service import service
@@ -117,5 +117,51 @@ async def test_revocation_during_embedding_prevents_fact_commit(tmp_path, monkey
         assert memory.engine.store.get_all() == []
         assert all(job.status != "completed" for job in memory.engine.store.list_jobs())
         assert memory.engine.store.list_episodic_events()[0].status != "consolidated"
+    finally:
+        await memory.close()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("view", ["memory", "captured_evidence"])
+@pytest.mark.parametrize("response_format", ["full", "compact"])
+@pytest.mark.parametrize("when", ["before", "during"])
+async def test_retrieval_does_not_return_results_after_revocation(
+    tmp_path, monkeypatch, view, response_format, when
+):
+    from mnemos.scopes import context_metadata
+    from mnemos.types import MemoryChunk
+
+    memory, context = service(tmp_path)
+    registry_path = tmp_path / "registry.json"
+    memory.registry.save(registry_path)
+    memory._registry_loader = lambda: ScopeRegistry.load(registry_path)
+    calls = []
+
+    def revoke():
+        registry = ScopeRegistry.load(registry_path)
+        registry.projects[context.project_id].enabled = False
+        registry.save(registry_path)
+
+    async def retrieve_then_revoke(*args, **kwargs):
+        revoke()
+        calls.append(True)
+        return [
+            MemoryChunk(
+                content="Private project content.",
+                embedding=[1.0],
+                metadata=context_metadata(context, "project"),
+            )
+        ]
+
+    monkeypatch.setattr(memory.engine, "retrieve", retrieve_then_revoke)
+    request = RetrievalRequest(
+        query="private", context=context, view=view, response_format=response_format
+    )
+    try:
+        if when == "before":
+            revoke()
+        with pytest.raises(ValueError, match="not enabled"):
+            await memory.retrieve(request)
+        assert calls == ([True] if when == "during" else [])
     finally:
         await memory.close()

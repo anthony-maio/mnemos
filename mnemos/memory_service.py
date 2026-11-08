@@ -901,6 +901,7 @@ class LocalMemoryService:
         )
 
     async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self._refresh_registry()
         self.registry.validate_context(request.context)
         # Ordinary calls retain compatibility with existing custom engines.
         # The production engine defaults to memory; evidence review opts in.
@@ -916,6 +917,10 @@ class LocalMemoryService:
             max_context_tokens=request.max_context_tokens,
             **view_options,
         )
+        # The provider may finish after project or workspace access changed.
+        # Revalidate before assembling either memory or evidence responses.
+        self._refresh_registry()
+        self.registry.validate_context(request.context)
         facts = []
         for chunk in chunks:
             support = self.engine.store.list_fact_evidence(chunk.id)
