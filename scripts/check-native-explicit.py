@@ -586,6 +586,7 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     "line_sha256": call.line_sha256,
                     "invocation_line": call.invocation_line_number,
                     "invocation_line_sha256": call.invocation_line_sha256,
+                    "response_id": call.response_id,
                 }
                 for call in calls
             ]

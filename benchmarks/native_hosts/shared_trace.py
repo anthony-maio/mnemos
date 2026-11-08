@@ -95,6 +95,7 @@ class NativeToolCall:
     completed_sequence: int | None = None
     invocation_line_number: int | None = None
     invocation_line_sha256: str | None = None
+    response_id: str | None = None
 
 
 def require_tool_sequence(
@@ -982,7 +983,7 @@ def parse_claude_tool_records(
     if tool_prefix not in {_CLAUDE_PREFIX, "mcp__mnemos__"}:
         raise ValueError("Unsupported Claude Mnemos prefix")
 
-    pending: dict[str, tuple[str, str, dict[str, Any], int, str]] = {}
+    pending: dict[str, tuple[str, str, dict[str, Any], int, str, str]] = {}
     issued: set[tuple[str, str]] = set()
     matched: list[NativeToolCall] = []
     saw_response = False
@@ -1034,7 +1035,7 @@ def parse_claude_tool_records(
                     raise ValueError("duplicate or ambiguous Claude provider call ID")
                 issued.add((response_id, provider_id))
                 call_id = f"{response_id}:{provider_id}"
-                pending[provider_id] = (call_id, name, arguments, line, line_hash)
+                pending[provider_id] = (call_id, name, arguments, line, line_hash, response_id)
         for node in results:
             if entry.get("type") != "user" or message.get("role") != "user":
                 raise ValueError("Claude tool_result must be in a user message")
@@ -1043,7 +1044,9 @@ def parse_claude_tool_records(
                 raise ValueError("Claude tool_result requires tool_use_id")
             if provider_id not in pending:
                 raise ValueError("Claude tool_result has no preceding unmatched tool_use")
-            call_id, name, arguments, invocation_line, invocation_hash = pending.pop(provider_id)
+            call_id, name, arguments, invocation_line, invocation_hash, response_id = pending.pop(
+                provider_id
+            )
             result = _claude_result(node)
             matched.append(
                 NativeToolCall(
@@ -1058,6 +1061,7 @@ def parse_claude_tool_records(
                     model_call_correlated=True,
                     invocation_line_number=invocation_line,
                     invocation_line_sha256=invocation_hash,
+                    response_id=response_id,
                 )
             )
     if not saw_response:

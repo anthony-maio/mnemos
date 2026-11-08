@@ -24,8 +24,13 @@ normalization now retains invocation positions and hashes as well as result
 positions. Batch mode requires those positions and checks that inspection and
 review results precede their dependent request invocations. A raw Claude trace
 test rejects a batch-page request issued in the same response as deletion.
-The expanded trace, contract and runner suite passes 164 tests. Adversarial
-recheck remains pending; no fresh native execution has occurred.
+The subsequent recheck found that split records can share one assistant response
+ID. The parser and normalized calls now retain that ID, and inspection/preview
+results from the consumer's own response cannot establish prior review even
+when line positions appear ordered. Raw tests cover both same-record and
+split-record overlap. The expanded suite passes 165 tests. Final scoped
+adversarial recheck found no remaining blocker. No fresh native execution has
+occurred.
 Each page re-fetches the full batch to detect changes; timing and cost savings
 are unproven. No source-cache shortcut or weaker stale-result check was added.
 

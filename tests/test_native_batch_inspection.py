@@ -148,7 +148,9 @@ def batch_forget_calls():
             ),
         )
     for index, call in enumerate(calls):
-        call.update(invocation_line=index * 2 + 1, line=index * 2 + 2)
+        call.update(
+            invocation_line=index * 2 + 1, line=index * 2 + 2, response_id=f"response-{index}"
+        )
     return calls
 
 
@@ -167,13 +169,15 @@ def test_full_forget_contract_accepts_complete_batches_but_not_missing_inspectio
 def test_batch_protocol_cannot_pass_with_only_single_fact_inspections():
     calls = _forget_calls()
     for index, call in enumerate(calls):
-        call.update(invocation_line=index * 2 + 1, line=index * 2 + 2)
+        call.update(
+            invocation_line=index * 2 + 1, line=index * 2 + 2, response_id=f"response-{index}"
+        )
     require_forget(calls, TARGET)
     with pytest.raises(ValueError, match="requires complete"):
         require_forget(calls, TARGET, require_batch=True)
 
 
-@pytest.mark.parametrize("overlap", [False, True])
+@pytest.mark.parametrize("overlap", ["none", "same_record", "split_record"])
 def test_raw_claude_batch_correlation_requires_results_before_apply_invocation(tmp_path, overlap):
     from benchmarks.native_hosts.shared_trace import (
         TraceProvenance,
@@ -216,17 +220,20 @@ def test_raw_claude_batch_correlation_requires_results_before_apply_invocation(t
                 ),
             )
         )
-    if overlap:
+    if overlap != "none":
         batch_index = max(
             i for i, call in enumerate(calls) if call["name"] == "mnemos_inspect_batch"
         )
         apply_index = next(
             i for i, call in enumerate(calls) if call["name"] == "mnemos_forget_related"
         )
-        rows[batch_index * 2]["message"]["content"].extend(
-            rows[apply_index * 2]["message"]["content"]
-        )
-        del rows[apply_index * 2]
+        if overlap == "same_record":
+            rows[batch_index * 2]["message"]["content"].extend(
+                rows[apply_index * 2]["message"]["content"]
+            )
+            del rows[apply_index * 2]
+        else:
+            rows[apply_index * 2]["message"]["id"] = rows[batch_index * 2]["message"]["id"]
     path = tmp_path / "trace.jsonl"
     path.write_text("\n".join(json.dumps(row) for row in rows) + "\n", encoding="utf-8")
     provenance = TraceProvenance(
@@ -248,12 +255,13 @@ def test_raw_claude_batch_correlation_requires_results_before_apply_invocation(t
             result=dict(c.result),
             model_call_correlated=c.model_call_correlated,
             invocation_line=c.invocation_line_number,
+            response_id=c.response_id,
             line=c.line_number,
         )
         for c in parsed
     ]
     assert all(c.invocation_line_sha256 for c in parsed)
-    if overlap:
+    if overlap != "none":
         with pytest.raises(ValueError):
             require_forget(normalized, TARGET, require_batch=True)
     else:

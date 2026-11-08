@@ -180,6 +180,10 @@ def _forget_fact(
 def _completed_before(call: Mapping[str, Any], boundary: Mapping[str, Any] | None) -> bool:
     if boundary is None or boundary.get("invocation_line") is None:
         return True  # Legacy observations retain their original evidence limits.
+    if boundary.get("response_id") is not None and boundary["response_id"] == call.get(
+        "response_id"
+    ):
+        return False
     start, finish = boundary["invocation_line"], call.get("line")
     return type(start) is int and type(finish) is int and 0 < finish < start
 
@@ -715,6 +719,8 @@ def require_forget(
         type(call.get("invocation_line")) is not int
         or type(call.get("line")) is not int
         or not 0 < call["invocation_line"] < call["line"]
+        or not isinstance(call.get("response_id"), str)
+        or not call["response_id"].strip()
         for call in calls
     ):
         raise ValueError("Batch protocol requires invocation and completion positions")
