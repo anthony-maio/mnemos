@@ -1,5 +1,10 @@
 # Optional explicit-memory learning pilot
 
+This report records preparation before scope approval. The user subsequently
+authorized validation. The [first native attempt](explicit-learning-pilot-native-v1.md)
+passed seven phases and failed validation during forgetting. Activation remains
+unapproved and neither pilot has recorded an actual use day.
+
 Four private project patches are prepared for a possible Codex learning pilot.
 They add a project-local MCP entry and explicit-use guidance to each of the two
 selected projects. The proposal uses the existing inactive `f5a944ea` wheel,
@@ -39,6 +44,6 @@ folder contains all four patches, their expected hashes, the exact instructions
 and rollback plan. No user-wide server registration or Claude change is proposed.
 
 The [receipt](explicit-learning-pilot-v1-receipt.json) records the archive and
-checks. Scope approval and activation approval are both absent. The existing
+checks. At preparation time, scope and activation approval were absent. The existing
 normal-hook review request belongs to the original full-pilot path and remains
 separate.

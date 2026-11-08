@@ -1,0 +1,132 @@
+{
+  "schema": "mnemos-explicit-learning-pilot-native-v1",
+  "status": "failed",
+  "validation_authorized": true,
+  "activation_authorized": false,
+  "source_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+  "protocol_commit": "c3865b7280217fbc4a175e775a4a912eb22177dd",
+  "wheel_sha256": "07c5b424bc7731cacbebb45f44709b3f19509c2cde3150a6451c92d12b27e6ae",
+  "runner_sha256": "c852b799be2df14e58a02c11d1cdaa10b94d1059c676f7499db26c241a620944",
+  "host": "codex-cli 0.164.0-alpha.11.1",
+  "host_executable_sha256": "1103e9e09c71fa2cd0afd6d8f3b9a2d63174fe8efd7cb5bd09f1cb14ef58a098",
+  "model": "gpt-6-astra",
+  "reasoning_effort": "high",
+  "max_seconds_per_phase": 180,
+  "started_at": "2026-11-08T04:05:09.539307+00:00",
+  "finished_at": "2026-11-08T04:08:59.778440+00:00",
+  "project_configurations_loaded": 2,
+  "exposed_mnemos_tools": 12,
+  "user_config_server_override": false,
+  "project_config_filter_override": false,
+  "guidance_relocated_unchanged": true,
+  "hooks_enabled": false,
+  "hook_trust_bypass": false,
+  "extraction_llm_enabled": false,
+  "default_internal_maintenance_scheduler_enabled": true,
+  "scheduled_host_memory_requests_added": false,
+  "cleanup": "passed",
+  "independent_audit": {
+    "status": "failure_verified",
+    "acceptance": "failed",
+    "error": "Native MCP dispatch correlation is incomplete",
+    "phases": [
+      {
+        "phase": "implicit-project-1",
+        "acceptance": "passed",
+        "accepted_calls": 0,
+        "guidance_verified": true
+      },
+      {
+        "phase": "implicit-project-2",
+        "acceptance": "passed",
+        "accepted_calls": 0,
+        "guidance_verified": true
+      },
+      {
+        "phase": "teach",
+        "acceptance": "passed",
+        "accepted_calls": 5,
+        "guidance_verified": true
+      },
+      {
+        "phase": "recall-v1",
+        "acceptance": "passed",
+        "accepted_calls": 2,
+        "guidance_verified": true
+      },
+      {
+        "phase": "project-2-recall",
+        "acceptance": "passed",
+        "accepted_calls": 2,
+        "guidance_verified": true
+      },
+      {
+        "phase": "correct",
+        "acceptance": "passed",
+        "accepted_calls": 7,
+        "guidance_verified": true
+      },
+      {
+        "phase": "recall-v2",
+        "acceptance": "passed",
+        "accepted_calls": 2,
+        "guidance_verified": true
+      },
+      {
+        "phase": "forget",
+        "acceptance": "failed",
+        "accepted_calls": 0,
+        "guidance_verified": true
+      }
+    ],
+    "fresh_sessions": 8,
+    "planned_sessions": 9,
+    "passed_phases": 7,
+    "accepted_correlated_calls": 18,
+    "accepted_native_inventories": 5,
+    "non_memory_controls": 2,
+    "diagnostic_forget_mcp_calls": 7,
+    "non_mcp_helpers": [
+      "list_mcp_resource_templates",
+      "list_mcp_resources"
+    ],
+    "diagnostic_unsuccessful_results": [
+      {
+        "tool": "mnemos_inspect",
+        "status": "degraded",
+        "error": "Mnemos service returned HTTP 404 (fact_not_found)"
+      }
+    ],
+    "diagnostic_forget_inventory_matches": true,
+    "target_deleted": true,
+    "retained_controls": 3,
+    "source_replay_executed": false,
+    "post_delete_restart_executed": false,
+    "installed_package_files": 96,
+    "installed_dependency_versions": 57,
+    "embedding_assets": 17,
+    "unchanged_live_paths": 14,
+    "normal_auth_unchanged": true,
+    "original_pilot_inactive": true,
+    "copied_auth_removed": true,
+    "descriptor_removed": true,
+    "recorded_process_identities_absent": true,
+    "process_ids_checked": 12,
+    "reused_pids": [],
+    "sqlite_integrity": "ok",
+    "sqlite_foreign_key_errors": 0,
+    "database_sha256": "01c63eb0af2af3d28ea0dd2adcc576f567c82080d3120d175dbb9ffa663df363",
+    "audit_model_calls": 0,
+    "activation_authorized": false,
+    "pilot_days": 0,
+    "record_limit": "The parent phase entry retains running because validation raised before updating it; process.json and run.json are terminal failures."
+  },
+  "archive": {
+    "sha256": "0f911e891d1779a534506ad75c11883ece0b4b78e9649b38b11a877028481408",
+    "members": 981,
+    "bytes": 4648221
+  },
+  "original_full_pilot_days": 0,
+  "optional_learning_pilot_days": 0,
+  "limits": "One failed isolated synthetic attempt. Seven phases passed; forgetting failed the frozen trace checker; original-source replay and post-delete restart recall were not run. No live activation, automatic capture, semantic quality, latency, daily-use or publication acceptance."
+}
