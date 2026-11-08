@@ -600,6 +600,33 @@ class MnemosClient:
             self._outbox_drained = replay["pending"] == 0
         return result
 
+    async def _acknowledge_replayed(self, event_ids: list[str]) -> int:
+        """Keep replay disk commits off the owner loop and join them on cancellation."""
+        work = asyncio.get_running_loop().run_in_executor(
+            None, self.outbox.acknowledge_many, list(event_ids)
+        )
+        cancellation: asyncio.CancelledError | None = None
+        while True:
+            try:
+                acknowledged = await asyncio.shield(work)
+            except asyncio.CancelledError as exc:
+                # Cancelling an executor await does not stop its thread. Keep
+                # the outbox alive until the transaction has finished, even if
+                # shutdown is requested more than once.
+                if work.done():
+                    if not work.cancelled():
+                        work.exception()
+                    raise
+                cancellation = exc
+            except Exception:
+                if cancellation is not None:
+                    raise cancellation
+                raise
+            else:
+                if cancellation is not None:
+                    raise cancellation
+                return acknowledged
+
     async def replay_outbox(self) -> dict[str, Any]:
         acknowledged = 0
         failed = 0
@@ -623,12 +650,12 @@ class MnemosClient:
             if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
                 delivered.append(event_id)
                 if len(delivered) >= self.outbox.replay_ack_batch_size:
-                    acknowledged += self.outbox.acknowledge_many(delivered)
+                    acknowledged += await self._acknowledge_replayed(delivered)
                     delivered.clear()
             else:
                 failed += 1
         if delivered:
-            acknowledged += self.outbox.acknowledge_many(delivered)
+            acknowledged += await self._acknowledge_replayed(delivered)
         return {
             "schema_version": SCHEMA_VERSION,
             "acknowledged": acknowledged,
