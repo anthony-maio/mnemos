@@ -264,3 +264,16 @@ patch and review description; it has not changed canonical code, the frozen
 wheel or pilot configuration. Native hook review and the optional pilot-scope
 decision remain pending. The completed wrapper matrices need no further runs
 without a new defect or change.
+
+The [local source integration](../validation/2026-11-07/functional-plugin-integration-v1.md)
+now brings the exact verified plugin repair into canonical code at `a7c6dcc8`,
+with its unchanged evidence and clearer runtime setup instructions. The main
+working branch contains that canonical revision. No source tests were repeated
+for the fast-forward; the documentation checks pass. Live configuration, the
+wheel and website remain unchanged.
+
+A fresh [upstream overlap check](../validation/2026-11-07/storage-delivery-overlap-v1.md)
+finds that the prepared transaction backport conflicts with open PRs #6 and #7.
+Prepare local resolutions against their exact heads, preserve their unrelated
+changes, and verify the combined storage behavior before choosing a delivery
+order. Keep original source/test bindings and all failed product gates intact.

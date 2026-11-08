@@ -941,3 +941,11 @@ No historical archive is removed or rewritten.
   module origins and all 96 package files verify. Canonical delivery and live
   configuration remain unchanged. Native validation, pilot decisions and
   publication remain open; completed wrapper checks are closed.
+
+- The [canonical plugin integration](../validation/2026-11-07/functional-plugin-integration-v1.md)
+  is complete locally at `a7c6dcc8`, with the exact tested launcher code and
+  unchanged wheel. All 12 documentation checks pass. A separate
+  [upstream check](../validation/2026-11-07/storage-delivery-overlap-v1.md) confirms
+  the transaction backport's public base but finds textual conflicts with open
+  PRs #6 and #7. Resolving those combinations locally is the next delivery task;
+  no upstream branch, release or pilot has been changed.
