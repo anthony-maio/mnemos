@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Execution preparation: [bundle, baseline mapping, tokenized frames and diagnostic grading pass 39 checks](../validation/2026-11-08/joint-support-training-contract-v1.md). Reserved labels cannot affect training inputs. All 127 joint frames and 109 development baseline witnesses fit the unchanged bounds. The worker remains to be implemented and frozen against the execution contract; do not repeat data preparation or claim training has occurred.
+
 Backward readiness: [the fixed-rank adapter and retained-weight synthetic step pass](../validation/2026-11-08/joint-support-backward-v1.md), with 11 tests, nonzero adapter/head gradients, unchanged originals and 1085336064 peak CUDA allocated bytes. No corpus training occurred. Implement and freeze the bounded training/evaluation runner, baseline and merged-output requirements next; the source and private probe do not change installed memory or release/pilot status.
 
 Coverage correction: [reviewed quorum/veto and negated-report contrasts](../validation/2026-11-08/joint-support-contrasts-v1.md) create corpus-v3 with 127 cases and 400 labels while preserving every original label and training weight. Review clears the specific sparse-category blocker; 36 checks pass. Next implement and test the proposed adapter/backward path, then bind the exact scaler, baseline and execution before the one bounded diagnostic training attempt. Three critical development facts still cannot establish the original acceptance requirement.
