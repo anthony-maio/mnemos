@@ -20,8 +20,9 @@ class TokenChoice:
 def decode_token_choice(response: Mapping[str, object], labels: Sequence[str]) -> TokenChoice:
     """Require all offered labels at one observed token position.
 
-    Returned probabilities retain vocabulary-wide mass. Missing labels are not
-    zero probabilities. A caller must independently evaluate semantic quality.
+    Returned values preserve reported mass without normalization over labels.
+    The caller must verify provider score semantics and semantic quality.
+    Missing labels are not zero probabilities.
     """
     if isinstance(labels, (str, bytes)) or not labels:
         raise ValueError("Expected explicit choice labels")
