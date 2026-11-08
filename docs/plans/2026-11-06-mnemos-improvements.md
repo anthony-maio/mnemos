@@ -4,6 +4,8 @@ Status: active. Started November 6, 2026 from delivery commit `9770c00` on
 `wt/mnemos-improvements`. This goal resumes the work deferred on October 28.
 No release, live configuration change, or pilot completion is implied.
 
+Latest storage delivery state: [PRs #7 and #8 are merged into master at 588a190b](../validation/2026-11-08/storage-merged-pr8.md) after explicit approval and a passing hosted integration run. The repair is accepted upstream. Package publication remains outstanding; the newer functional candidate and optional pilot remain separate artifacts.
+
 Latest computational result: the inference-only portable GQA adapter failed its retained-model numerical gate before timing. Small numerical tests passed, but 28 of 100,352 hidden-state values on the first nonempty request exceeded the frozen tolerance. The candidate is closed and has no measured speed result; see [the retained-model report](../validation/2026-11-08/portable-gqa-capacity-v1.md). The six-priority status below remains unchanged.
 
 ## Scope and completion evidence

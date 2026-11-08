@@ -31,6 +31,8 @@ The original capture target remains 100 ms. Warm recall remains 500 ms at 10,000
 
 ## Artifact and pilot boundaries
 
+Storage acceptance follow-up: with explicit user approval, [PRs #7 and #8 are merged](../validation/2026-11-08/storage-merged-pr8.md). Remote master `588a190b` has the exact file tree tested in the final all-green hosted integration run: 325 tests on each of three Python versions, lint, both legacy benchmark repetitions, MCP smoke and documentation checks. This establishes upstream acceptance, not package publication, interactive native acceptance, original semantic/latency success or pilot completion. Preserve the earlier draft-state records below as history.
+
 Combined storage draft follow-up: [PR #8 now carries the plugin and typing repairs](../validation/2026-11-08/storage-pr8-combined-v1.md). The combined source passed 325 tests, strict typing and formatting. Head `7c6cdccd` adds documentation and a test portability correction; runtime is unchanged and 17 plugin tests pass after the correction. The earlier narrow-candidate failures remain historical evidence. Hosted CI, prerequisite integration and release acceptance are still outstanding.
 
 Storage delivery follow-up: [draft PR #8](../validation/2026-11-08/storage-draft-pr8.md) is open on the exact four-file `e02c3951` repair, stacked on PR #7. Thirteen current storage checks pass; prior full-suite/typing limitations remain disclosed. This is reviewable remote delivery, not merge or release acceptance. Retarget and revalidate after the prerequisite is merged.
