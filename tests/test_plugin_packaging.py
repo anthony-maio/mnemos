@@ -7,6 +7,10 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
+
+import pytest
 
 try:
     import tomllib
@@ -150,3 +154,69 @@ def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:
     runtime_python = wrapper._resolve_runtime_python(plugin_root, dict(os.environ))
 
     assert runtime_python == str(expected_python)
+
+
+def test_plugin_wrapper_resolves_command_from_runtime_path(tmp_path) -> None:
+    wrapper = _load_plugin_wrapper()
+    folder = tmp_path / "runtime with spaces"
+    folder.mkdir()
+    executable = folder / ("python.exe" if os.name == "nt" else "python")
+    executable.touch()
+    executable.chmod(0o700)
+    env = {"MNEMOS_PLUGIN_PYTHON": "python", "PATH": str(folder)}
+
+    assert Path(wrapper._resolve_runtime_python(tmp_path, env)) == executable
+
+
+def test_plugin_wrapper_rejects_unavailable_runtime_command(tmp_path) -> None:
+    wrapper = _load_plugin_wrapper()
+    env = {"MNEMOS_PLUGIN_PYTHON": "mnemos-missing-python", "PATH": str(tmp_path)}
+
+    with pytest.raises(FileNotFoundError, match="MNEMOS_PLUGIN_PYTHON"):
+        wrapper._resolve_runtime_python(tmp_path, env)
+
+
+def test_plugin_wrapper_does_not_search_unlisted_current_directory(tmp_path, monkeypatch) -> None:
+    wrapper = _load_plugin_wrapper()
+    working = tmp_path / "working"
+    runtime = tmp_path / "runtime"
+    working.mkdir()
+    runtime.mkdir()
+    name = "python.exe" if os.name == "nt" else "python"
+    for folder in [working, runtime]:
+        executable = folder / name
+        executable.touch()
+        executable.chmod(0o700)
+    monkeypatch.chdir(working)
+
+    assert wrapper._resolve_runtime_python(
+        tmp_path, {"MNEMOS_PLUGIN_PYTHON": name, "PATH": str(runtime)}
+    ) == str(runtime / name)
+
+
+def test_plugin_wrapper_preserves_explicit_relative_runtime_path(tmp_path) -> None:
+    wrapper = _load_plugin_wrapper()
+    executable = "./runtime with spaces/python"
+
+    assert (
+        wrapper._resolve_runtime_python(tmp_path, {"MNEMOS_PLUGIN_PYTHON": executable})
+        == executable
+    )
+
+
+def test_plugin_runtime_command_keeps_the_selected_environment(tmp_path) -> None:
+    wrapper = _load_plugin_wrapper()
+    env = {key: value for key, value in os.environ.items() if key in {"SYSTEMROOT", "WINDIR"}}
+    env["MNEMOS_PLUGIN_PYTHON"] = "python"
+    env["PATH"] = str(Path(sys.executable).parent)
+    runtime = wrapper._resolve_runtime_python(tmp_path, env)
+    completed = subprocess.run(
+        [runtime, "-c", "import json, sys; print(json.dumps({'prefix': sys.prefix}))"],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=30,
+    )
+
+    assert Path(json.loads(completed.stdout)["prefix"]).resolve() == Path(sys.prefix).resolve()
