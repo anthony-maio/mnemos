@@ -7,6 +7,7 @@ They never query retrieval and never treat a failed empty operation as abstentio
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import Counter
 import hashlib
 from typing import Any
 
@@ -178,8 +179,18 @@ def grade_extraction(
     if (result is None) == (error is None):
         raise ValueError("Supply exactly one result or error")
     observed, invalid = _outcomes(case, result) if result is not None else ([], 0)
+    # Every retained candidate must have exactly one terminal reconciliation.
+    # An absent outcome is incomplete processing, not an empty decision. Keep
+    # this structural failure separate from source-provenance failures.
+    accounting_errors = 0
+    if result is not None:
+        counts = Counter(item.candidate_index for item in result.reconciliations)
+        accounting_errors = sum(abs(counts[index] - 1) for index in range(len(result.candidates)))
+        accounting_errors += sum(
+            count for index, count in counts.items() if not 0 <= index < len(result.candidates)
+        )
     included = case.expected_preflight_error is None
-    ok = included and result is not None and not invalid
+    ok = included and result is not None and not invalid and not accounting_errors
     # Matching is one to one. The expected spans are unique, so duplicate output
     # cannot turn one reference fact into two retained facts.
     matched: dict[int, int] = {}
@@ -213,6 +224,8 @@ def grade_extraction(
     accepted = len(result.proposals) if result is not None else 0
     exact_accepted = sum(observed[index]["operation"] in ACCEPTED for index in matched.values())
     return {
+        "grader_version": "exact-span-candidate-accounting-v2",
+        "candidate_accounting_errors": accounting_errors,
         "included_in_quality": included,
         "guard_passed": bool(
             not included

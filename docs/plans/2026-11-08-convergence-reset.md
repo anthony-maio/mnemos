@@ -31,6 +31,8 @@ The original capture target remains 100 ms. Warm recall remains 500 ms at 10,000
 
 ## Artifact and pilot boundaries
 
+Extraction evaluation follow-up: [candidate accounting v2](../validation/2026-11-08/extraction-accounting-v2.md) repairs two reproduced false-success cases in the isolated grader. Every retained candidate must have exactly one reconciliation before quality credit is available. Thirty-one grader/pipeline checks passed. Historical scores remain unchanged; no model execution, persisted extraction or fresh acceptance is implied.
+
 Native transport follow-up: canonical `54cb50e7` [replaces per-header-byte socket operations with bounded reads](../validation/2026-11-08/native-hook-buffered-v1.md). Six Rust and 75 final-binary integration tests passed, including deadline and framing checks. This is an inactive transport implementation change with no complete timing result; it does not solve authoritative Git or durable-commit cost and does not consume the remaining paired comparison. The Python wheel and optional pilot bindings remain unchanged.
 
 Loader-review follow-up: [integration remains withheld](../validation/2026-11-08/git-loader-review-v1.md). The owner and pinned-manifest mechanism are implemented, and Windows home-selection invalidation is repaired, but the runtime closure is not approved. Prepare the single permitted current complete-path attribution next, with authoritative Git still active. Do not extend loader inspection indefinitely before measuring whether the remaining latency budget justifies more cache work. Integration still requires the full freshness contract above.

@@ -135,6 +135,34 @@ def test_valid_empty_extraction_can_abstain() -> None:
     assert grade_extraction(c, empty, error=None, provider_calls=1)["correct_abstention"]
 
 
+def test_unreconciled_candidate_is_not_successful_empty_abstention() -> None:
+    c = replace(case(), expected=())
+    incomplete = result(c).model_copy(update={"reconciliations": [], "proposals": []})
+    grade = grade_extraction(c, incomplete, error=None, provider_calls=2)
+    assert not grade["correct_abstention"]
+    assert not grade["case_exact"] and not grade["operational_success"]
+    assert grade["candidate_accounting_errors"] == 1
+
+
+def test_missing_candidate_cannot_hide_behind_an_exact_accepted_outcome() -> None:
+    c = case()
+    incomplete = result(c)
+    incomplete.candidates.append(incomplete.candidates[0])
+    grade = grade_extraction(c, incomplete, error=None, provider_calls=2)
+    assert not grade["operational_success"] and not grade["case_exact"]
+    assert grade["critical_retained"] == 0
+
+
+def test_out_of_range_reconciliation_does_not_cover_missing_candidate() -> None:
+    c = case()
+    actual = result(c)
+    actual.reconciliations[0].candidate_index = 1
+    grade = grade_extraction(c, actual, error=None, provider_calls=2)
+    assert grade["candidate_accounting_errors"] == 2
+    assert grade["invalid_provenance_outcomes"] == 1
+    assert not grade["operational_success"] and grade["critical_retained"] == 0
+
+
 def test_retaining_extra_instruction_is_not_an_exact_critical_match() -> None:
     c = case("The worker limit is twelve. Use bullets for this reply.")
     c = replace(c, expected=(replace(c.expected[0], end=len("The worker limit is twelve. ")),))
@@ -150,8 +178,10 @@ def test_duplicate_proposals_do_not_double_credit_one_expected_fact() -> None:
     actual.reconciliations.append(actual.reconciliations[0].model_copy(deep=True))
     actual.proposals.append(actual.proposals[0].model_copy(deep=True))
     grade = grade_extraction(c, actual, error=None, provider_calls=2)
-    assert grade["critical_retained"] == grade["exact_supported_accepted"] == 1
-    assert grade["accepted_outcomes"] == 2 and grade["unmatched_accepted"] == 1
+    assert grade["critical_retained"] == grade["exact_supported_accepted"] == 0
+    assert grade["accepted_outcomes"] == 2 and grade["unmatched_accepted"] == 2
+    assert grade["candidate_accounting_errors"] == 1
+    assert not grade["operational_success"]
     assert not grade["case_exact"]
 
 
