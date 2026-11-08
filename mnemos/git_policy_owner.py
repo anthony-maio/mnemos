@@ -102,6 +102,18 @@ def _executable_observation(path: Path) -> tuple[object, ...]:
     return (str(path), parents, identity(after), security, digest)
 
 
+def _home_selection_observation(environment):
+    """Observe the filesystem input to the Windows wrapper's HOME fallback."""
+    if os.name != "nt" or environment.get("HOME") or not environment.get("HOMEPATH"):
+        return ()
+    candidate = Path(environment.get("HOMEDRIVE", "") + environment["HOMEPATH"])
+    if not candidate.is_absolute() or ".." in candidate.parts:
+        raise ValueError("Unsupported Windows home selection path")
+    # Watch absent paths too: creation can switch Git away from USERPROFILE.
+    # Parent observations reject aliases and observe access metadata changes.
+    return observe_config_path(candidate)
+
+
 class GitPolicyOwner:
     """One root, serialized calls, no authorization or persistent policy records.
 
@@ -145,7 +157,8 @@ class GitPolicyOwner:
         if self.runtime_binding is not None:
             self.runtime_binding.validate(executable, observations)
         routing = _routing_snapshot(self.root)
-        return (tuple(sorted(environment.items())), observations, routing), executable, environment
+        home_selection = _home_selection_observation(environment)
+        return (tuple(sorted(environment.items())), observations, routing, home_selection), executable, environment
 
     def probe(self) -> str | None:
         """Return a generation only when all declared observations are stable."""

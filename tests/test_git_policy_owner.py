@@ -64,6 +64,24 @@ def test_unsupported_runtime_config_delegates_without_reuse(repo, monkeypatch):
     assert len(calls) == 2 and cache._cached is None
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Windows wrapper HOME selection")
+def test_home_selection_observes_creation_removal_and_explicit_override(tmp_path):
+    candidate = tmp_path / "home"
+    environment = {"HOMEDRIVE": candidate.drive, "HOMEPATH": str(candidate)[len(candidate.drive):]}
+    absent = module._home_selection_observation(environment)
+    candidate.mkdir()
+    assert module._home_selection_observation(environment) != absent
+    candidate.rmdir()
+    assert module._home_selection_observation(environment) == absent
+    environment["HOME"] = str(tmp_path)
+    assert module._home_selection_observation(environment) == ()
+    environment.pop("HOME")
+    environment["HOMEDRIVE"] = ""
+    environment["HOMEPATH"] = "relative"
+    with pytest.raises(ValueError, match="home selection"):
+        module._home_selection_observation(environment)
+
+
 def test_unreadable_dependency_forces_authoritative_fallback(repo, monkeypatch):
     owner, cache, calls = setup(repo)
     cache.resolve(repo, policy_probe=owner.probe)
@@ -128,3 +146,26 @@ def test_new_include_edge_is_rediscovered_before_later_target_change(repo):
     child.write_text("[user]\nname = New\n")
     cache.resolve(repo, policy_probe=owner.probe)
     assert len(calls) == 3 and cache._cached is not None
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows wrapper HOME selection")
+def test_new_home_directory_cannot_hide_authoritative_git_failure(repo, tmp_path, monkeypatch):
+    profile = tmp_path / "profile"
+    profile.mkdir()
+    roaming = tmp_path / "new-roaming-home"
+    monkeypatch.delenv("HOME", raising=False)
+    monkeypatch.delenv("GIT_CONFIG_GLOBAL", raising=False)
+    monkeypatch.setenv("USERPROFILE", str(profile))
+    monkeypatch.setenv("HOMEDRIVE", roaming.drive)
+    monkeypatch.setenv("HOMEPATH", str(roaming)[len(roaming.drive):])
+    monkeypatch.setenv("XDG_CONFIG_HOME", str(tmp_path / "xdg"))
+    owner, cache, calls = setup(repo)
+    cache.resolve(repo, policy_probe=owner.probe)
+    assert cache._cached is not None
+    roaming.mkdir()
+    (roaming / ".gitconfig").write_text("[broken\n")
+    with pytest.raises(ValueError):
+        canonical_project_root(repo)
+    with pytest.raises(ValueError):
+        cache.resolve(repo, policy_probe=owner.probe)
+    assert len(calls) == 2 and cache._cached is None
