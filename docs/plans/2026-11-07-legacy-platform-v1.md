@@ -55,3 +55,19 @@ each platform's dry-run resolution report and freeze its complete resolved
 constraint list, including conditional dependencies, before installation.
 Use the original constraints for 3.11 and 3.12. Resolve runner paths absolutely.
 Preserve both initial attempts and use new directories for corrected attempts.
+
+## Windows plugin failure and separate repair
+
+The original source passes 344 cases in each WSL environment. Both Windows
+environments pass 343 and fail the plugin-manifest roundtrip: a bare `python`
+override selects the base interpreter without installed dependencies. All 41
+installed storage/recency regressions pass in every environment.
+
+Preserve these results. Prepare the launcher repair on a separate branch from
+the frozen candidate, resolving bare commands to absolute paths from the
+configured PATH while preserving virtual-environment symlinks. Add regressions
+for command lookup, missing commands, explicit paths, current-directory
+exclusion and the actual child interpreter. Verify the complete revised source
+suite in the five existing environments using new source copies and output
+directories. This is a new revision comparison; do not rerun the unchanged
+installed regression suite or qualify the original failed source as passing.
