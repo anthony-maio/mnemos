@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import runpy
 import shutil
 import subprocess
 import sys
@@ -747,6 +748,9 @@ def run_claude_phase(
             "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
         }
     )
+    isolation = runpy.run_path(str(Path(__file__).with_name("claude_isolation.py")))
+    isolation["verify_binary"](executable)
+    env = isolation["environment"](env, home, config.root)
     command = [
         str(executable),
         "--print",

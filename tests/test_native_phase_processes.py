@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
+from unittest.mock import patch
 
 try:
     import tomllib
@@ -541,15 +542,20 @@ class FakeProcess:
 
 
 def _run_claude(config, source, **kwargs):
-    return phases.run_claude_phase(
-        config,
-        phase="test-phase",
-        prompt="synthetic fixture prompt",
-        executable=Path("synthetic-claude.exe"),
-        auth_source=source,
-        allowed_tools=[phases.CLAUDE_PREFIX + "mnemos_retrieve"],
-        **kwargs,
-    )
+    isolation = phases.runpy.run_path(str(Path(phases.__file__).with_name("claude_isolation.py")))
+    # Native execution is mocked in these resource-boundary tests. Keep real
+    # environment isolation; binary rejection has its own focused test.
+    isolation["verify_binary"] = lambda executable: None
+    with patch.object(phases.runpy, "run_path", return_value=isolation):
+        return phases.run_claude_phase(
+            config,
+            phase="test-phase",
+            prompt="synthetic fixture prompt",
+            executable=Path("synthetic-claude.exe"),
+            auth_source=source,
+            allowed_tools=[phases.CLAUDE_PREFIX + "mnemos_retrieve"],
+            **kwargs,
+        )
 
 
 @pytest.mark.parametrize("inherited_nonblocking", [None, "true", "false"])
@@ -575,6 +581,9 @@ def test_claude_denies_every_installed_tool_outside_the_phase(
 
     def launch(command, **kwargs):
         assert kwargs["env"]["MCP_CONNECTION_NONBLOCKING"] == "false"
+        for key in ("HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA", "CLAUDE_CONFIG_DIR"):
+            assert Path(kwargs["env"][key]).is_relative_to(config.root)
+        assert kwargs["env"]["CLAUDE_CODE_DISABLE_CLAUDE_MDS"] == "1"
         assert command[command.index("--tools") + 1] == ""
         assert set(command[command.index("--allowed-tools") + 1].split(",")) == allowed
         denied = set(command[command.index("--disallowed-tools") + 1].split(","))

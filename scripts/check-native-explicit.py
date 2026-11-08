@@ -23,6 +23,7 @@ import sqlite3
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 from typing import Any
 import zipfile
@@ -37,6 +38,7 @@ PROFILE = "native-explicit-20261106"
 INPUTS = (
     "scripts/check-native-explicit.py",
     "benchmarks/native_hosts/native_processes.py",
+    "benchmarks/native_hosts/claude_isolation.py",
     "benchmarks/native_hosts/shared_trace.py",
     "benchmarks/native_hosts/three_host_contract.py",
     "examples/restart_recall.py",
@@ -303,7 +305,22 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         ):
             raise ValueError("Acceptance inputs must be committed before inference")
     executable = args.codex if host == "codex" else args.claude
-    host_version = subprocess.check_output([str(executable), "--version"], text=True).strip()
+    if host == "claude-code":
+        isolation = helper("benchmarks/native_hosts/claude_isolation.py")
+        native = helper("benchmarks/native_hosts/native_processes.py")
+        isolation.verify_binary(executable)
+        with tempfile.TemporaryDirectory(prefix="mnemos-claude-version-") as temporary:
+            probe_root = Path(temporary)
+            native._private(probe_root)
+            probe_home = probe_root / "profile"
+            probe_home.mkdir()
+            probe_env = isolation.environment(native.clean_environment({}), probe_home, probe_root)
+            host_version = subprocess.check_output(
+                [str(executable), "--version"], cwd=probe_home, env=probe_env,
+                text=True, timeout=15, creationflags=subprocess.CREATE_NO_WINDOW,
+            ).strip()
+    else:
+        host_version = subprocess.check_output([str(executable), "--version"], text=True).strip()
     expected_version = CODEX_VERSION if host == "codex" else "2.1.191 (Claude Code)"
     if host_version != expected_version:
         raise ValueError("Native host version differs from this protocol")
