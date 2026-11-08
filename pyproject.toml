@@ -75,6 +75,11 @@ Documentation = "https://github.com/anthony-maio/mnemos#readme"
 [tool.hatch.build.targets.wheel]
 packages = ["mnemos"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"benchmarks/datasets/contradiction-update-v1.jsonl" = "mnemos/benchmark_datasets/contradiction-update-v1.jsonl"
+"benchmarks/datasets/preference-drift-v1.jsonl" = "mnemos/benchmark_datasets/preference-drift-v1.jsonl"
+"benchmarks/datasets/cross-project-scope-v1.jsonl" = "mnemos/benchmark_datasets/cross-project-scope-v1.jsonl"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

@@ -28,7 +28,9 @@ from .types import Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
-BENCHMARK_DATASET_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
+BENCHMARK_DATASET_DIR = Path(__file__).resolve().parent / "benchmark_datasets"
+if not BENCHMARK_DATASET_DIR.is_dir():
+    BENCHMARK_DATASET_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
 DATASET_PACKS: dict[str, tuple[str, ...]] = {
     "claim-driving": (
         "contradiction-update-v1.jsonl",
