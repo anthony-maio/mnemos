@@ -1,0 +1,78 @@
+{
+  "status": "passed",
+  "source_commit": "c77933402a8bb4629211f24be22c3555fc872a76",
+  "archive_verification": {
+    "status": "passed",
+    "source_commit": "c77933402a8bb4629211f24be22c3555fc872a76",
+    "scope": "Archive integrity and exact source parity only; installed runtime not yet tested",
+    "build_backend": "hatchling==1.33.0",
+    "prior_attempt": "No-isolation build failed before artifact creation: hatchling unavailable",
+    "wheel_source_members": 96,
+    "sdist_source_members": 103,
+    "artifacts": {
+      "mnemos_memory-0.7.0b1-py3-none-any.whl": {
+        "sha256": "0f3a41aa29abe9fc387ce733b25448478b9ba486e837535d1246e60db48f3e72",
+        "bytes": 437302
+      },
+      "mnemos_memory-0.7.0b1.tar.gz": {
+        "sha256": "eb7738a1f4ff11b0cf08292b3e19dbe0d73a4e13067da4031f5d6e50dafca9ae",
+        "bytes": 411700
+      }
+    }
+  },
+  "installed_smoke": {
+    "status": "passed",
+    "wheel": "mnemos_memory-0.7.0b1-py3-none-any.whl",
+    "wheel_sha256": "0f3a41aa29abe9fc387ce733b25448478b9ba486e837535d1246e60db48f3e72",
+    "installation": {
+      "version": "0.7.0b1",
+      "mcp_version": "1.30.0",
+      "fastembed_version": "0.9.1",
+      "console_scripts": {
+        "mnemos": "mnemos.cli:main",
+        "mnemos-benchmark": "mnemos.benchmark:main",
+        "mnemos-cli": "mnemos.cli:main",
+        "mnemos-mcp": "mnemos.mcp_server:main"
+      },
+      "hermes_entrypoint": "mnemos.adapters.hermes:register",
+      "experimental_module_defaults": {
+        "surprisal": false,
+        "mutable_rag": false,
+        "affective": false,
+        "sleep": false,
+        "spreading": false
+      },
+      "bundled_benchmark_documents": {
+        "contradiction-update-v1": 8,
+        "preference-drift-v1": 8,
+        "cross-project-scope-v1": 6
+      }
+    },
+    "example": {
+      "status": "passed",
+      "version": "0.7.0b1",
+      "fact": "The sample notebook project keeps release checklists in docs/release.md.",
+      "query": "Where does the sample notebook project keep its release checklist?",
+      "fact_id": "43b0cf6c-3245-4aae-88d5-b2beb594472f",
+      "embedding": "FastEmbed BAAI/bge-small-en-v1.5 (384 dimensions)",
+      "experimental_modules": "disabled",
+      "hosted_llm_calls": "not required",
+      "checks": {
+        "cli_remember": true,
+        "service_restart": true,
+        "cli_recall_same_id": true,
+        "mcp_stdio_initialize": true,
+        "mcp_tools_discovered": 18,
+        "mcp_recall_and_inspect": true,
+        "other_project_empty": true,
+        "hermes_entrypoint_loaded": true,
+        "service_stopped": true
+      },
+      "limits": "Explicit fact persistence only; no automatic extraction, ranking-quality or native Hermes acceptance claim."
+    }
+  },
+  "dependency_count": 57,
+  "private_archive_sha256": "40b655c5631fbcef0813aca1c20140d9967125927c3de8b6cf2f492cf5e2ca70",
+  "dependencies_sha256": "982e5e6beb7630a16908feafb5a55028e4382e4421d33bf917ca8adaa6993dd0",
+  "scope": "Local installed artifact integration; no quality, latency, native host, pilot or publication acceptance"
+}
