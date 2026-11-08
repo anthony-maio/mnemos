@@ -1,6 +1,7 @@
 """Inactive resident-owner prototype for observable Git policy freshness."""
 
 import hashlib
+from dataclasses import dataclass
 import os
 from pathlib import Path
 import shutil
@@ -13,6 +14,54 @@ from .project_identity_cache import (
     _security_identity,
     _unsupported_git_environment,
 )
+
+
+@dataclass(frozen=True)
+class PinnedGitRuntime:
+    """Reviewed manifest, not automatic approval of discovered dependencies."""
+
+    selected: Path
+    hashes: tuple[tuple[Path, str], ...]
+    directories: tuple[tuple[Path, tuple[str, ...]], ...]
+
+    def __post_init__(self):
+        files = dict(self.hashes)
+        directories = dict(self.directories)
+        if (
+            not 1 <= len(files) <= 128
+            or len(files) != len(self.hashes)
+            or self.selected not in files
+            or not 1 <= len(directories) <= 128
+            or len(directories) != len(self.directories)
+        ):
+            raise ValueError("Incomplete or duplicate runtime manifest")
+        for path in (self.selected, *files, *directories):
+            if not isinstance(path, Path) or not path.is_absolute() or ".." in path.parts:
+                raise ValueError("Runtime paths must be absolute without parent traversal")
+        if any(path.parent not in directories for path in files):
+            raise ValueError("Runtime file parents require directory inventories")
+        for digest in files.values():
+            if (
+                not isinstance(digest, str)
+                or len(digest) != 64
+                or any(c not in "0123456789abcdef" for c in digest)
+            ):
+                raise ValueError("Expected SHA256 runtime binding")
+        for names in directories.values():
+            if (
+                not isinstance(names, tuple)
+                or len(names) > 4096
+                or names != tuple(sorted(set(names)))
+            ):
+                raise ValueError("Expected bounded sorted unique directory inventory")
+
+    def validate(self, executable, observations):
+        observed = {Path(row[0]): row[-1] for row in observations}
+        if executable != self.selected or observed != dict(self.hashes):
+            raise ValueError("Git runtime differs from reviewed binding")
+        for directory, names in self.directories:
+            if tuple(sorted(p.name for p in directory.iterdir())) != names:
+                raise ValueError("Git runtime directory changed")
 
 
 def _executable_observation(path: Path) -> tuple[object, ...]:
@@ -62,9 +111,22 @@ class GitPolicyOwner:
     until the installation owner supplies and verifies that closure.
     """
 
-    def __init__(self, root: str | Path, *, runtime_files: tuple[Path, ...]) -> None:
+    def __init__(
+        self,
+        root: str | Path,
+        *,
+        runtime_files: tuple[Path, ...] = (),
+        runtime_binding: PinnedGitRuntime | None = None,
+    ) -> None:
+        if runtime_binding is not None and runtime_files:
+            raise ValueError("Use a pinned binding or unpinned experimental files, not both")
         self.root = Path(root).absolute()
-        self.runtime_files = tuple(Path(p).absolute() for p in runtime_files)
+        self.runtime_binding = runtime_binding
+        self.runtime_files = (
+            tuple(p for p, _ in runtime_binding.hashes)
+            if runtime_binding is not None
+            else tuple(Path(p).absolute() for p in runtime_files)
+        )
         self._context = None
         self._dependencies = None
 
@@ -80,6 +142,8 @@ class GitPolicyOwner:
         if len(binaries) > 128:
             raise ValueError("Runtime dependency limit exceeded")
         observations = tuple(_executable_observation(p) for p in binaries)
+        if self.runtime_binding is not None:
+            self.runtime_binding.validate(executable, observations)
         routing = _routing_snapshot(self.root)
         return (tuple(sorted(environment.items())), observations, routing), executable, environment
 
