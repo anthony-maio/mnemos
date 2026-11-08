@@ -926,11 +926,24 @@ Later measurements retain their own artifact and configuration bindings. The
 [installed pilot timing](docs/validation/2026-11-07/installed-pilot-command-timing-v1.md)
 fails recall and complete hook latency for both launchers. The
 [nine-phase optional explicit-memory validation](docs/validation/2026-11-07/explicit-learning-pilot-native-v2.md)
-passes on the frozen wheel, but activation is pending and actual use remains
-zero days. The subsequent
+passes on the frozen wheel. The [optional pilot was activated](docs/validation/2026-11-08/explicit-learning-pilot-activation-v1.md)
+on November 8 through four reviewed project files; native configuration loading
+passed in both projects. Activation started no service and stored no facts.
+Recorded actual-use days remain zero. The original two-week pilot is still inactive.
+The subsequent
 [discriminative support screen](docs/validation/2026-11-07/discriminative-support-feasibility-v1.md)
 rejects all 40 supported answers and fails support-only latency. No quality,
 latency or daily-use acceptance follows from the native workflow pass.
+
+Two later development experiments also failed. The [single-token witness rule](docs/validation/2026-11-08/token-support-execution-v1.md)
+reached 84.62% precision and 91.67% critical retention on 24 authored questions,
+with 619.01 ms support-only p95. On a separate 24-question set, the
+[two-stage qualification selector](docs/validation/2026-11-08/qualified-support-execution-v1.md)
+retained all 12 expected facts but reduced precision to 63.16% and correct
+abstention to 66.67%, compared with 73.33% and 83.33% for its paired baseline.
+Cold/warm support-only p95 was 1508.05/489.78 ms. The warm result excludes
+retrieval and qualification work and does not pass complete retrieval latency.
+Both experiments are closed development evidence; neither changed defaults.
 
 Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
