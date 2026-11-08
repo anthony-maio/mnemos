@@ -5,7 +5,15 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+import subprocess
+import sys
 import time
+
+TIMEOUT_SECONDS = 180
+
+
+def write(path, value):
+    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
 def load_capacity():
@@ -26,12 +34,42 @@ def parameter_digest(head, trainable):
     return digest.hexdigest()
 
 
+def gradient_activity(head):
+    import torch
+
+    parameters = [p for p in head.parameters() if p.requires_grad]
+    if not all(p.grad is not None and torch.isfinite(p.grad).all() for p in parameters):
+        raise ValueError("Missing or nonfinite trainable gradient")
+    b_gradient = sum(
+        float(p.grad.abs().sum())
+        for name, p in head.named_parameters()
+        if name.endswith(".b") and p.requires_grad
+    )
+    classifier_gradient = sum(float(p.grad.abs().sum()) for p in head.classifier.parameters())
+    if not (b_gradient > 0 and classifier_gradient > 0):
+        raise ValueError("Nonzero adapter-B and classifier gradients are required")
+    return dict(adapter_b_gradient_l1=b_gradient, classifier_gradient_l1=classifier_gradient)
+
+
 def run(destination):
     destination.mkdir(exist_ok=False)
     result = dict(status="failed", scope="one_disposable_synthetic_step_no_corpus_training")
     started = time.perf_counter()
-    capacity = load_capacity()
+    torch = None
+
+    def stage(name):
+        result["stage"] = name
+        if torch is not None:
+            try:
+                result["peak_allocated_bytes"] = torch.cuda.max_memory_allocated()
+                result["peak_reserved_bytes"] = torch.cuda.max_memory_reserved()
+            except Exception as memory_error:
+                result["memory_observation_error"] = str(memory_error)
+        write(destination / "progress.json", result)
+
     try:
+        stage("imports")
+        capacity = load_capacity()
         import torch
         import transformers
         from transformers import Qwen3Model
@@ -48,6 +86,7 @@ def run(destination):
         torch.backends.cuda.enable_flash_sdp(True)
         torch.backends.cuda.enable_mem_efficient_sdp(True)
         torch.backends.cuda.enable_math_sdp(True)
+        stage("preparation")
         tokenizer, encode, files, binding = capacity.tokenizer_setup()
         request = capacity.request(5)
         original = request["candidates"][-1]["sources"][-1]["excerpt"]
@@ -89,6 +128,7 @@ def run(destination):
         capacity.write(destination / "freeze.json", freeze)
         result["freeze_sha256"] = capacity.digest(destination / "freeze.json")
         torch.cuda.reset_peak_memory_stats()
+        stage("load_checkpoint")
         backbone, loading = Qwen3Model.from_pretrained(
             capacity.ROOT / ".venv/reranker-support-v1/model",
             local_files_only=True,
@@ -111,26 +151,32 @@ def run(destination):
             .to("cuda")
         )
         head.train()
+        stage("initial_parameter_audit")
         frozen_before = parameter_digest(head, False)
         trainable_before = parameter_digest(head, True)
         optimizer = torch.optim.AdamW(
             adapters.optimizer_groups(head), betas=(0.9, 0.999), eps=1e-8, weight_decay=0.01
         )
         scaler = torch.amp.GradScaler("cuda", **freeze["scaler"])
+        stage("forward")
         with torch.autocast("cuda", dtype=torch.float16):
             logits = head([frame], pad_token_id=tokenizer.pad_token_id, max_tokens=4096)[0].logits
             targets = torch.tensor([0.0, 1.0, 0.0, 1.0, 0.0], device="cuda")
             loss = torch.nn.functional.binary_cross_entropy_with_logits(logits.float(), targets)
         assert torch.isfinite(loss)
+        stage("backward")
         scaler.scale(loss).backward()
+        stage("gradient_validation")
         scaler.unscale_(optimizer)
         parameters = [p for p in head.parameters() if p.requires_grad]
-        assert all(p.grad is not None and torch.isfinite(p.grad).all() for p in parameters)
+        result.update(gradient_activity(head))
         norm = torch.nn.utils.clip_grad_norm_(parameters, 1.0, error_if_nonfinite=True)
+        stage("optimizer_step")
         scaler.step(optimizer)
         scaler.update()
         assert scaler.get_scale() == 128
         assert all(optimizer.state[p]["step"].item() == 1 for p in parameters)
+        stage("final_parameter_audit")
         assert frozen_before == parameter_digest(head, False)
         assert trainable_before != parameter_digest(head, True)
         assert all(p.grad is None for p in head.parameters() if not p.requires_grad)
@@ -155,11 +201,44 @@ def run(destination):
         raise
     finally:
         result["elapsed_seconds"] = time.perf_counter() - started
-        capacity.write(destination / "result.json", result)
+        stage(result.get("stage", "unknown"))
+        write(destination / "result.json", result)
         print(json.dumps(result), flush=True)
+
+
+def supervise(destination):
+    if destination.exists():
+        raise FileExistsError(destination)
+    # An exclusive sidecar prevents two supervisors racing before worker mkdir.
+    with destination.with_suffix(".supervisor.json").open("x", encoding="utf-8") as handle:
+        json.dump(dict(timeout_seconds=TIMEOUT_SECONDS, started_unix=time.time()), handle)
+    try:
+        subprocess.run(
+            [sys.executable, str(Path(__file__).resolve()), "--worker", str(destination)],
+            check=True,
+            timeout=TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        # subprocess.run kills and waits for its owned worker before raising.
+        destination.mkdir(exist_ok=True)
+        progress = destination / "progress.json"
+        try:
+            result = json.loads(progress.read_bytes()) if progress.exists() else {}
+        except (ValueError, OSError):
+            result = {}
+        result.update(
+            status="failed",
+            error="Outer wall-clock timeout",
+            timeout_seconds=TIMEOUT_SECONDS,
+            memory_scope="last worker observation; unavailable during stalled call",
+        )
+        write(destination / "result.json", result)
+        raise
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("destination", type=Path)
-    run(parser.parse_args().destination.resolve())
+    parser.add_argument("--worker", action="store_true")
+    args = parser.parse_args()
+    (run if args.worker else supervise)(args.destination.resolve())

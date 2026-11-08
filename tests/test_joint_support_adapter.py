@@ -6,6 +6,7 @@ from unittest.mock import patch
 from pathlib import Path
 import json
 import tempfile
+import subprocess
 
 from test_joint_support_head import load
 from test_reduced_depth_support import tiny
@@ -92,6 +93,56 @@ class AdapterTests(unittest.TestCase):
         head = model().half()
         with self.assertRaisesRegex(ValueError, "float32"):
             adapter.optimizer_groups(head)
+
+    def test_gradient_guard_rejects_weight_decay_only_step(self):
+        probe = load("joint_support_backward_probe")
+        head = model()
+        for p in head.parameters():
+            if p.requires_grad:
+                p.grad = torch.zeros_like(p)
+        with self.assertRaisesRegex(ValueError, "Nonzero"):
+            probe.gradient_activity(head)
+        head.classifier.weight.grad.fill_(1)
+        with self.assertRaisesRegex(ValueError, "Nonzero"):
+            probe.gradient_activity(head)
+        head.backbone.layers[0].self_attn.q_proj.b.grad.fill_(1)
+        self.assertGreater(probe.gradient_activity(head)["adapter_b_gradient_l1"], 0)
+
+    def test_probe_import_failure_has_receipt(self):
+        probe = load("joint_support_backward_probe")
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "probe"
+            with patch.object(
+                probe, "load_capacity", side_effect=KeyboardInterrupt("early import")
+            ):
+                with self.assertRaises(KeyboardInterrupt):
+                    probe.run(destination)
+            result = json.loads((destination / "result.json").read_text())
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["stage"], "imports")
+
+    def test_probe_timeout_retains_last_memory_and_prevents_restart(self):
+        probe = load("joint_support_backward_probe")
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "probe"
+
+            def stalled_worker(*args, **kwargs):
+                destination.mkdir()
+                (destination / "progress.json").write_text(
+                    json.dumps(dict(stage="backward", peak_allocated_bytes=123))
+                )
+                raise subprocess.TimeoutExpired("worker", 180)
+
+            with patch.object(probe.subprocess, "run", side_effect=stalled_worker) as call:
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    probe.supervise(destination)
+                self.assertEqual(call.call_args.kwargs["timeout"], 180)
+                with self.assertRaises(FileExistsError):
+                    probe.supervise(destination)
+            result = json.loads((destination / "result.json").read_text())
+            self.assertEqual(result["status"], "failed")
+            self.assertEqual(result["stage"], "backward")
+            self.assertEqual(result["peak_allocated_bytes"], 123)
 
     @unittest.skipUnless(torch.cuda.is_available(), "Requires CUDA autocast")
     def test_cuda_scaled_update_changes_only_adapters_and_head(self):

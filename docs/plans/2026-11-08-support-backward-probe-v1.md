@@ -21,6 +21,13 @@ An exception, nonfinite value or skipped update fails the probe. No parameter
 or optimizer checkpoint is saved. One exclusive destination prevents restart.
 Retain failure evidence and make a new reviewed decision before any retry.
 
+Before stepping, require nonzero adapter-B and classifier gradients; changed
+hashes alone could reflect weight decay. Zero initial A gradients are expected.
+Record the active stage and available peak memory on failures, including early
+imports. Run under an outer 180-second subprocess timeout that kills and waits
+for its owned worker. A timeout retains the last stage/memory observation with
+that limitation stated. An exclusive supervisor receipt prevents restart races.
+
 This probe cannot establish semantic quality, convergence, full-corpus gradient
 stability, merged-adapter numerical agreement or complete recall/capture latency.
 The exact training/baseline execution freeze still precedes corpus training.
