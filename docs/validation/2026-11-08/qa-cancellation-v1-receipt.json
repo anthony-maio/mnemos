@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "composition_commit": "2a065f04f78e024dd6035e46fa0a2add54e9b83e",
+  "archive_sha256": "cd1dfa9678a308b2fd2abadcb68b4d286752d23f3e925e21336caebec82fc5c5",
+  "freeze": {
+    "helper_sha256": "fdaaf8c7af9a87f87a92f83232f131bfed687f44e07d79157bd2e9f9eaa6323d",
+    "owner_sha256": "603f271fa3a445bfe35e112fffea338d51972031413f62e60dbec2e304009a63",
+    "stub_sha256": "1709b3ce03876e89145df2c6787b3cadeed59209b5b70c8ada7b02dd771b8f23",
+    "runner_sha256": "e645c91a8516ea260e534e55eee4c837c61e2fe48bc758f5225d0b3fc16681a9",
+    "composition_sha256": "3339dd54171df291b49b45edbfaba493169b05728d829e7f60871eae04c2a035",
+    "python": "3.12.11 (main, Sep  2 2025, 14:18:04) [MSC v.1944 64 bit (AMD64)]",
+    "model_calls": 0
+  },
+  "results": [
+    {
+      "case": "normal",
+      "status": "passed",
+      "cleanup": {
+        "launcher_exit": 0,
+        "interpreter_absent": true
+      },
+      "tainted": false
+    },
+    {
+      "case": "caller_cancel",
+      "status": "passed",
+      "cleanup": {
+        "forced_stop": true,
+        "launcher_exit": 1,
+        "interpreter_absent": true
+      },
+      "tainted": true,
+      "cancellation_and_cleanup_ms": 4644.111100118607
+    },
+    {
+      "case": "sibling_failure",
+      "status": "passed",
+      "cleanup": {
+        "forced_stop": true,
+        "launcher_exit": 1,
+        "interpreter_absent": true
+      },
+      "tainted": true,
+      "cancellation_and_cleanup_ms": 4492.861199891195
+    }
+  ],
+  "all_workers_stopped": true,
+  "model_calls": 0,
+  "hard_wall_clock_deadline_verified": false
+}
