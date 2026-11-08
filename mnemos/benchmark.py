@@ -877,6 +877,7 @@ def run_retrieval_benchmark(
         "mrr": metrics["mrr"],
         "latency_mean_ms": metrics["latency_mean_ms"],
         "latency_p95_ms": metrics["latency_p95_ms"],
+        "query_latencies_ms": latencies_ms,
         "store_stats": store.get_stats(),
     }
 

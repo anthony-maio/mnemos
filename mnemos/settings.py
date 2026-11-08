@@ -424,10 +424,7 @@ class AppSettings(BaseModel):
     def apply_inferred_defaults(self) -> "AppSettings":
         if self.embedding.provider is None:
             if self.llm.provider in {"ollama", "openai", "openclaw", "openrouter"}:
-                self.embedding.provider = cast(
-                    Literal["ollama", "openai", "openclaw", "openrouter"],
-                    self.llm.provider,
-                )
+                self.embedding.provider = self.llm.provider
             else:
                 self.embedding.provider = "simple"
 
