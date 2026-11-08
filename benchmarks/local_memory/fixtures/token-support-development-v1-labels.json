@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "queries": {
+    "direct/present":{"expected_ids":["directory"],"critical_ids":["directory"],"rationale":"Explicit directory; timeout does not answer location."},
+    "direct/absent":{"expected_ids":[],"critical_ids":[],"rationale":"No owner is recorded."},
+    "proposal/present":{"expected_ids":["review"],"critical_ids":["review"],"rationale":"Rollback review is an explicit prerequisite."},
+    "proposal/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Proposed date is not an approval date."},
+    "condition/present":{"expected_ids":["replicas"],"critical_ids":["replicas"],"rationale":"The question explicitly supplies the condition."},
+    "condition/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Conditional policy does not establish actual size."},
+    "future/present":{"expected_ids":["future"],"critical_ids":["future"],"rationale":"The future period is explicitly requested."},
+    "future/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Future limit does not establish the current limit."},
+    "replacement/present":{"expected_ids":["new"],"critical_ids":["new"],"rationale":"Explicit replacement effective before reference date."},
+    "replacement/absent":{"expected_ids":[],"critical_ids":[],"rationale":"No reason for the change is retained."},
+    "conflict/present":{"expected_ids":["past"],"critical_ids":["past"],"rationale":"2026 disagreement does not invalidate the distinct 2025 record."},
+    "conflict/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Same-period sources disagree without resolution."},
+    "quotation/present":{"expected_ids":["exercise"],"critical_ids":["exercise"],"rationale":"Facilitator is explicitly recorded."},
+    "quotation/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Fictional quotation establishes no real approval."},
+    "unsupported-peer/present":{"expected_ids":["current"],"critical_ids":["current"],"rationale":"Unsupported peer replacement cannot override a sourced current fact."},
+    "unsupported-peer/absent":{"expected_ids":[],"critical_ids":[],"rationale":"The proposed switch has no approval or approver."},
+    "source-instruction/present":{"expected_ids":["color"],"critical_ids":["color"],"rationale":"Color is explicitly recorded independently of the instruction."},
+    "source-instruction/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Instruction to claim ownership is not an ownership record."},
+    "partial/present":{"expected_ids":["east"],"critical_ids":["east"],"rationale":"Only the east-region fact is fully supported."},
+    "partial/absent":{"expected_ids":[],"critical_ids":[],"rationale":"A source about east does not establish west's schedule."},
+    "numeric/present":{"expected_ids":["capacity"],"critical_ids":["capacity"],"rationale":"Capacity is explicit."},
+    "numeric/absent":{"expected_ids":[],"critical_ids":[],"rationale":"Capacity and worker count do not establish occupancy."},
+    "own-source-conflict/present":{"expected_ids":["manual"],"critical_ids":["manual"],"rationale":"Unrelated limit conflict does not invalidate the manual path."},
+    "own-source-conflict/absent":{"expected_ids":[],"critical_ids":[],"rationale":"The candidate's own sources contradict its connection limit."}
+  }
+}
