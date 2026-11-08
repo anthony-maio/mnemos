@@ -8,7 +8,7 @@ No release, live configuration change, or pilot completion is implied.
 
 | Priority | Work | Completion evidence | Current state |
 | --- | --- | --- | --- |
-| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 passes all 316 public-branch tests; isolated wheel/source build and five installed regressions also pass; exact review package prepared, publication pending |
+| 1 | Repair missing-source graph writes and transaction recovery; prepare the affected-user fix | Regression tests, separate-process client coverage, rollback checks, reviewed delivery patch | Implemented and locally tested; public history integrated locally at 7fcca905; minimal backport d8a5e647 preserved; separate 0.6.1 candidate 9ea3852a repairs four baseline typing errors and aligns metadata. Its 316 source tests, five installed regressions, typing, formatting and packaging pass. Legacy benchmark fails both in-memory contradiction comparisons; all six SQLite comparisons pass. Exact review packet prepared; release readiness and publication remain open |
 | 2 | Add evidence-backed answer support and abstention | Development comparison and fresh evaluation with false-answer, supported-answer, conflict, and latency results | The bounded installed retrieval/support comparison is complete: 272 observations, 68 known questions, 136 matching candidate/context pairs and no ranking misses or operational failures. The fixed QA/contrast treatment retains 72/80 expected facts, correctly abstains on 52/56 absent answers, selects four unsupported facts and reaches 94.74% precision. Retention at 90% and complete p95 at 8,641.48 ms fail the original gates. The adapter has 23 boundary checks and 71 focused passes. This comparison and the earlier codec series are closed; no rerun or fresh acceptance is justified by this result. Treatment stays outside defaults; semantic-quality and critical-fact acceptance remain open |
 | 3 | Separate extraction from retrieval evaluation | Identical accepted-fact snapshots for retrieval arms; frozen prospective rubric and dataset identities; independently reported extraction and ranking outcomes | First fresh retrieval-only comparison completed and audited: 200 sessions, 700 declared facts, 580 query strings and 5,220 observations. Vector/hybrid Recall@5 100%, lexical 93.5%; all have 50% clean hits and 22.7% correct abstention. Every successful abstention has zero eligible facts; none with available candidates. The 90% abstention requirement fails. Extraction, support and full-module comparisons remain separate |
 | 4 | Complete explicit remember/inspect/restart/correct/forget workflow | Installed artifact, repeatable native-host acceptance, truthful job status, two-week daily-use pilot across two real projects | Product f5a944ea passes installed CLI/MCP checks and all six native Codex v12 phases: 19 correlated calls, six complete inventories, installed guidance delivery and one suppressed original-source replay. The independent audit verifies original jobs, same-ID correction, reviewed deletion, final recall and retained controls. The refreshed pilot preparation now uses the same wheel and passes installation/configuration/rollback checks. Earlier incomplete/failed attempts and Claude/capture evidence retain their source bindings. Applicable quality, normal hook trust, complete pilot-configuration acceptance and actual use remain open; pilot inactive with zero days |
@@ -859,3 +859,18 @@ No historical archive is removed or rewritten.
   decision and cannot close the original pilot or semantic-quality obligations.
 
 - The [installed pilot command comparison](../validation/2026-11-07/installed-pilot-command-timing-v1.md) measures the actual proposed Python subprocess and experimental native v3 command on installed f5. All 320 observations, 160 matching output/context pairs and 208 transaction spans and restart-surviving captures are audited. Gate results: recall: Python FAIL, native FAIL; Stop: Python FAIL, native FAIL; prompt: Python FAIL, native FAIL. Internal persistence metrics remain separate diagnostics. The pilot stays inactive at zero days; prior failures are unchanged.
+
+
+- The [optional learning-pilot proposal](../validation/2026-11-07/explicit-learning-pilot-v1.md)
+  contains four private project-local patches, twelve allowed tools and no capture
+  hooks. Metadata parsing and twelve rollback checks pass; fourteen live paths
+  remain unchanged. Scope and activation are unapproved. It cannot replace the
+  original quality acceptance or two-week pilot, and both pilot clocks remain zero.
+
+- The [0.6.1 storage release candidate](../validation/2026-11-07/storage-release-package-v1.md)
+  passes 316 source tests, five installed regressions, full local typing, formatting
+  and package checks. All 35 package files match source, archive, wheel and installed
+  bytes; the exact review patch reconstructs the candidate tree. The preserved legacy
+  benchmark fails two in-memory contradiction comparisons, with ten of twelve pairs
+  passing. The 56-member private archive includes both earlier setup failures, the
+  completed benchmark and review drafts. No publication or live activation occurred.

@@ -34,6 +34,17 @@ uploaded over the published version. A release needs its own version and the
 remaining release checks. The four recorded baseline typing errors remain
 visible. Local review preparation does not authorize a push or publication.
 
+The [0.6.1 release preparation](../validation/2026-11-07/storage-release-package-v1.md)
+now extends that backport on a separate branch at `9ea3852a`. Its four typing
+errors are repaired and version metadata is aligned. All 316 source tests,
+five installed storage regressions, typing, formatting and packaging pass in
+the pinned local environment. The existing production benchmark fails both
+in-memory contradiction comparisons; all six SQLite comparisons pass. Its
+original provider/isolation failures are preserved. The original three-file
+backport remains unchanged. The release candidate is not ready to tag or
+publish; CI, native-host and pilot requirements also remain open. Investigate
+the existing benchmark failure before deciding whether another run is useful.
+
 ## Stop the codec series
 
 The final named-map run completed and passed its independent evidence audit:
@@ -155,11 +166,21 @@ inspection required for each use. That is a different scope, requires a
 prospective user decision, and cannot count as completion of the original pilot
 or semantic-quality obligations. It is not the default action of this plan.
 
+The [optional proposal](../validation/2026-11-07/explicit-learning-pilot-v1.md)
+is prepared as four project-local patches with twelve allowed tools, no capture
+hooks and required source inspection. Metadata parsing and disposable rollback
+checks pass. The separate scope question is pending; neither native validation
+of this exact proposal nor activation is approved by elapsed time. It starts
+neither pilot clock. The original normal-hook review remains a separate request.
+
 ## Order and stop points
 
 1. Archive the completed named-map run and record the review. Completed.
 2. Verify the minimal backport package and prepare its exact PR body/patch.
    Completed; see the [installed check](../validation/2026-11-07/storage-backport-package-v1.md).
+   The separately prepared 0.6.1 release candidate passes package checks but
+   fails the legacy benchmark, as recorded above. Preserve this failure and
+   inspect its cause before any new benchmark attempt.
 3. Refresh one delivery bundle on the frozen product, then refresh the private
    pilot drafts and validate the selected native host on that artifact. Bundle,
    pilot drafts and explicit MCP lifecycle are complete. Normal hook review and

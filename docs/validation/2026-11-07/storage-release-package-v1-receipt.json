@@ -1,0 +1,146 @@
+{
+  "status": "package_verified_gates_incomplete",
+  "checked_at": "2026-11-08T00:50:27.279229+00:00",
+  "source_commit": "9ea3852a23fd315f3bb641bd6450c7889878e951",
+  "metadata_version": "0.6.1",
+  "package_files_verified": 35,
+  "artifacts": {
+    "mnemos_memory-0.6.1-py3-none-any.whl": {
+      "sha256": "0b0f79fde304dd60b4c710a990862d6b114c1071d8f6eb8a71cf7ea1cdad2b5f",
+      "bytes": 138566
+    },
+    "mnemos_memory-0.6.1.tar.gz": {
+      "sha256": "8c92617d8ff0deb95559eb9287b8f8bca67e96cfb1226f38481bdb1fef687276",
+      "bytes": 237982
+    }
+  },
+  "steps": [
+    {
+      "step": "source-format",
+      "exit_code": 0
+    },
+    {
+      "step": "source-types",
+      "exit_code": 0
+    },
+    {
+      "step": "source-tests",
+      "exit_code": 0
+    },
+    {
+      "step": "legacy-benchmark",
+      "exit_code": 1,
+      "reason": "Existing machine provider settings selected OpenRouter; authentication failed before a report was produced."
+    },
+    {
+      "step": "legacy-benchmark-isolated",
+      "exit_code": 1,
+      "reason": "The all-socket guard blocked Windows asyncio internal loopback; provider preflight passed and no report was produced."
+    },
+    {
+      "step": "legacy-benchmark-isolated-loopback",
+      "exit_code": 2
+    },
+    {
+      "step": "build",
+      "exit_code": 0
+    },
+    {
+      "step": "twine",
+      "exit_code": 0
+    },
+    {
+      "step": "create-environment",
+      "exit_code": 0
+    },
+    {
+      "step": "install",
+      "exit_code": 0
+    },
+    {
+      "step": "installed-files",
+      "exit_code": 0
+    },
+    {
+      "step": "installed-storage-tests",
+      "exit_code": 0
+    },
+    {
+      "step": "cli-help",
+      "exit_code": 0
+    },
+    {
+      "step": "dependencies",
+      "exit_code": 0
+    },
+    {
+      "step": "freeze",
+      "exit_code": 0
+    }
+  ],
+  "isolated_install": true,
+  "installed_regression_cases": 5,
+  "source_unchanged": true,
+  "native_host_tested": false,
+  "live_configuration_changed": false,
+  "published": false,
+  "release_version_prepared": true,
+  "legacy_benchmark_gate_passed": false,
+  "original_provider_failure_preserved": true,
+  "note": "Local 0.6.1 patch candidate; not published or tagged. Pinned-environment checks and a legacy synthetic benchmark do not establish native-host, pilot, semantic-quality or GitHub CI acceptance.",
+  "base_commit": "866444378e5a42598bba0548f6460d07adcded10",
+  "source_tests": 316,
+  "installed_storage_tests": 5,
+  "full_mypy_passed": true,
+  "typing_files": 31,
+  "format_files": 65,
+  "python_version": "3.12.11",
+  "numpy_version": "2.2.6",
+  "mypy_version": "2.4.1",
+  "public_ci_run": false,
+  "python_matrix_run": false,
+  "original_backport_preserved": true,
+  "main_frozen_product_unchanged": true,
+  "completed_benchmark_runs": 2,
+  "benchmark_pairs": 12,
+  "benchmark_passed_pairs": 10,
+  "benchmark_failed_pairs": [
+    {
+      "repetition": 1,
+      "dataset": "contradiction-update-v1",
+      "store_type": "memory",
+      "mrr_lift_ratio": 0.0,
+      "latency_p95_ratio": 0.6291949190199374,
+      "max_latency_p95_ratio": 2.0,
+      "latency_ratio_floor_ms": 1.0,
+      "passed": false
+    },
+    {
+      "repetition": 2,
+      "dataset": "contradiction-update-v1",
+      "store_type": "memory",
+      "mrr_lift_ratio": -0.5,
+      "latency_p95_ratio": 0.36921502323821187,
+      "max_latency_p95_ratio": 2.0,
+      "latency_ratio_floor_ms": 1.0,
+      "passed": false
+    }
+  ],
+  "benchmark_source_unchanged_from_public_base": true,
+  "matched_base_comparison_run": false,
+  "all_sqlite_pairs_pass": true,
+  "all_latency_ratios_pass": true,
+  "applied_patch_tree_matches_candidate": true,
+  "patch_sha256": "b960bba8ca38a1a32578f500984f36d1a5d152351f6409f379d2a25dbd826eee",
+  "pr_body_sha256": "c5eb4423c2d4559a4c2f5e4bbfc29a7a8159175a8b8aedd7e5dc5ddb369f8d33",
+  "release_draft_sha256": "134e639c4268960e5306198733c0459bf84466ec1f86273c481407b67adc0294",
+  "audit_sha256": "62c62300cdebd513cf4e8b65fdacd361418c6d94b78604cffcebfeb51e7586fc",
+  "benchmark_sha256": "2cd9450839b825330f99a72e167f2d3b0dc8ca8a57a9571dbc8a28a798b89597",
+  "live_paths_unchanged": 14,
+  "inactive_pilot_package_files_unchanged": 96,
+  "pilot_days": 0,
+  "release_ready": false,
+  "archive_sha256": "6fc3b55882b161a8b433f11ac754b4e225b5c19fa218bbbb6d630596ce3a277e",
+  "archive_members": 56,
+  "archive_bytes": 639961
+}
