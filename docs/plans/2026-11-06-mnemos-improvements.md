@@ -894,3 +894,11 @@ No historical archive is removed or rewritten.
   checks. The original wheel, fourteen watched live paths and failed acceptance
   gates are unchanged. Publication, full native configuration and actual pilot
   use remain open; this does not repeat native-host or semantic acceptance.
+
+- The separate [legacy content-recency repair](../validation/2026-11-07/legacy-content-recency-v1.md)
+  prevents prior access from promoting stale content. All 344 legacy tests,
+  including 28 recency cases, pass with strict typing and formatting. Schema 3
+  preserves unknown revision history and migrates copied rows, vectors, graph
+  and feedback controls without loss. The 0.6.1 candidate and frozen f5 product
+  remain unchanged. Original scores are preserved; installed-package validation
+  and a prospective chronology benchmark for this repair remain open.

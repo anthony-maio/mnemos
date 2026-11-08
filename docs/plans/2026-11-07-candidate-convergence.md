@@ -220,3 +220,11 @@ The original wheel is preserved. External publication still requires a final
 decision, and the failed quality/timing gates, native configuration and original
 two-week pilot remain unresolved. No new tuning or pilot activation follows
 from these integration checks.
+
+The separate [content-recency repair](../validation/2026-11-07/legacy-content-recency-v1.md)
+at `777c5445` addresses the demonstrated legacy access-promotion mechanism.
+Its source suite, typing and copied-database migration checks pass. Unknown
+revision times remain null and the original failed benchmark is unchanged.
+This repair stays outside the narrow storage backport, 0.6.1 candidate and f5
+product. Any later benchmark must first declare explicit chronology and
+prior-access coverage; the existing ambiguous fixture is not a fresh gate.
