@@ -207,7 +207,7 @@ def test_plugin_wrapper_preserves_explicit_relative_runtime_path(tmp_path) -> No
 def test_plugin_runtime_command_keeps_the_selected_environment(tmp_path) -> None:
     wrapper = _load_plugin_wrapper()
     env = {key: value for key, value in os.environ.items() if key in {"SYSTEMROOT", "WINDIR"}}
-    env["MNEMOS_PLUGIN_PYTHON"] = "python"
+    env["MNEMOS_PLUGIN_PYTHON"] = Path(sys.executable).name
     env["PATH"] = str(Path(sys.executable).parent)
     runtime = wrapper._resolve_runtime_python(tmp_path, env)
     completed = subprocess.run(
