@@ -1,0 +1,11 @@
+# Exact quotation binding without generated offsets
+
+The development-only resolver derives Python character offsets from an exact, unique quotation within a fact's own retained source. Missing text returns absent; repeated text, including overlapping matches, returns ambiguous. Neither result supplies a span. It does not normalize whitespace or case, search other facts' evidence, or fall back to the first occurrence. Invalid, blank or oversized input raises a contract error.
+
+Every subject, relation, value, temporal and whole-fact quotation field must be explicit. A caller cannot omit an inconvenient field. Null optional quotations remain unqualified; the existing relation evaluator separately requires witnesses when whole-fact support or temporal boundaries are asserted. Source authorization and live snapshot checks remain caller responsibilities. Quote uniqueness establishes a location, not entailment.
+
+The resolver and relation evaluator passed 28 checks in 3.86 seconds, with JUnit at `.venv/quote-binding-v1.xml`. Coverage includes exact character offsets, repeated and overlapping occurrences, no normalization, invalid inputs, own-source isolation and changed/forgotten source behavior.
+
+An offline diagnostic used the original unrelated relational-screen warmup. All four non-null quotations bind uniquely to its retained source. The resolver derives relation offsets 12:17, value offsets 21:25 and whole-fact offsets 0:26, correcting the three locations the model supplied incorrectly. The diagnostic made zero semantic calls. It did not modify, regrade or rerun the closed experiment, and it gives no answer-quality or acceptance credit.
+
+The adjacent JSON binds the original warmup input/reply, resolver and audit helper, and records every derived span. This mechanism remains outside production and outside the frozen producer configuration. A future producer may request exact quotations without asking the model to count characters, but it must still be evaluated for quotation choice, whole-fact support, conflicts, conditions and temporal applicability. The previous deadline failure remains unresolved; quotation binding alone does not establish the original latency target.
