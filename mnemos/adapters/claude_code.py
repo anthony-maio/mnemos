@@ -716,7 +716,9 @@ class ClaudeCodeAdapter:
         return "project context recent work"
 
     async def retrieve_context(self, event: str, payload: Mapping[str, Any]) -> HookResult:
-        context = self._context(payload)
+        # Discovery can wait on Git. Keep replay and cancellation responsive;
+        # a cancelled caller discards the result before sending a client request.
+        context = await asyncio.to_thread(self._context, dict(payload))
         if os.environ.get("MNEMOS_AUTO_RETRIEVE", "true").lower() in {"0", "false", "no", "off"}:
             return HookResult(status="skipped", committed=False)
         query = self._query(payload, event)
@@ -746,7 +748,7 @@ class ClaudeCodeAdapter:
     ) -> HookResult:
         if event in {"SessionStart", "UserPromptSubmit"}:
             try:
-                context = self._context(payload)
+                context = await asyncio.to_thread(self._context, dict(payload))
             except Exception as exc:
                 reason = reason_for_context_error(exc)
                 record_unresolved_routing_failure(
@@ -829,7 +831,7 @@ class ClaudeCodeAdapter:
             )
         if event in {"Stop", "PreCompact", "PostCompact"}:
             try:
-                context = self._context(payload)
+                context = await asyncio.to_thread(self._context, dict(payload))
             except Exception as exc:
                 reason = reason_for_context_error(exc)
                 record_unresolved_routing_failure(
