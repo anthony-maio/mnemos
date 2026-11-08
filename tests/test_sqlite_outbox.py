@@ -103,6 +103,34 @@ def test_failed_acknowledgment_retains_pending_record(queue):
     assert queue.pending()[0]["event_id"] == identity
 
 
+def test_batch_acknowledgment_commits_once_and_preserves_new_entries(queue):
+    for identity in ("one", "two", "new"):
+        queue.append({"content": identity}, event_id=identity)
+    statements = []
+    queue._connection.set_trace_callback(statements.append)
+    assert queue.acknowledge_many(["one", "two", "one", "missing"]) == 2
+    assert sum(s == "COMMIT" for s in statements) == 1
+    assert [r["event_id"] for r in queue.pending()] == ["new"]
+    queue.close()
+    assert [r["event_id"] for r in queue.pending()] == ["new"]
+
+
+def test_failed_batch_commit_retains_every_entry(queue):
+    for identity in ("one", "two"):
+        queue.append({"content": identity}, event_id=identity)
+    connection = queue._connection
+    connection.set_authorizer(
+        lambda action, value, *rest: sqlite3.SQLITE_DENY
+        if action == sqlite3.SQLITE_TRANSACTION and value == "COMMIT"
+        else sqlite3.SQLITE_OK
+    )
+    with pytest.raises(ValueError, match="not acknowledged"):
+        queue.acknowledge_many(["one", "two"])
+    connection.set_authorizer(None)
+    queue.close()
+    assert [r["event_id"] for r in queue.pending()] == ["one", "two"]
+
+
 def test_two_connections_append_without_lost_records(queue):
     other = SQLiteOutbox(queue.path)
     try:

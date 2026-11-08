@@ -35,6 +35,7 @@ class Outbox:
 
     _path_locks: dict[str, Any] = {}
     _path_locks_guard = threading.Lock()
+    replay_ack_batch_size = 1
 
     def __init__(
         self,
@@ -191,6 +192,9 @@ class Outbox:
 
     def __len__(self) -> int:
         return len(self.pending())
+
+    def acknowledge_many(self, event_ids: list[str]) -> int:
+        return sum(self.acknowledge(event_id) for event_id in event_ids)
 
 
 class ServiceClientError(RuntimeError):
@@ -599,6 +603,7 @@ class MnemosClient:
     async def replay_outbox(self) -> dict[str, Any]:
         acknowledged = 0
         failed = 0
+        delivered: list[str] = []
         for entry in self.outbox.pending():
             payload = entry.get("payload")
             operation = entry.get("operation", "capture")
@@ -616,10 +621,14 @@ class MnemosClient:
             # Match the direct path: a committed or explicitly rejected reply
             # removes the entry; anything ambiguous keeps it for another replay.
             if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
-                if self.outbox.acknowledge(event_id):
-                    acknowledged += 1
+                delivered.append(event_id)
+                if len(delivered) >= self.outbox.replay_ack_batch_size:
+                    acknowledged += self.outbox.acknowledge_many(delivered)
+                    delivered.clear()
             else:
                 failed += 1
+        if delivered:
+            acknowledged += self.outbox.acknowledge_many(delivered)
         return {
             "schema_version": SCHEMA_VERSION,
             "acknowledged": acknowledged,

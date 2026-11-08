@@ -17,6 +17,9 @@ from .service import _protect_private_path
 
 
 class SQLiteOutbox(Outbox):
+    # Bounded replay batches amortize deletion commits. Capture append receipts
+    # remain individually durable. Interruption leaves delivered IDs replayable.
+    replay_ack_batch_size = 32
     _connection: sqlite3.Connection | None = None
     _owner_pid: int | None = None
     _file_identity: tuple[int, int] | None = None
@@ -133,11 +136,22 @@ class SQLiteOutbox(Outbox):
                 raise ValueError("Invalid SQLite outbox") from exc
 
     def acknowledge(self, event_id: str) -> bool:
+        return self.acknowledge_many([event_id]) == 1
+
+    def acknowledge_many(self, event_ids: list[str]) -> int:
+        if not isinstance(event_ids, list) or any(
+            not isinstance(event_id, str) or not event_id for event_id in event_ids
+        ):
+            raise ValueError("Acknowledgment identities must be nonempty strings")
+        if not event_ids:
+            return 0
+        identities = list(dict.fromkeys(event_ids))
         with self._transaction() as connection:
-            removed = connection.execute(
-                "DELETE FROM outbox_entries WHERE event_id=?", (event_id,)
+            removed = connection.executemany(
+                "DELETE FROM outbox_entries WHERE event_id=?",
+                [(event_id,) for event_id in identities],
             ).rowcount
-        return removed == 1
+        return removed
 
     def close(self) -> None:
         with self._lock:
