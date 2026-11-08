@@ -1,7 +1,8 @@
 # Replay acknowledgement comparison preparation
 
-Status: package preparation and prospective design. No measured comparison has
-run. Execution still requires the completed runner/auditor, review and a manifest
+Status: package preparation and owner functional preflight complete. See
+[owner validation](../validation/2026-11-08/replay-ack-owner-preflight-v1.md).
+No measured comparison has run. Execution still requires the completed runner/auditor, review and a manifest
 binding their exact bytes, settings, schedule, dependencies and native binary.
 
 Compare baseline `7a77e40f4ec8dd5b2fbf47ff0b1e3f0862e0129d` with candidate
@@ -39,6 +40,11 @@ Record acknowledgement start/end intervals symmetrically and count actual
 overlap with each command. Report the counts alongside all measurements. Little
 or no overlap means the intended mechanism was not sufficiently exercised; it
 does not authorize another schedule or a rerun.
+
+These intervals cover the entire acknowledgement method, including lock waits;
+they are not isolated COMMIT durations. The owner's response trace records
+completed server dispatch before HTTP delivery. The auditor must combine it
+with native command outcomes to establish a successfully delivered receipt.
 
 ## Audit and interpretation
 
