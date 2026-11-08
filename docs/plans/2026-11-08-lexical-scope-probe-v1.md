@@ -21,3 +21,11 @@ calls, extraction, live databases, host settings or frozen scores are changed.
 A useful result permits a scoped implementation with isolation, view, tie,
 transaction and arbitrary-predicate regression coverage. Complete installed
 latency and fresh quality evaluation remain separate requirements.
+
+Preflight found an empty WAL sidecar and a seed predating the current scope
+index. No timing observations ran. Retain both failed preflights. On each
+copy only, create the exact scope index declared in current canonical source,
+verify all chunk rows unchanged, close the preparation connection, and hash
+the prepared file. Run the fixed comparison read-only and verify these hashes
+afterward. The comparison measures ranking SQL only, without model parsing or
+full chunk hydration; it cannot establish the complete method's latency.
