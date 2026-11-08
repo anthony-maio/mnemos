@@ -128,7 +128,11 @@ class MemoryChunk(BaseModel):
     )
     updated_at: datetime = Field(
         default_factory=_utcnow,
-        description="UTC timestamp of last modification.",
+        description="UTC timestamp of last modification or access (legacy activity time).",
+    )
+    content_updated_at: datetime | None = Field(
+        default=None,
+        description="UTC timestamp of a known content rewrite; None means unknown history.",
     )
     access_count: int = Field(
         default=0,
@@ -142,6 +146,21 @@ class MemoryChunk(BaseModel):
     )
 
     model_config = {"frozen": False}
+
+    @field_validator("content_updated_at")
+    @classmethod
+    def normalize_content_time(cls, value: datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc)
+
+    @property
+    def content_recency_at(self) -> datetime:
+        """Rank by known content revision, falling back to creation, never access."""
+        value = self.content_updated_at or self.created_at
+        return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
 
     def touch(self) -> None:
         """Increment access count and update timestamp (simulates memory reactivation)."""
@@ -162,6 +181,7 @@ class MemoryChunk(BaseModel):
         Returns:
             A new MemoryChunk with incremented version and updated content.
         """
+        revised_at = _utcnow()
         return MemoryChunk(
             id=self.id,  # Same ID — same memory, new version
             content=new_content,
@@ -170,7 +190,8 @@ class MemoryChunk(BaseModel):
             salience=self.salience,
             cognitive_state=self.cognitive_state,
             created_at=self.created_at,
-            updated_at=_utcnow(),
+            updated_at=revised_at,
+            content_updated_at=revised_at,
             access_count=self.access_count + 1,
             version=self.version + 1,
         )

@@ -555,7 +555,7 @@ class MnemosEngine:
             chunk_scope, _ = _chunk_scope_data(chunk)
             base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
             if recency_hint:
-                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
+                age_seconds = max((now - chunk.content_recency_at).total_seconds(), 0.0)
                 recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
                 base_score = (0.35 * semantic_rank_score) + (0.85 * recency_weight)
                 base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
@@ -570,7 +570,7 @@ class MnemosEngine:
             if chunk.id in activated_ids:
                 base_score *= 1.2
             if recency_hint:
-                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
+                age_seconds = max((now - chunk.content_recency_at).total_seconds(), 0.0)
                 recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
                 base_score += 0.35 * recency_weight
             existing = chunk_scores.get(chunk.id)
@@ -605,7 +605,7 @@ class MnemosEngine:
             head_count = min(len(sorted_chunks), max(top_k * 2, 2))
             recency_head = sorted(
                 sorted_chunks[:head_count],
-                key=lambda x: x[1].updated_at,
+                key=lambda x: x[1].content_recency_at,
                 reverse=True,
             )
             sorted_chunks = recency_head + sorted_chunks[head_count:]
