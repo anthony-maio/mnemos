@@ -1,0 +1,1198 @@
+{
+  "kind": "authored-supplied-annotation-development",
+  "control": {
+    "status": "complete",
+    "completion_requests": 22,
+    "observations": 22,
+    "unattempted": 0,
+    "model_unloaded": true,
+    "stop_exit": 0,
+    "server_exit": 1,
+    "process_absent": true,
+    "port_closed": true,
+    "native_absent": true,
+    "native_port_closed": true,
+    "bindings_unchanged": true,
+    "prepared_unchanged": true
+  },
+  "groups": {
+    "semantic": {
+      "planned": 18,
+      "planned_claims": 36,
+      "attempted": 18,
+      "completed": 18,
+      "protocol_valid": 18,
+      "exact": 13,
+      "temporal_correct": 18,
+      "relation_correct": 34,
+      "condition_correct": 31,
+      "claim_correct": 31,
+      "decision_correct": 16
+    },
+    "control": {
+      "planned": 4,
+      "planned_claims": 8,
+      "attempted": 4,
+      "completed": 4,
+      "protocol_valid": 4,
+      "exact": 4,
+      "temporal_correct": 4,
+      "relation_correct": 8,
+      "condition_correct": 8,
+      "claim_correct": 8,
+      "decision_correct": 4
+    }
+  },
+  "pairs": [
+    {
+      "pair": "absent",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "condition-applies",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "condition-excluded",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "condition-unknown",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "conflict",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "current",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "instruction",
+      "available": true,
+      "judgments_same_by_fact": false,
+      "temporal_same": true
+    },
+    {
+      "pair": "language",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "maintainer",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "unresolved",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    },
+    {
+      "pair": "unsupported",
+      "available": true,
+      "judgments_same_by_fact": true,
+      "temporal_same": true
+    }
+  ],
+  "timing": {
+    "provider_ms": {
+      "n": 22,
+      "median": 1849.6679000090808,
+      "p95": 2113.3363000117242,
+      "maximum": 2435.1181001402438
+    },
+    "processing_ms": {
+      "n": 22,
+      "median": 1951.2704499065876,
+      "p95": 2644.780599977821,
+      "maximum": 2668.26089983806
+    },
+    "prompt_tokens": {
+      "n": 22,
+      "median": 770.0,
+      "p95": 821,
+      "maximum": 821
+    },
+    "generated_tokens": {
+      "n": 22,
+      "median": 72.0,
+      "p95": 82,
+      "maximum": 82
+    }
+  },
+  "cases": [
+    {
+      "key": "01-maintainer-forward",
+      "group": "semantic",
+      "pair": "maintainer",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "maintainer"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "maintainer"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "01-maintainer-reversed",
+      "group": "semantic",
+      "pair": "maintainer",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "maintainer"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "maintainer"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "02-language-forward",
+      "group": "semantic",
+      "pair": "language",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "language"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "language"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "02-language-reversed",
+      "group": "semantic",
+      "pair": "language",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "language"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "language"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "03-absent-forward",
+      "group": "semantic",
+      "pair": "absent",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "03-absent-reversed",
+      "group": "semantic",
+      "pair": "absent",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "04-conflict-forward",
+      "group": "semantic",
+      "pair": "conflict",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "conflict",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "conflict",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "04-conflict-reversed",
+      "group": "semantic",
+      "pair": "conflict",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "conflict",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "conflict",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "05-condition-applies-forward",
+      "group": "semantic",
+      "pair": "condition-applies",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "conditional"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "conditional"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "05-condition-applies-reversed",
+      "group": "semantic",
+      "pair": "condition-applies",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "conditional"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "conditional"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "06-condition-excluded-forward",
+      "group": "semantic",
+      "pair": "condition-excluded",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "excluded"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": false,
+      "temporal_correct": true,
+      "relation_correct": 1,
+      "condition_correct": 1,
+      "claim_correct": 1,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "06-condition-excluded-reversed",
+      "group": "semantic",
+      "pair": "condition-excluded",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "excluded"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": false,
+      "temporal_correct": true,
+      "relation_correct": 1,
+      "condition_correct": 1,
+      "claim_correct": 1,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "07-condition-unknown-forward",
+      "group": "semantic",
+      "pair": "condition-unknown",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "unresolved"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": false,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 1,
+      "claim_correct": 1,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "conditional"
+      ],
+      "decision_correct": false
+    },
+    {
+      "key": "07-condition-unknown-reversed",
+      "group": "semantic",
+      "pair": "condition-unknown",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "unresolved"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": false,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 1,
+      "claim_correct": 1,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "conditional"
+      ],
+      "decision_correct": false
+    },
+    {
+      "key": "08-current-forward",
+      "group": "semantic",
+      "pair": "current",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "at_date",
+        "date": "2026-11-08",
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "at_date",
+        "date": "2026-11-08",
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "unavailable",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "08-current-reversed",
+      "group": "semantic",
+      "pair": "current",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "at_date",
+        "date": "2026-11-08",
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "at_date",
+        "date": "2026-11-08",
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "unavailable",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "09-unsupported-forward",
+      "group": "control",
+      "pair": "unsupported",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "09-unsupported-reversed",
+      "group": "control",
+      "pair": "unsupported",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "absent",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "absent",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "10-unresolved-forward",
+      "group": "control",
+      "pair": "unresolved",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "unavailable",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "10-unresolved-reversed",
+      "group": "control",
+      "pair": "unresolved",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "unavailable",
+      "expected_fact_ids": [],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "unavailable",
+      "actual_fact_ids": [],
+      "decision_correct": true
+    },
+    {
+      "key": "11-instruction-forward",
+      "group": "semantic",
+      "pair": "instruction",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "maintainer"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "matches",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "excluded",
+            "conditions": "excluded"
+          }
+        }
+      },
+      "exact": false,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 1,
+      "claim_correct": 1,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "maintainer"
+      ],
+      "decision_correct": true
+    },
+    {
+      "key": "11-instruction-reversed",
+      "group": "semantic",
+      "pair": "instruction",
+      "attempted": true,
+      "completed": true,
+      "protocol_valid": true,
+      "expected": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "expected_status": "selected",
+      "expected_fact_ids": [
+        "maintainer"
+      ],
+      "actual": {
+        "intent": "source_state",
+        "date": null,
+        "judgments": {
+          "c0": {
+            "relation": "excluded",
+            "conditions": "applies"
+          },
+          "c1": {
+            "relation": "matches",
+            "conditions": "applies"
+          }
+        }
+      },
+      "exact": true,
+      "temporal_correct": true,
+      "relation_correct": 2,
+      "condition_correct": 2,
+      "claim_correct": 2,
+      "actual_status": "selected",
+      "actual_fact_ids": [
+        "maintainer"
+      ],
+      "decision_correct": true
+    }
+  ],
+  "hashes": {
+    "events.jsonl": "08fe67890765cf3d08cd57b6841d2e6d5a7ebedec7d1fcc82b3891941ce99fda",
+    "token-journal.jsonl": "7a29b329d5c62b459f7065eb5392be3f9b20136a8e6e42fbf0502085f9c51da6",
+    "freeze.json": "f78d9ab8f0b741409ccf253135a352e793023642ae57249d12c6fc3bf3842d0a",
+    "control.json": "bf6ef1440f3fb6a2abdf324eed9cd287ba2affbe6d4cd8d96c824ddcbddb86ce"
+  },
+  "limits": "No extraction, initial retrieval, native-host dispatch, fresh acceptance or actual pilot; descriptive comparison to earlier runs is not a causal codec experiment.",
+  "archive_sha256": "fe0ec51aa0a05a7d7523015ad42799f6c53ac846d5999725b575bcf0a920392d"
+}
