@@ -1,0 +1,13 @@
+# Token-choice runtime capability
+
+The single frozen capability request passed on the retained Qwen3:14b model and Ollama 0.40.9. The response contained exactly one generated token, `A`, and returned scores for both offered labels. The strict decoder accepted it without filling missing alternatives or normalizing over the offered labels. This proves compatibility for this request, not a working answer-support selector.
+
+The unrelated question asked which of 8 and 9 is even. The request disabled thinking, used temperature zero, requested twenty alternatives, and allowed one generated token. It returned HTTP 200 with `done_reason=length`, as expected for that output cap. There was one generation attempt and no retry, semantic dataset, warmup, or prompt revision.
+
+The reported chosen-token log probability was zero. The decoded values were A=1.0 and B approximately 4.947e-15. Floating-point rounding makes their sum slightly greater than one within the decoder's tolerance. These observations do not establish calibrated confidence, the distribution's sampling semantics, or equivalence to the previous model-generated probability threshold.
+
+Wall time was 6,104.93 ms, including cold model loading. Provider metadata reported 5,699.93 ms loading, 379.24 ms prompt evaluation, 43 prompt tokens, and one output token. Its reported generation duration was 0.001 ms. Do not interpret that single metadata field as an end-to-end token latency or extrapolate it to support requests. This was not a warm latency benchmark.
+
+The driver verified the retained executable and model hashes before execution and again afterward. It used an isolated loopback server with the private retained model directory. Cleanup unloaded the model, confirmed no model remained loaded, stopped the verified owned server, and confirmed the port closed. The driver exited zero; the server's forced-stop exit was recorded separately. No normal host configuration, pilot, memory database, or original evaluation changed.
+
+The [versioned Ollama request definition](https://github.com/ollama/ollama/blob/v0.40.9/llm/server.go) exposes log-probability fields. Its [runner implementation](https://github.com/ollama/ollama/blob/v0.40.9/llm/llama_server.go) forwards a probability-count request to the inference backend. That inspection and this capability check do not yet establish how the backend's sampler affects the returned scores. Verify those semantics before defining a support-selection rule or threshold. Any subsequent semantic evaluation must preserve the original external quality and latency requirements and use a prospective protocol.
