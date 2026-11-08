@@ -31,6 +31,8 @@ The original capture target remains 100 ms. Warm recall remains 500 ms at 10,000
 
 ## Artifact and pilot boundaries
 
+Affected-user package follow-up: [private 0.6.1 candidate 37e942f8](../validation/2026-11-08/storage-merged-package-v1.md) is prepared from merged master and pushed on its own branch. Wheel/source parity, Twine, 11 installed storage checks and three installed automated MCP roundtrips pass. The candidate remains unpublished; operational/native/pilot checklist obligations and publication approval are outstanding. Earlier private 0.6.1/rc candidates retain their separate evidence.
+
 Storage acceptance follow-up: with explicit user approval, [PRs #7 and #8 are merged](../validation/2026-11-08/storage-merged-pr8.md). Remote master `588a190b` has the exact file tree tested in the final all-green hosted integration run: 325 tests on each of three Python versions, lint, both legacy benchmark repetitions, MCP smoke and documentation checks. This establishes upstream acceptance, not package publication, interactive native acceptance, original semantic/latency success or pilot completion. Preserve the earlier draft-state records below as history.
 
 Combined storage draft follow-up: [PR #8 now carries the plugin and typing repairs](../validation/2026-11-08/storage-pr8-combined-v1.md). The combined source passed 325 tests, strict typing and formatting. Head `7c6cdccd` adds documentation and a test portability correction; runtime is unchanged and 17 plugin tests pass after the correction. The earlier narrow-candidate failures remain historical evidence. Hosted CI, prerequisite integration and release acceptance are still outstanding.
