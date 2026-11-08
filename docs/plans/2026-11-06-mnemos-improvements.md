@@ -874,3 +874,13 @@ No historical archive is removed or rewritten.
   benchmark fails two in-memory contradiction comparisons, with ten of twelve pairs
   passing. The 56-member private archive includes both earlier setup failures, the
   completed benchmark and review drafts. No publication or live activation occurred.
+
+
+- The [legacy recency diagnosis](../validation/2026-11-07/legacy-recency-diagnostic-v1.md)
+  reproduces the timestamp tie behind a stale deployment answer and shows that
+  accessing an old fact makes it appear current. All 24 controlled query pairs
+  match across stores with identical content, embeddings and scope. Ordered
+  timestamps yield 8/8 expected answers; prior stale access reduces both stores
+  to 0/8. This is diagnostic evidence only. The relevant ranking code predates
+  the patch, the original failed gate remains unchanged and no production
+  retrieval or benchmark repair has been folded into the storage candidate.

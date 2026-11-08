@@ -45,6 +45,16 @@ backport remains unchanged. The release candidate is not ready to tag or
 publish; CI, native-host and pilot requirements also remain open. Investigate
 the existing benchmark failure before deciding whether another run is useful.
 
+The [completed diagnosis](../validation/2026-11-07/legacy-recency-diagnostic-v1.md)
+reproduces tied ingestion timestamps and access being treated as content
+recency. With fixed snapshots, both stores return 2/8 expected answers under
+tied timestamps, 8/8 under ordered timestamps and 0/8 after prior access to old
+facts. The relevant ranking logic predates the patch. Preserve the failed gate;
+another unchanged benchmark run cannot repair these semantics. Any repair must
+separate content revision from access and use an explicit, versioned chronology
+fixture with prior-access coverage. Keep that work separate from the bounded
+storage patch and the frozen f5 candidate.
+
 ## Stop the codec series
 
 The final named-map run completed and passed its independent evidence audit:
@@ -179,8 +189,9 @@ neither pilot clock. The original normal-hook review remains a separate request.
 2. Verify the minimal backport package and prepare its exact PR body/patch.
    Completed; see the [installed check](../validation/2026-11-07/storage-backport-package-v1.md).
    The separately prepared 0.6.1 release candidate passes package checks but
-   fails the legacy benchmark, as recorded above. Preserve this failure and
-   inspect its cause before any new benchmark attempt.
+   fails the legacy benchmark, as recorded above. Its bounded diagnosis is now
+   complete. Preserve the failure and require a separately reviewed recency and
+   fixture repair before another gate attempt; do not retry for a passing clock.
 3. Refresh one delivery bundle on the frozen product, then refresh the private
    pilot drafts and validate the selected native host on that artifact. Bundle,
    pilot drafts and explicit MCP lifecycle are complete. Normal hook review and
