@@ -210,3 +210,13 @@ Sources: [adversarial review](../validation/2026-11-07/adversarial-goal-review-v
 [named-map result](../validation/2026-11-07/named-choice-support-v1.md),
 [original targets](2026-09-16-functional-local-memory.md), and
 [pilot protocol](2026-09-20-local-memory-daily-use-pilot.md).
+
+
+The [canonical integration record](../validation/2026-11-07/canonical-integration-v1.md)
+closes the local code/site integration step. Exact patches reconstruct both
+reviewed trees; local canonical checkouts now include the frozen product and
+current limits. The isolated full suite, typing and local browser checks pass.
+The original wheel is preserved. External publication still requires a final
+decision, and the failed quality/timing gates, native configuration and original
+two-week pilot remain unresolved. No new tuning or pilot activation follows
+from these integration checks.

@@ -884,3 +884,13 @@ No historical archive is removed or rewritten.
   to 0/8. This is diagnostic evidence only. The relevant ranking code predates
   the patch, the original failed gate remains unchanged and no production
   retrieval or benchmark repair has been folded into the storage candidate.
+
+
+- The [local canonical integration](../validation/2026-11-07/canonical-integration-v1.md)
+  passes 3,758 tests with four platform skips, all 75 native-launcher cases,
+  strict typing across 228 source files and Python formatting. Desktop/mobile
+  browser checks and six exact receipt downloads pass. Both local canonical
+  checkouts are fast-forwarded after exact patch reconstruction and clean-tree
+  checks. The original wheel, fourteen watched live paths and failed acceptance
+  gates are unchanged. Publication, full native configuration and actual pilot
+  use remain open; this does not repeat native-host or semantic acceptance.

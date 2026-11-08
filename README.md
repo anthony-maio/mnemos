@@ -59,6 +59,8 @@ The [retrieval-only evaluation](docs/validation/2026-11-07/fresh-accepted-v1.md)
 
 The explicit-memory example below uses real local embeddings and disables experimental enrichment. It needs no hosted extraction LLM. The candidate has not been validated in native Hermes; loading its Python provider entrypoint is only an installation check. Earlier Claude and other host results retain their artifact bindings in the [compatibility matrix](docs/client-compatibility-matrix.md). The [delivery inventory](docs/validation/2026-11-06/delivery-state.md) separates local preparation, public source and PyPI.
 
+The [local canonical integration](docs/validation/2026-11-07/canonical-integration-v1.md) passes 3,758 tests with four platform skips, full local typing and formatting, and desktop/mobile website checks on its recorded revisions. The original wheel is unchanged. Code and website are integrated locally; this has not updated the public source, PyPI or hosted site, and the failed entry requirements remain open.
+
 Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
 
 The intended setup path is:
