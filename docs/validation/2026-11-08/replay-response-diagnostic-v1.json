@@ -1,0 +1,129 @@
+{
+  "status": "diagnostic_audit_passed",
+  "summary": {
+    "immediate": {
+      "observations": 50,
+      "min_ms": 177.55710007622838,
+      "p95_ms": 498.5067001543939,
+      "max_ms": 671.4292000979185,
+      "meets_command_100ms": false
+    },
+    "deferred": {
+      "observations": 50,
+      "min_ms": 159.43739982321858,
+      "p95_ms": 383.2123000174761,
+      "max_ms": 503.3404999412596,
+      "meets_command_100ms": false
+    }
+  },
+  "completed_events": 110,
+  "completed_jobs": 110,
+  "native_host_dispatch_tested": false,
+  "scope": "Native immediate versus deferred replay notification, instrumented synthetic diagnostic only.",
+  "boundary_summary": {
+    "immediate": {
+      "command_ms": {
+        "median_ms": 242.02004994731396,
+        "p95_ms": 498.5067001543939,
+        "min_ms": 177.55710007622838,
+        "max_ms": 671.4292000979185
+      },
+      "submit_ms": {
+        "median_ms": 175.7003499660641,
+        "p95_ms": 332.6475000940263,
+        "min_ms": 137.2402000706643,
+        "max_ms": 553.3776001539081
+      },
+      "dispatch_ms": {
+        "median_ms": 152.00000000186265,
+        "p95_ms": 309.0782000217587,
+        "min_ms": 119.98310009948909,
+        "max_ms": 502.2890002001077
+      },
+      "before_dispatch_ms": {
+        "median_ms": 0.27365004643797874,
+        "p95_ms": 0.3667999990284443,
+        "min_ms": 0.2210000529885292,
+        "max_ms": 0.6136000156402588
+      },
+      "after_dispatch_ms": {
+        "median_ms": 20.624350057914853,
+        "p95_ms": 50.77289999462664,
+        "min_ms": 14.894700143486261,
+        "max_ms": 100.15160008333623
+      },
+      "project_identity": {
+        "median_ms": 68.62720008939505,
+        "p95_ms": 230.77669995836914,
+        "min_ms": 60.27739983983338,
+        "max_ms": 324.93650005199015
+      },
+      "enqueue": {
+        "median_ms": 75.34590002615005,
+        "p95_ms": 168.3481999207288,
+        "min_ms": 47.693599946796894,
+        "max_ms": 219.35049979947507
+      },
+      "fsync": {
+        "median_ms": 62.13495007250458,
+        "p95_ms": 99.09910010173917,
+        "min_ms": 39.09370000474155,
+        "max_ms": 192.52209994010627
+      }
+    },
+    "deferred": {
+      "command_ms": {
+        "median_ms": 197.5171499652788,
+        "p95_ms": 383.2123000174761,
+        "min_ms": 159.43739982321858,
+        "max_ms": 503.3404999412596
+      },
+      "submit_ms": {
+        "median_ms": 149.59489996545017,
+        "p95_ms": 283.2957999780774,
+        "min_ms": 117.40599991753697,
+        "max_ms": 464.145100209862
+      },
+      "dispatch_ms": {
+        "median_ms": 149.21565004624426,
+        "p95_ms": 282.9020000062883,
+        "min_ms": 116.99000000953674,
+        "max_ms": 463.822899851948
+      },
+      "before_dispatch_ms": {
+        "median_ms": 0.25904993526637554,
+        "p95_ms": 0.579299870878458,
+        "min_ms": 0.22430019453167915,
+        "max_ms": 0.6383000873029232
+      },
+      "after_dispatch_ms": {
+        "median_ms": 0.12540013995021582,
+        "p95_ms": 0.6757001392543316,
+        "min_ms": 0.09560002945363522,
+        "max_ms": 0.9305998682975769
+      },
+      "project_identity": {
+        "median_ms": 67.21945002209395,
+        "p95_ms": 230.11790006421506,
+        "min_ms": 61.47559988312423,
+        "max_ms": 356.06370004825294
+      },
+      "enqueue": {
+        "median_ms": 68.53439996484667,
+        "p95_ms": 115.43269990943372,
+        "min_ms": 48.6197997815907,
+        "max_ms": 163.5128001216799
+      },
+      "fsync": {
+        "median_ms": 59.219200047664344,
+        "p95_ms": 104.44070002995431,
+        "min_ms": 40.87859997525811,
+        "max_ms": 132.079100003466
+      }
+    }
+  },
+  "all_terminal": true,
+  "private_archive_sha256": "7dec26c2b988b9b64bcadfa811894030ae5b45358e9cd7a79dee2784e279621f",
+  "report": "docs/validation/2026-11-08/replay-response-diagnostic-v1.md",
+  "next_action": "Implement response-completion replay notification with direct-submit, failed-write, cancellation, and shutdown coverage. Preserve restart and timer recovery; validate actual installed command behavior before promotion."
+}
