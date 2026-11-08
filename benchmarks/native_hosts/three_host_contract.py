@@ -222,12 +222,31 @@ def _forget_inspected_before(
     raise ValueError("Forget lacks prior inspection of the same fact and version")
 
 
+def _review_layout_binding(review: Mapping[str, Any]) -> tuple[str, str]:
+    format_name = review.get("format")
+    if format_name == "json_fragments_v1":
+        return format_name, _forget_digest(review.get("snapshot_digest"))
+    if format_name == "json_fragments_v2":
+        return format_name, _forget_digest(review.get("layout_digest"))
+    raise ValueError("Unknown review fragment format")
+
+
+def _require_review_layout(binding: tuple[str, str], fragments: list) -> None:
+    if binding[0] == "json_fragments_v2":
+        encoded = json.dumps(
+            {"format": binding[0], "fragments": fragments},
+            ensure_ascii=True, separators=(",", ":"), allow_nan=False,
+        )
+        if hashlib.sha256(encoded.encode("utf-8")).hexdigest() != binding[1]:
+            raise ValueError("Review layout digest does not match its fragments")
+
+
 def _completed_batch_inspections(calls: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
     """Accept only complete, independently reconstructed batches before mutation."""
     completed = []
     fragments = []
     expected_cursor = None
-    identities = digest = total = None
+    identities = digest = total = binding = None
     previous = None
     for call in calls:
         if call.get("name") != "mnemos_inspect_batch":
@@ -251,17 +270,19 @@ def _completed_batch_inspections(calls: Sequence[Mapping[str, Any]]) -> list[Map
             or page["schema_version"] != 1
             or page.get("status") != "inspection"
             or not isinstance(review, Mapping)
-            or review.get("format") != "json_fragments_v1"
         ):
             raise ValueError("Unknown batch inspection format")
         page_digest = _forget_digest(review.get("snapshot_digest"))
+        page_binding = _review_layout_binding(review)
         page_total = _review_integer(review.get("total_fragments"))
         if not fragments:
             identities, digest, total = ids, page_digest, page_total
+            binding = page_binding
         if (
             ids != identities
             or page_digest != digest
             or page_total != total
+            or page_binding != binding
             or total == 0
             or args.get("cursor") != expected_cursor
         ):
@@ -281,10 +302,11 @@ def _completed_batch_inspections(calls: Sequence[Mapping[str, Any]]) -> list[Map
         last = len(fragments) == total
         if page.get("complete") is not last or review.get("last_page") is not last:
             raise ValueError("Batch inspection completion marker is inconsistent")
-        expected_cursor = None if last else f"{digest}:{len(fragments)}"
+        expected_cursor = None if last else f"{binding[1]}:{len(fragments)}"
         if review.get("next_cursor") != expected_cursor:
             raise ValueError("Batch inspection cursor is inconsistent")
         if last:
+            _require_review_layout(binding, fragments)
             snapshot = _review_snapshot(fragments)
             encoded = json.dumps(
                 snapshot, ensure_ascii=True, separators=(",", ":"), allow_nan=False
@@ -428,6 +450,7 @@ def _complete_native_review(
         raise ValueError("Forget lacks one matching complete native preview")
     fragments: list[Mapping[str, Any]] = []
     snapshot_digest: str | None = None
+    binding: tuple[str, str] | None = None
     total: int | None = None
     expected_cursor: str | None = None
     first_args = calls[matching[0][0]]["args"]
@@ -441,7 +464,6 @@ def _complete_native_review(
         review = page.get("review")
         if (
             not isinstance(review, Mapping)
-            or review.get("format") != "json_fragments_v1"
             or page.get("status") != "preview"
             or page.get("complete") is not True
             or page.get("preview_digest") != digest
@@ -453,10 +475,15 @@ def _complete_native_review(
         ):
             raise ValueError("Forget review page is unbound or inconsistent")
         page_digest = _forget_digest(review.get("snapshot_digest"))
+        page_binding = _review_layout_binding(review)
         page_total = _review_integer(review.get("total_fragments"))
         if snapshot_digest is None:
             snapshot_digest, total = page_digest, page_total
-        if page_digest != snapshot_digest or page_total != total or page_total == 0:
+            binding = page_binding
+        if (
+            page_digest != snapshot_digest or page_total != total
+            or page_total == 0 or page_binding != binding
+        ):
             raise ValueError("Forget review changed its snapshot or fragment count")
         if _review_integer(review.get("first_fragment")) != len(fragments):
             raise ValueError("Forget review page sequence has a gap or overlap")
@@ -473,7 +500,7 @@ def _complete_native_review(
         last = len(fragments) == page_total
         if review.get("last_page") is not last:
             raise ValueError("Forget review last-page marker is inconsistent")
-        expected_cursor = None if last else f"{snapshot_digest}:{len(fragments)}"
+        expected_cursor = None if last else f"{binding[1]}:{len(fragments)}"
         if review.get("next_cursor") != expected_cursor or last != (number == len(matching) - 1):
             raise ValueError("Forget review is incomplete or has trailing pages")
         if not last and (
@@ -483,6 +510,7 @@ def _complete_native_review(
             raise ValueError("Forget review exposes apply preconditions before the last page")
     if total != len(fragments) or expected_cursor is not None:
         raise ValueError("Forget review is incomplete")
+    _require_review_layout(binding, fragments)
     snapshot = _review_snapshot(fragments)
     encoded = json.dumps(snapshot, ensure_ascii=True, separators=(",", ":"), allow_nan=False)
     if hashlib.sha256(encoded.encode("utf-8")).hexdigest() != snapshot_digest:
