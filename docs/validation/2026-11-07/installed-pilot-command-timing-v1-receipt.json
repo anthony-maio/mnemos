@@ -1,0 +1,512 @@
+{
+  "status": "completed_and_audited",
+  "protocol_commit": "ad8442e68a21ee23a08444aa38e36fdbfb8410f6",
+  "artifacts": {
+    "baseline": {
+      "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+      "wheel_sha256": "07c5b424bc7731cacbebb45f44709b3f19509c2cde3150a6451c92d12b27e6ae"
+    },
+    "candidate": {
+      "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+      "wheel_sha256": "07c5b424bc7731cacbebb45f44709b3f19509c2cde3150a6451c92d12b27e6ae"
+    }
+  },
+  "native_binary_sha256": "ec52c79a0ae613ae336836b3e82ddf853a601a0de3f7cd3aa0047318d06ee12b",
+  "summary": {
+    "recall": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 732.9777500126511,
+        "p95_ms": 1098.8414549734437,
+        "maximum_ms": 1524.7337999753654,
+        "limit_ms": 500,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 744.6567500010133,
+        "p95_ms": 1508.408585062716,
+        "maximum_ms": 1540.6939000822604,
+        "limit_ms": 500,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": 9.677549940533936,
+        "candidate_faster_pairs": 22,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      }
+    },
+    "Stop": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 859.54945,
+        "p95_ms": 1359.044725,
+        "maximum_ms": 1691.5957,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 206.00029999999998,
+        "p95_ms": 360.88304999999997,
+        "maximum_ms": 977.963,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -652.4993000000001,
+        "candidate_faster_pairs": 49,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      },
+      "components": {
+        "baseline": {
+          "transaction_component_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 3.002,
+            "p95_ms": 3.7894199999999993,
+            "maximum_ms": 4.3616
+          },
+          "dispatch_to_transaction_return_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 796.85455,
+            "p95_ms": 1297.3601999999998,
+            "maximum_ms": 1595.15
+          }
+        },
+        "candidate": {
+          "transaction_component_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 2.9469000000000003,
+            "p95_ms": 3.5244199999999997,
+            "maximum_ms": 3.7373
+          },
+          "dispatch_to_transaction_return_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 164.96114999999998,
+            "p95_ms": 289.9094799999999,
+            "maximum_ms": 327.0327
+          }
+        }
+      }
+    },
+    "UserPromptSubmit": {
+      "baseline": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 1821.95165,
+        "p95_ms": 2992.08558,
+        "maximum_ms": 3188.5336,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "candidate": {
+        "attempted": 50,
+        "failed": 0,
+        "median_ms": 1334.8071,
+        "p95_ms": 2036.3381249999998,
+        "maximum_ms": 2287.844,
+        "limit_ms": 100,
+        "gate": "FAIL"
+      },
+      "paired": {
+        "pairs": 50,
+        "median_delta_ms": -424.3868,
+        "candidate_faster_pairs": 47,
+        "decoded_mismatches": 0,
+        "full_context_mismatches": 0
+      },
+      "components": {
+        "baseline": {
+          "transaction_component_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 2.8894,
+            "p95_ms": 3.424025,
+            "maximum_ms": 4.5465
+          },
+          "dispatch_to_transaction_return_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 944.47545,
+            "p95_ms": 1678.2024849999998,
+            "maximum_ms": 2389.2404
+          }
+        },
+        "candidate": {
+          "transaction_component_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 2.86485,
+            "p95_ms": 3.4289549999999998,
+            "maximum_ms": 4.6507
+          },
+          "dispatch_to_transaction_return_ms": {
+            "attempted": 50,
+            "failed": 0,
+            "median_ms": 443.51099999999997,
+            "p95_ms": 817.1030149999998,
+            "maximum_ms": 1245.6861
+          }
+        }
+      }
+    },
+    "arm_labels": {
+      "baseline": "installed_python",
+      "candidate": "experimental_native"
+    },
+    "outer_shell_and_native_host_included": false,
+    "early_durable_host_acknowledgment": false,
+    "blocks": {
+      "baseline-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 748.8068998791277,
+          "p95_ms": 1339.2367800232007,
+          "maximum_ms": 1524.7337999753654,
+          "limit_ms": 500,
+          "gate": "FAIL"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 847.8804,
+          "p95_ms": 1302.7108599999995,
+          "maximum_ms": 1371.9802,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 1682.9465,
+          "p95_ms": 2452.26176,
+          "maximum_ms": 2497.0953,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-0": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 755.925300065428,
+          "p95_ms": 1398.5707198735308,
+          "maximum_ms": 1540.6939000822604,
+          "limit_ms": 500,
+          "gate": "FAIL"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 202.8395,
+          "p95_ms": 332.0439799999999,
+          "maximum_ms": 977.963,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 1332.9161,
+          "p95_ms": 2088.88456,
+          "maximum_ms": 2287.844,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "candidate-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 737.0655001141131,
+          "p95_ms": 1354.088320117442,
+          "maximum_ms": 1527.9353000223637,
+          "limit_ms": 500,
+          "gate": "FAIL"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 207.4026,
+          "p95_ms": 361.40229999999997,
+          "maximum_ms": 362.5033,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 1336.6981,
+          "p95_ms": 1847.3614199999993,
+          "maximum_ms": 2046.2955,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      },
+      "baseline-1": {
+        "recall": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 728.138200007379,
+          "p95_ms": 943.1569398846472,
+          "maximum_ms": 1193.4873000718653,
+          "limit_ms": 500,
+          "gate": "FAIL"
+        },
+        "Stop": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 867.838,
+          "p95_ms": 1503.9567399999987,
+          "maximum_ms": 1691.5957,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "UserPromptSubmit": {
+          "attempted": 25,
+          "failed": 0,
+          "median_ms": 1912.9911,
+          "p95_ms": 3101.6661799999997,
+          "maximum_ms": 3188.5336,
+          "limit_ms": 100,
+          "gate": "FAIL"
+        },
+        "restart_capture_failures": 0
+      }
+    },
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "native_host_run": false,
+    "pilot_days": 0
+  },
+  "audit": {
+    "status": "verified",
+    "observations": 320,
+    "timed_observations": 300,
+    "pairs": 160,
+    "all_pairs_equal": true,
+    "durable_captures": 208,
+    "persistence_spans_correlated": 208,
+    "python_commands_verified": 104,
+    "pending_outbox_entries_at_completion": 0,
+    "watched_files_unchanged": true,
+    "watched_files_count": 14,
+    "outer_shell_and_native_host_included": false,
+    "early_durable_host_acknowledgment": false,
+    "component_metrics_substitute_for_complete_gate": false,
+    "blocks": [
+      {
+        "block": "baseline-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 142,
+        "package_files": 96,
+        "command_transport": "python",
+        "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+        "evidence_index_present": true,
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 0,
+        "python_command_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "148b0406e4923e3d92886628edb0eb5ce16425267384ec5096d351932e77f1c1",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-0",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 142,
+        "package_files": 96,
+        "command_transport": "native",
+        "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+        "evidence_index_present": true,
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 0,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "435b37161dde491b61d1db3aa6ae4071a03e97333d74183604f426bb2b581ac2",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "candidate-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 142,
+        "package_files": 96,
+        "command_transport": "native",
+        "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+        "evidence_index_present": true,
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 52,
+        "python_command_checks": 0,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "5c9af10af16ecad58525f2e3bf2d514c786fa0c7a0c886ae8a95c4ef0a8178c5",
+        "accepted_snapshot_unchanged": true
+      },
+      {
+        "block": "baseline-1",
+        "observations": 80,
+        "timed": 75,
+        "captures": 52,
+        "bindings": 142,
+        "package_files": 96,
+        "command_transport": "python",
+        "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+        "evidence_index_present": true,
+        "resident_route_failures": 0,
+        "worker_dispatch_checks": 0,
+        "python_command_checks": 52,
+        "model_assets": 17,
+        "jobs": {
+          "completed": 52
+        },
+        "database_sha256": "8e04609166de8871812ec87472f93214ca712e1e420c69ff1f48d9a962602f2c",
+        "accepted_snapshot_unchanged": true
+      }
+    ],
+    "audit_revision": 1,
+    "wrapper_preflight_compiled_files": 5,
+    "wrapper_preparation_counter_erratum": "The frozen preparation says four compiled wrappers; its compile loop covered all five generated Python files. No measurement or wrapper changed.",
+    "source_commit": "ad8442e68a21ee23a08444aa38e36fdbfb8410f6",
+    "native_binary_sha256": "ec52c79a0ae613ae336836b3e82ddf853a601a0de3f7cd3aa0047318d06ee12b",
+    "worker_dispatches_verified": 104,
+    "native_resident_route_failures": 0,
+    "timed_native_resident_route_failures": 0,
+    "native_resident_route_gate": "PASS",
+    "prior_native_comparisons_preserved": true,
+    "private_profile_policy_pairs": 12,
+    "complete_hook_measurement": true,
+    "native_host_acceptance": false,
+    "pilot_days": 0,
+    "published": false,
+    "measured_processes_absent": true,
+    "process_ids_checked": 234,
+    "numeric_process_ids_absent": 234,
+    "reused_pids": [],
+    "process_identity_check_at": "2026-11-08T00:30:02.305941+00:00",
+    "seed_unchanged": true,
+    "audit_model_calls": 0,
+    "settings_values_recorded": false
+  },
+  "wall_seconds": 811.9785288998391,
+  "archive_sha256": "00b8db784fd242500b561611e12b1c5318beb2b78ea168e8cc2485476425c6c3",
+  "archive_members": 242,
+  "archive_logical_files": 356,
+  "archive_bytes": 336270592,
+  "content_addressed_archive": true,
+  "native_host_run": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "published": false,
+  "all_owned_processes_stopped": true,
+  "startup_measurements": [
+    {
+      "block": "baseline-0",
+      "processes": [
+        {
+          "kind": "service",
+          "start_ms": 3084.2335999477655,
+          "ownership_check_ms": 1284.2092998325825
+        },
+        {
+          "kind": "service",
+          "start_ms": 2909.514599945396,
+          "ownership_check_ms": 1199.2738000117242
+        }
+      ]
+    },
+    {
+      "block": "candidate-0",
+      "processes": [
+        {
+          "kind": "service",
+          "start_ms": 3176.258600084111,
+          "ownership_check_ms": 1203.6297000013292
+        },
+        {
+          "kind": "worker",
+          "start_ms": 1903.432099847123,
+          "ownership_check_ms": 1224.6746998280287
+        },
+        {
+          "kind": "service",
+          "start_ms": 3144.358899910003,
+          "ownership_check_ms": 1176.8869999796152
+        }
+      ]
+    },
+    {
+      "block": "candidate-1",
+      "processes": [
+        {
+          "kind": "service",
+          "start_ms": 2886.331800138578,
+          "ownership_check_ms": 1192.4221001099795
+        },
+        {
+          "kind": "worker",
+          "start_ms": 1909.572099801153,
+          "ownership_check_ms": 1078.1709998846054
+        },
+        {
+          "kind": "service",
+          "start_ms": 3151.7908999230713,
+          "ownership_check_ms": 1314.311500173062
+        }
+      ]
+    },
+    {
+      "block": "baseline-1",
+      "processes": [
+        {
+          "kind": "service",
+          "start_ms": 3458.618799922988,
+          "ownership_check_ms": 1088.3923000656068
+        },
+        {
+          "kind": "service",
+          "start_ms": 5998.332099989057,
+          "ownership_check_ms": 2086.5402999334037
+        }
+      ]
+    }
+  ],
+  "documentation_checks": {
+    "passed": 12,
+    "duration_seconds": 0.85,
+    "canonical_website_commit": "08d393eef4cbab8ec77731094cbf5434e6e913df",
+    "log_sha256": "4793d84e609f4d584ba7854c654a28d0e53ad3ca67968d73f4d73a868c66f2ae",
+    "junit_sha256": "2633bd83804b229683119be386d9344f62bb0051aa1d44f3ffae3d15d9714a48"
+  }
+}

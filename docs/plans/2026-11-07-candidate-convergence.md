@@ -165,9 +165,11 @@ or semantic-quality obligations. It is not the default action of this plan.
    pilot drafts and explicit MCP lifecycle are complete. Normal hook review and
    full-configuration execution remain pending.
 4. Execute the single bounded end-to-end quality increment and the prospective
-   timing protocol. The quality increment is complete and failed; prospective
-   installed-pilot timing remains open. Do not launch unrelated tuning
-   experiments in parallel.
+   timing protocol. Both increments are complete. The quality comparison failed;
+   the [installed pilot timing result](../validation/2026-11-07/installed-pilot-command-timing-v1.md)
+   records complete-command and recall gates separately from internal persistence.
+   Keep the failed entry checks and prior results intact. Do not launch unrelated
+   tuning experiments.
 5. If entry passes, request activation on concrete reviewed files and observe
    actual use. If entry fails, present the remaining failure and the scoped
    alternative above. Keep all unmet goal requirements explicit.
