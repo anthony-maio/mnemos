@@ -552,7 +552,10 @@ def _run_claude(config, source, **kwargs):
     )
 
 
-def test_claude_denies_every_installed_tool_outside_the_phase(config, tmp_path, monkeypatch):
+@pytest.mark.parametrize("inherited_nonblocking", [None, "true", "false"])
+def test_claude_denies_every_installed_tool_outside_the_phase(
+    config, tmp_path, monkeypatch, inherited_nonblocking
+):
     import asyncio
 
     from mnemos.mcp_server import _create_service_mcp_server
@@ -565,8 +568,13 @@ def test_claude_denies_every_installed_tool_outside_the_phase(config, tmp_path, 
     }
     allowed = {phases.CLAUDE_PREFIX + "mnemos_retrieve"}
     assert phases.CLAUDE_PREFIX + "mnemos_reviews" in catalog - allowed
+    if inherited_nonblocking is None:
+        monkeypatch.delenv("MCP_CONNECTION_NONBLOCKING", raising=False)
+    else:
+        monkeypatch.setenv("MCP_CONNECTION_NONBLOCKING", inherited_nonblocking)
 
     def launch(command, **kwargs):
+        assert kwargs["env"]["MCP_CONNECTION_NONBLOCKING"] == "false"
         assert command[command.index("--tools") + 1] == ""
         assert set(command[command.index("--allowed-tools") + 1].split(",")) == allowed
         denied = set(command[command.index("--disallowed-tools") + 1].split(","))

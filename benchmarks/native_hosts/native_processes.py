@@ -741,6 +741,9 @@ def run_claude_phase(
             "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoint),
             "DISABLE_AUTOUPDATER": "1",
             "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+            # A phase requires its MCP catalog before the first model request.
+            # Host defaults can otherwise start inference with pending servers.
+            "MCP_CONNECTION_NONBLOCKING": "false",
             "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
         }
     )
