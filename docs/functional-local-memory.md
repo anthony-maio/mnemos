@@ -524,6 +524,22 @@ the historical `exclude_existing` argument remains accepted but no longer
 preserves adjacency across a derived rebuild. Persisted builder version 4
 invalidates older derived links while preserving facts and evidence.
 
+### Experimental sleep settings
+
+The experimental `SleepDaemon` configuration accepts every `SleepConfig` field
+through `[sleep]` in the global or project TOML file. Environment overrides use
+`MNEMOS_SLEEP_` plus the uppercase field name, including
+`MNEMOS_SLEEP_EXTRACTION_MODE`. Project settings override global settings;
+nonempty environment values override both. Invalid values fail validation.
+Saved prompt strings preserve newlines, tabs, quotes and backslashes.
+
+For example, `MNEMOS_SLEEP_MIN_EPISODES_BEFORE_CONSOLIDATION=5` changes the
+episode threshold, while `MNEMOS_SLEEP_EXTRACTION_MODE=source_bound` selects
+the source-bound mode. Setting sleep options does not enable the sleep module.
+Experimental modules remain disabled by default; judged extraction still
+requires a configured judgment provider. These controls do not establish an
+extraction-quality benefit or change a queued job into a completed fact.
+
 ## Backups, restore, and reindex
 
 `mnemos backup <new-archive.zip>` takes a consistent snapshot through the owning service. It uses SQLite's backup API, includes the scope registry and a hashed manifest, and runs integrity checks. `mnemos restore <archive.zip> <new-database.sqlite>` restores to a new destination and merges current suppression records so an old snapshot does not silently resurrect a forgotten fact. Restore does not activate the new database or replace the registry. Keep the original until the restored copy passes integrity and identity checks.
