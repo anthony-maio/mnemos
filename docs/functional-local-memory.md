@@ -281,6 +281,16 @@ The memory inspector and scoped list still show stored captured copies.
 Excluding a copy from ordinary recall does not delete it or satisfy a forget
 request. Source retention, revisions, jobs, and replay suppression are unchanged.
 
+Related-forget previews label each target and candidate with `record_kind`
+(`memory` or `captured_evidence`) and `assertion_status`. The captured-evidence
+label follows capture provenance even if imported metadata claims otherwise.
+`exact_assertion` describes text overlap; it does not establish that a captured
+statement is an accepted memory or true. These labels participate in the
+preview digest, so a concurrent classification change requires a fresh review.
+Both record kinds retain their IDs, versions, content, source dependencies and
+explicit selection requirements. A label does not authorize deletion or replace
+inspection of a selected record.
+
 Corrections use a stable fact ID and an expected version:
 
 ```text

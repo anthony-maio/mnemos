@@ -44,6 +44,7 @@ from ..types import (
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from ..source_review import ReviewResolutionReference, SourceReviewReference
 from ..memory_safety import MemoryWriteFirewall
+from ..retrieval import assertion_status
 from ..errors import (
     EventIdentityConflict,
     VersionConflict,
@@ -3837,6 +3838,12 @@ class SQLiteStore(MemoryStore):
                     "version": chunk.version,
                     "content": chunk.content,
                     "match_type": "exact_assertion" if matches else "similarity_candidate",
+                    "record_kind": (
+                        "captured_evidence"
+                        if chunk.metadata.get("source") == "captured_passthrough"
+                        else "memory"
+                    ),
+                    "assertion_status": assertion_status(chunk),
                     "matched_assertions": matches,
                     "similarity": candidate_score,
                     "embedding_digest": vector_digest(chunk.embedding),
@@ -3991,6 +3998,12 @@ class SQLiteStore(MemoryStore):
                 "fact_id": target.id,
                 "version": target.version,
                 "content": normalize_memory_text(target.content),
+                "record_kind": (
+                    "captured_evidence"
+                    if target.metadata.get("source") == "captured_passthrough"
+                    else "memory"
+                ),
+                "assertion_status": assertion_status(target),
                 "embedding_digest": vector_digest(target.embedding),
                 "source_event_ids": target_source_event_ids,
                 "job_ids": target_job_ids,
@@ -4008,6 +4021,8 @@ class SQLiteStore(MemoryStore):
                     "version": item["version"],
                     "content": normalize_memory_text(item["content"]),
                     "match_type": item["match_type"],
+                    "record_kind": item["record_kind"],
+                    "assertion_status": item["assertion_status"],
                     "similarity": item["similarity"],
                     "embedding_digest": item["embedding_digest"],
                     "source_event_ids": item["source_event_ids"],
@@ -4039,6 +4054,12 @@ class SQLiteStore(MemoryStore):
         ).hexdigest()
         return {
             "matching_policy": "exact_assertion_and_advisory_similarity",
+            "matching_guidance": (
+                "Match type describes text overlap or similarity, not assertion status. "
+                "Captured evidence is unverified conversation and may be outdated. "
+                "Asserted is a stored claim, not an independent truth judgment. "
+                "Every selected record still requires explicit source review."
+            ),
             "similarity_search": similarity_search,
             "scope": {
                 "user_profile_id": user_profile_id,
@@ -4049,6 +4070,8 @@ class SQLiteStore(MemoryStore):
                 "version": target.version,
                 "content": target.content,
                 "current_assertion": target.content,
+                "record_kind": digest_state["target"]["record_kind"],
+                "assertion_status": digest_state["target"]["assertion_status"],
                 "historical_assertions": [item.content for item in revisions],
                 "source_event_ids": target_source_event_ids,
                 "job_ids": target_job_ids,
