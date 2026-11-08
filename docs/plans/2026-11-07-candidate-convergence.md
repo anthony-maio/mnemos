@@ -245,3 +245,13 @@ abstention or temporal-correctness claim follows for those conditions. The singl
 run and corrected read-only numeric audit are archived. The original benchmark
 and failed gates remain unchanged; this does not reopen the closed f5 tuning
 experiments or authorize publication or pilot activation.
+
+The [runtime coverage check](../validation/2026-11-07/legacy-platform-v1.md)
+adds Windows 3.10/3.11 and Debian/WSL 3.10-3.12 evidence. It finds a plugin
+interpreter-selection failure on both Windows versions. The separate source
+repair at `a229d8fd` passes 349 tests in each environment; the unchanged memory
+wheel passes 41 installed regressions in each. Original failures and dependency
+setup corrections are preserved. The source repair has an exact review patch
+and remains outside the frozen candidates and canonical delivery. The functional
+plugin has a similar bare-command branch that needs its own scoped follow-up.
+Native application acceptance, hosted CI, publication and pilot use remain open.

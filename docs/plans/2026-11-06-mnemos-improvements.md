@@ -921,3 +921,14 @@ No historical archive is removed or rewritten.
   credit. A read-only float32 audit correction preserves the original audit and
   all raw results. This completes the bounded legacy development comparison;
   fresh semantic, native, platform, release and actual pilot obligations remain.
+
+- The [legacy runtime matrix](../validation/2026-11-07/legacy-platform-v1.md)
+  covers five new Windows and Debian/WSL environments. All installed storage
+  and recency checks pass, but the original source's plugin roundtrip fails on
+  Windows 3.10 and 3.11 because a bare command selects the base interpreter.
+  The separate wrapper repair at `a229d8fd` passes all 349 source tests in each
+  environment and preserves the memory wheel. Exact patch reconstruction and
+  dependency/source audits pass. The original failures, four pre-test setup
+  failures and intermediate assertions remain recorded. Functional-plugin
+  integration, native applications, hosted CI, publication and pilot use remain
+  open; this does not replace earlier benchmark or acceptance evidence.
