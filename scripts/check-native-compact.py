@@ -62,7 +62,10 @@ class FixtureEmbedding(EmbeddingProvider):
 
 
 def snapshot(service: MnemosService) -> list[dict[str, Any]]:
-    store = service._dispatcher.engine.store
+    dispatcher = service._dispatcher
+    if dispatcher is None:
+        raise RuntimeError("Cannot snapshot a service without a dispatcher")
+    store = dispatcher.engine.store
     return [
         {
             "id": chunk.id,
@@ -177,13 +180,17 @@ def prepare(root: Path) -> tuple[MnemosService, native.PhaseEnvironment, dict[st
         )
         return service, phase, expected
     except BaseException:
-        port = service.descriptor["port"]
+        descriptor = service.descriptor
+        port = descriptor["port"] if descriptor is not None else None
         service.stop()
-        with socket.socket() as connection:
-            save(
-                root / "prepare-cleanup.json",
-                {"port": port, "closed": connection.connect_ex(("127.0.0.1", port)) != 0},
-            )
+        if port is None:
+            save(root / "prepare-cleanup.json", {"port": None, "closed": None})
+        else:
+            with socket.socket() as connection:
+                save(
+                    root / "prepare-cleanup.json",
+                    {"port": port, "closed": connection.connect_ex(("127.0.0.1", port)) != 0},
+                )
         raise
 
 
@@ -322,7 +329,10 @@ def main(args: argparse.Namespace) -> None:
     port = None
     try:
         service, phase, expected = prepare(root)
-        port = service.descriptor["port"]
+        descriptor = service.descriptor
+        if descriptor is None:
+            raise RuntimeError("Prepared service has no runtime descriptor")
+        port = descriptor["port"]
         report["service_port"] = port
         origin = subprocess.check_output(
             [sys.executable, "-I", "-c", "import mnemos; print(mnemos.__file__)"],

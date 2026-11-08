@@ -66,9 +66,12 @@ def main() -> None:
     if versions != config["versions"]:
         raise ValueError("QA dependency versions differ from the frozen configuration")
     for name, expected in config["model_files"].items():
+        digest = hashlib.sha256()
         with (model_root / name).open("rb") as stream:
-            if hashlib.file_digest(stream, "sha256").hexdigest() != expected:
-                raise ValueError("QA model asset differs: " + name)
+            while block := stream.read(1024 * 1024):
+                digest.update(block)
+        if digest.hexdigest() != expected:
+            raise ValueError("QA model asset differs: " + name)
     control: dict[str, Any] = {
         "status": "loading",
         "pid": os.getpid(),
