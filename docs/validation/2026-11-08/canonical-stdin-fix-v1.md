@@ -9,3 +9,5 @@ The isolated capture candidate additionally passed 165 installed checks and six 
 The copied backend comparison retains both failed 100 ms results: JSON command p95 690.03 ms and SQLite 476.37 ms. JSON remains canonical; SQLite and queued worker changes have not been integrated here. All historical failures and original gates remain intact.
 
 This is local preparation only. No public branch, release, hosted page, live pilot configuration or memory database was changed. Quality, performance, fresh acceptance and actual daily-use obligations remain open.
+
+Follow-up: the [canonical package built from 5805c2f1](canonical-stdin-package-v1.md) passed 102 selected installed checks with source parity verified. That artifact now has its own validation; the separate experimental v5 wheel remains a different build. Publication, timing, quality and pilot requirements remain open.
