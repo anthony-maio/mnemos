@@ -1,0 +1,253 @@
+{
+  "status": "development_quality_gates_failed",
+  "report": "docs/validation/2026-11-08/qualified-support-execution-v1.md",
+  "control": {
+    "status": "screen_completed",
+    "completion_requests": 201,
+    "arms": 72,
+    "operational_failures": 0,
+    "semantic_attempts": 200,
+    "model_unloaded": true,
+    "stop_exit": 0,
+    "server_exit": 1,
+    "process_absent": true,
+    "port_closed": true,
+    "native_absent": true,
+    "native_port_closed": true,
+    "bindings_unchanged": true,
+    "prepared_unchanged": true
+  },
+  "tokenizer_control": {
+    "status": "passed",
+    "completion_requests": 0,
+    "requests": 633,
+    "min_tokens": 207,
+    "max_tokens": 759,
+    "model_unloaded": true,
+    "stop_exit": 0,
+    "server_exit": 1,
+    "process_absent": true,
+    "port_closed": true,
+    "native_absent": true,
+    "native_port_closed": true,
+    "bindings_unchanged": true,
+    "prepared_unchanged": true
+  },
+  "metrics": {
+    "baseline": {
+      "questions": 24,
+      "hits": 11,
+      "expected": 12,
+      "recall": 0.9166666666666666,
+      "critical_retention": 0.9166666666666666,
+      "selected": 15,
+      "unsupported": 4,
+      "precision": 0.7333333333333333,
+      "correct_abstentions": 10,
+      "absent": 12,
+      "abstention_rate": 0.8333333333333334,
+      "operational_failures": 0,
+      "support_only_p95_ms": 858.0183000303805,
+      "failures": [
+        {
+          "key": "s00/q01",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s02/q00",
+          "expected": [
+            "f00"
+          ],
+          "selected": [
+            "f00",
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s03/q00",
+          "expected": [
+            "f00"
+          ],
+          "selected": [],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q00",
+          "expected": [
+            "f00"
+          ],
+          "selected": [
+            "f00",
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q01",
+          "expected": [],
+          "selected": [
+            "f01"
+          ],
+          "status": "assessed"
+        }
+      ]
+    },
+    "qualified_cold": {
+      "questions": 24,
+      "hits": 12,
+      "expected": 12,
+      "recall": 1.0,
+      "critical_retention": 1.0,
+      "selected": 19,
+      "unsupported": 7,
+      "precision": 0.631578947368421,
+      "correct_abstentions": 8,
+      "absent": 12,
+      "abstention_rate": 0.6666666666666666,
+      "operational_failures": 0,
+      "support_only_p95_ms": 1508.054899983108,
+      "failures": [
+        {
+          "key": "s00/q01",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s01/q00",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q00",
+          "expected": [
+            "f00"
+          ],
+          "selected": [
+            "f00",
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q01",
+          "expected": [],
+          "selected": [
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s08/q01",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s09/q01",
+          "expected": [
+            "f02"
+          ],
+          "selected": [
+            "f00",
+            "f01",
+            "f02"
+          ],
+          "status": "assessed"
+        }
+      ]
+    },
+    "qualified_warm": {
+      "questions": 24,
+      "hits": 12,
+      "expected": 12,
+      "recall": 1.0,
+      "critical_retention": 1.0,
+      "selected": 19,
+      "unsupported": 7,
+      "precision": 0.631578947368421,
+      "correct_abstentions": 8,
+      "absent": 12,
+      "abstention_rate": 0.6666666666666666,
+      "operational_failures": 0,
+      "support_only_p95_ms": 489.7774998098612,
+      "failures": [
+        {
+          "key": "s00/q01",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s01/q00",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q00",
+          "expected": [
+            "f00"
+          ],
+          "selected": [
+            "f00",
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s05/q01",
+          "expected": [],
+          "selected": [
+            "f01"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s08/q01",
+          "expected": [],
+          "selected": [
+            "f00"
+          ],
+          "status": "assessed"
+        },
+        {
+          "key": "s09/q01",
+          "expected": [
+            "f02"
+          ],
+          "selected": [
+            "f00",
+            "f01",
+            "f02"
+          ],
+          "status": "assessed"
+        }
+      ]
+    }
+  },
+  "source_qualification": {
+    "assessments": 50,
+    "unique_source_pairs": 25,
+    "false_support": 2,
+    "false_rejection": 0,
+    "unresolved": 0
+  },
+  "archive_sha256": "fa215e5696cf3f6486bb7d5c17fd7b827658b4717e48ad5ad6991bd62c86a9c4"
+}
