@@ -13,3 +13,5 @@ Sdist SHA256: 7d6b4c5e34839970bbd7ec8b2bc2c5d160c5e7e2e1ecf623a4aaa15261549215.
 The verified 25-member evidence archive retains the distributions, copied tests, JUnit, parity records and audit helpers. Archive SHA256: f3bd7786de44a1713a5db18f8e4c08321fedfafe22f923c1cf41653b9fa4e0e6. The adjacent JSON contains the machine-readable receipt. The test session handle was no longer available on recovery; the completed JUnit establishes the test outcome, rather than a recovered shell exit status.
 
 No performance improvement is claimed. A prospective backlog replay comparison remains necessary, and replay throughput does not establish the 100 ms durable-capture requirement. The candidate remains isolated from the canonical runtime and live pilot. The original quality, latency, fresh-acceptance and daily-use gates remain open.
+
+Follow-up: the [bounded backlog comparison](replay-batch-benchmark-v2.md) measured lower replay times in all three pairs while preserving event and job identity. It does not establish capture latency.
