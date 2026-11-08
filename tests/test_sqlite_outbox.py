@@ -44,6 +44,24 @@ def test_duplicate_conflict_and_reopen(queue):
     assert queue.pending() == [] and queue.acknowledge(first) is False
 
 
+def test_reopened_reader_observes_committed_backlog_during_another_write(queue):
+    queue.append({"content": "committed"}, event_id="one")
+    queue.close()
+    writer = sqlite3.connect(queue.path, isolation_level=None)
+    reader = SQLiteOutbox(queue.path)
+    try:
+        writer.execute("BEGIN IMMEDIATE")
+        writer.execute("DELETE FROM outbox_entries")
+        # Reopening for inspection must not acquire a schema write lock, and
+        # must not expose the other connection's uncommitted acknowledgment.
+        assert [row["event_id"] for row in reader.pending()] == ["one"]
+        writer.execute("COMMIT")
+        assert reader.pending() == []
+    finally:
+        writer.close()
+        reader.close()
+
+
 def test_full_sync_wal_is_required(queue):
     queue.append({"content": "record"}, event_id="one")
     connection = queue._connection

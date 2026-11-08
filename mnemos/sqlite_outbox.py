@@ -64,14 +64,17 @@ class SQLiteOutbox(Outbox):
             connection.execute("PRAGMA synchronous=FULL")
             if connection.execute("PRAGMA synchronous").fetchone()[0] != 2:
                 raise ValueError("SQLite outbox requires full synchronous commits")
-            connection.execute("BEGIN IMMEDIATE")
-            connection.execute(
-                "CREATE TABLE IF NOT EXISTS outbox_entries ("
-                "event_id TEXT PRIMARY KEY NOT NULL, "
-                "entry_json TEXT NOT NULL)"
-            )
-            connection.execute("PRAGMA user_version=1")
-            connection.execute("COMMIT")
+            # A validated existing schema needs no write transaction. In WAL
+            # mode, inspection can then proceed while another owner writes.
+            if not tables:
+                connection.execute("BEGIN IMMEDIATE")
+                connection.execute(
+                    "CREATE TABLE IF NOT EXISTS outbox_entries ("
+                    "event_id TEXT PRIMARY KEY NOT NULL, "
+                    "entry_json TEXT NOT NULL)"
+                )
+                connection.execute("PRAGMA user_version=1")
+                connection.execute("COMMIT")
             _protect_private_path(self.path)
         except BaseException:
             connection.close()
