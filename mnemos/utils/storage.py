@@ -353,7 +353,8 @@ class SQLiteStore(MemoryStore):
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             access_count INTEGER NOT NULL DEFAULT 0,
-            version INTEGER NOT NULL DEFAULT 1
+            version INTEGER NOT NULL DEFAULT 1,
+            content_updated_at TEXT
         );
     """
 
@@ -443,7 +444,7 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "2"
+    _SCHEMA_VERSION = "3"
     _GRAPH_EDGE_TYPE = "RELATED_TO"
     _SQLITE_VEC_DIM_KEY = "sqlite_vec_dim"
 
@@ -462,7 +463,11 @@ class SQLiteStore(MemoryStore):
         self._conn.execute("PRAGMA journal_mode=WAL;")  # Better concurrent access
         self._conn.execute("PRAGMA synchronous=NORMAL;")  # Lower fsync cost for high-read local use
         self._load_sqlite_vec_extension()
-        self._initialize_schema()
+        try:
+            self._initialize_schema()
+        except BaseException:
+            self._conn.close()
+            raise
 
     def _load_sqlite_vec_extension(self) -> None:
         try:
@@ -489,7 +494,17 @@ class SQLiteStore(MemoryStore):
         self._sqlite_vec_module = sqlite_vec
 
     def _initialize_schema(self) -> None:
+        # Serialize schema inspection and ALTER across independent clients.
+        with self._conn:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._initialize_schema_in_transaction()
+
+    def _initialize_schema_in_transaction(self) -> None:
         self._conn.execute(self._CREATE_TABLE_SQL)
+        columns = {row[1] for row in self._conn.execute("PRAGMA table_info(memory_chunks)")}
+        if "content_updated_at" not in columns:
+            # The legacy activity timestamp cannot recover content revision history.
+            self._conn.execute("ALTER TABLE memory_chunks ADD COLUMN content_updated_at TEXT")
         self._conn.execute(self._CREATE_META_TABLE_SQL)
         self._conn.execute(self._CREATE_EDGES_TABLE_SQL)
         self._conn.execute(self._CREATE_EDGES_SOURCE_INDEX_SQL)
@@ -534,7 +549,6 @@ class SQLiteStore(MemoryStore):
             if self._sqlite_vec_dim is not None:
                 self._ensure_vec_table(self._sqlite_vec_dim)
                 self._rebuild_vec_index()
-        self._conn.commit()
 
     def _meta_value(self, key: str) -> str | None:
         row = self._conn.execute("SELECT value FROM mnemos_meta WHERE key = ?", (key,)).fetchone()
@@ -643,6 +657,7 @@ class SQLiteStore(MemoryStore):
             chunk.updated_at.isoformat(),
             chunk.access_count,
             chunk.version,
+            chunk.content_updated_at.isoformat() if chunk.content_updated_at else None,
         )
 
     def _row_to_chunk(self, row: tuple[Any, ...]) -> MemoryChunk:
@@ -658,6 +673,7 @@ class SQLiteStore(MemoryStore):
             updated_at,
             access_count,
             version,
+            content_updated_at,
         ) = row
 
         embedding = json.loads(embedding_json) if embedding_json else None
@@ -685,6 +701,7 @@ class SQLiteStore(MemoryStore):
             updated_at=_parse_dt(updated_at),
             access_count=access_count,
             version=version,
+            content_updated_at=_parse_dt(content_updated_at) if content_updated_at else None,
         )
 
     def _feedback_event_to_row(self, event: RetrievalFeedbackEvent) -> tuple[Any, ...]:
@@ -735,8 +752,8 @@ class SQLiteStore(MemoryStore):
                 """
                 INSERT INTO memory_chunks
                 (id, content, embedding, metadata, salience, cognitive_state,
-                 created_at, updated_at, access_count, version)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, updated_at, access_count, version, content_updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     content=excluded.content,
                     embedding=excluded.embedding,
@@ -746,7 +763,8 @@ class SQLiteStore(MemoryStore):
                     created_at=excluded.created_at,
                     updated_at=excluded.updated_at,
                     access_count=excluded.access_count,
-                    version=excluded.version
+                    version=excluded.version,
+                    content_updated_at=excluded.content_updated_at
                 """,
                 row,
             )
