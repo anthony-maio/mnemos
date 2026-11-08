@@ -2,11 +2,17 @@
 
 ## Current disposition
 
+The FastEmbed provider comparison is complete against delivery `de45f13b`:
+the provider implementation and default-model function are AST-identical,
+and all 13 entry-point/default tests passed. No provider port is needed. See
+[FastEmbed comparison](local-070-fastembed-comparison-v1.md) for scope and limits.
+Automatic priming, first-run UI and durable-pipeline comparisons remain open.
+
 The remaining chronology input has now been adapted in canonical `7a77e40f`;
 see [benchmark contract repair](canonical-benchmark-contract-v1.md). Direct
 timestamp and ingestion-timing regressions pass, but the old perfect-MRR
 expectation does not transfer to current retrieval. Historical scores remain
-frozen. Older FastEmbed, auto-priming, first-run UI and durable-pipeline commits
+frozen. Older auto-priming, first-run UI and durable-pipeline commits
 still require behavioral comparison; this is not a blanket merge of 0.7.0.
 
 Rechecked November 8 against the original working copy and remote backup. The

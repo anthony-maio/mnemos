@@ -1,0 +1,37 @@
+{
+  "old_head": "5fcc925d5a90a087e5715c2fe6de56fa23a7d3a6",
+  "new_head": "de45f13b92b3bf7a43bd65c9220ec9fe71b154d4",
+  "checks": [
+    {
+      "file": "mnemos/utils/embeddings.py",
+      "symbol": "FastembedProvider",
+      "identical_ast": true
+    },
+    {
+      "file": "mnemos/settings.py",
+      "symbol": "_default_embedding_model",
+      "identical_ast": true
+    },
+    {
+      "file": "mnemos/settings.py",
+      "symbol": "apply_inferred_defaults",
+      "identical_ast": false
+    }
+  ],
+  "files": {
+    "D:\\Development\\mnemos\\mnemos\\mnemos\\utils\\embeddings.py": "96c540f5d94d90fcdcbab96efafbbef09af7b2be2b8b41e2f85d7b6ba61398cc",
+    "D:\\Development\\mnemos\\mnemos\\mnemos\\settings.py": "c53229c9143804c33cf93dca55c6af7e2dbab00e0831e4fa1158c5d0ff9412d8",
+    "D:\\Development\\mnemos\\mnemos\\mnemos\\runtime.py": "a9d9f8d1357bf5577330a39754b664a70e1cb5ee3b419f13fd11d9874be4b5d3",
+    "D:\\Development\\mnemos\\mnemos\\pyproject.toml": "8cbb5c5333abd2508ff9d974b63f635bd0d4afd0f3183eb22b2eb45cb0024220",
+    "D:\\Development\\mnemos-delivery\\mnemos\\utils\\embeddings.py": "6667d2d672e2a28bf18831e08ef9feacf0f61039adbb29fc4fd34b8e69fe7584",
+    "D:\\Development\\mnemos-delivery\\mnemos\\settings.py": "868adc7f4f0752bccde3b899f5356b950d49d44cc5a282fcedd9b167118e5d0d",
+    "D:\\Development\\mnemos-delivery\\mnemos\\runtime.py": "870307eebc5c0fc61bc78a8fbdc908aa9e7c25d6cefb33b213256931ba691331",
+    "D:\\Development\\mnemos-delivery\\pyproject.toml": "669246aed712de21798d69842de716e69d265f641d25272d67031487ad38f0b7"
+  },
+  "entrypoint_tests": {
+    "passed": 13,
+    "junit_sha256": "1e4d504da4672afa96918b2ea5db5fe6125079798ceb7f9bc9b0b0bdf1db59d2",
+    "uses_stub_provider": true
+  },
+  "conclusion": "FastembedProvider and default embedding model function are AST-identical. AppSettings inferred embedding defaults are unchanged; delivery adds judgment model defaults. No provider implementation port needed. Entry-point selection tests use a stub and do not establish model quality or latency."
+}
