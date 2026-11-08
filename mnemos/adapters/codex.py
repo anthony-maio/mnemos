@@ -53,6 +53,7 @@ class CodexHookResult:
     event_ids: tuple[str, ...] = ()
     degraded: bool = False
     error: str | None = None
+    queued: int = 0
 
 
 def default_registry_path() -> Path:
@@ -121,8 +122,10 @@ class CodexAdapter:
         user_profile_id: str | None = None,
         top_k: int = 5,
         max_context_tokens: int = 1200,
+        queue_capture: bool = False,
     ) -> None:
         self.client = client or MnemosClient()
+        self.queue_capture = queue_capture
         self.registry = registry or load_registry(registry_path)
         # A default profile would silently merge unrelated users.  Require an
         # explicit identity and let a missing environment be degraded below.
@@ -199,7 +202,11 @@ class CodexAdapter:
             "source_ref": f"{event}:{turn_id or 'session'}",
         }
         try:
-            result = await self.client.capture(payload)
+            result = (
+                self.client.enqueue_capture(payload)
+                if self.queue_capture
+                else await self.client.capture(payload)
+            )
         except Exception:
             return False, event_id, True
         if not isinstance(result, Mapping):
@@ -277,6 +284,7 @@ class CodexAdapter:
             return CodexHookResult(status="manual_mcp", degraded=True, error=reason)
 
         captured = 0
+        queued_count = 0
         ids: list[str] = []
         degraded = False
         context_text = ""
@@ -298,6 +306,7 @@ class CodexAdapter:
                 if accepted:
                     captured = 1
                     ids.append(event_id)
+                    queued_count = int(queued)
                 degraded = degraded or queued or not accepted
             else:
                 # The host supplied no usable text at a capture boundary.
@@ -319,6 +328,7 @@ class CodexAdapter:
             context=context_text,
             event_ids=tuple(ids),
             degraded=degraded,
+            queued=queued_count,
         )
 
 
