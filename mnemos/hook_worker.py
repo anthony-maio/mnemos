@@ -45,6 +45,7 @@ class HookDispatcher:
         cwd: str | Path,
         client: MnemosClient | None = None,
         queue_captures: bool = False,
+        notify_queued_captures: bool = True,
     ) -> None:
         if host not in {"codex", "claude-code"}:
             raise ValueError("Unsupported adapter host")
@@ -63,6 +64,7 @@ class HookDispatcher:
         self.client = client if client is not None else MnemosClient()
         self._lock = asyncio.Lock()
         self.queue_captures = queue_captures
+        self.notify_queued_captures = notify_queued_captures
         self.replay = None
         if queue_captures:
             # Separate transport/startup state, same durable queue and firewall.
@@ -142,7 +144,7 @@ class HookDispatcher:
                         queued=result.queued,
                         event_ids=list(result.event_ids),
                     )
-                    if result.queued and self.replay is not None:
+                    if result.queued and self.replay is not None and self.notify_queued_captures:
                         self.replay.notify()
             else:
                 claude = ClaudeCodeAdapter(
@@ -192,7 +194,9 @@ class HookWorker(MnemosService):
         self.environment_sha256 = environment_fingerprint()
 
         def create_dispatcher() -> HookDispatcher:
-            dispatcher = HookDispatcher(host, cwd=cwd, queue_captures=queue_captures)
+            dispatcher = HookDispatcher(
+                host, cwd=cwd, queue_captures=queue_captures, notify_queued_captures=False
+            )
             # Factory runs on the service owner loop before run_forever. Drain
             # restart leftovers even if no new hook event arrives.
             asyncio.get_event_loop().call_soon(dispatcher.start)
@@ -202,6 +206,36 @@ class HookWorker(MnemosService):
             descriptor_path=target,
             dispatcher_factory=create_dispatcher,
         )
+
+    def submit(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        result = super().submit(operation, payload)
+        self.response_finished(operation, result)
+        return result
+
+    def submit_http(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        # HTTP owns the later notification; direct callers use submit above.
+        return super().submit(operation, payload)
+
+    def response_finished(self, operation: str, result: dict[str, Any]) -> None:
+        if operation != "hook" or result.get("capture_state") != "queued":
+            return
+        loop = self._loop
+        if loop is None or loop.is_closed():
+            return  # Durable queue is replayed by a future owner.
+
+        def notify() -> None:
+            dispatcher = self._dispatcher
+            if isinstance(dispatcher, HookDispatcher) and dispatcher.replay is not None:
+                try:
+                    dispatcher.replay.notify()
+                except RuntimeError:
+                    # Shutdown can close the pump after the response was produced.
+                    pass
+
+        try:
+            loop.call_soon_threadsafe(notify)
+        except RuntimeError:
+            pass  # Loop shutdown raced this notification; disk remains authoritative.
 
     def start(self) -> dict[str, Any]:
         descriptor = super().start()
