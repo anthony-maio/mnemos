@@ -38,6 +38,9 @@ class Claim:
     valid_until: date | None = None
     temporal_span: Span | None = None
     applicability: Literal["bounded", "unbounded", "unresolved"] = "unresolved"
+    whole_fact_support: Literal["supported", "unsupported", "unresolved"] = "unresolved"
+    condition_match: Literal["applies", "excluded", "unresolved"] = "unresolved"
+    whole_fact_span: Span | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +114,14 @@ def evaluate(
                 raise ValueError("A temporal boundary requires a source span")
         if claim.temporal_span is not None:
             claim.temporal_span.validate(excerpt)
+        if claim.whole_fact_support not in {"supported", "unsupported", "unresolved"}:
+            raise ValueError("Unknown whole-fact assessment")
+        if claim.condition_match not in {"applies", "excluded", "unresolved"}:
+            raise ValueError("Unknown condition assessment")
+        if claim.whole_fact_support == "supported" and claim.whole_fact_span is None:
+            raise ValueError("Whole-fact support requires an own-source span")
+        if claim.whole_fact_span is not None:
+            claim.whole_fact_span.validate(excerpt)
         if claim.applicability not in {"bounded", "unbounded", "unresolved"}:
             raise ValueError("Unknown temporal applicability")
         has_bound = claim.valid_from is not None or claim.valid_until is not None
@@ -118,7 +129,10 @@ def evaluate(
                 or (claim.applicability == "unbounded" and has_bound)):
             raise ValueError("Applicability contradicts annotated boundaries")
         if claim.subject == frame.subject and claim.relation == frame.relation:
-            if claim.applicability == "unresolved":
+            if claim.whole_fact_support == "unsupported" or claim.condition_match == "excluded":
+                continue
+            if (claim.applicability == "unresolved" or claim.whole_fact_support == "unresolved"
+                    or claim.condition_match == "unresolved"):
                 unresolved = True
                 continue
         if (claim.subject == frame.subject and claim.relation == frame.relation

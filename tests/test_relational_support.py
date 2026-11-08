@@ -15,7 +15,8 @@ def fixture_claim(fact, relation, value, *, start=None, end=None):
     return source, Claim(fact, fact + '-source', 'project', relation, value,
                          span('Project'), span(relation), span(value), start, end,
                          span(interval) if start or end else None,
-                         'bounded' if start or end else 'unbounded')
+                         'bounded' if start or end else 'unbounded', 'supported', 'applies',
+                         Span(0, len(source), source))
 
 
 def run(items, relation='duration', at=date(2026, 11, 8), **changes):
@@ -72,3 +73,16 @@ def test_equal_values_preserve_all_supporting_witnesses():
 def test_unresolved_applicability_is_not_timeless_support_or_successful_absence():
     source, claim = fixture_claim('a', 'owner', 'Taylor')
     assert run([(source, replace(claim, applicability='unresolved'))], 'owner').status == 'unavailable'
+
+
+@pytest.mark.parametrize('field', ['whole_fact_support', 'condition_match'])
+def test_missing_qualification_is_unavailable(field):
+    source, claim = fixture_claim('a', 'owner', 'Taylor')
+    assert run([(source, replace(claim, **{field: 'unresolved'}))], 'owner').status == 'unavailable'
+
+
+def test_unsupported_peer_and_excluded_condition_cannot_override_supported_value():
+    supported = fixture_claim('a', 'owner', 'Taylor')
+    source, peer = fixture_claim('b', 'owner', 'Morgan')
+    for change in ({'whole_fact_support': 'unsupported'}, {'condition_match': 'excluded'}):
+        assert run([supported, (source, replace(peer, **change))], 'owner').fact_ids == ('a',)
