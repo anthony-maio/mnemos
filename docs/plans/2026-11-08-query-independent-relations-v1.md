@@ -50,7 +50,17 @@ The harness and producer boundary suites passed 95 tests in 2.01 seconds, record
 
 ## Remaining implementation and evaluation
 
-Prepare the owner runtime wrapper, durable journal, tokenizer preflight, grading records and execution freeze. Source inventory completeness and normalization, whole-fact support, date resolution and condition applicability all require separate semantic grading. Unavailable results get no successful-abstention credit.
+The durable event sink is implemented in `evaluation_journal.py`. It creates an exclusive file, writes one ordered hash-linked JSON record per event, flushes and fsyncs each record, and refuses further writes after any append failure. Its reader rejects changed, reordered or incomplete records without repairing the evidence. Hash links establish local integrity, not authenticity, and a complete journal alone does not establish runtime cleanup. The owner must supply a private directory. File fsync is not a claim about directory-creation durability or hardware behavior under power loss.
+
+The journal and all new boundary suites passed 101 tests in 2.08 seconds, retained at `.venv/evaluation-journal-v1.xml`. This includes an integrated two-pass harness using the real file journal, overwrite refusal, damage detection, fsync failure and writer poisoning. No semantic calls were made.
+
+The prepared development cohort at `.venv/relation-inventory-development-v1` retains the original 68 questions and 127 candidate observations. There are 127 distinct source requests and 136 planned query observations across two passes. Thus this particular first pass has no cross-question source reuse; the second pass measures reuse explicitly. Maximum source prompt size is 5,074 UTF-8 bytes. This is a byte count, not tokenizer acceptance.
+
+Prepared manifest SHA-256: `ffb69bd57cf5e3cc026e6fa55a2e74bdc8c9e6f93d4ef1507f4157001796474b`. Separate source and query policy records SHA-256: `bf9d3075802879621313ed377761bb48ff28f3dfe7167121a363fb6baa0ed76b`. Original grading labels remain unchanged at SHA-256 `f2af04ad22b277dc096d9d084b85b871816e514814739673fcf52ed9f790e916`; preparation copied and hashed them without passing them to either producer.
+
+The prepared policies use the retained Qwen3:14b model, Ollama binary identity, 8,192-token context, 2,048-token output bound, temperature zero, seed 2026110805 and 15-second cooperative deadline. They bind both prompts, schemas and implementation hashes. The current executable hash matches the retained identity. This preparation is not an execution freeze: owner lifecycle code, tokenizer preflight and separate source-grading records are still outstanding. Do not start semantic evaluation until those are ready.
+
+Prepare the owner runtime wrapper, tokenizer preflight, grading records and execution freeze. Source inventory completeness and normalization, whole-fact support, date resolution and condition applicability all require separate semantic grading. Unavailable results get no successful-abstention credit.
 
 Freeze the model/runtime identities, both prompts and response schemas, exact input cohort, decision rules, limits and request schedule before semantic evaluation. Grade source annotation accuracy separately from final precision, critical retention, recall and abstention. Reuse known development inputs only as development; fresh acceptance remains unopened until a complete candidate passes.
 
