@@ -26,6 +26,9 @@ _RAW_TOOLS = {
     "mnemos_forget_preview",
     "mnemos_forget_related",
     "mnemos_job_status",
+    "mnemos_health",
+    "mnemos_list",
+    "mnemos_feedback",
 }
 _CLAUDE_PREFIX = "mcp__plugin_mnemos-memory_mnemos__"
 _BAD_STATUS = {"rejected", "degraded", "error", "failed", "failure"}
@@ -87,6 +90,8 @@ class NativeToolCall:
     model_call_correlated: bool = False
     dispatch_kind: str = "mnemos_mcp"
     outcome: str = "success"
+    started_sequence: int | None = None
+    completed_sequence: int | None = None
 
 
 def require_tool_sequence(
@@ -630,6 +635,8 @@ def _read_codex_code_mode_trace(
                 True,
                 "codex_discovery" if discovery else "mnemos_mcp",
                 outcome,
+                start["seq"],
+                end["seq"],
             )
         )
     if not calls:
@@ -652,6 +659,37 @@ def parse_codex_tool_inventory(
     model: str,
     allowed_tools: set[str],
 ) -> tuple[tuple[NativeToolCall, ...], dict[str, str], dict[str, Any]]:
+    """Require the complete inventory and strictly successful Mnemos calls."""
+    return _read_codex_tool_inventory(
+        directory, provenance=provenance, model=model, allowed_tools=allowed_tools
+    )
+
+
+def observe_codex_tool_inventory(
+    directory: Path,
+    *,
+    provenance: TraceProvenance,
+    model: str,
+    allowed_tools: set[str],
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str], dict[str, Any]]:
+    """Bind complete inventory and observations without accepting their outcomes."""
+    return _read_codex_tool_inventory(
+        directory,
+        provenance=provenance,
+        model=model,
+        allowed_tools=allowed_tools,
+        observe_outcomes=True,
+    )
+
+
+def _read_codex_tool_inventory(
+    directory: Path,
+    *,
+    provenance: TraceProvenance,
+    model: str,
+    allowed_tools: set[str],
+    observe_outcomes: bool = False,
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str], dict[str, Any]]:
     """Require a complete, native inventory before any memory operation.
 
     Only the fixed expression over ALL_TOOLS supplies evidence. An empty
@@ -661,8 +699,13 @@ def parse_codex_tool_inventory(
     """
     if not allowed_tools or not allowed_tools <= _RAW_TOOLS:
         raise ValueError("Invalid inventory allowlist")
-    calls, hashes = parse_codex_code_mode_trace(directory, provenance=provenance, model=model)
-    if any(call.name not in allowed_tools for call in calls):
+    reader = observe_codex_code_mode_trace if observe_outcomes else parse_codex_code_mode_trace
+    calls, hashes = reader(directory, provenance=provenance, model=model)
+    if any(
+        call.name not in allowed_tools
+        and not (observe_outcomes and call.dispatch_kind == "codex_discovery")
+        for call in calls
+    ):
         raise ValueError("Native call is outside the inventory allowlist")
     root = directory.resolve(strict=True)
 

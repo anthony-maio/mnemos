@@ -598,6 +598,164 @@ def require_forget(calls: Sequence[Mapping[str, Any]], fact_id: str) -> None:
     _reviewed_forget(calls, index, write, fact_id)
 
 
+def require_learning_phase_observations(
+    calls: Sequence[Mapping[str, Any]], *, phase: str, fact_id: str | None = None
+) -> dict[str, Any]:
+    """Apply the prospective pilot outcome policy without rewriting observations.
+
+    Callers must supply the complete inventory-bound observation stream. This
+    checks permitted operations and outcomes, not the remaining lifecycle,
+    database, source replay or restart requirements.
+    """
+    recall = {"mnemos_retrieve", "mnemos_inspect"}
+    allowed = {
+        "teach": recall
+        | {"mnemos_store", "mnemos_consolidate", "mnemos_job_status", "mnemos_list"},
+        "recall-v1": recall,
+        "project-2-recall": recall,
+        "correct": recall | {"mnemos_correct", "mnemos_consolidate", "mnemos_job_status"},
+        "recall-v2": recall,
+        "forget": recall | {"mnemos_forget_preview", "mnemos_forget_related"},
+        "recall-forgotten": recall,
+    }
+    if phase not in allowed or not calls:
+        raise ValueError("Unknown or empty learning phase")
+    if (phase == "forget" and (not isinstance(fact_id, str) or not fact_id.strip())) or (
+        phase != "forget" and fact_id is not None
+    ):
+        raise ValueError("Learning phase has an invalid deletion target")
+    sessions: set[str] = set()
+    identities: set[str] = set()
+    previous_start = 0
+    mcp: list[Mapping[str, Any]] = []
+    discovery: list[str] = []
+    missing: list[Mapping[str, Any]] = []
+    seen_discovery: set[str] = set()
+    bad_status = {"rejected", "degraded", "error", "failed", "failure"}
+    expected_missing = {
+        "schema_version": 1,
+        "status": "degraded",
+        "committed": False,
+        "degraded": True,
+        "error": "Mnemos service returned HTTP 404 (fact_not_found)",
+    }
+    for call in calls:
+        start, end = call.get("started_sequence"), call.get("completed_sequence")
+        session, identity = call.get("session_id"), call.get("call_id")
+        if (
+            type(start) is not int
+            or type(end) is not int
+            or start <= previous_start
+            or end <= start
+            or not isinstance(session, str)
+            or not session.strip()
+            or not isinstance(identity, str)
+            or not identity.strip()
+            or identity in identities
+            or call.get("model_call_correlated") is not True
+        ):
+            raise ValueError("Learning observation lacks ordered native identity")
+        previous_start = start
+        sessions.add(session)
+        identities.add(identity)
+        if len(sessions) != 1:
+            raise ValueError("Learning observations cross native sessions")
+        name, args, result = call.get("name"), call.get("args"), call.get("result")
+        outcome, kind = call.get("outcome"), call.get("dispatch_kind")
+        if (
+            not isinstance(name, str)
+            or not name
+            or not isinstance(args, Mapping)
+            or not isinstance(result, Mapping)
+        ):
+            raise ValueError("Learning observation arguments or result are malformed")
+        if outcome not in {"success", "unsuccessful"}:
+            raise ValueError("Learning observation has an unknown outcome")
+        is_bad = (
+            result.get("isError") is True
+            or result.get("is_error") is True
+            or bool(result.get("error"))
+            or result.get("degraded") is True
+            or (
+                "status" in result
+                and (
+                    not isinstance(result["status"], str) or result["status"].lower() in bad_status
+                )
+            )
+        )
+        if (outcome == "success") == is_bad:
+            raise ValueError("Learning outcome label contradicts its result")
+        if kind == "codex_discovery":
+            key = {
+                "list_mcp_resources": "resources",
+                "list_mcp_resource_templates": "resourceTemplates",
+            }.get(name)
+            if (
+                key is None
+                or mcp
+                or name in seen_discovery
+                or outcome != "success"
+                or dict(args) not in ({}, {"server": "mnemos"})
+                or set(result) != {key}
+                or not isinstance(result[key], list)
+                or any(
+                    not isinstance(entry, Mapping) or entry.get("server") != "mnemos"
+                    for entry in result[key]
+                )
+            ):
+                raise ValueError("Learning discovery exceeds the bounded Mnemos listing")
+            seen_discovery.add(name)
+            discovery.append(identity)
+            continue
+        if kind != "mnemos_mcp" or name not in allowed[phase]:
+            raise ValueError("Learning phase issued an unapproved operation")
+        mcp.append(call)
+        if outcome == "unsuccessful":
+            ids = {key: value for key, value in args.items() if key in {"fact_id", "chunk_id"}}
+            if (
+                phase != "forget"
+                or name != "mnemos_inspect"
+                or not ids
+                or set(args) != set(ids)
+                or any(value != fact_id for value in ids.values())
+                or dict(result) != expected_missing
+                or type(result.get("schema_version")) is not int
+                or result.get("committed") is not False
+                or result.get("degraded") is not True
+                or missing
+            ):
+                raise ValueError("Learning phase has an unexpected unsuccessful operation")
+            missing.append(call)
+    if not mcp:
+        raise ValueError("Learning phase contains no memory operation")
+    if any(
+        c["dispatch_kind"] == "codex_discovery"
+        and c["completed_sequence"] >= mcp[0]["started_sequence"]
+        for c in calls
+    ):
+        raise ValueError("Discovery did not complete before memory operations")
+    if phase == "forget":
+        assert isinstance(fact_id, str)
+        require_forget(mcp, fact_id)
+        apply_index, apply = next(
+            (i, c) for i, c in enumerate(mcp) if c["name"] == "mnemos_forget_related"
+        )
+        if any(c["completed_sequence"] >= apply["started_sequence"] for c in mcp[:apply_index]):
+            raise ValueError("Forget started before its review operations completed")
+        if missing and apply["completed_sequence"] >= missing[0]["started_sequence"]:
+            raise ValueError("Missing-fact inspection did not follow completed deletion")
+    return {
+        "status": "phase_policy_satisfied",
+        "phase": phase,
+        "observation_count": len(calls),
+        "mcp_call_count": len(mcp),
+        "discovery_call_ids": discovery,
+        "expected_missing_fact_call_ids": [c["call_id"] for c in missing],
+        "outcomes_rewritten": False,
+        "lifecycle_complete": False,
+    }
+
+
 def require_absent(state: Mapping[str, Any], fact_id: str, labels: Sequence[str]) -> None:
     if any(row["id"] == fact_id for row in state["facts"]):
         raise ValueError("Forgotten target still exists")

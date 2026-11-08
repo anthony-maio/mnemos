@@ -102,13 +102,14 @@ def inventory_fixture(inventories=None, *, source=None, late=False):
     return events, payloads, session
 
 
-def check(tmp_path, data, *, allowed=None):
-    parse(tmp_path, *data)
+def check(tmp_path, data, *, allowed=None, observe=False):
+    parse(tmp_path, *data, observe=observe)
     source = tmp_path / "session.jsonl"
     provenance = trace.TraceProvenance(
         "codex", 42, "session-1", str(source), hashlib.sha256(source.read_bytes()).hexdigest()
     )
-    return trace.parse_codex_tool_inventory(
+    reader = trace.observe_codex_tool_inventory if observe else trace.parse_codex_tool_inventory
+    return reader(
         tmp_path / "trace",
         provenance=provenance,
         model="pinned",
@@ -117,9 +118,10 @@ def check(tmp_path, data, *, allowed=None):
 
 
 @pytest.mark.parametrize("initial_empty", [False, True])
-def test_complete_inventory_precedes_correlated_memory_call(tmp_path, initial_empty):
+@pytest.mark.parametrize("observe", [False, True])
+def test_complete_inventory_precedes_correlated_memory_call(tmp_path, initial_empty, observe):
     inventories = [["clock__curr_time"], ["clock__curr_time", EXPECTED]] if initial_empty else None
-    calls, hashes, receipt = check(tmp_path, inventory_fixture(inventories))
+    calls, hashes, receipt = check(tmp_path, inventory_fixture(inventories), observe=observe)
     assert len(calls) == 1 and calls[0].name == "mnemos_retrieve"
     assert receipt["status"] == "verified" and receipt["inventory_before_memory_calls"]
     assert receipt["expected_mnemos_names"] == [EXPECTED]
@@ -144,9 +146,10 @@ def test_complete_inventory_precedes_correlated_memory_call(tmp_path, initial_em
         [[], [], [EXPECTED]],
     ],
 )
-def test_wrong_or_unavailable_inventory_cannot_pass(tmp_path, inventories):
+@pytest.mark.parametrize("observe", [False, True])
+def test_wrong_or_unavailable_inventory_cannot_pass(tmp_path, inventories, observe):
     with pytest.raises(ValueError):
-        check(tmp_path, inventory_fixture(inventories))
+        check(tmp_path, inventory_fixture(inventories), observe=observe)
 
 
 @pytest.mark.parametrize(
@@ -218,8 +221,12 @@ def test_inventory_acknowledgement_must_match_native_cell(tmp_path, mutation):
         check(tmp_path, (events, payloads, session))
 
 
-def test_inventory_payload_cannot_change_after_native_trace_verification(tmp_path, monkeypatch):
-    original = trace.parse_codex_code_mode_trace
+@pytest.mark.parametrize("observe", [False, True])
+def test_inventory_payload_cannot_change_after_native_trace_verification(
+    tmp_path, monkeypatch, observe
+):
+    name = "observe_codex_code_mode_trace" if observe else "parse_codex_code_mode_trace"
+    original = getattr(trace, name)
 
     def change_after_parse(directory, **kwargs):
         result = original(directory, **kwargs)
@@ -232,10 +239,11 @@ def test_inventory_payload_cannot_change_after_native_trace_verification(tmp_pat
 
     data = inventory_fixture()
     parse(tmp_path, *data)
-    monkeypatch.setattr(trace, "parse_codex_code_mode_trace", change_after_parse)
+    monkeypatch.setattr(trace, name, change_after_parse)
     source = tmp_path / "session.jsonl"
     with pytest.raises(ValueError, match="changed after trace verification"):
-        trace.parse_codex_tool_inventory(
+        reader = trace.observe_codex_tool_inventory if observe else trace.parse_codex_tool_inventory
+        reader(
             tmp_path / "trace",
             provenance=trace.TraceProvenance(
                 "codex",
@@ -247,6 +255,45 @@ def test_inventory_payload_cannot_change_after_native_trace_verification(tmp_pat
             model="pinned",
             allowed_tools={"mnemos_retrieve"},
         )
+
+
+def test_observed_inventory_retains_unsuccessful_operation_and_native_sequences(tmp_path):
+    events, payloads, session = inventory_fixture()
+    result = {"status": "degraded", "error": "connection unavailable"}
+    ok = payloads["5"]["result"]["Ok"]
+    ok["content"][0]["text"] = json.dumps(result)
+    ok["structuredContent"]["result"] = json.dumps(result)
+    calls, _, inventory = check(tmp_path / "observation", (events, payloads, session), observe=True)
+    assert inventory["status"] == "verified"
+    assert len(calls) == 1 and calls[0].outcome == "unsuccessful"
+    assert calls[0].result == result
+    assert calls[0].started_sequence < calls[0].completed_sequence
+    with pytest.raises(ValueError):
+        check(tmp_path / "strict", (events, payloads, session))
+
+
+def test_complete_twelve_tool_learning_inventory_requires_every_advertised_name(tmp_path):
+    allowed = {
+        "mnemos_store",
+        "mnemos_retrieve",
+        "mnemos_inspect",
+        "mnemos_correct",
+        "mnemos_forget",
+        "mnemos_forget_preview",
+        "mnemos_forget_related",
+        "mnemos_job_status",
+        "mnemos_consolidate",
+        "mnemos_list",
+        "mnemos_health",
+        "mnemos_feedback",
+    }
+    names = sorted("mcp__mnemos__" + name for name in allowed)
+    calls, _, inventory = check(
+        tmp_path / "all", inventory_fixture([names]), allowed=allowed, observe=True
+    )
+    assert len(calls) == 1 and inventory["expected_mnemos_names"] == names
+    with pytest.raises(ValueError):
+        check(tmp_path / "partial", inventory_fixture([names[:-1]]), allowed=allowed, observe=True)
 
 
 def test_wrong_allowlist_cannot_accept_used_memory_tool(tmp_path):
