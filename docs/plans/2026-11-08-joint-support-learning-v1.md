@@ -10,6 +10,8 @@ Seed review: [51 corrected training-only examples](../validation/2026-11-08/join
 
 ## Decision and inference path
 
+Corpus expansion: [12 additional cases](../validation/2026-11-08/joint-support-expansion-v1.md) add owned multisource evidence, multiple supported targets, permutation, measured versus attributed claims, negative prerequisites and source instructions. Review corrected ambiguous rule/sensor text and linked shared template ancestry. The combined 63 examples occupy three declared connected training groups; all labels remain pending, and tuning/development data are still absent. This is coverage preparation, not training readiness.
+
 The retained Qwen3-Reranker-0.6B checkpoint is a Qwen3ForCausalLM backbone, not an encoder. Its generic relevance objective failed support precision. Its previous per-witness scoring also repeated the complete candidate context. The new hypothesis changes both supervision and inference: one shared backbone pass over the query and complete retrieved cohort, with a shared binary classification head at one decision position per target fact. No generated text or sequential model calls.
 
 The input contains the exact query, reference date and ordered candidate list. Each candidate carries its opaque ID, full fact text, assertion status and its own retained sources. All target decision markers occur after the entire cohort, so each can attend to every source and competitor. Marker indices bind one-to-one to target IDs. Gather those hidden states and apply the same head to each; do not feed gold labels, predicted labels or previous decisions into later markers. The LM vocabulary head is not used.
