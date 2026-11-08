@@ -1,0 +1,115 @@
+"""Inactive resident-owner prototype for observable Git policy freshness."""
+
+import hashlib
+import os
+from pathlib import Path
+import shutil
+import stat
+
+from .git_policy_dependencies import discover_config_dependencies, observe_config_path
+from .project_identity_cache import (
+    _entry,
+    _routing_snapshot,
+    _security_identity,
+    _unsupported_git_environment,
+)
+
+
+def _executable_observation(path: Path) -> tuple[object, ...]:
+    parents = tuple(_entry(p) for p in reversed(path.parents))
+    before = path.lstat()
+    if (
+        not stat.S_ISREG(before.st_mode)
+        or getattr(before, "st_file_attributes", 0) & 0x400
+        or before.st_size > 128 * 1024 * 1024
+    ):
+        raise ValueError("Unsupported executable identity")
+    security = _security_identity(path, before)
+    with path.open("rb") as stream:
+        opened = os.fstat(stream.fileno())
+        digest = hashlib.file_digest(stream, "sha256").hexdigest()
+    after = path.lstat()
+
+    def identity(info):
+        return (
+            info.st_dev,
+            info.st_ino,
+            info.st_mode,
+            info.st_size,
+            info.st_mtime_ns,
+            info.st_ctime_ns,
+        )
+
+    # Windows fstat reports different mode/ctime semantics from path stat.
+    # Compare the open handle's file identity/content metadata, and compare
+    # all path metadata before versus after the read separately.
+    def handle_identity(info):
+        return (info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode), info.st_size, info.st_mtime_ns)
+
+    if handle_identity(before) != handle_identity(opened) or identity(before) != identity(after):
+        raise ValueError("Executable changed while reading")
+    if security != _security_identity(path, after):
+        raise ValueError("Executable security changed while reading")
+    return (str(path), parents, identity(after), security, digest)
+
+
+class GitPolicyOwner:
+    """One root, serialized calls, no authorization or persistent policy records.
+
+    runtime_files must be the owner's reviewed installation dependencies in
+    addition to the selected executable. This helper does not discover a
+    wrapper's child executable or loaded libraries. It must not be integrated
+    until the installation owner supplies and verifies that closure.
+    """
+
+    def __init__(self, root: str | Path, *, runtime_files: tuple[Path, ...]) -> None:
+        self.root = Path(root).absolute()
+        self.runtime_files = tuple(Path(p).absolute() for p in runtime_files)
+        self._context = None
+        self._dependencies = None
+
+    def _observe_context(self):
+        if _unsupported_git_environment():
+            raise ValueError("Unsupported Git selector")
+        environment = dict(os.environ)
+        selected = shutil.which("git")
+        if selected is None:
+            raise ValueError("Git executable unavailable")
+        executable = Path(os.path.abspath(selected))
+        binaries = tuple(dict.fromkeys((executable, *self.runtime_files)))
+        if len(binaries) > 128:
+            raise ValueError("Runtime dependency limit exceeded")
+        observations = tuple(_executable_observation(p) for p in binaries)
+        routing = _routing_snapshot(self.root)
+        return (tuple(sorted(environment.items())), observations, routing), executable, environment
+
+    def probe(self) -> str | None:
+        """Return a generation only when all declared observations are stable."""
+        try:
+            context, executable, environment = self._observe_context()
+            dependencies = self._dependencies
+            if (
+                context != self._context
+                or dependencies is None
+                or any(
+                    observe_config_path(path) != observation
+                    for path, observation in zip(
+                        dependencies.paths, dependencies.observations, strict=True
+                    )
+                )
+            ):
+                dependencies = discover_config_dependencies(self.root, executable, environment)
+            after, _, _ = self._observe_context()
+            if after != context or any(
+                observe_config_path(path) != observation
+                for path, observation in zip(
+                    dependencies.paths, dependencies.observations, strict=True
+                )
+            ):
+                raise ValueError("Policy changed across observation")
+            self._context, self._dependencies = context, dependencies
+            # Environment and configuration contents are never written to disk.
+            return hashlib.sha256(repr((context, dependencies)).encode("utf-8")).hexdigest()
+        except Exception:
+            self._context = self._dependencies = None
+            return None
