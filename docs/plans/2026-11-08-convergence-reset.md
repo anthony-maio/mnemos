@@ -31,6 +31,8 @@ The original capture target remains 100 ms. Warm recall remains 500 ms at 10,000
 
 ## Artifact and pilot boundaries
 
+Combined storage draft follow-up: [PR #8 now carries the plugin and typing repairs](../validation/2026-11-08/storage-pr8-combined-v1.md). The combined source passed 325 tests, strict typing and formatting. Head `7c6cdccd` adds documentation and a test portability correction; runtime is unchanged and 17 plugin tests pass after the correction. The earlier narrow-candidate failures remain historical evidence. Hosted CI, prerequisite integration and release acceptance are still outstanding.
+
 Storage delivery follow-up: [draft PR #8](../validation/2026-11-08/storage-draft-pr8.md) is open on the exact four-file `e02c3951` repair, stacked on PR #7. Thirteen current storage checks pass; prior full-suite/typing limitations remain disclosed. This is reviewable remote delivery, not merge or release acceptance. Retarget and revalidate after the prerequisite is merged.
 
 Extraction evaluation follow-up: [candidate accounting v2](../validation/2026-11-08/extraction-accounting-v2.md) repairs two reproduced false-success cases in the isolated grader. Every retained candidate must have exactly one reconciliation before quality credit is available. Thirty-one grader/pipeline checks passed. Historical scores remain unchanged; no model execution, persisted extraction or fresh acceptance is implied.
