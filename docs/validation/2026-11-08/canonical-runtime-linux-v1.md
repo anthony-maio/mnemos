@@ -1,0 +1,11 @@
+# Canonical wheel Linux persistence checks
+
+The unchanged canonical wheel from source `d9ab39ba6b23815c3b0457c1d389d2f70fb3fd4c` passed 49 selected installed checks on Debian WSL2, Python 3.12.13. There were no failures, errors or skips; pytest reported 5.64 seconds. The Windows-skipped `test_replaced_open_path_never_acknowledges` case ran and passed here. This closes that scenario for the tested Linux environment without changing the Windows skip or implying that Windows permits the operation.
+
+The seven selected files cover graph persistence, graph preference transactions, graph storage writes, SQLite outbox, replay batches, replay process exit and related forgetting. They use the exact copied test bytes from the preceding Windows package verification. The test-only tree supports fixture imports; the consumer has no source package. Python isolated mode and imported-module origin checks confirmed that runtime modules came from the new installed environment.
+
+The wheel SHA256 remains `5182601cb4f8f4739bb8472e255e2e0ee019ae27362a65829d363e7df0464a6f`. All 98 package/resource members matched that wheel before and after the run. Copied test hashes also remained unchanged. A separate environment under `/tmp/mnemos-canonical-runtime-linux312-env-v1` resolved 41 distributions including the base package and pytest tools; dependency consistency passed. The test consumer and profile are under `/tmp/mnemos-canonical-runtime-linux-consumer-v1`. The Windows environment and live configuration were not changed.
+
+Evidence is retained in `.venv/canonical-runtime-linux-v1` and `.venv/canonical-runtime-linux-v1-evidence.zip`, SHA256 `3926d136c7fccff030100d3ef0eac3d5814d675ae95d2ab5f55658fa11c21f15`. JUnit SHA256 is `684b6c70b957a55ae56285b9d0dc4681e0cd462f7d789a909b38ff032a0a6e71`. The Linux archive retains the verifier, dependency inventory, module origins, test hashes and results; exact copied test source bytes and the wheel remain in the preceding Windows evidence archive. Archive members were read back and verified.
+
+This is one Linux environment and seven selected test files. It is not a full Linux suite, MCP-extra check, macOS result, native interactive-host acceptance or publication. It does not satisfy the original semantic quality, complete-command latency, fresh-evaluation or two-week pilot gates.
