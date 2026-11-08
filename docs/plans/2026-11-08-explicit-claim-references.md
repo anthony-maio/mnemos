@@ -1,0 +1,13 @@
+# Explicit claim references for a future query candidate
+
+Status: implemented and tested without model calls. This repairs the interface ambiguity observed in the closed v2 screen; it does not reopen that screen or establish a passing answer-support candidate.
+
+`relation_claim_references.py` assigns an explicit reference to each supplied claim. The reference binds the complete source qualification key, an inventory digest and the claim's source-local position. The qualification key includes fact revision, scope, all own sources and source policy/model/runtime identities. Changed source revisions or annotations produce different references. Queries do not enter the source reference, but each query response must still bind its complete request fingerprint.
+
+The module preserves candidate, source and claim order and validates own-source coverage and inventory quotations. Missing inventories remain unavailable work. It resolves response references only when they cover the exact supplied set once each; response order can differ. It never reconstructs omitted candidates from historical records. Inventory serialization is hashed once per source rather than repeated for every claim.
+
+`relation_query_v3.py` supplies a flat list of explicit `claim_ref` entries alongside the complete original snapshot and source inventory status. The strict reply schema requests copied references instead of inferred fact/source/index tuples. Selection maps each reference back to its original fact and evidence, preserving the temporal support basis. V1 and v2 modules and frozen evidence remain unchanged.
+
+The focused reference, temporal, v2 source-integration and harness checks passed 43 tests in 1.31 seconds, retained at `.venv/claim-references-v2.xml`. An earlier 43-test run remains at `.venv/claim-references-v1.xml`. Tests exercise two different sources whose only claims both have local index zero, reversed reply order, missing/duplicate/foreign references, legacy index rejection, source/annotation invalidation, query-independent reuse and missing-inventory preservation. They do not prove that a model will copy references correctly.
+
+No v3 execution harness, frozen model policy or semantic run has been prepared. Reference repair alone does not address the five omitted condition lists, unresolved qualified-report support, temporal uncertainty, invented quotations or generation timeout from v2. A prospective candidate must address those independently and measure its complete quality and timing. Explicit references add prompt/output tokens; token cost and complete latency must be measured before any efficiency claim. All original gates remain unchanged.
