@@ -1,0 +1,17 @@
+# Query-circumstance development cohort
+
+The authored cohort in `benchmarks/local_memory/condition_query_probe.py` separates question interpretation from source extraction and final answer selection. It has 16 cases over 14 distinct questions and 30 prerequisite-predicate judgments. Source conditions and predicate identities are supplied. Expected applicability is four applies, one excluded and eleven unresolved; a method that always returns unresolved therefore fails established-case retention even if its aggregate accuracy looks substantial.
+
+Cases cover explicit positive and negative constraints, unstated circumstances, quoted phrases, reported claims, questions about a predicate, requested hypothetical cases, reports about hypothetical cases, foreign subjects, contradictory constraints, partial prerequisites, alternatives, negation with missing evidence, negation with explicit contrary evidence, instruction text and mixed subjects.
+
+Two pairs reuse a question under different source logic. An established maintenance constraint with missing approval is unresolved under conjunction but applies under disjunction. An entirely unspecified case remains unresolved under both an ordinary prerequisite and a negated prerequisite. Query interpretation must remain independent of the desired applicability outcome; missing evidence does not become false under negation.
+
+Preparation emits separate provider requests and grading labels. The provider receives the exact question and complete predicate catalog, without expected states or applicability outcomes. Authored reference quotations pass the exact-query binder, and the authored interpretations produce the expected result through the condition evaluator. All 47 selected cohort, boundary and logic tests passed in 1.01 seconds; JUnit is `.venv/condition-query-probe-v1.xml`. Black and diff checks passed.
+
+## Prospective execution requirements
+
+Before inference, bind code, model/runtime identities, exact request bytes, grading and execution limits. First inspect native token counts for prompts and representative reference replies. The previous readable probe's 72-token median reply and 1.85-second provider median are a warning about output cost, not a transferable latency estimate or proof of a lower bound. Do not assume this quotation format fits 500 ms, and do not append it as another sequential stage to the failed path without a complete budget.
+
+Grade protocol validity, each positive/negative/not-established state, polarity, question witness location and semantic adequacy, and final applicability separately. Exact agreement with an authored reference quotation is a diagnostic, not the only possible correct witness. Review differing valid spans against the full question rather than marking every alternative incorrect or treating every exact substring as entailment. Keep false establishment and lost established circumstances visible; an always-unresolved method is not a solution.
+
+No model, tokenizer or latency measurement has run for this cohort. It is development data authored after prior failures, not fresh acceptance. The implementation currently supplies a cohort builder and model-free preparation checks, not a verified execution package. Full source-condition extraction, relation matching, temporal support, complete retrieval timing and the original quality/pilot requirements remain open. Frozen experiments, production behavior and live installations are unchanged.
