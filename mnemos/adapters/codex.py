@@ -266,7 +266,10 @@ class CodexAdapter:
                 error="Codex hook turn_id is required for capture",
             )
         try:
-            context = self._context(payload)
+            # Git discovery can block on process startup or its timeout. Keep
+            # the resident worker's event loop available for replay and cancel.
+            # Cancellation discards the lookup result before any client call.
+            context = await asyncio.to_thread(self._context, dict(payload))
         except Exception as exc:
             reason = reason_for_context_error(exc)
             record_unresolved_routing_failure(
