@@ -127,13 +127,13 @@ class Outbox:
             except FileNotFoundError:
                 pass
 
-    def append(
+    def _prepare_entry(
         self,
         payload: Mapping[str, Any],
         *,
         event_id: str | None = None,
         operation: str = "capture",
-    ) -> str:
+    ) -> dict[str, Any]:
         sanitized = self._sanitize(payload)
         stable_id = str(event_id or sanitized.get("event_id") or uuid4())
         sanitized["event_id"] = stable_id
@@ -149,7 +149,17 @@ class Outbox:
                     ]
                 ).encode("utf-8")
             ).hexdigest()
-        entry = {"event_id": stable_id, "operation": operation, "payload": sanitized}
+        return {"event_id": stable_id, "operation": operation, "payload": sanitized}
+
+    def append(
+        self,
+        payload: Mapping[str, Any],
+        *,
+        event_id: str | None = None,
+        operation: str = "capture",
+    ) -> str:
+        entry = self._prepare_entry(payload, event_id=event_id, operation=operation)
+        stable_id = str(entry["event_id"])
         with self._exclusive():
             entries = self._read()
             existing = next((item for item in entries if item.get("event_id") == stable_id), None)
