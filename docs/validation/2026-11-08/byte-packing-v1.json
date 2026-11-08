@@ -1,0 +1,97 @@
+{
+  "status": "passed",
+  "differential_checks": 500,
+  "seed": 20261108,
+  "baseline_commit": "bc482489",
+  "before": {
+    "source_sha256": "9ff97982a3efd27e8170bf3d6286e2fa18d42f4b43e829a66e2c300a954448e7",
+    "rows": [
+      {
+        "records": 1000,
+        "bytes": 68890,
+        "ms": [
+          15.030700247734785,
+          16.83229999616742,
+          15.060700010508299,
+          15.64900018274784,
+          15.084499958902597
+        ],
+        "median_ms": 15.084499958902597,
+        "context_sha256": "3bd3c9e5dbc9caf8101928c315f29e36de10cd66338110ca14b6a98c4ccc5e0a"
+      },
+      {
+        "records": 5000,
+        "bytes": 348890,
+        "ms": [
+          854.5221001841128,
+          538.2773000746965,
+          471.724699717015,
+          386.0415001399815,
+          688.5702996514738
+        ],
+        "median_ms": 538.2773000746965,
+        "context_sha256": "36a4e95fdbb3a480e0568c8f77bcdbd888cc8bf07c526431fe7fa185cf8d8aa6"
+      },
+      {
+        "records": 10000,
+        "bytes": 698890,
+        "ms": [
+          6831.85079973191,
+          7442.658599931747,
+          7470.207099802792,
+          6511.431599967182,
+          7335.506500210613
+        ],
+        "median_ms": 7335.506500210613,
+        "context_sha256": "6402ffa8496cdbc70064ec405d2392e4f04d97748939802c2b5b4ec609a4b57b"
+      }
+    ],
+    "limits": "Synthetic packing only; excludes retrieval, storage, models and native host."
+  },
+  "after": {
+    "source_sha256": "a39d1692029b4ac4832556d559febc9845e541b59d89d5aa52595a044e9393dc",
+    "rows": [
+      {
+        "records": 1000,
+        "bytes": 68890,
+        "ms": [
+          0.6674998439848423,
+          0.6667999550700188,
+          0.6463001482188702,
+          0.6916997954249382,
+          0.6564999930560589
+        ],
+        "median_ms": 0.6667999550700188,
+        "context_sha256": "3bd3c9e5dbc9caf8101928c315f29e36de10cd66338110ca14b6a98c4ccc5e0a"
+      },
+      {
+        "records": 5000,
+        "bytes": 348890,
+        "ms": [
+          3.8741999305784702,
+          4.495200235396624,
+          4.028600174933672,
+          4.559400025755167,
+          4.287400282919407
+        ],
+        "median_ms": 4.287400282919407,
+        "context_sha256": "36a4e95fdbb3a480e0568c8f77bcdbd888cc8bf07c526431fe7fa185cf8d8aa6"
+      },
+      {
+        "records": 10000,
+        "bytes": 698890,
+        "ms": [
+          10.220299940556288,
+          10.98780008032918,
+          12.91449973359704,
+          15.723099932074547,
+          15.936399810016155
+        ],
+        "median_ms": 12.91449973359704,
+        "context_sha256": "6402ffa8496cdbc70064ec405d2392e4f04d97748939802c2b5b4ec609a4b57b"
+      }
+    ],
+    "limits": "Synthetic packing only; excludes retrieval, storage, models and native host."
+  },
+  "limits": "Synthetic packing only. Timings are sequential, five repetitions each; no end-to-end latency or semantic quality claim."
+}
