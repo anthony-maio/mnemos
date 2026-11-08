@@ -86,6 +86,7 @@ from .engine import MnemosEngine
 from .client import MnemosClient
 from .health import run_health_checks
 from .inspectability import build_chunk_inspection
+from .inspection_batch import render_inspection_batch
 from .observability import configure_logging, log_event
 from .runtime import (
     build_embedder_from_env,
@@ -954,6 +955,40 @@ def _register_service_tools(mcp: Any) -> None:
                 {"fact_id": identifier, "context": service_context.scope.model_dump(mode="json")},
             )
         )
+
+    @mcp.tool(annotations=read_only)
+    async def mnemos_inspect_batch(
+        fact_ids: Annotated[list[str], Field(min_length=1, max_length=20)],
+        ctx: Context[Any, Any, Any] | None = None,
+        cursor: str | None = None,
+    ) -> str:
+        """Inspect one to twenty explicitly chosen facts with complete evidence.
+
+        Use this to inspect additional forget candidates without omitting any
+        selected fact. Read every page with the same ordered fact_ids and copy
+        review.next_cursor unchanged. Fragment paths reconstruct full individual
+        inspection results, including IDs, versions, revisions and source evidence.
+        Changed results invalidate the cursor; restart the batch. No fact is
+        selected for deletion by this tool. Review each result before explicitly
+        selecting it in mnemos_forget_related. Normal host scope checks apply
+        independently to every requested fact; unavailable facts reject the batch.
+        """
+        if not 1 <= len(fact_ids) <= 20 or any(not item.strip() for item in fact_ids):
+            raise ValueError("Provide one to twenty nonempty fact identifiers")
+        if len(set(fact_ids)) != len(fact_ids):
+            raise ValueError("Duplicate fact identifiers are not allowed")
+        service_context = _service_context_from_ctx(ctx, "mnemos_inspect_batch")
+        results = []
+        for identifier in fact_ids:
+            result = await _service_request(
+                service_context,
+                "inspect",
+                {"fact_id": identifier, "context": service_context.scope.model_dump(mode="json")},
+            )
+            if not isinstance(result.get("fact"), dict) or result["fact"].get("id") != identifier:
+                raise ValueError("Every requested fact must be available for inspection")
+            results.append(result)
+        return render_inspection_batch(results, cursor)
 
     @mcp.tool(annotations=read_only)
     async def mnemos_reviews(
