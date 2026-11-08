@@ -1,0 +1,165 @@
+{
+  "status": "diagnostic_audit_passed",
+  "summary": {
+    "python": {
+      "observations": 50,
+      "min_ms": 315.1504001580179,
+      "p95_ms": 876.6173999756575,
+      "max_ms": 1195.6774999853224,
+      "meets_command_100ms": false
+    },
+    "native": {
+      "observations": 50,
+      "min_ms": 180.81869999878109,
+      "p95_ms": 490.07299984805286,
+      "max_ms": 1244.2272000480443,
+      "meets_command_100ms": false
+    }
+  },
+  "completed_events": 110,
+  "completed_jobs": 110,
+  "native_host_dispatch_tested": false,
+  "scope": "Instrumented stage attribution only; nested times overlap and are not acceptance evidence.",
+  "stage_summary": {
+    "python": {
+      "command": {
+        "median_ms": 371.31329998373985,
+        "p95_ms": 876.6173999756575,
+        "min_ms": 315.1504001580179,
+        "max_ms": 1195.6774999853224
+      },
+      "dispatch": {
+        "median_ms": 153.51009997539222,
+        "p95_ms": 381.3330000266433,
+        "min_ms": 114.84229983761907,
+        "max_ms": 397.3713999148458
+      },
+      "outside_dispatch": {
+        "median_ms": 207.91650004684925,
+        "p95_ms": 484.59020000882447,
+        "min_ms": 188.80360014736652,
+        "max_ms": 938.6533999349922
+      },
+      "dispatch_outside_enqueue": {
+        "median_ms": 73.47025000490248,
+        "p95_ms": 263.99159990251064,
+        "min_ms": 66.99700001627207,
+        "max_ms": 296.87510011717677
+      },
+      "enqueue": {
+        "median_ms": 78.21169996168464,
+        "p95_ms": 112.14890005066991,
+        "min_ms": 41.54819995164871,
+        "max_ms": 128.03560006432235
+      },
+      "outbox_write": {
+        "median_ms": 74.02844994794577,
+        "p95_ms": 103.39609999209642,
+        "min_ms": 39.49540015310049,
+        "max_ms": 115.20759994164109
+      },
+      "fsync": {
+        "median_ms": 66.68659998103976,
+        "p95_ms": 94.08449986949563,
+        "min_ms": 33.923800103366375,
+        "max_ms": 107.11759980767965
+      },
+      "sanitize": {
+        "median_ms": 0.4035000456497073,
+        "p95_ms": 0.542700057849288,
+        "min_ms": 0.37199980579316616,
+        "max_ms": 0.5927998572587967
+      },
+      "client_protect": {
+        "median_ms": 2.3800000781193376,
+        "p95_ms": 4.835000261664391,
+        "min_ms": 1.8718999344855547,
+        "max_ms": 7.8512998297810555
+      },
+      "service_protect": {
+        "median_ms": 1.362600247375667,
+        "p95_ms": 12.797900009900331,
+        "min_ms": 0.9770998731255531,
+        "max_ms": 19.132900051772594
+      },
+      "lock_acquire": {
+        "median_ms": 1.8529000226408243,
+        "p95_ms": 13.26080015860498,
+        "min_ms": 1.3862999621778727,
+        "max_ms": 19.55590001307428
+      }
+    },
+    "native": {
+      "command": {
+        "median_ms": 219.2312499973923,
+        "p95_ms": 490.07299984805286,
+        "min_ms": 180.81869999878109,
+        "max_ms": 1244.2272000480443
+      },
+      "dispatch": {
+        "median_ms": 143.37790000718087,
+        "p95_ms": 313.88099980540574,
+        "min_ms": 122.82190006226301,
+        "max_ms": 526.664299890399
+      },
+      "outside_dispatch": {
+        "median_ms": 68.4198000235483,
+        "p95_ms": 209.21719982288778,
+        "min_ms": 56.50209984742105,
+        "max_ms": 833.3352000918239
+      },
+      "dispatch_outside_enqueue": {
+        "median_ms": 72.38124986179173,
+        "p95_ms": 204.27960017696023,
+        "min_ms": 66.77110004238784,
+        "max_ms": 436.31909997202456
+      },
+      "enqueue": {
+        "median_ms": 70.98104991018772,
+        "p95_ms": 101.32470005191863,
+        "min_ms": 48.24560019187629,
+        "max_ms": 141.11570012755692
+      },
+      "outbox_write": {
+        "median_ms": 67.90505000390112,
+        "p95_ms": 94.67350016348064,
+        "min_ms": 44.70039997249842,
+        "max_ms": 136.3637000322342
+      },
+      "fsync": {
+        "median_ms": 61.97280006017536,
+        "p95_ms": 88.40980008244514,
+        "min_ms": 39.854600094258785,
+        "max_ms": 132.01029994525015
+      },
+      "sanitize": {
+        "median_ms": 0.4090500297024846,
+        "p95_ms": 0.5649998784065247,
+        "min_ms": 0.3691003657877445,
+        "max_ms": 0.9543001651763916
+      },
+      "client_protect": {
+        "median_ms": 2.2179499501362443,
+        "p95_ms": 5.542999831959605,
+        "min_ms": 1.8140000756829977,
+        "max_ms": 9.35310055501759
+      },
+      "service_protect": {
+        "median_ms": 1.350299920886755,
+        "p95_ms": 5.176400067284703,
+        "min_ms": 0.9783999994397163,
+        "max_ms": 6.70140003785491
+      },
+      "lock_acquire": {
+        "median_ms": 1.789950067177415,
+        "p95_ms": 5.702499998733401,
+        "min_ms": 1.402700087055564,
+        "max_ms": 7.733100093901157
+      }
+    }
+  },
+  "all_terminal": true,
+  "private_archive_sha256": "ca14a7af359ab2df94f6d40c1f51c4b448ca6a23ad7b2b00b62ac93ae445bd53",
+  "report": "docs/validation/2026-11-08/queued-stage-diagnostic-v1.md",
+  "next_action": "Measure project identity resolution and service submission/response scheduling independently; preserve fsync and permission checks. Original 100 ms failure remains authoritative."
+}
