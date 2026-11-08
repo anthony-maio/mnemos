@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Installed patch follow-up: [package v2](../validation/2026-11-08/storage-merged-package-v2.md) verifies the rebuilt `1319e1c6` candidate, including the previously missing storage event. Fifteen installed storage tests, three automated MCP flows and isolated operational checks pass. Draft PR #9 is open; hosted CI, interactive acceptance and actual pilot requirements remain separate. No tag or publication occurred.
+
 Storage operational follow-up: [installed checks and logging repair](../validation/2026-11-08/storage-operational-v2.md) verify doctor, legacy counts, MCP health and existing events on the private wheel. A missing graph-failure event is repaired in source `1319e1c6`, with 329 tests passing and review resolved. That code is pushed but not in the existing wheel. Rebuild and validate the changed installed artifact next; no publication or broader gate claim follows.
 
 All six original priorities and their completion requirements remain active. The previous turn's Linux installed check was progress: it ran the Windows-skipped open-database replacement case successfully on the same wheel. It did not resolve semantic quality, complete latency, publication or actual pilot use.
