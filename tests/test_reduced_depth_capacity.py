@@ -36,4 +36,3 @@ def test_interrupt_retains_active_sample_and_resets_pass_status():
     assert result["status"] == "failed"
     assert row["repeat"] == 9 and row["shape"] == active["shape"]
     assert row["status"] == "failed" and row["elapsed_until_exception_ms"] >= 0
-
