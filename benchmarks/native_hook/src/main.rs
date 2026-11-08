@@ -13,6 +13,8 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::time::{Duration, Instant};
 
+mod timing;
+
 const DESCRIPTOR_ENV: &str = "MNEMOS_HOOK_WORKER_DESCRIPTOR";
 const MAX_FRAME: usize = 1_048_576;
 const MAX_HEADERS: usize = 16_384;
@@ -183,8 +185,12 @@ fn read_response(stream: &mut TcpStream, deadline: Instant) -> Result<Vec<u8>, (
             .map_err(|_| ())?;
         let mut byte = [0];
         stream.read_exact(&mut byte).map_err(|_| ())?;
+        if header.is_empty() {
+            timing::mark("response_first_byte");
+        }
         header.push(byte[0]);
     }
+    timing::mark("response_headers_read");
     let text = std::str::from_utf8(&header).map_err(|_| ())?;
     let mut lines = text.split("\r\n");
     let status: Vec<_> = lines.next().ok_or(())?.split_whitespace().collect();
@@ -241,6 +247,7 @@ fn request(
     cwd: &str,
     env: Option<&BTreeMap<String, String>>,
 ) -> Outcome {
+    timing::mark("request_begin");
     let Some(env) = env else {
         return Outcome::Fallback;
     };
@@ -263,6 +270,7 @@ fn request(
     {
         return Outcome::Fallback;
     }
+    timing::mark("descriptor_validated");
     let identifier = uuid::Uuid::new_v4().to_string();
     let envelope = json!({"hook_protocol":1,"request_id":identifier,"host":host,"event":event,
         "payload":payload,"cwd":cwd,"environment_sha256":env_hash});
@@ -272,11 +280,13 @@ fn request(
     if wire.len() > MAX_FRAME {
         return Outcome::Fallback;
     }
+    timing::mark("request_serialized");
     let deadline = Instant::now() + DEADLINE;
     let address = SocketAddr::from((Ipv4Addr::LOCALHOST, port as u16));
     let Ok(mut stream) = TcpStream::connect_timeout(&address, DEADLINE) else {
         return Outcome::Fallback;
     };
+    timing::mark("connected");
     let Ok(timeout) = remaining(deadline) else {
         return Outcome::Fallback;
     };
@@ -306,9 +316,11 @@ fn request(
             Ok(count) => offset += count,
         }
     }
+    timing::mark("request_written");
     let Ok(bytes) = read_response(&mut stream, deadline) else {
         return Outcome::Unknown;
     };
+    timing::mark("response_read");
     let Ok(value) = serde_json::from_slice::<Value>(&bytes) else {
         return Outcome::Unknown;
     };
@@ -331,6 +343,7 @@ fn request(
     {
         return Outcome::Unknown;
     }
+    timing::mark("response_validated");
     Outcome::Handled(value)
 }
 
@@ -353,6 +366,7 @@ fn diagnostic(host: &str, event: &str, status: &str) {
 }
 
 fn fallback(launch: &Launch, host: &str, event: &str, raw: &[u8]) -> i32 {
+    timing::mark("fallback_begin");
     let module = if host == "codex" {
         "mnemos.adapters.codex"
     } else {
@@ -443,11 +457,13 @@ fn run() -> i32 {
     } else {
         return 2;
     };
+    timing::mark("launch_prepared");
     let mut raw = Vec::new();
     if std::io::stdin().read_to_end(&mut raw).is_err() {
         diagnostic(host, event_arg, "error");
         return 0;
     }
+    timing::mark("stdin_read");
     let payload: Value = if raw.iter().all(u8::is_ascii_whitespace) {
         json!({})
     } else {
@@ -462,6 +478,7 @@ fn run() -> i32 {
             }
         }
     };
+    timing::mark("payload_parsed");
     if !payload.is_object() {
         return 0;
     }
@@ -506,7 +523,11 @@ fn run() -> i32 {
 }
 
 fn main() {
-    std::process::exit(run());
+    timing::mark("main_begin");
+    let code = run();
+    timing::mark("run_finished");
+    timing::emit();
+    std::process::exit(code);
 }
 
 #[cfg(test)]

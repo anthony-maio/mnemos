@@ -1,0 +1,11 @@
+# Native pipeline diagnostic v1
+
+Prospective diagnostic only. Use the unchanged installed response-completion wheel with SHA256 cfe4e9b480fb8232453d53e928a6a2ba840d26bb3a7a9106dc6bdc1968fd4c2e, normal replay timers, deterministic embeddings and an isolated initially empty store. Use the separately built stage-timing native launcher. Freeze both binaries, worker wrapper, helper, dependencies and source before execution. Preserve all earlier runs.
+
+Keep five warmups per launcher and fifty alternating measured Python/native pairs. Both arms use one resident queued worker and the same worker instrumentation. Time the complete subprocess invocation through collected stdout/stderr and exit. Correlate every queued receipt with its original event, one persisted event and one completed job. Queue draining and job completion remain outside the command timer. Retain failures and all samples; do not replace outliers or selectively rerun.
+
+The diagnostic native build emits monotonic marks from main entry through output handling. Record first response byte and complete headers separately from body read and response validation. Combine only durations from the same sample. The worker records nested dispatch, identity, enqueue, write and fsync intervals under a context-local timer. Do not sum nested stages or subtract independent percentiles. Check native mark order, one record per command, response identity, worker stage nesting and source/package hashes in an offline audit.
+
+Report full command timing, within-main duration, outside-main residual, connection/serialization, request-written to first-byte, header read, body read and final handling. Request-to-first-byte contains both worker and transport work; it does not isolate one cause. Worker traces add response fields and an observer write, and native traces add stderr work. These results guide investigation only, not speedup or acceptance claims. No cache, permission, Git identity, durability or replay semantics change.
+
+Capture still requires 100 ms and complete recall 500 ms. This diagnostic does not establish native-host dispatch, scale, power-loss durability, quality, fresh acceptance or pilot days. Stop only the recorded owned process trees and verify their ports closed. Freeze and separately measure any resulting implementation before claiming improvement.

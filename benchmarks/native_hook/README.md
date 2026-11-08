@@ -68,3 +68,29 @@ Run a frozen comparison before claiming a speedup. A loopback transport probe
 does not exercise Git scope lookup, durable capture, retrieval, host trust or
 complete hook latency. The complete installed and native-host checks remain
 required before delivery or activation.
+
+
+## Optional stage timing build
+
+Build with `--features stage-timing` into a separate target directory to emit one
+`native_stage_timing_v1` JSON record on stderr after the hook finishes. Normal
+builds have no timing collection or output. The feature changes no environment
+selector, descriptor binding, request format or stdout response.
+
+Marks use elapsed milliseconds from entry into main and fixed names only. They
+cover launch preparation, stdin parsing, descriptor validation, serialization,
+connect, completed request write, first response byte, complete headers, body
+read, response validation and completion. Early failures have partial traces;
+fallback has its own start mark. Traces contain no request IDs, source text,
+paths, tokens or environment values. Failed diagnostic writes are ignored.
+
+Process creation before main, final trace serialization/write and process exit
+are outside these marks. Compare them with an outer command timer; do not call
+inside-main timing complete command latency. Request-to-first-byte time combines
+server work and transport. Worker-side evidence is needed to separate them.
+Instrumentation can change scheduling and adds overhead, so this build is for
+diagnosis rather than acceptance timing. Keep the original binary and results.
+
+Set `MNEMOS_NATIVE_HOOK_TIMING_EXE` to the diagnostic build to run
+`tests/test_native_hook_timing.py`. Keep `MNEMOS_NATIVE_HOOK_EXE` pointed at a
+normal build for the existing launcher, profile and environment suites.
