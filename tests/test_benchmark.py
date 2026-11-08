@@ -6,9 +6,14 @@ from __future__ import annotations
 
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+
+import mnemos.types as types_module
+import mnemos.benchmark as benchmark_module
 
 from mnemos.benchmark import (
     BenchmarkDocument,
@@ -25,6 +30,127 @@ from mnemos.benchmark import (
     run_retrieval_benchmark,
 )
 from mnemos.types import MemoryChunk
+
+
+@pytest.mark.parametrize("store_type", ["memory", "sqlite"])
+@pytest.mark.parametrize("retriever", ["baseline", "engine"])
+def test_chronology_does_not_depend_on_clock_resolution(
+    monkeypatch, tmp_path, store_type, retriever
+):
+    class FrozenDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return cls(2026, 1, 1, tzinfo=timezone.utc)
+
+    monkeypatch.setattr(types_module, "datetime", FrozenDateTime)
+    captured = []
+    original_close = benchmark_module._close_store
+
+    def capture_and_close(store):
+        captured.extend(store.get_all())
+        original_close(store)
+
+    monkeypatch.setattr(benchmark_module, "_close_store", capture_and_close)
+    path = Path("benchmarks/datasets/contradiction-update-v1.jsonl")
+    documents = load_documents(path)
+    result = run_retrieval_benchmark(
+        store_type=store_type,
+        retriever=retriever,
+        top_k=1,
+        documents=documents,
+        queries=_load_queries(path, documents),
+        sqlite_path=tmp_path / "chronology.sqlite",
+    )
+    by_content = {chunk.content: chunk for chunk in captured}
+    assert len(by_content) == len(documents)
+    first = by_content[documents[0].content].created_at
+    for index, doc in enumerate(documents):
+        expected = first + timedelta(seconds=index)
+        chunk = by_content[doc.content]
+        assert chunk.created_at == chunk.updated_at == chunk.last_observed_at == expected
+        if retriever == "engine":
+            assert chunk.metadata["original_timestamp"] == expected.isoformat()
+    assert result["chronology"]["policy"] == "dataset_order_1s_v1"
+    end = datetime.fromisoformat(result["chronology"]["observation_end_exclusive"])
+    assert end == first + timedelta(seconds=len(documents))
+
+
+@pytest.mark.parametrize("retriever", ["baseline", "engine"])
+def test_ingest_measurement_excludes_retrieval(monkeypatch, retriever):
+    ticks = iter([0.0, 1.0, 10.0, 15.0])
+    monkeypatch.setattr(benchmark_module, "time", SimpleNamespace(perf_counter=lambda: next(ticks)))
+    result = run_retrieval_benchmark(
+        store_type="memory",
+        retriever=retriever,
+        top_k=1,
+        documents=[
+            BenchmarkDocument(
+                id="db", content="We use PostgreSQL backups nightly.", queries=("postgres backups",)
+            )
+        ],
+    )
+    assert result["ingest_seconds"] == 1.0
+    assert result["latency_mean_ms"] == 5000.0
+
+
+def test_explicit_observation_anchor_is_shared_by_retrievers():
+    end = datetime(2026, 11, 8, 12, tzinfo=timezone.utc)
+    documents = [
+        BenchmarkDocument(
+            id="db", content="We use PostgreSQL backups nightly.", queries=("postgres backups",)
+        )
+    ]
+    reports = [
+        run_retrieval_benchmark(
+            store_type="memory", retriever=mode, top_k=1, documents=documents, observation_end=end
+        )
+        for mode in ("baseline", "engine")
+    ]
+    assert reports[0]["chronology"] == reports[1]["chronology"]
+    assert reports[0]["chronology"]["observation_end_exclusive"] == end.isoformat()
+
+
+def test_naive_observation_anchor_is_rejected_before_storage(monkeypatch):
+    def unexpected_storage(*args, **kwargs):
+        pytest.fail("invalid chronology must not create or clean a store")
+
+    monkeypatch.setattr(benchmark_module, "_cleanup_local_store_artifacts", unexpected_storage)
+    with pytest.raises(ValueError, match="timezone"):
+        run_retrieval_benchmark(
+            store_type="memory",
+            top_k=1,
+            documents=[BenchmarkDocument(id="db", content="Database policy.", queries=("policy",))],
+            observation_end=datetime(2026, 11, 8),
+        )
+
+
+@pytest.mark.parametrize("store_type", ["memory", "sqlite"])
+def test_repeated_observations_preserve_first_creation(monkeypatch, tmp_path, store_type):
+    captured = []
+    original_close = benchmark_module._close_store
+
+    def capture_and_close(store):
+        captured.extend(store.get_all())
+        original_close(store)
+
+    monkeypatch.setattr(benchmark_module, "_close_store", capture_and_close)
+    end = datetime(2026, 11, 8, 12, tzinfo=timezone.utc)
+    run_retrieval_benchmark(
+        store_type=store_type,
+        retriever="engine",
+        top_k=1,
+        sqlite_path=tmp_path / "repeated.sqlite",
+        observation_end=end,
+        documents=[
+            BenchmarkDocument(
+                id=key, content="We use PostgreSQL backups nightly.", queries=("postgres backups",)
+            )
+            for key in ("first", "second")
+        ],
+    )
+    assert len(captured) == 1
+    assert captured[0].created_at == end - timedelta(seconds=2)
+    assert captured[0].updated_at == captured[0].last_observed_at == end - timedelta(seconds=1)
 
 
 def test_compute_retrieval_metrics_recall_mrr_and_p95() -> None:

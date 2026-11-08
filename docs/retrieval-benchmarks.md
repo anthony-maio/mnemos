@@ -50,6 +50,20 @@ Retriever modes:
 
 `baseline` is intentionally scope-agnostic by default so scoped retrieval value is visible in cross-project benchmarks. To make baseline scope-aware for strict apples-to-apples runs, pass `--baseline-scope-aware`.
 
+New runs assign observations in dataset order, one second apart. The CLI shares
+one UTC anchor across retrievers, stores and repetitions and records it under
+`chronology`, with policy `dataset_order_1s_v1`. Programmatic comparisons should
+pass the same timezone-aware `observation_end` to each run. This removes clock
+resolution and ingestion speed from the synthetic old/new ordering. Dataset
+order is a fixture assumption, not inferred chronology for real documents.
+
+Timestamp assignment is included in ingestion, outside retrieval timing.
+Engine `ingest_seconds` now stops before query execution, matching the baseline
+measurement boundary. Previously it also included retrieval. Preserve existing
+reports as recorded; do not relabel or regrade them using these changes. New
+results need their own source/data bindings. This legacy harness does not replace
+the separate accepted-fact snapshot, answer-support or native-latency evaluations.
+
 The report includes a `comparisons` section with per-store deltas:
 - `delta_engine_minus_baseline.recall_at_k`
 - `delta_engine_minus_baseline.mrr`

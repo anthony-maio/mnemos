@@ -16,6 +16,7 @@ import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -570,13 +571,18 @@ async def _run_engine_roundtrip(
     documents: list[BenchmarkDocument],
     queries: list[BenchmarkQuery],
     top_k: int,
-) -> tuple[dict[str, str], list[list[str]], list[set[str]], list[float]]:
+    observation_start: datetime,
+    ingest_started: float,
+) -> tuple[dict[str, str], list[list[str]], list[set[str]], list[float], float]:
     id_map: dict[str, str] = {}
-    for doc in documents:
+    first_observed: dict[str, datetime] = {}
+    for index, doc in enumerate(documents):
+        observed_at = observation_start + timedelta(seconds=index)
         result = await engine.process(
             Interaction(
                 role="user",
                 content=doc.content,
+                timestamp=observed_at,
                 metadata={"source": "benchmark", "benchmark_id": doc.id},
             ),
             scope=doc.scope,
@@ -584,7 +590,13 @@ async def _run_engine_roundtrip(
         )
         if not result.stored or result.chunk is None:
             raise RuntimeError(f"Engine failed to store benchmark document: {doc.id}")
+        result.chunk.created_at = first_observed.setdefault(result.chunk.id, observed_at)
+        result.chunk.updated_at = observed_at
+        result.chunk.last_observed_at = observed_at
+        engine.store.update(result.chunk.id, result.chunk)
         id_map[doc.id] = result.chunk.id
+
+    ingest_seconds = time.perf_counter() - ingest_started
 
     retrieved_ids: list[list[str]] = []
     relevant_ids: list[set[str]] = []
@@ -608,7 +620,7 @@ async def _run_engine_roundtrip(
             raise RuntimeError(f"Query {query.text!r} has no mapped relevant IDs.")
         relevant_ids.append(mapped_relevant_ids)
 
-    return id_map, retrieved_ids, relevant_ids, latencies_ms
+    return id_map, retrieved_ids, relevant_ids, latencies_ms, ingest_seconds
 
 
 def _build_comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -784,6 +796,7 @@ def run_retrieval_benchmark(
     sqlite_path: Path | None = None,
     queries: list[BenchmarkQuery] | None = None,
     baseline_scope_aware: bool = False,
+    observation_end: datetime | None = None,
 ) -> dict[str, Any]:
     """Run one benchmark pass for one storage backend and retriever mode."""
     if top_k <= 0:
@@ -792,6 +805,11 @@ def run_retrieval_benchmark(
         raise ValueError("Benchmark requires at least one document.")
     if retriever not in {"baseline", "engine"}:
         raise ValueError("retriever must be 'baseline' or 'engine'.")
+    observation_end = observation_end or datetime.now(timezone.utc)
+    if observation_end.utcoffset() is None:
+        raise ValueError("observation_end must include a timezone")
+    observation_end = observation_end.astimezone(timezone.utc)
+    observation_start = observation_end - timedelta(seconds=len(documents))
 
     benchmark_queries = queries or build_queries(documents)
     if query_limit is not None and query_limit > 0:
@@ -817,7 +835,8 @@ def run_retrieval_benchmark(
         if not document_embeddings:
             raise ValueError("Unable to generate document embeddings.")
         id_map: dict[str, str] = {}
-        for doc, embedding in zip(documents, document_embeddings):
+        for index, (doc, embedding) in enumerate(zip(documents, document_embeddings)):
+            observed_at = observation_start + timedelta(seconds=index)
             store_id = _benchmark_store_id(doc.id)
             id_map[doc.id] = store_id
             metadata: dict[str, Any] = {"source": "benchmark", "scope": doc.scope}
@@ -829,6 +848,9 @@ def run_retrieval_benchmark(
                     content=doc.content,
                     embedding=embedding,
                     metadata=metadata,
+                    created_at=observed_at,
+                    updated_at=observed_at,
+                    last_observed_at=observed_at,
                 )
             )
         ingest_seconds = time.perf_counter() - ingest_start
@@ -860,15 +882,16 @@ def run_retrieval_benchmark(
             embedder=embedder,
             store=store,
         )
-        _, retrieved_ids, relevant_ids, latencies_ms = asyncio.run(
+        _, retrieved_ids, relevant_ids, latencies_ms, ingest_seconds = asyncio.run(
             _run_engine_roundtrip(
                 engine=engine,
                 documents=documents,
                 queries=benchmark_queries,
                 top_k=top_k,
+                observation_start=observation_start,
+                ingest_started=ingest_start,
             )
         )
-        ingest_seconds = time.perf_counter() - ingest_start
 
     metrics = compute_retrieval_metrics(
         retrieved_ids=retrieved_ids,
@@ -889,6 +912,10 @@ def run_retrieval_benchmark(
         "latency_mean_ms": metrics["latency_mean_ms"],
         "latency_p95_ms": metrics["latency_p95_ms"],
         "store_stats": store.get_stats(),
+        "chronology": {
+            "policy": "dataset_order_1s_v1",
+            "observation_end_exclusive": observation_end.isoformat(),
+        },
     }
 
     _close_store(store)
@@ -1006,6 +1033,7 @@ def main() -> None:
         dataset_label = "built-in"
 
     reports: list[dict[str, Any]] = []
+    observation_end = datetime.now(timezone.utc)
     for repetition in range(args.repetitions):
         results: list[dict[str, Any]] = []
         for dataset_name, documents, benchmark_queries in dataset_runs:
@@ -1026,6 +1054,7 @@ def main() -> None:
                         sqlite_path=run_sqlite_path,
                         queries=benchmark_queries,
                         baseline_scope_aware=args.baseline_scope_aware,
+                        observation_end=observation_end,
                     )
                     result["dataset"] = dataset_name
                     results.append(result)
