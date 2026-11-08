@@ -1,0 +1,23 @@
+# Source-bound relation and interval development
+
+Status: deterministic evaluator prototype only. No model inference, semantic score or production integration. The QA/contrast, qualified-support and reranker experiments remain closed with their original failed results.
+
+The recorded failures require query-specific comparison: incompatible durations must cause abstention for a duration request without suppressing a supported reviewer. Historical values must remain available inside their stated intervals. The existing two binary votes cannot satisfy the quality gates under any fixed Boolean combination. This candidate changes the representation consumed by the decision stage rather than tuning those votes.
+
+`benchmarks/local_memory/relational_support.py` evaluates proposed canonical subject, relation and value annotations against an exact eligible source cohort. Each claim binds to its own fact and evidence, with exact subject, relation and value spans. Temporal bounds use half-open dates and require a temporal source span. The producer must explicitly mark bounded, unbounded or unresolved applicability; missing applicability defaults to unresolved, not timeless validity. Conflicting values only matter within the requested subject, relation and time. All supporting witnesses for an equal value remain visible.
+
+The evaluator requires a matching snapshot fingerprint and policy identity, and an explicit assessment entry for every candidate. Missing assessments, stale policy or unresolved applicability for the requested relation return unavailable, not successful abstention. A missing or forgotten candidate cannot be reintroduced through a foreign evidence reference. The caller still owns current scope authorization and pre/post snapshot checks.
+
+Ten model-free checks passed in 0.72 seconds, with JUnit at `.venv/relational-support-v2.xml`. They cover relation-specific conflicts, historical boundaries, stale/incomplete assessments, foreign evidence, exact span validation, invalid temporal claims, equal-value witnesses and unresolved applicability. The first nine-check run also passed; the tenth closes the risk of treating an omitted temporal judgment as unbounded support.
+
+## Required producer and evaluation
+
+These annotations are fallible model outputs. An exact quotation establishes where text came from, not that the normalized relation or interval follows from it. Equivalent values and relations must be normalized by the evaluated method; fixtures must never supply those keys at inference time. Wrong normalization can manufacture conflicts or hide them. A complete assessment list does not prove the producer extracted every relevant claim.
+
+Before inference, implement and freeze a producer that receives only the original query, reference date, eligible facts and their own retained sources. It must produce source-bound claims and a query frame without access to labels. Separately qualify whole-fact support, including negation, quotation, uncertainty, conditions and quantity. A relation/value match cannot authorize returning an original fact whose other clauses lack support. The current evaluator does not provide that qualification or a conditional-query representation and is not yet an end-to-end treatment.
+
+Query-independent annotations may eventually be produced during asynchronous processing, but measure their cold cost and revision invalidation separately. Do not move a synchronous cost outside the capture timer by relabeling it. At query time, measure query-frame construction, annotation misses, comparison, packing and actual retrieval together. The original 500 ms complete warm retrieval requirement remains unchanged. No repeated sequential model calls may be added while reporting only the cheap deterministic evaluator's time.
+
+Freeze model/runtime identities, prompts, input/output schemas, fixed decision rules, limits and request schedule before any semantic execution. Use the known development questions for development only, preserving all original facts, candidate cohorts and labels. Include missing relations, unsupported broader clauses, current conflicts, unrelated conflicts, historical answers, proposed/quoted/negative facts and conditional requests. Grade annotation accuracy separately from final supported-fact precision, critical retention, recall and abstention. Unavailable outcomes receive no abstention credit. Keep fresh acceptance unopened until a complete candidate passes development.
+
+The next implementation step is the producer contract and complete-fact/condition boundary, not promotion of the current deterministic prototype. No live memory, package default, capture hook or pilot configuration changes here.
