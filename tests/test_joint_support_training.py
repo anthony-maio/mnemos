@@ -11,7 +11,10 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from test_joint_support_head import load
+if __package__:
+    from .test_joint_support_head import load
+else:  # unittest discovery with tests as the start directory
+    from test_joint_support_head import load
 import torch
 
 helper = load("joint_support_training")

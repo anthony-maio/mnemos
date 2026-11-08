@@ -8,8 +8,12 @@ import json
 import tempfile
 import subprocess
 
-from test_joint_support_head import load
-from test_reduced_depth_support import tiny
+if __package__:
+    from .test_joint_support_head import load
+    from .test_reduced_depth_support import tiny
+else:  # unittest discovery with tests as the start directory
+    from test_joint_support_head import load
+    from test_reduced_depth_support import tiny
 
 import torch
 

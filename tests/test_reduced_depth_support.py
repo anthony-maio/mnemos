@@ -2,7 +2,10 @@
 
 import unittest
 
-from test_joint_support_head import load
+if __package__:
+    from .test_joint_support_head import load
+else:  # unittest discovery with tests as the start directory
+    from test_joint_support_head import load
 
 import torch
 from transformers import Qwen3Config, Qwen3Model
