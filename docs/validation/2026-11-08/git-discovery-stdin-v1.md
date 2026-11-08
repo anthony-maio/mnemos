@@ -1,0 +1,9 @@
+# Git discovery stdin isolation
+
+The capture candidate now gives the Git project-discovery subprocess DEVNULL stdin. Discovery has no legitimate need for the host's protocol or control input. Existing Git arguments, environment filtering, five-second timeout, retry policy and fail-closed project identity behavior remain unchanged.
+
+A process-level regression uses a discovery stand-in that reads stdin before returning a valid directory. Before the patch, the child consumed the host's supplied protocol line and the assertion failed. After the patch, the child received EOF and the host retained its complete input. This demonstrates input-stream isolation. It does not establish the exact cause of the earlier Windows Git output-reader stall or a latency improvement.
+
+All 38 project identity resolution, identity cache and scope context checks passed in 14.57 seconds using a fresh temp directory outside Git repositories. The earlier broad run used a basetemp inside the mnemos worktree and produced three failures: two plain-directory fallback tests and an unrelated-directory identity test. Their fixtures were actually repository descendants, so the resolver correctly treated them as a shared Git project. That failed run and its JUnit remain preserved. The initial regression also had a test collection syntax error, which was corrected before observing the meaningful red assertion.
+
+Final JUnit: `.venv/git-stdin-regression-green-v2.xml`. Earlier evidence: `.venv/git-stdin-regression-green-v1.xml` and retained red test directories. The source diff passed whitespace checks. This change is isolated to the capture candidate; the installed v4 wheel, frozen command comparisons, canonical delivery and live optional pilot remain unchanged. Installed validation and any timing claim require a new artifact and separate measurement.
