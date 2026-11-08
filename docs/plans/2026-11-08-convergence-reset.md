@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Storage operational follow-up: [installed checks and logging repair](../validation/2026-11-08/storage-operational-v2.md) verify doctor, legacy counts, MCP health and existing events on the private wheel. A missing graph-failure event is repaired in source `1319e1c6`, with 329 tests passing and review resolved. That code is pushed but not in the existing wheel. Rebuild and validate the changed installed artifact next; no publication or broader gate claim follows.
+
 All six original priorities and their completion requirements remain active. The previous turn's Linux installed check was progress: it ran the Windows-skipped open-database replacement case successfully on the same wheel. It did not resolve semantic quality, complete latency, publication or actual pilot use.
 
 ## Decision and drift correction
