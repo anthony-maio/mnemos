@@ -403,7 +403,8 @@ class MnemosClient:
         port = int(descriptor["port"])
         if host not in {"127.0.0.1", "localhost", "::1"}:
             raise ServiceClientError("runtime descriptor is not loopback")
-        url = f"http://{host}:{port}/v1/dispatch"
+        authority = f"[{host}]" if host == "::1" else host
+        url = f"http://{authority}:{port}/v1/dispatch"
         headers = {
             "Authorization": f"Bearer {descriptor['token']}",
             "Content-Type": "application/json",
