@@ -1,0 +1,13 @@
+# Qualifier coverage contract and reachability
+
+An opt-in comparator now adds an independent applicability-condition check to the stronger v8 pairwise baseline. It asks about conditions in both directions, separates identifying conditions from changed setting values, and returns covered, incompatible or unspecified. Every target is checked; malformed later responses fail the case without returning partial results. The existing default comparator is unchanged.
+
+The runtime can retain a relation or downgrade a complete same-variable match to insufficient identity. It cannot create a match from an unrelated or uncertain pair, grant source authority, select a target on its own, or write a fact. Scope validation and final full-target ambiguity handling remain in the existing reconciler. A failed qualifier check leaves a pair plausible rather than turning missing specificity into an unrelated new fact.
+
+Validation passed 56 focused tests, including 16 new contract cases, and strict type checking for both changed modules. These tests use controlled provider replies. They establish the transformation and failure boundaries, not semantic quality. No model was started, no frozen response was changed, and no fresh-quality or performance result is claimed.
+
+Before inference, a separate static audit replayed the retained Qwen3.5 v8 responses through current response validation. It verified the original manifest and audit hashes, every manifest-bound artifact, the unchanged fixture, all target/version bindings and all 198 observed relations. It recovered the original 167 correct relations. An oracle choosing the best allowed qualifier result could reach at most 186 correct relations on those retained responses: 19 same-variable errors can become insufficient identity, but 12 different-variable errors cannot. This is a transformation bound on observed responses, not an estimate of model performance or a bound on future generations.
+
+The qualifier component alone therefore cannot satisfy the unchanged 198/198 relation gate on the retained baseline. Do not launch a full inference study on the assumption that it repairs the complete correction problem. The next candidate must also handle false unrelated judgments without treating an unrelated single target as a valid correction. Existing v8/v9 results, the original 20-case screen, confirmation, fresh acceptance, persisted extraction and actual daily-use requirements remain open.
+
+Source work is isolated in the improvement branch. Installed packages, canonical delivery, live memory and pilot configuration are unchanged. The private audit and test receipts are bound by the companion JSON.

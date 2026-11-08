@@ -21,6 +21,7 @@ from .source_reconciliation import (
 )
 from .source_relationship import reconcile_source_relationships
 from .source_referent import compare_referents, compare_referents_pairwise
+from .source_qualifier_coverage import compare_referents_with_qualifier_coverage
 from .source_identity_spans import compare_identity_spans
 from .source_selection import ExtractiveMemory
 from mnemos.types import EpisodicEvent, MemoryChunk
@@ -172,10 +173,16 @@ async def reconcile_source_target_identity(
     provider: LLMProvider,
     *,
     comparison_style: Literal[
-        "quoted", "referent", "referent_pairwise", "identity_spans"
+        "quoted", "referent", "referent_pairwise", "identity_spans", "qualifier_coverage"
     ] = "quoted",
 ) -> list[StagedReconciliation]:
-    if comparison_style not in {"quoted", "referent", "referent_pairwise", "identity_spans"}:
+    if comparison_style not in {
+        "quoted",
+        "referent",
+        "referent_pairwise",
+        "identity_spans",
+        "qualifier_coverage",
+    }:
         raise ValueError("Unknown identity comparison style")
     candidate_snapshot, event_snapshot, target_snapshot = _validate_inputs(
         candidates, events, targets
@@ -227,7 +234,12 @@ async def reconcile_source_target_identity(
         comparisons: list[TargetMatch] = []
         for start in range(0, len(visible), 8):
             batch = visible[start : start + 8]
-            if comparison_style in {"referent", "referent_pairwise", "identity_spans"}:
+            if comparison_style in {
+                "referent",
+                "referent_pairwise",
+                "identity_spans",
+                "qualifier_coverage",
+            }:
                 compare = (
                     compare_identity_spans
                     if comparison_style == "identity_spans"
@@ -237,6 +249,8 @@ async def reconcile_source_target_identity(
                         else compare_referents
                     )
                 )
+                if comparison_style == "qualifier_coverage":
+                    compare = compare_referents_with_qualifier_coverage
                 referents = await compare(candidate, batch, provider)
                 comparisons.extend(
                     TargetMatch(
