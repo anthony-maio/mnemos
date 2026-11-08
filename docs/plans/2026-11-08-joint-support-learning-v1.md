@@ -6,6 +6,8 @@ Preparation progress: [the serializer and retained tokenizer contract](../valida
 
 Data-audit implementation: [grouped split and label-binding checks](../validation/2026-11-08/joint-support-data-audit-v1.md) are implemented and tested. This is audit machinery, not a completed corpus or semantic label review. It always reports training readiness as false; a separate reviewed corpus and the remaining feasibility gates are required.
 
+Seed review: [51 corrected training-only examples](../validation/2026-11-08/joint-support-seed-review-v1.md) occupy only two connected template groups. Initial cross-domain split declarations were rejected, negative-answer labels corrected, and unsupported critical flags removed. No reserved tuning/development set exists yet. The seed is insufficient for training readiness and must not be promoted by row expansion alone.
+
 ## Decision and inference path
 
 The retained Qwen3-Reranker-0.6B checkpoint is a Qwen3ForCausalLM backbone, not an encoder. Its generic relevance objective failed support precision. Its previous per-witness scoring also repeated the complete candidate context. The new hypothesis changes both supervision and inference: one shared backbone pass over the query and complete retrieved cohort, with a shared binary classification head at one decision position per target fact. No generated text or sequential model calls.
@@ -23,6 +25,8 @@ Shared attention does not guarantee consistent joint decisions. Grade whole-coho
 ## Supervised decision and data gate
 
 Label a target supported only if its own evidence supports its full claim, it answers the requested relation for the requested subject/time/circumstances, and no unresolved applicable contradiction in the cohort invalidates that answer. A topic match, partial entailment or quotation of a condition is insufficient. Missing query conditions remain unknown; explicitly requested hypotheticals can establish the requested scenario. Reports, examples, questions, foreign subjects and injected instructions cannot silently become adopted constraints.
+
+Support includes a justified negative answer. A rule plus an explicitly false prerequisite may establish that an action is forbidden; do not label the rule unsupported merely because permission is denied. Questions asking for the rule itself differ from questions asking whether a particular action is authorized. Policy/schedule evidence must not be relabeled as an observation that an event actually occurred.
 
 Record a reason alongside every binary target label: supported, wrong subject/relation, incomplete source support, attribution mismatch, unresolved condition, unmet condition, temporal mismatch, unresolved conflict or other specifically adjudicated failure. Reasons and gold labels live outside inference inputs. Preserve valid supported counterparts for negative cases; all-abstention must fail retention.
 
