@@ -32,6 +32,21 @@ def write(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
+def record_failure(result, rows, active_sample, exc):
+    result["status"] = "failed"
+    result["error"] = f"{type(exc).__name__}: {exc}"
+    if active_sample is not None:
+        row = {k: v for k, v in active_sample.items() if k != "start_perf"}
+        row.update(
+            status="failed",
+            error=result["error"],
+            elapsed_until_exception_ms=(time.perf_counter() - active_sample["start_perf"]) * 1000,
+        )
+        rows.append(row)
+        return row
+    return None
+
+
 def tokenizer_setup():
     from transformers import AutoTokenizer
 
@@ -187,6 +202,7 @@ def run(destination):
     with (destination / "started.json").open("x", encoding="utf-8") as handle:
         json.dump(dict(started_unix=time.time()), handle)
     rows = []
+    active_sample = None
     result = dict(status="failed", scope="computation_only_random_head", samples=[])
     try:
         freeze = json.loads((destination / "freeze.json").read_bytes())
@@ -261,6 +277,9 @@ def run(destination):
                         torch.cuda.synchronize()
                         before_calls = calls[0]
                         start = time.perf_counter()
+                        active_sample = dict(
+                            phase=phase, repeat=repeat, shape=case["name"], start_perf=start
+                        )
                         frame = encode(case["request"])
                         assert frame.frame_sha256 == frames[case["name"]]["frame_sha256"]
                         outputs = head(
@@ -286,6 +305,7 @@ def run(destination):
                         rows.append(row)
                         log.write(json.dumps(row) + "\n")
                         log.flush()
+                        active_sample = None
                     if repeat % 10 == 0:
                         print(
                             json.dumps(dict(phase=phase, completed_repetitions=repeat + 1)),
@@ -320,7 +340,13 @@ def run(destination):
         del head, backbone
         torch.cuda.empty_cache()
     except Exception as exc:
-        result["error"] = f"{type(exc).__name__}: {exc}"
+        failed = record_failure(result, rows, active_sample, exc)
+        if failed is not None:
+            try:
+                with (destination / "samples.jsonl").open("a", encoding="utf-8") as log:
+                    log.write(json.dumps(failed) + "\n")
+            except OSError as log_exc:
+                result["failure_log_error"] = str(log_exc)
         raise
     finally:
         result["samples"] = rows
