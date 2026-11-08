@@ -39,3 +39,19 @@ before making any necessary harness correction. Do not rerun passing cells or
 edit tests to hide a platform failure. Finish with a result table that names
 the actual operating systems and patch versions, plus exact source/artifact
 bindings and the still-open release requirements.
+
+## Setup correction before test execution
+
+The first Windows 3.10 attempt failed because a relative bundle path was passed
+to a process whose working directory changed. The first WSL 3.10 installation
+failed because the Python 3.12 constraint for platformdirs requires Python 3.11.
+No source or installed regression test ran in either attempt.
+
+Metadata inspection identifies seven pinned dependencies that exclude 3.10:
+platformdirs, pycparser, pydantic-settings, python-multipart, rpds-py,
+sse-starlette and starlette. Resolve compatible versions for these seven under
+the unchanged package requirements, retaining every compatible pin. Preserve
+each platform's dry-run resolution report and freeze its complete resolved
+constraint list, including conditional dependencies, before installation.
+Use the original constraints for 3.11 and 3.12. Resolve runner paths absolutely.
+Preserve both initial attempts and use new directories for corrected attempts.
