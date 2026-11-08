@@ -1,0 +1,11 @@
+# Installed queued-capture command timing
+
+Compare the synchronous and opt-in queued resident Codex worker from wheel `f9160ee1ca1bc09f169c09f7ad3c61ca5e45019c66150b29d14903fbebb3f5c3`. Use the same private project, real LocalMemoryService/SQLite owner, deterministic embeddings, disabled experimental modules, and unavailable cognition. No live configuration changes.
+
+Start both owned workers before timing. Run five untimed Stop commands per arm, then 50 measured commands per arm, alternating which arm goes first in each pair. Generate unique source identities and equivalent synthetic content. After each command, wait for its event to persist and complete its job before the next command. This measures an empty-backlog warm service; it does not establish load, cold startup, or 10,000-fact recall performance.
+
+Time parent subprocess launch through complete stdout/stderr collection and process exit. Invoke installed Python in isolated mode through a thin helper that delegates to the installed hook_client.main. The helper records the authenticated worker response to a private trace before returning it; this trace-write overhead is included. Require the trace to prove resident dispatch, valid output, original identity, and queued state where applicable. Preserve failures rather than selectively repeating observations.
+
+For every command, correlate the event's identity/content and job in SQLite and require completed processing. Record command time and post-command completion wait separately. A nonblocking stdout response alone earns no durability credit. Reopen SQLite after all owners stop and verify all 110 events/jobs and their completion state. Verify owned process cleanup and unchanged installed files.
+
+Report nearest-rank p95 separately for the 50 measured observations in each arm. Compare command latency with the unchanged 100 ms target without claiming native-host acceptance: native Codex dispatch, real embeddings, the proposed pilot command, and automatic capture trust are excluded. Preserve previous failures and distinguish queued admission from completed service processing. Freeze helpers, wheel/package/dependency identities, schedule, and commands before timing.
