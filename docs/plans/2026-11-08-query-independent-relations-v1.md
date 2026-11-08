@@ -1,6 +1,6 @@
 # Query-independent relation inventory development
 
-Status: an in-memory record boundary is implemented and tested. No model has produced inventories for this design, no latency gain is claimed, and nothing is connected to production retrieval or capture.
+Status: an in-memory record boundary and source-only producer are implemented and tested. No model has produced inventories for this design, no latency gain is claimed, and nothing is connected to production retrieval or capture.
 
 The closed relational screen generated a complete source inventory during each query and exceeded its first 15-second deadline. It also exposed unreliable model-generated character offsets. This design separates query-independent source annotation from query interpretation and uses exact unique quotations for source locations. It is an architectural change requiring new evaluation; it does not reopen or regrade the failed screen.
 
@@ -16,9 +16,17 @@ Records are immutable tuples with at most 32 claims and 32 condition quotations 
 
 The cache, quotation resolver and reused qualification boundary passed 59 checks in 3.24 seconds. JUnit is retained at `.venv/relation-inventory-v2.xml`. Checks cover reuse across different questions without conditional answers, correction/content/scope/source/reference/sibling changes, policy/model/runtime changes, omitted candidates, denied scope fences, failed postvalidation, conflicting records, eviction and byte limits. These tests establish control flow only.
 
-## Remaining implementation and evaluation
+## Source-only producer
 
-Implement a source-only producer that receives the original fact and all its retained evidence but no query or answer labels. Keep unresolved assessments explicit, preserve conditions/modality/negation/attribution, and record no unsupported broader fact as a supported relation. A candidate's other source evidence must remain visible during assessment and invalidation, even when one record binds to a particular own source. Do not infer whole-fact support from a unique quote alone.
+`source_relation_producer.py` receives the original fact, all its retained evidence and the policy/model/runtime identity. Its API has no query or answer labels. The prompt asks for conditions, modality, negation and attribution to be preserved and whole-fact support to cover every original clause. This instruction remains an untested semantic requirement, not a guaranteed property of model output.
+
+The strict response schema binds the request key, fact and target evidence. It rejects query condition-match results and model-generated offsets. The cache validates exact unique quotations and source intervals before recording. Requests and replies are each bounded to 64,000 UTF-8 bytes without truncation. Source and authorization fences run around cache access, provider work and recording. An unresolved inventory remains unresolved on reuse; provider errors cannot become negative facts.
+
+The injected provider has a 15-second cooperative timeout. Cancellation propagates, while ordinary failures return unavailable without recording an inventory. A provider that delays cancellation can exceed that deadline; a future runtime harness must record actual wall time and cleanup rather than claiming a hard bound. There is no concrete model connection, persistent worker or capture integration.
+
+The producer and existing cache, quotation and qualification boundaries passed 73 tests in 1.93 seconds. JUnit is retained at `.venv/source-relation-producer-v2.xml`; the earlier 69-test run remains at `.venv/source-relation-producer-v1.xml`. Tests cover one-call reuse, request identity, foreign/stale replies, invalid quotations and fields, source changes during generation, provider failure/cancellation, denied cached lookup, unresolved reuse, timeout cleanup and oversized input rejection. These are model-free control-flow checks.
+
+## Remaining implementation and evaluation
 
 Implement query interpretation and condition applicability separately, using every eligible original candidate and inventory, including unresolved and unsupported annotations. Conditions must be compared with the actual query; unresolved conditions get no successful-abstention credit. A missing inventory cannot silently remove a competing value. Query-specific conflict and historical-interval rules remain required.
 

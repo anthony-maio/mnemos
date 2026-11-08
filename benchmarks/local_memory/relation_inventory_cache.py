@@ -139,3 +139,13 @@ class RelationInventoryCache:
             result.append(AnnotatedCandidate(candidate, tuple(inventories)))
         revalidate()
         return tuple(result)
+
+    def lookup(self, candidate: SupportCandidate, evidence_id: str, identity: QualificationIdentity,
+               revalidate: SnapshotFence) -> InventoryView:
+        revalidate()
+        key = qualification_key(candidate, evidence_id, identity)
+        inventory = self._records.get(key)
+        result = InventoryView(evidence_id, inventory.status if inventory else 'missing',
+                               inventory.claims if inventory else (), inventory is not None)
+        revalidate()
+        return result
