@@ -620,6 +620,35 @@ class MnemosClient:
     async def capture(self, payload: Mapping[str, Any]) -> dict[str, Any]:
         return await self.request("capture", payload)
 
+    def enqueue_capture(self, payload: Mapping[str, Any]) -> dict[str, Any]:
+        """Persist a capture without startup, transport, or service-completion waits.
+
+        This receipt acknowledges only the local outbox. A caller must arrange
+        replay_outbox separately and must not present queued work as a completed
+        service job. Disk failures propagate without a success receipt.
+        """
+        try:
+            data = self.outbox.sanitize(payload)
+            data["event_id"] = data.get("event_id") or str(uuid4())
+            outbox_event_id = self.outbox.append(data, operation="capture")
+        except (TypeError, ValueError) as exc:
+            return {
+                "schema_version": SCHEMA_VERSION,
+                "status": "blocked",
+                "committed": False,
+                "durable_queued": False,
+                "error": str(exc),
+            }
+        self._outbox_drained = False
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "status": "queued",
+            "committed": False,
+            "durable_queued": True,
+            "event_id": data["event_id"],
+            "outbox_event_id": outbox_event_id,
+        }
+
     def begin_host_event(self) -> None:
         """Reset per-invocation attempts between serialized resident host events.
 
