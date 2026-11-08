@@ -1,6 +1,17 @@
 # Changelog
 
-## Unreleased
+## 0.6.1rc1 (unreleased)
+
+This local prerelease combines transaction rollback, content recency and Windows
+plugin interpreter repairs. It is not published or approved for live upgrade.
+
+- Separate known content revisions from access timestamps. Legacy schema 3 adds
+  a nullable revision field; older clients cannot share an upgraded database.
+- Resolve explicit plugin Python commands against PATH on Windows.
+- Complete float32 array annotations without changing embedding calculations.
+- Preserve the original benchmark failures and separate development comparisons.
+
+See [upgrade and rollback boundaries](docs/legacy-upgrade.md).
 
 - Make graph-neighbor replacement atomic. A failed insert restores the previous
   edges, and success or failure preserves any caller-owned transaction. The

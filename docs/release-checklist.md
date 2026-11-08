@@ -1,52 +1,25 @@
-# Mnemos Release Checklist
+# 0.6.1rc1 review checklist
 
-Use this checklist before tagging a release candidate or making category-defining claims.
+This is a local prerelease candidate, not an approved or published release.
 
-## Quality Gates
-- `black --check .` passes
-- `mypy .` passes
-- `pytest -q` passes
-- benchmark gate passes for required local store modes:
-  - `memory`
-  - `sqlite`
-- Tier 1 MCP checks pass as real end-to-end flows:
-  - Claude Code plugin flow
-  - Claude Desktop stdio registration
-  - generic stdio host harness
+- [x] Preserve graph rollback and caller-owned transactions.
+- [x] Integrate content-recency and Windows plugin interpreter repairs.
+- [x] Verify combined source at b3508f6d: 353 tests; strict typing and formatting.
+- [x] Assign 0.6.1rc1 consistently to package, runtime and plugin manifests.
+- [x] Document schema-3 incompatibility and rollback limits.
+- [ ] Build and verify the exact prerelease source archive and wheel.
+- [ ] Verify installed migration, transaction behavior and MCP roundtrips.
+- [ ] Review the supported Python/platform matrix for this exact artifact.
+- [ ] Resolve or explicitly review the original legacy benchmark failure; a
+      different development comparison cannot overwrite that result.
+- [ ] Complete interactive native-host and actual pilot obligations before
+      claiming them. Automated stdio configuration tests are separate evidence.
+- [ ] Approve the exact upstream diff, artifact hashes and upgrade plan.
+- [ ] Merge, tag, publish and verify the published artifact only after approval.
 
-## Documentation and Contract
-- `tests/test_docs_consistency.py` passes
-- `docs/mcp-transport-contract.md` reflects current tool/resource contract
-- `docs/client-compatibility-matrix.md` includes tested versions and caveats
-- `docs/codex.md` reflects the current MCP + `AGENTS.md` setup path
+[Upgrade instructions](legacy-upgrade.md) require older clients stopped before
+schema migration. Do not restore a pre-upgrade backup after new writes or forget
+requests without reconciling those changes. There is no automatic downgrade.
 
-## Operational Readiness
-- `mnemos-cli doctor` reports expected readiness
-- `mnemos-cli doctor` reports legacy unscoped chunk counts when present
-- `mnemos_health` MCP tool reports readiness + backend stats + scope-isolation status
-- structured logs verified for:
-  - startup (`mnemos.startup`)
-  - provider/storage failures (`mnemos.provider_failure`)
-  - retrieval latency (`mnemos.retrieval_latency`)
-
-## PyPI Publish Approval
-- Publish to PyPI only through the GitHub Actions release workflow guarded by the `mnemos-release` environment.
-- Before approving `mnemos-release`, verify:
-  - the Git tag points at the intended release commit
-  - `pyproject.toml` and `mnemos/__init__.py` match the release version
-  - `CHANGELOG.md` and GitHub release notes match the shipped change set
-  - `black --check .`, `mypy .`, and `pytest -q` are green for that commit
-  - the built artifacts for that version were validated locally when needed (`python -m build`, `python -m twine check dist/*`)
-- Cancel stale waiting PyPI publish runs before approving a new one.
-- Treat direct `twine upload` as emergency-only. If used, cancel the waiting GitHub publish run for the same version so the environment does not later re-publish or fail on duplicates.
-
-## Replacement Claim Gate
-- Claim-driving benchmark pack satisfies:
-  - `gates.production_replacement.passed == true`
-  - `MRR lift >= 15%`
-  - `p95 latency ratio <= configured profile threshold`
-- No unresolved blocker issues for scope leakage, startup failure, or data corruption
-
-## Pilot Gate
-- At least two external pilot users/projects complete 2 weeks of daily usage
-- Zero blocker incidents for memory corruption, scope leakage, or startup failure
+The full six-priority improvement goal remains open. This checklist does not
+waive semantic quality, complete-command latency or two-week pilot requirements.

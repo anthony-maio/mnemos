@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/readme-hero.svg" alt="Mnemos - reliable scoped memory for coding agents" width="100%">
+  <img src="docs/assets/readme-hero.svg" alt="Mnemos - local scoped memory for coding agents" width="100%">
 </p>
 
 <h1 align="center">mnemos</h1>
@@ -37,9 +37,22 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ---
 
-## Public Beta
+## Candidate status
 
-Mnemos is now in broad public beta. The core engine and onboarding control plane are ready for real coding-agent usage, and the intended setup path is:
+This checkout is the unpublished `0.6.1rc1` legacy repair candidate. It combines
+graph transaction rollback, content-recency and Windows plugin runtime fixes.
+The combined implementation passed 353 source tests before this metadata update;
+that result does not establish fresh quality, native-host acceptance or daily use.
+The original failed benchmark remains recorded. Experimental memory mechanisms
+are not evidence of measured retrieval or token savings.
+
+Schema 3 cannot be shared safely with older clients. Read the
+[upgrade guide](docs/legacy-upgrade.md) before opening any existing database.
+Use a separately verified database copy for candidate testing. Publication,
+interactive host checks and release qualification remain pending.
+
+The following installation command selects the published package, not this
+unpublished candidate. Its documented onboarding path is:
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
@@ -122,7 +135,7 @@ Most agent memory tools either keep too much raw transcript or append contradict
 - **Lossy by design** — sleep compresses episodic logs into semantic abstractions and discards the rest
 - **Associative** — remembering "server" pre-activates "AWS," "downtime," and "nginx" before you ask
 
-mnemos implements these mechanisms as composable Python modules. They can be used independently or composed through `MnemosEngine`, but the product promise is narrower than the research inspiration: reliable scoped memory for agent workflows.
+mnemos implements these mechanisms as composable Python modules. They can be used independently or composed through `MnemosEngine`, but the product promise is narrower than the research inspiration: scoped memory whose retrieval and consolidation behavior still require evaluation.
 
 ---
 
@@ -708,22 +721,11 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ## Compatibility and Release Posture
 
-Mnemos is ready for a disciplined public open-source release. It is not yet ready for “definitive replacement” claims across every host and workflow. The verified public surface today is:
-
-| Client / Surface | Status | Notes |
-|---|---|---|
-| Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end on the default local SQLite path. |
-| Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
-| Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
-| Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack and optional maintenance Automations; host-hook auto-capture is still not shipped. |
-| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path, but host-hook auto-capture is not yet shipped. |
-
-The current product promise is narrower than the architecture story:
-
-- safe scoped memory for solo coding-agent workflows
-- local-first persistence with a single SQLite database
-- biomimetic retrieval and consolidation under the hood
-- verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
+This candidate is locally tested and unpublished. Automated stdio checks cover
+the generic MCP configuration, Claude Desktop sample configuration and Claude
+plugin manifest. They do not establish an interactive native-host workflow.
+Codex, Cursor, Windsurf and Cline configuration examples remain documentation,
+not daily-use acceptance. See the candidate status and upgrade guide above.
 
 Source-of-truth release docs:
 
@@ -826,7 +828,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.6.0},
+  version      = {0.6.1rc1},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

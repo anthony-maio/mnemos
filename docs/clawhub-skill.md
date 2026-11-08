@@ -1,6 +1,6 @@
 # Mnemos ClawHub Skill
 
-The repo ships a publishable ClawHub skill at `skills/mnemos-memory`.
+The repo ships a ClawHub skill source at `skills/mnemos-memory`.
 
 What it does:
 
@@ -10,11 +10,9 @@ What it does:
 - reinforces the `retrieve -> work -> store -> consolidate` loop
 - keeps host claims accurate by not promising hard auto-capture outside verified hook-capable hosts
 
-Publish command:
-
-```bash
-clawhub publish ./skills/mnemos-memory --slug mnemos-memory --name "Mnemos Memory" --version 0.6.0 --tags latest
-```
+This checkout is an unpublished 0.6.1rc1 candidate. No ClawHub upload is prepared
+or authorized by package validation. Reconcile the skill's version and current
+host claims with the final reviewed release before publishing it.
 
 Positioning:
 
