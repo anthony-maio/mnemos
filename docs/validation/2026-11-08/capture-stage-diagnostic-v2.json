@@ -1,0 +1,143 @@
+{
+  "status": "complete",
+  "measured": 30,
+  "warmups": 5,
+  "metrics": {
+    "git_ms": {
+      "minimum": 58.55800025165081,
+      "median": 66.06499990448356,
+      "p95_nearest_rank": 319.9563999660313,
+      "maximum": 383.46979999914765
+    },
+    "append_ms": {
+      "minimum": 30.635399743914604,
+      "median": 40.028200251981616,
+      "p95_nearest_rank": 48.904700204730034,
+      "maximum": 53.31619968637824
+    },
+    "connection_ms": {
+      "minimum": 0.9945002384483814,
+      "median": 2.7183000929653645,
+      "p95_nearest_rank": 7.241800427436829,
+      "maximum": 7.663999684154987
+    },
+    "protection_ms": {
+      "minimum": 0.8112001232802868,
+      "median": 2.113600028678775,
+      "p95_nearest_rank": 6.841199938207865,
+      "maximum": 7.163000758737326
+    },
+    "prepare_ms": {
+      "minimum": 0.09380001574754715,
+      "median": 0.16729999333620071,
+      "p95_nearest_rank": 0.31659984961152077,
+      "maximum": 0.6240997463464737
+    },
+    "commit_ms": {
+      "minimum": 28.77469966188073,
+      "median": 35.97799991257489,
+      "p95_nearest_rank": 45.44139979407191,
+      "maximum": 48.79309982061386
+    }
+  },
+  "first": {
+    "index": 0,
+    "warmup": true,
+    "git_ms": 193.142999894917,
+    "append_ms": 297.28509997949004,
+    "prepare_ms": 0.1509999856352806,
+    "commit_ms": 37.55020024254918,
+    "statements": [
+      {
+        "operation": "BEGIN",
+        "ms": 0.02110004425048828
+      },
+      {
+        "operation": "SELECT",
+        "ms": 0.030199997127056122
+      },
+      {
+        "operation": "INSERT",
+        "ms": 0.011799857020378113
+      },
+      {
+        "operation": "COMMIT",
+        "ms": 37.55020024254918
+      }
+    ],
+    "connection_ms": 259.4582000747323,
+    "protection_ms": 2.223900519311428,
+    "protection": [
+      {
+        "path": "queue",
+        "ms": 1.7412002198398113
+      },
+      {
+        "path": "events.sqlite",
+        "ms": 0.48270029947161674
+      }
+    ],
+    "event_id": "095e34f7d806e189ae0e21840021335da0742029ec75378cc58196f47ebe03b4"
+  },
+  "reopened_entries": 35,
+  "full_sync": true,
+  "integrity_check": "ok",
+  "bindings_unchanged": true,
+  "limits": "Synthetic stage diagnostic with wrapper overhead; no process launch, host transport, service processing, contention or complete command timing.",
+  "archive_sha256": "b74a751765b1f9623e1f35a78322fe28202ba8b95a3e6b80ddd0e86360af99ac",
+  "prior_result": {
+    "status": "complete",
+    "measured": 30,
+    "warmups": 5,
+    "metrics": {
+      "git_ms": {
+        "minimum": 62.28840025141835,
+        "median": 68.10840009711683,
+        "p95_nearest_rank": 338.75760016962886,
+        "maximum": 702.2539000026882
+      },
+      "append_ms": {
+        "minimum": 30.16550000756979,
+        "median": 42.514550033956766,
+        "p95_nearest_rank": 70.68549981340766,
+        "maximum": 74.95609996840358
+      },
+      "connection_ms": {
+        "minimum": 2.2765998728573322,
+        "median": 3.8372501730918884,
+        "p95_nearest_rank": 7.855799980461597,
+        "maximum": 8.870200254023075
+      },
+      "protection_ms": {
+        "minimum": 1.8620002083480358,
+        "median": 2.9283000621944666,
+        "p95_nearest_rank": 7.043300196528435,
+        "maximum": 7.424900308251381
+      }
+    },
+    "first": {
+      "index": 0,
+      "warmup": true,
+      "git_ms": 442.9251002147794,
+      "append_ms": 358.3301999606192,
+      "connection_ms": 334.10050021484494,
+      "protection_ms": 2.7472996152937412,
+      "protection": [
+        {
+          "path": "queue",
+          "ms": 1.7011999152600765
+        },
+        {
+          "path": "events.sqlite",
+          "ms": 1.0460997000336647
+        }
+      ],
+      "event_id": "095e34f7d806e189ae0e21840021335da0742029ec75378cc58196f47ebe03b4"
+    },
+    "reopened_entries": 35,
+    "full_sync": true,
+    "integrity_check": "ok",
+    "bindings_unchanged": true,
+    "limits": "Synthetic stage diagnostic with wrapper overhead; no process launch, host transport, service processing, contention or complete command timing."
+  }
+}
