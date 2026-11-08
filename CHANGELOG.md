@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Make graph-neighbor replacement atomic. A failed insert restores the previous
+  edges, and success or failure preserves any caller-owned transaction. The
+  missing-source guard from PR #5 remains in place while the write lock is held.
+
 ## 0.6.0 — 2026-03-31
 
 Beta update focused on making SQLite the only shipped persistence path and exposing recall-gated plasticity on the live runtime.
