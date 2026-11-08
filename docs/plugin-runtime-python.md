@@ -11,7 +11,6 @@ symlinks and reports a missing command before launching the server. An explicit
 absolute or relative path is retained. Leaving the override unset still uses
 the plugin's managed environment.
 
-This wrapper change is separate from the frozen 0.6.2 memory wheel. It does not
-change storage, retrieval or package contents. Source and subprocess tests
-establish interpreter selection; they do not establish native application
-acceptance, semantic quality or release readiness.
+The selected interpreter must already have Mnemos and its MCP dependencies
+installed. This override selects an interpreter; it does not install those
+dependencies or activate a host integration.
