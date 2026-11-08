@@ -1,0 +1,234 @@
+{
+  "kind": "offline-filter-bound",
+  "model_calls": 0,
+  "expected_fact_observations": 8,
+  "selected_fact_observations": 10,
+  "state_counts": [
+    {
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": 6,
+      "unsupported": 0
+    },
+    {
+      "state": [
+        "matches",
+        "applies",
+        true
+      ],
+      "expected": 2,
+      "unsupported": 2
+    }
+  ],
+  "mappings": [
+    {
+      "keep": [
+        {
+          "state": [
+            "matches",
+            "applies",
+            false
+          ],
+          "value": false
+        },
+        {
+          "state": [
+            "matches",
+            "applies",
+            true
+          ],
+          "value": false
+        }
+      ],
+      "retained_expected": 0,
+      "unsupported": 0,
+      "precision": null,
+      "retention": 0.0,
+      "meets_precision_and_retention": false
+    },
+    {
+      "keep": [
+        {
+          "state": [
+            "matches",
+            "applies",
+            false
+          ],
+          "value": false
+        },
+        {
+          "state": [
+            "matches",
+            "applies",
+            true
+          ],
+          "value": true
+        }
+      ],
+      "retained_expected": 2,
+      "unsupported": 2,
+      "precision": 0.5,
+      "retention": 0.25,
+      "meets_precision_and_retention": false
+    },
+    {
+      "keep": [
+        {
+          "state": [
+            "matches",
+            "applies",
+            false
+          ],
+          "value": true
+        },
+        {
+          "state": [
+            "matches",
+            "applies",
+            true
+          ],
+          "value": false
+        }
+      ],
+      "retained_expected": 6,
+      "unsupported": 0,
+      "precision": 1.0,
+      "retention": 0.75,
+      "meets_precision_and_retention": false
+    },
+    {
+      "keep": [
+        {
+          "state": [
+            "matches",
+            "applies",
+            false
+          ],
+          "value": true
+        },
+        {
+          "state": [
+            "matches",
+            "applies",
+            true
+          ],
+          "value": true
+        }
+      ],
+      "retained_expected": 8,
+      "unsupported": 2,
+      "precision": 0.8,
+      "retention": 1.0,
+      "meets_precision_and_retention": false
+    }
+  ],
+  "observations": [
+    {
+      "key": "01-maintainer-forward",
+      "fact_id": "maintainer",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    },
+    {
+      "key": "01-maintainer-reversed",
+      "fact_id": "maintainer",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    },
+    {
+      "key": "02-language-forward",
+      "fact_id": "language",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    },
+    {
+      "key": "02-language-reversed",
+      "fact_id": "language",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    },
+    {
+      "key": "05-condition-applies-forward",
+      "fact_id": "conditional",
+      "state": [
+        "matches",
+        "applies",
+        true
+      ],
+      "expected": true
+    },
+    {
+      "key": "05-condition-applies-reversed",
+      "fact_id": "conditional",
+      "state": [
+        "matches",
+        "applies",
+        true
+      ],
+      "expected": true
+    },
+    {
+      "key": "07-condition-unknown-forward",
+      "fact_id": "conditional",
+      "state": [
+        "matches",
+        "applies",
+        true
+      ],
+      "expected": false
+    },
+    {
+      "key": "07-condition-unknown-reversed",
+      "fact_id": "conditional",
+      "state": [
+        "matches",
+        "applies",
+        true
+      ],
+      "expected": false
+    },
+    {
+      "key": "11-instruction-forward",
+      "fact_id": "maintainer",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    },
+    {
+      "key": "11-instruction-reversed",
+      "fact_id": "maintainer",
+      "state": [
+        "matches",
+        "applies",
+        false
+      ],
+      "expected": true
+    }
+  ],
+  "any_mapping_passes": false,
+  "source_receipt_sha256": "da8ff365062bb77bd607a27f93a02df21eaf2843e521c19cd3bfde338c488bfd",
+  "events_sha256": "08fe67890765cf3d08cd57b6841d2e6d5a7ebedec7d1fcc82b3891941ce99fda",
+  "limits": "Filters of existing selected results using only relation, condition judgment and presence of source conditions. Repeated order views are not independent scenarios. Not a bound on methods using query/source semantics or new evidence."
+}
