@@ -629,7 +629,7 @@ class MnemosClient:
         """
         try:
             data = self.outbox.sanitize(payload)
-            data["event_id"] = data.get("event_id") or str(uuid4())
+            data["event_id"] = str(data.get("event_id") or uuid4())
             outbox_event_id = self.outbox.append(data, operation="capture")
         except (TypeError, ValueError) as exc:
             return {

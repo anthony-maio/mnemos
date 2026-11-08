@@ -102,3 +102,13 @@ async def test_queue_receipt_obeys_selected_write_policy(tmp_path):
         assert not path.exists()
     finally:
         await client.close()
+
+
+@pytest.mark.asyncio
+async def test_receipt_identity_matches_serialized_payload(tmp_path):
+    client = MnemosClient(descriptor_path=tmp_path / "runtime.json")
+    try:
+        result = client.enqueue_capture({**payload(), "event_id": 42})
+        assert result["event_id"] == client.outbox.pending()[0]["payload"]["event_id"] == "42"
+    finally:
+        await client.close()
