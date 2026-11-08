@@ -11,11 +11,13 @@ from __future__ import annotations
 
 import asyncio
 import argparse
+import hashlib
 import json
 import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -560,12 +562,50 @@ def _close_store(store: MemoryStore) -> None:
         close_fn()
 
 
+def _chunk_evidence(chunk: MemoryChunk) -> dict[str, Any]:
+    """Copy observed state now; later accesses may mutate in-memory chunks."""
+    return {
+        "chunk_id": chunk.id,
+        "content_sha256": hashlib.sha256(chunk.content.encode("utf-8")).hexdigest(),
+        "created_at": chunk.created_at.isoformat(),
+        "updated_at": chunk.updated_at.isoformat(),
+        "content_updated_at": (
+            chunk.content_updated_at.isoformat() if chunk.content_updated_at else None
+        ),
+        "content_recency_at": chunk.content_recency_at.isoformat(),
+        "version": chunk.version,
+        "access_count": chunk.access_count,
+    }
+
+
+def _query_evidence(
+    query: BenchmarkQuery,
+    chunks: list[MemoryChunk],
+    relevant: set[str],
+    elapsed_ms: float,
+    started_at: str,
+) -> dict[str, Any]:
+    return {
+        "query_sha256": hashlib.sha256(query.text.encode("utf-8")).hexdigest(),
+        "current_scope": query.current_scope,
+        "scope_id": query.scope_id,
+        "allowed_scopes": list(query.allowed_scopes),
+        "started_at": started_at,
+        "latency_ms": elapsed_ms,
+        "relevant_chunk_ids": sorted(relevant),
+        "returned_chunk_ids": [chunk.id for chunk in chunks],
+        "returned_chunks": [_chunk_evidence(chunk) for chunk in chunks],
+    }
+
+
 async def _run_engine_roundtrip(
     *,
     engine: MnemosEngine,
+    store: MemoryStore,
     documents: list[BenchmarkDocument],
     queries: list[BenchmarkQuery],
     top_k: int,
+    evidence: dict[str, Any],
 ) -> tuple[dict[str, str], list[list[str]], list[set[str]], list[float]]:
     id_map: dict[str, str] = {}
     for doc in documents:
@@ -582,11 +622,15 @@ async def _run_engine_roundtrip(
             raise RuntimeError(f"Engine failed to store benchmark document: {doc.id}")
         id_map[doc.id] = result.chunk.id
 
+    evidence["document_chunk_ids"] = dict(id_map)
+    evidence["stored_before_queries"] = [_chunk_evidence(c) for c in store.get_all()]
+
     retrieved_ids: list[list[str]] = []
     relevant_ids: list[set[str]] = []
     latencies_ms: list[float] = []
 
     for query in queries:
+        started_at = datetime.now(timezone.utc).isoformat()
         start = time.perf_counter()
         chunks = await engine.retrieve(
             query.text,
@@ -603,6 +647,9 @@ async def _run_engine_roundtrip(
         if not mapped_relevant_ids:
             raise RuntimeError(f"Query {query.text!r} has no mapped relevant IDs.")
         relevant_ids.append(mapped_relevant_ids)
+        evidence["queries"].append(
+            _query_evidence(query, chunks, mapped_relevant_ids, elapsed_ms, started_at)
+        )
 
     return id_map, retrieved_ids, relevant_ids, latencies_ms
 
@@ -805,6 +852,7 @@ def run_retrieval_benchmark(
     retrieved_ids: list[list[str]] = []
     relevant_ids: list[set[str]] = []
     latencies_ms: list[float] = []
+    evidence: dict[str, Any] = {"schema_version": 1, "queries": []}
 
     if retriever == "baseline":
         document_embeddings = embedder.embed_batch([doc.content for doc in documents])
@@ -826,8 +874,11 @@ def run_retrieval_benchmark(
                 )
             )
         ingest_seconds = time.perf_counter() - ingest_start
+        evidence["document_chunk_ids"] = dict(id_map)
+        evidence["stored_before_queries"] = [_chunk_evidence(c) for c in store.get_all()]
 
         for query in benchmark_queries:
+            started_at = datetime.now(timezone.utc).isoformat()
             start = time.perf_counter()
             query_embedding = embedder.embed(query.text)
             scope_filter = _scope_filter_for_query(query) if baseline_scope_aware else None
@@ -841,6 +892,9 @@ def run_retrieval_benchmark(
             if not mapped_relevant_ids:
                 raise RuntimeError(f"Query {query.text!r} has no mapped relevant IDs.")
             relevant_ids.append(mapped_relevant_ids)
+            evidence["queries"].append(
+                _query_evidence(query, chunks, mapped_relevant_ids, elapsed_ms, started_at)
+            )
     else:
         engine = MnemosEngine(
             config=MnemosConfig(
@@ -854,9 +908,11 @@ def run_retrieval_benchmark(
         _, retrieved_ids, relevant_ids, latencies_ms = asyncio.run(
             _run_engine_roundtrip(
                 engine=engine,
+                store=store,
                 documents=documents,
                 queries=benchmark_queries,
                 top_k=top_k,
+                evidence=evidence,
             )
         )
         ingest_seconds = time.perf_counter() - ingest_start
@@ -880,6 +936,7 @@ def run_retrieval_benchmark(
         "latency_mean_ms": metrics["latency_mean_ms"],
         "latency_p95_ms": metrics["latency_p95_ms"],
         "query_latencies_ms": latencies_ms,
+        "retrieval_evidence": evidence,
         "store_stats": store.get_stats(),
     }
 
