@@ -1,0 +1,58 @@
+{
+  "status": "candidate_rejected_latency_regression",
+  "source_commit": "c77933402a8bb4629211f24be22c3555fc872a76",
+  "protocol_commit": "5b6b67f6",
+  "observations": 1008,
+  "exact_pairs": 504,
+  "timed_pairs": 420,
+  "summary": [
+    {
+      "scope": "unrestricted",
+      "arm": "baseline",
+      "n": 140,
+      "median_ms": 41.94825,
+      "p95_nearest_rank_ms": 53.0073
+    },
+    {
+      "scope": "unrestricted",
+      "arm": "candidate",
+      "n": 140,
+      "median_ms": 36.8656,
+      "p95_nearest_rank_ms": 45.7323
+    },
+    {
+      "scope": "project",
+      "arm": "baseline",
+      "n": 140,
+      "median_ms": 36.7774,
+      "p95_nearest_rank_ms": 45.2101
+    },
+    {
+      "scope": "project",
+      "arm": "candidate",
+      "n": 140,
+      "median_ms": 184.36385,
+      "p95_nearest_rank_ms": 216.076
+    },
+    {
+      "scope": "absent",
+      "arm": "baseline",
+      "n": 140,
+      "median_ms": 2.1599,
+      "p95_nearest_rank_ms": 4.7927
+    },
+    {
+      "scope": "absent",
+      "arm": "candidate",
+      "n": 140,
+      "median_ms": 142.57184999999998,
+      "p95_nearest_rank_ms": 189.5452
+    }
+  ],
+  "source_sha256": "3a1546201d4f5418903238b696e556dfa514aae2e2696de2fcc984a37e8c7c11",
+  "seed_sha256": "7d362132eb196e099ac63e2578602c80196ac0b07c486a2682b911d6d23de5ac",
+  "evidence_archive_sha256": "3bd1ffe598cef20060633cf42fe18e19fd5914c2d743f461df0c1097308057b3",
+  "archive_scope": "Raw observations, plans, input freeze, result, helpers and preflight logs. Database copies retained separately by hash.",
+  "product_changed": false,
+  "full_latency_acceptance": false
+}
