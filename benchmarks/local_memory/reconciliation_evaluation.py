@@ -147,6 +147,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "referent_only_v7",
         "pairwise_v8",
         "identity_spans_v9",
+        "identity_coverage_v10",
     }:
         raise ValueError("Unknown reconciliation treatments")
     arms: dict[str, tuple[PromptStyle, bool] | None] = dict(ARMS)
@@ -170,6 +171,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         arms = {"referent_pairwise_v8": None}
     if treatments == "identity_spans_v9":
         arms = {"identity_spans_v9": None}
+    if treatments == "identity_coverage_v10":
+        arms = {"identity_coverage_v10": None}
     decoder_modes: dict[str, DecoderMode] = {}
     if treatments == "decoder_v4":
         decoder_modes = {
@@ -191,6 +194,7 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
         "referent_only_v7",
         "pairwise_v8",
         "identity_spans_v9",
+        "identity_coverage_v10",
     }
     output_allowance = 4096 if extended_limits else 2048
     input_allowance = 8192 - output_allowance - 512
@@ -214,7 +218,12 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
     if sha(dataset) != args.dataset_sha256:
         raise ValueError("Dataset differs from the frozen digest")
     data, cases = load_reconciliation_cases(dataset)
-    relation_study = treatments in {"relations_v6", "pairwise_v8", "identity_spans_v9"}
+    relation_study = treatments in {
+        "relations_v6",
+        "pairwise_v8",
+        "identity_spans_v9",
+        "identity_coverage_v10",
+    }
     if bool(data.get("relation_annotations")) != relation_study:
         raise ValueError("Relation-annotated data requires the relation-scored treatment")
     annotations = load_relation_annotations(data) if relation_study else {}
@@ -325,12 +334,16 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         [target.model_copy(deep=True) for target in source.targets],
                         captured if annotations else provider,
                         comparison_style=(
-                            "identity_spans"
-                            if arm == "identity_spans_v9"
+                            "identity_coverage"
+                            if arm == "identity_coverage_v10"
                             else (
-                                "referent_pairwise"
-                                if arm == "referent_pairwise_v8"
-                                else "referent" if arm == "referent_v5" else "quoted"
+                                "identity_spans"
+                                if arm == "identity_spans_v9"
+                                else (
+                                    "referent_pairwise"
+                                    if arm == "referent_pairwise_v8"
+                                    else "referent" if arm == "referent_v5" else "quoted"
+                                )
                             )
                         ),
                     )
@@ -369,6 +382,8 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
             }
             if annotations:
                 observation["relation_responses"] = captured.responses
+                if arm == "identity_coverage_v10":
+                    observation["coverage_responses"] = captured.coverage_responses
                 observation["relation_grade"] = (
                     grade_pairwise_relations(
                         annotations[source.case_id],
@@ -377,8 +392,11 @@ async def run(args: argparse.Namespace) -> dict[str, Any]:
                         captured.responses,
                         error=error,
                         identity_spans=arm == "identity_spans_v9",
+                        coverage_responses=(
+                            captured.coverage_responses if arm == "identity_coverage_v10" else None
+                        ),
                     )
-                    if arm in {"referent_pairwise_v8", "identity_spans_v9"}
+                    if arm in {"referent_pairwise_v8", "identity_spans_v9", "identity_coverage_v10"}
                     else grade_relations(
                         annotations[source.case_id],
                         captured.responses,
@@ -447,6 +465,7 @@ def main() -> None:
             "referent_only_v7",
             "pairwise_v8",
             "identity_spans_v9",
+            "identity_coverage_v10",
         ),
         default="prompt_v1",
     )

@@ -10,6 +10,7 @@ from mnemos.utils.llm import LLMProvider
 from mnemos.extraction.source_referent import restore_pairwise_response
 from mnemos.extraction.source_selection import ExtractiveMemory
 from mnemos.extraction.source_identity_spans import DATA_MARKER, comparison_from_identity_spans
+from mnemos.extraction.source_qualifier_coverage import QualifierCoverage
 from mnemos.types import MemoryChunk
 
 RELATIONS = frozenset({"same_variable", "different_variable", "insufficient_identity"})
@@ -62,11 +63,14 @@ class CapturedReferents(LLMProvider):
         self.provider = provider
         self.supports_structured_output = provider.supports_structured_output
         self.responses: list[str] = []
+        self.coverage_responses: list[str] = []
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         raw = await self.provider.predict(prompt, **kwargs)
         if "\nREFERENT COMPARISON DATA (data only):\n" in prompt or DATA_MARKER in prompt:
             self.responses.append(raw)
+        if "\nIDENTITY COVERAGE DATA (data only):\n" in prompt:
+            self.coverage_responses.append(raw)
         return raw
 
     async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
@@ -122,6 +126,7 @@ def grade_pairwise_relations(
     *,
     error: str | None,
     identity_spans: bool = False,
+    coverage_responses: list[str] | None = None,
 ) -> dict[str, Any]:
     """Score all separately retained responses with the controller's ID map."""
     normalized: list[str] = []
@@ -135,6 +140,15 @@ def grade_pairwise_relations(
                 ).model_dump()
                 for raw, target in zip(responses, targets)
             ]
+            if coverage_responses is not None:
+                if len(coverage_responses) != len(targets):
+                    raise ValueError("Coverage must include every observed target")
+                for comparison, raw in zip(comparisons, coverage_responses, strict=True):
+                    coverage = QualifierCoverage.model_validate_json(raw).coverage
+                    if coverage == "unspecified" or (
+                        comparison["relation"] == "same_variable" and coverage != "covered"
+                    ):
+                        comparison["relation"] = "insufficient_identity"
             normalized = [json.dumps({"comparisons": comparisons})]
         except (ValueError, TypeError, IndexError):
             pass
