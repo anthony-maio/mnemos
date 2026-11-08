@@ -1,0 +1,13 @@
+# Joint support input and decision-position contract
+
+Implementation commit `a64069f1` adds the inactive benchmark serializer in `benchmarks/local_memory/joint_support_frame.py`. It accepts zero through five candidates, preserves every supplied fact/source and revision, and appends one structurally recorded decision position per target after the entire cohort. A source containing the same marker text cannot redirect the recorded positions.
+
+The inference schema rejects extra fields, including labels at request, candidate or source level. Duplicate targets, duplicate evidence within a target, invalid versions/statuses, oversized source inventories, reserved tokenizer IDs and byte/token overflow reject the whole input. Missing sources remain explicitly empty; they do not acquire another candidate's evidence. Tokenizer binding, canonical payload, exact input IDs and decision mapping contribute to the frame hash. Candidate permutation changes the mapping and hash while preserving source ownership.
+
+Eighteen new model-free tests passed. After validation/formatting changes, the combined serializer and existing reranker-decoder suite passed 26 tests in 0.81 seconds. Private JUnit files `.venv/joint-frame-v1.xml` and `.venv/joint-frame-v2.xml` retain both runs. Black and `git diff --check` passed.
+
+The retained Qwen tokenizer was then loaded with local_files_only=True and trust_remote_code=False. Six short synthetic cohorts, zero through five candidates, produced 34, 99, 164, 229, 294 and 359 tokens. The helper verified exact complete-body encoding, each separately encoded marker segment, target order and reserved-token rejection. Marker positions were constructed while appending token segments, not found by searching the serialized text. Training and inference must use this same segmented construction; concatenating text first and retokenizing is not assumed equivalent.
+
+Private tokenizer evidence: `.venv/check-joint-tokenizer-v1.py` and `.venv/joint-tokenizer-v1.json`. The tokenizer binding is `620982bd901e79a30f6025cddf6b67a65560b4e83c8732431530231252cc728e`; tested source SHA256 is `7beef3b9f4810822ddd0e6ce6a0b19eb3e32a9f39f893491def0275a5cc96a00`. No model/head forward, training, semantic grading or capacity measurement occurred.
+
+This verifies serialization, not immunity to semantic prompt injection or correct answer support. Padding/masking, the actual shared head, grouped data and label audit, exact workload capacity and the bounded training recipe remain to be implemented or verified. No production module, installed package, pilot or earlier failed experiment changed.
