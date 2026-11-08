@@ -8,6 +8,7 @@ from __future__ import annotations
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import cast
 
 
 @dataclass(frozen=True)
@@ -44,7 +45,10 @@ def decode_token_choice(response: Mapping[str, object], labels: Sequence[str]) -
         token, logprob = item.get("token"), item.get("logprob")
         if not isinstance(token, str) or not token:
             raise ValueError("Missing token text")
-        if type(logprob) not in (int, float) or not math.isfinite(logprob) or logprob > 0:
+        if type(logprob) not in (int, float):
+            raise ValueError("Invalid log probability")
+        numeric_logprob = cast(int | float, logprob)
+        if not math.isfinite(numeric_logprob) or numeric_logprob > 0:
             raise ValueError("Invalid log probability")
         wire = item.get("bytes")
         if wire is not None and (
@@ -53,7 +57,7 @@ def decode_token_choice(response: Mapping[str, object], labels: Sequence[str]) -
             or bytes(wire) != token.encode("utf-8")
         ):
             raise ValueError("Token bytes disagree with text")
-        return token, float(logprob)
+        return token, float(numeric_logprob)
 
     chosen, chosen_logprob = score(entries[0])
     if chosen not in labels or response.get("response") != chosen:
