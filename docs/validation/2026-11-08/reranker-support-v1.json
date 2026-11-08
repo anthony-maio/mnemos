@@ -1,0 +1,777 @@
+{
+  "status": "failed_closed",
+  "counts": {
+    "questions": 68,
+    "supported": 40,
+    "unsupported": 73,
+    "expected": 40,
+    "answerable": 40,
+    "hits": 40,
+    "absent": 28,
+    "correct_abstention": 5,
+    "operational_failures": 0
+  },
+  "metrics": {
+    "precision": 0.35398230088495575,
+    "expected_retention": 1.0,
+    "answerable_recall": 1.0,
+    "abstention": 0.17857142857142858,
+    "support_median_ms": 174.23404997680336,
+    "support_p95_ms": 375.64119999296963
+  },
+  "gates": {
+    "precision": false,
+    "retention": true,
+    "recall": true,
+    "abstention": false,
+    "support_latency": true
+  },
+  "errors": [
+    {
+      "key": "sparse/approval-status/approver",
+      "expected": [],
+      "selected": [
+        "pending",
+        "requirement"
+      ],
+      "missing": [],
+      "unsupported": [
+        "pending",
+        "requirement"
+      ]
+    },
+    {
+      "key": "sparse/approval-status/date",
+      "expected": [],
+      "selected": [
+        "pending",
+        "requirement"
+      ],
+      "missing": [],
+      "unsupported": [
+        "pending",
+        "requirement"
+      ]
+    },
+    {
+      "key": "sparse/approval-status/status",
+      "expected": [
+        "pending"
+      ],
+      "selected": [
+        "pending",
+        "requirement"
+      ],
+      "missing": [],
+      "unsupported": [
+        "requirement"
+      ]
+    },
+    {
+      "key": "sparse/attributed-result/record",
+      "expected": [],
+      "selected": [
+        "report",
+        "rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "report",
+        "rule"
+      ]
+    },
+    {
+      "key": "sparse/attributed-result/speaker",
+      "expected": [
+        "report"
+      ],
+      "selected": [
+        "report",
+        "rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "rule"
+      ]
+    },
+    {
+      "key": "sparse/conditional-setting/current",
+      "expected": [],
+      "selected": [
+        "conditional"
+      ],
+      "missing": [],
+      "unsupported": [
+        "conditional"
+      ]
+    },
+    {
+      "key": "sparse/environment-count/production",
+      "expected": [
+        "production"
+      ],
+      "selected": [
+        "production",
+        "staging"
+      ],
+      "missing": [],
+      "unsupported": [
+        "staging"
+      ]
+    },
+    {
+      "key": "sparse/environment-count/staging",
+      "expected": [
+        "staging"
+      ],
+      "selected": [
+        "production",
+        "staging"
+      ],
+      "missing": [],
+      "unsupported": [
+        "production"
+      ]
+    },
+    {
+      "key": "sparse/future-storage/completion",
+      "expected": [],
+      "selected": [
+        "active",
+        "scheduled"
+      ],
+      "missing": [],
+      "unsupported": [
+        "active",
+        "scheduled"
+      ]
+    },
+    {
+      "key": "sparse/future-storage/current",
+      "expected": [
+        "active"
+      ],
+      "selected": [
+        "active",
+        "scheduled"
+      ],
+      "missing": [],
+      "unsupported": [
+        "scheduled"
+      ]
+    },
+    {
+      "key": "sparse/future-storage/date",
+      "expected": [
+        "scheduled"
+      ],
+      "selected": [
+        "active",
+        "scheduled"
+      ],
+      "missing": [],
+      "unsupported": [
+        "active"
+      ]
+    },
+    {
+      "key": "sparse/missing-region/region",
+      "expected": [],
+      "selected": [
+        "queue",
+        "retention"
+      ],
+      "missing": [],
+      "unsupported": [
+        "queue",
+        "retention"
+      ]
+    },
+    {
+      "key": "sparse/missing-region/technology",
+      "expected": [
+        "queue"
+      ],
+      "selected": [
+        "queue",
+        "retention"
+      ],
+      "missing": [],
+      "unsupported": [
+        "retention"
+      ]
+    },
+    {
+      "key": "sparse/owner-replacement/current",
+      "expected": [
+        "successor"
+      ],
+      "selected": [
+        "former",
+        "successor"
+      ],
+      "missing": [],
+      "unsupported": [
+        "former"
+      ]
+    },
+    {
+      "key": "sparse/owner-replacement/historical",
+      "expected": [
+        "former"
+      ],
+      "selected": [
+        "former",
+        "successor"
+      ],
+      "missing": [],
+      "unsupported": [
+        "successor"
+      ]
+    },
+    {
+      "key": "sparse/temporary-window/after",
+      "expected": [],
+      "selected": [
+        "trial"
+      ],
+      "missing": [],
+      "unsupported": [
+        "trial"
+      ]
+    },
+    {
+      "key": "sparse/temporary-window/before",
+      "expected": [],
+      "selected": [
+        "trial"
+      ],
+      "missing": [],
+      "unsupported": [
+        "trial"
+      ]
+    },
+    {
+      "key": "sparse/undated-location/current",
+      "expected": [
+        "current"
+      ],
+      "selected": [
+        "current",
+        "translation"
+      ],
+      "missing": [],
+      "unsupported": [
+        "translation"
+      ]
+    },
+    {
+      "key": "sparse/undated-location/historical",
+      "expected": [],
+      "selected": [
+        "current",
+        "translation"
+      ],
+      "missing": [],
+      "unsupported": [
+        "current",
+        "translation"
+      ]
+    },
+    {
+      "key": "sparse/undated-location/translation",
+      "expected": [],
+      "selected": [
+        "current",
+        "translation"
+      ],
+      "missing": [],
+      "unsupported": [
+        "current",
+        "translation"
+      ]
+    },
+    {
+      "key": "sparse/unresolved-duration/duration",
+      "expected": [],
+      "selected": [
+        "long",
+        "reviewer",
+        "short"
+      ],
+      "missing": [],
+      "unsupported": [
+        "long",
+        "reviewer",
+        "short"
+      ]
+    },
+    {
+      "key": "sparse/unresolved-duration/reviewer",
+      "expected": [
+        "reviewer"
+      ],
+      "selected": [
+        "long",
+        "reviewer",
+        "short"
+      ],
+      "missing": [],
+      "unsupported": [
+        "long",
+        "short"
+      ]
+    },
+    {
+      "key": "support/attribution/record",
+      "expected": [],
+      "selected": [
+        "reported-check",
+        "verification-rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "reported-check",
+        "verification-rule"
+      ]
+    },
+    {
+      "key": "support/attribution/reporter",
+      "expected": [
+        "reported-check"
+      ],
+      "selected": [
+        "reported-check",
+        "verification-rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "verification-rule"
+      ]
+    },
+    {
+      "key": "support/conflict/duration",
+      "expected": [],
+      "selected": [
+        "retention-review"
+      ],
+      "missing": [],
+      "unsupported": [
+        "retention-review"
+      ]
+    },
+    {
+      "key": "support/negation/allowed",
+      "expected": [
+        "prod-rule"
+      ],
+      "selected": [
+        "prod-rule",
+        "staging-rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "staging-rule"
+      ]
+    },
+    {
+      "key": "support/negation/approver",
+      "expected": [],
+      "selected": [
+        "prod-rule",
+        "staging-rule"
+      ],
+      "missing": [],
+      "unsupported": [
+        "prod-rule",
+        "staging-rule"
+      ]
+    },
+    {
+      "key": "support/ownership/cache",
+      "expected": [
+        "cache-owner"
+      ],
+      "selected": [
+        "api-owner",
+        "cache-owner"
+      ],
+      "missing": [],
+      "unsupported": [
+        "api-owner"
+      ]
+    },
+    {
+      "key": "support/quotation/path",
+      "expected": [
+        "fixture-path"
+      ],
+      "selected": [
+        "fixture-path",
+        "quoted-fixture"
+      ],
+      "missing": [],
+      "unsupported": [
+        "quoted-fixture"
+      ]
+    },
+    {
+      "key": "support/release-path/where",
+      "expected": [
+        "release-path"
+      ],
+      "selected": [
+        "check-status",
+        "release-path"
+      ],
+      "missing": [],
+      "unsupported": [
+        "check-status"
+      ]
+    },
+    {
+      "key": "support/source-mismatch/owner",
+      "expected": [],
+      "selected": [
+        "claimed-owner",
+        "settlement-path"
+      ],
+      "missing": [],
+      "unsupported": [
+        "claimed-owner",
+        "settlement-path"
+      ]
+    },
+    {
+      "key": "support/source-mismatch/path",
+      "expected": [
+        "settlement-path"
+      ],
+      "selected": [
+        "claimed-owner",
+        "settlement-path"
+      ],
+      "missing": [],
+      "unsupported": [
+        "claimed-owner"
+      ]
+    },
+    {
+      "key": "support/temporal-attribute/backup",
+      "expected": [
+        "backup-region"
+      ],
+      "selected": [
+        "backup-region",
+        "frontend-region"
+      ],
+      "missing": [],
+      "unsupported": [
+        "frontend-region"
+      ]
+    },
+    {
+      "key": "support/temporal-attribute/frontend",
+      "expected": [
+        "frontend-region"
+      ],
+      "selected": [
+        "backup-region",
+        "frontend-region"
+      ],
+      "missing": [],
+      "unsupported": [
+        "backup-region"
+      ]
+    },
+    {
+      "key": "support/temporal-attribution/current",
+      "expected": [],
+      "selected": [
+        "reported-threshold"
+      ],
+      "missing": [],
+      "unsupported": [
+        "reported-threshold"
+      ]
+    },
+    {
+      "key": "support/temporal-environment/production",
+      "expected": [
+        "production-cluster"
+      ],
+      "selected": [
+        "production-cluster",
+        "staging-cluster"
+      ],
+      "missing": [],
+      "unsupported": [
+        "staging-cluster"
+      ]
+    },
+    {
+      "key": "support/temporal-environment/staging",
+      "expected": [
+        "staging-cluster"
+      ],
+      "selected": [
+        "production-cluster",
+        "staging-cluster"
+      ],
+      "missing": [],
+      "unsupported": [
+        "production-cluster"
+      ]
+    },
+    {
+      "key": "support/temporal-expired/current",
+      "expected": [],
+      "selected": [
+        "trial-batch"
+      ],
+      "missing": [],
+      "unsupported": [
+        "trial-batch"
+      ]
+    },
+    {
+      "key": "support/temporal-history-only/current",
+      "expected": [],
+      "selected": [
+        "historical-runtime"
+      ],
+      "missing": [],
+      "unsupported": [
+        "historical-runtime"
+      ]
+    },
+    {
+      "key": "support/temporal-proposal/approved",
+      "expected": [
+        "proposed-format"
+      ],
+      "selected": [
+        "current-format",
+        "proposed-format"
+      ],
+      "missing": [],
+      "unsupported": [
+        "current-format"
+      ]
+    },
+    {
+      "key": "support/temporal-proposal/current",
+      "expected": [
+        "current-format"
+      ],
+      "selected": [
+        "current-format",
+        "proposed-format"
+      ],
+      "missing": [],
+      "unsupported": [
+        "proposed-format"
+      ]
+    },
+    {
+      "key": "support/temporal-quoted-future/current",
+      "expected": [
+        "dated-backend"
+      ],
+      "selected": [
+        "dated-backend",
+        "quoted-transition"
+      ],
+      "missing": [],
+      "unsupported": [
+        "quoted-transition"
+      ]
+    },
+    {
+      "key": "support/temporal-quoted-future/future",
+      "expected": [],
+      "selected": [
+        "dated-backend",
+        "quoted-transition"
+      ],
+      "missing": [],
+      "unsupported": [
+        "dated-backend",
+        "quoted-transition"
+      ]
+    },
+    {
+      "key": "support/temporal-scheduled/current",
+      "expected": [
+        "active-bucket"
+      ],
+      "selected": [
+        "active-bucket",
+        "scheduled-switch"
+      ],
+      "missing": [],
+      "unsupported": [
+        "scheduled-switch"
+      ]
+    },
+    {
+      "key": "support/temporal-scheduled/schedule",
+      "expected": [
+        "scheduled-switch"
+      ],
+      "selected": [
+        "active-bucket",
+        "scheduled-switch"
+      ],
+      "missing": [],
+      "unsupported": [
+        "active-bucket"
+      ]
+    },
+    {
+      "key": "support/temporal-transition/current",
+      "expected": [
+        "replacement-owner"
+      ],
+      "selected": [
+        "previous-owner",
+        "replacement-owner"
+      ],
+      "missing": [],
+      "unsupported": [
+        "previous-owner"
+      ]
+    },
+    {
+      "key": "support/temporal-transition/historical",
+      "expected": [
+        "previous-owner"
+      ],
+      "selected": [
+        "previous-owner",
+        "replacement-owner"
+      ],
+      "missing": [],
+      "unsupported": [
+        "replacement-owner"
+      ]
+    },
+    {
+      "key": "support/temporal-undated/historical",
+      "expected": [],
+      "selected": [
+        "handbook"
+      ],
+      "missing": [],
+      "unsupported": [
+        "handbook"
+      ]
+    },
+    {
+      "key": "support/temporal-unmarked-conflict/duration",
+      "expected": [],
+      "selected": [
+        "long-retention",
+        "retention-owner",
+        "short-retention"
+      ],
+      "missing": [],
+      "unsupported": [
+        "long-retention",
+        "retention-owner",
+        "short-retention"
+      ]
+    },
+    {
+      "key": "support/temporal-unmarked-conflict/reviewer",
+      "expected": [
+        "retention-owner"
+      ],
+      "selected": [
+        "long-retention",
+        "retention-owner",
+        "short-retention"
+      ],
+      "missing": [],
+      "unsupported": [
+        "long-retention",
+        "short-retention"
+      ]
+    },
+    {
+      "key": "support/temporal-unsupported-transition/completed",
+      "expected": [],
+      "selected": [
+        "active-pipeline",
+        "claimed-transition"
+      ],
+      "missing": [],
+      "unsupported": [
+        "active-pipeline",
+        "claimed-transition"
+      ]
+    },
+    {
+      "key": "support/temporal-unsupported-transition/current",
+      "expected": [
+        "active-pipeline"
+      ],
+      "selected": [
+        "active-pipeline",
+        "claimed-transition"
+      ],
+      "missing": [],
+      "unsupported": [
+        "claimed-transition"
+      ]
+    },
+    {
+      "key": "support/time/current",
+      "expected": [
+        "current-queue"
+      ],
+      "selected": [
+        "current-queue",
+        "old-queue"
+      ],
+      "missing": [],
+      "unsupported": [
+        "old-queue"
+      ]
+    },
+    {
+      "key": "support/time/region",
+      "expected": [],
+      "selected": [
+        "current-queue"
+      ],
+      "missing": [],
+      "unsupported": [
+        "current-queue"
+      ]
+    },
+    {
+      "key": "support/uncertainty/approved",
+      "expected": [
+        "proposal"
+      ],
+      "selected": [
+        "current-db",
+        "proposal"
+      ],
+      "missing": [],
+      "unsupported": [
+        "current-db"
+      ]
+    }
+  ],
+  "raw_sha256": "c0bad57eca82e8aca58b862b5378265b9d8116e259019d942905862ba215c670",
+  "freeze_sha256": "28711b9e1516221add9f3f01d8d4b695f1e8d8aab616bbf8021d0645d4599890",
+  "fresh_acceptance": false,
+  "full_retrieval_timing": false,
+  "archive_sha256": "a665e250de547d4fff6cba5ee18bd7211e232a95af659aa8c25564afdc89bac2",
+  "archive_members": 23,
+  "tokenizer_preflight_sha256": "3e50d4036f020272d83341db16f70e66f3db2c3595b973589a860c43187ea2fa",
+  "independent_logits_recomputation": true,
+  "execution_exit_code": 0
+}
