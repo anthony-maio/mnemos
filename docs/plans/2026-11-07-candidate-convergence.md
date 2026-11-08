@@ -255,3 +255,12 @@ setup corrections are preserved. The source repair has an exact review patch
 and remains outside the frozen candidates and canonical delivery. The functional
 plugin has a similar bare-command branch that needs its own scoped follow-up.
 Native application acceptance, hosted CI, publication and pilot use remain open.
+
+The [functional plugin follow-up](../validation/2026-11-07/functional-plugin-python-v1.md)
+now repairs both command-resolution entry points at `d854db7e`. All 38 wrapper
+cases pass in six Python/OS environments, and five checks against the unchanged
+installed f5 wheel pass on Windows 3.12. This source-only branch has an exact
+patch and review description; it has not changed canonical code, the frozen
+wheel or pilot configuration. Native hook review and the optional pilot-scope
+decision remain pending. The completed wrapper matrices need no further runs
+without a new defect or change.

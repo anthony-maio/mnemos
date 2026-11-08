@@ -932,3 +932,12 @@ No historical archive is removed or rewritten.
   failures and intermediate assertions remain recorded. Functional-plugin
   integration, native applications, hosted CI, publication and pilot use remain
   open; this does not replace earlier benchmark or acceptance evidence.
+
+- The [functional plugin repair](../validation/2026-11-07/functional-plugin-python-v1.md)
+  fixes the same command-selection failure for both MCP and hook entry points
+  on a separate source branch. All 38 wrapper checks pass in six environments;
+  five installed-package checks pass against the unchanged f5 wheel. Missing
+  hook runtimes skip without installing or blocking. Exact patch reconstruction,
+  module origins and all 96 package files verify. Canonical delivery and live
+  configuration remain unchanged. Native validation, pilot decisions and
+  publication remain open; completed wrapper checks are closed.
