@@ -1,9 +1,10 @@
 # Optional explicit-memory learning pilot
 
 This report records preparation before scope approval. The user subsequently
-authorized validation. The [first native attempt](explicit-learning-pilot-native-v1.md)
-passed seven phases and failed validation during forgetting. Activation remains
-unapproved and neither pilot has recorded an actual use day.
+authorized validation. The [second native attempt](explicit-learning-pilot-native-v2.md)
+passed all nine phases under its prospective outcome policy. The first attempt
+remains failed. Activation remains unapproved and neither pilot has recorded
+an actual use day.
 
 Four private project patches are prepared for a possible Codex learning pilot.
 They add a project-local MCP entry and explicit-use guidance to each of the two
