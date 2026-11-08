@@ -61,6 +61,8 @@ The explicit-memory example below uses real local embeddings and disables experi
 
 The [local canonical integration](docs/validation/2026-11-07/canonical-integration-v1.md) passes 3,758 tests with four platform skips, full local typing and formatting, and desktop/mobile website checks on its recorded revisions. The original wheel is unchanged. Code and website are integrated locally; this has not updated the public source, PyPI or hosted site, and the failed entry requirements remain open.
 
+The later [plugin launcher integration](docs/validation/2026-11-07/functional-plugin-integration-v1.md) brings the verified interpreter-selection repair into local canonical code. Its wrapper and installed MCP checks retain their own revision bindings. The memory package and website are unchanged; this source-only repair does not qualify the native host or pilot.
+
 Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
 
 The intended setup path is:
@@ -456,7 +458,9 @@ This repository now includes a native Claude Code plugin package (`.claude-plugi
 /plugin install mnemos-memory@mnemos-marketplace
 ```
 
-On first run, the plugin bootstraps a local virtual environment under `.claude-plugin/.venv` and installs Mnemos with MCP extras. The MCP server and all five lifecycle hooks share that runtime. Set `MNEMOS_PLUGIN_PYTHON` to use an existing Mnemos Python environment instead. Bootstrap output goes to stderr so it does not interfere with MCP or hook responses.
+On first MCP startup, the plugin creates a local virtual environment under `.claude-plugin/.venv` and installs Mnemos with MCP extras. The MCP server owns installation. All five lifecycle hooks use that runtime when it is ready; otherwise they report a skip without installing or blocking the host. A skip is not a completed capture.
+
+Set `MNEMOS_PLUGIN_PYTHON` to an existing Mnemos interpreter path or a command resolved from the configured PATH. Explicit paths and virtual-environment symlinks are preserved. Bootstrap diagnostics go to stderr so stdout remains available for the protocol. See [Python selection for plugin servers and hooks](docs/plugin-runtime-python.md) for missing-runtime behavior.
 It also ships Claude Code subagents for the default Mnemos workflow:
 - `mnemos-recall` to pull scoped repo memory before substantial work
 - `mnemos-curator` to keep only durable facts after meaningful work

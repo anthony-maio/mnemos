@@ -47,8 +47,8 @@ def main() -> int:
         return 0
     try:
         # Inherited stdio preserves Claude's protocol streams and subprocess
-        # execution returns the configured runtime's exit status reliably on
-        # both POSIX and Windows, including a bare ``python`` from PATH.
+        # execution returns the selected runtime's exit status on both POSIX
+        # and Windows. Command overrides have already been resolved from PATH.
         completed = subprocess.run(
             _runtime_command(runtime_python, event),
             env=env,
