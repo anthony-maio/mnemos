@@ -1,9 +1,10 @@
 # Converge the improvement work on one candidate
 
-The adversarial review found a real planning problem: useful repairs are spread
-across several validated checkpoints, while the daily-use configuration is
-still old and inactive. Close the output-format experiments and consolidate the
-delivery work. The six original goals and their acceptance targets stay open.
+The adversarial review found a real planning problem: useful repairs were spread
+across several validated checkpoints, while the daily-use configuration was
+old and inactive. Delivery and pilot preparation now use one frozen artifact.
+The bounded retrieval/support comparison has completed and failed its gates.
+The six original goals and their acceptance targets stay open.
 
 ## Candidate and delivery boundary
 
@@ -90,6 +91,17 @@ failures. Extraction remains a separate evaluation. If development fails,
 report the failed obligation and return a concrete scope/design decision;
 do not spend fresh cases on an already failing candidate.
 
+The [completed run](../validation/2026-11-07/retrieval-support-development-v1.md)
+used the actual installed retrieval path for all 272 observations and preserved
+all 136 matched candidate/context pairs. Treatment precision is 94.74%, expected
+fact retention 90%, correct abstention 52/56 and complete p95 8,641.48 ms. There
+are no ranking misses or operational failures; support rejects eight expected
+answers and still selects four unsupported facts. One run was sufficient to
+establish failure. No integration defect warrants the permitted rerun, and
+this bounded comparison is closed. Keep the treatment disabled and preserve
+the original gates. Critical-fact retention and 10,000-fact timing are not
+established by these known small scenarios.
+
 ## Separate the timing contracts
 
 The original requirement at line 1017 of the functional-memory plan is warm
@@ -153,7 +165,9 @@ or semantic-quality obligations. It is not the default action of this plan.
    pilot drafts and explicit MCP lifecycle are complete. Normal hook review and
    full-configuration execution remain pending.
 4. Execute the single bounded end-to-end quality increment and the prospective
-   timing protocol. Do not launch unrelated tuning experiments in parallel.
+   timing protocol. The quality increment is complete and failed; prospective
+   installed-pilot timing remains open. Do not launch unrelated tuning
+   experiments in parallel.
 5. If entry passes, request activation on concrete reviewed files and observe
    actual use. If entry fails, present the remaining failure and the scoped
    alternative above. Keep all unmet goal requirements explicit.

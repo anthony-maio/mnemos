@@ -1,0 +1,184 @@
+{
+  "status": "completed_and_audited",
+  "checked_at": "2026-11-08T00:02:59.993025+00:00",
+  "runner_commit": "49044983e563bd42db554453b54893f9f8fe3c53",
+  "product_commit": "f5a944ea9a7f61499733b8b64e829aa10f5920be",
+  "wheel_sha256": "07c5b424bc7731cacbebb45f44709b3f19509c2cde3150a6451c92d12b27e6ae",
+  "installed_package_files": 96,
+  "dependency_versions": 57,
+  "observations": 272,
+  "pairs": 136,
+  "known_questions": 68,
+  "fresh_questions": 0,
+  "repetitions": 2,
+  "complete_scenarios": 32,
+  "complete_scenario_facts": 61,
+  "preflight_retrieval_calls": 68,
+  "measured_retrieval_calls": 272,
+  "extraction_calls": 0,
+  "qa_source_forwards": 246,
+  "qa_warmup_forwards": 1,
+  "contrast_requests": 136,
+  "http_attempts": 136,
+  "qwen_prompt_tokens": 101228,
+  "qwen_generated_tokens": 17666,
+  "qa_source_input_tokens": 10158,
+  "summary": {
+    "baseline": {
+      "observations": 136,
+      "answerable": 80,
+      "absent": 56,
+      "hit": 80,
+      "clean_hit": 14,
+      "correct_abstention": 0,
+      "supported": 80,
+      "unsupported": 174,
+      "selected": 254,
+      "expected": 80,
+      "operational_failure": 0,
+      "precision": 0.31496062992125984,
+      "expected_retention": 1.0,
+      "context_bytes_total": 25530,
+      "supported_per_1000_context_byte_bound": 3.1335683509596555,
+      "recall_at_5": 1.0,
+      "abstention_rate": 0.0,
+      "elapsed_median_ms": 136.52810011990368,
+      "elapsed_p95_ms": 293.3567001018673,
+      "ranking_misses": 0,
+      "support_rejections": 0,
+      "absent_with_candidates": 56,
+      "abstained_with_candidates": 0
+    },
+    "intersection": {
+      "observations": 136,
+      "answerable": 80,
+      "absent": 56,
+      "hit": 72,
+      "clean_hit": 72,
+      "correct_abstention": 52,
+      "supported": 72,
+      "unsupported": 4,
+      "selected": 76,
+      "expected": 80,
+      "operational_failure": 0,
+      "precision": 0.9473684210526315,
+      "expected_retention": 0.9,
+      "context_bytes_total": 7410,
+      "supported_per_1000_context_byte_bound": 9.7165991902834,
+      "recall_at_5": 0.9,
+      "abstention_rate": 0.9285714285714286,
+      "elapsed_median_ms": 6905.580250080675,
+      "elapsed_p95_ms": 8641.476499848068,
+      "ranking_misses": 0,
+      "support_rejections": 8,
+      "absent_with_candidates": 56,
+      "abstained_with_candidates": 52
+    }
+  },
+  "development_gates": {
+    "baseline": {
+      "precision": false,
+      "expected_retention": true,
+      "recall_at_5": true,
+      "abstention_rate": false,
+      "complete_warm_latency": true,
+      "zero_operational_failures": true
+    },
+    "intersection": {
+      "precision": false,
+      "expected_retention": false,
+      "recall_at_5": true,
+      "abstention_rate": true,
+      "complete_warm_latency": false,
+      "zero_operational_failures": true
+    }
+  },
+  "confidence_intervals": {
+    "baseline": {
+      "precision": [
+        0.2695035460992908,
+        0.3652173913043478
+      ],
+      "expected_retention": [
+        1.0,
+        1.0
+      ],
+      "recall_at_5": [
+        1.0,
+        1.0
+      ],
+      "abstention_rate": [
+        0.0,
+        0.0
+      ],
+      "elapsed_median_ms": [
+        133.83549987338483,
+        141.16824988741428
+      ],
+      "elapsed_p95_ms": [
+        181.4649999141693,
+        535.5980999302119
+      ]
+    },
+    "intersection": {
+      "precision": [
+        0.8648648648648649,
+        1.0
+      ],
+      "expected_retention": [
+        0.8,
+        0.9761904761904762
+      ],
+      "recall_at_5": [
+        0.8,
+        0.9761904761904762
+      ],
+      "abstention_rate": [
+        0.8148148148148148,
+        1.0
+      ],
+      "elapsed_median_ms": [
+        6779.782799887471,
+        7142.404400045052
+      ],
+      "elapsed_p95_ms": [
+        7881.175300106406,
+        9752.920500002801
+      ]
+    }
+  },
+  "paired_latency_median_difference_ms": 6757.6115999836475,
+  "paired_latency_median_difference_ci": [
+    6640.413149958476,
+    7020.87779995054
+  ],
+  "uncertainty": "95% percentile intervals from 10000 scenario-cluster bootstrap resamples; seed 2026110704.",
+  "critical_fact_retention": "unmeasured: original known fixtures have no separate annotation",
+  "ten_thousand_fact_latency": "not measured by this small-scenario development run",
+  "context_efficiency_units": "UTF-8 byte upper bound, not measured host tokens; judgment input/output cost is separate.",
+  "net_token_savings_claimed": false,
+  "execution_runs": 1,
+  "integration_reruns": 0,
+  "preparation_failure_preserved": true,
+  "native_host_tested": false,
+  "pilot_days": 0,
+  "live_configuration_changed": false,
+  "frozen_files_verified": 127,
+  "model_assets_verified": 33,
+  "database_copies_verified": 272,
+  "source_snapshots_preserved": true,
+  "cleanup": {
+    "qa": {
+      "launcher_exit": 0,
+      "interpreter_absent": true
+    },
+    "qwen_unloaded": true,
+    "server_exit": 1,
+    "port_closed": true,
+    "errors": []
+  },
+  "archive_sha256": "1911c50ecce4e8e5911ed5142208dd9a9810da5db7cdb81a7f1fabe2a904d86e",
+  "archive_bytes": 11960799,
+  "archive_members": 499,
+  "archive_member_manifest_sha256": "ef2b50ec6b1062cbd80015f80ab54759d77722b602c8de37024c3c44433edebc"
+}
