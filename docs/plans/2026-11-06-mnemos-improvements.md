@@ -910,3 +910,14 @@ No historical archive is removed or rewritten.
   checks pass with graph and feedback controls. The original 0.6.1 and f5 artifacts
   are unchanged. No benchmark was rerun; chronology evaluation, native acceptance
   and release qualification remain open.
+
+- The [controlled chronology result](../validation/2026-11-07/legacy-chronology-v1.md)
+  verifies the installed 0.6.2 recency mechanism in one prospectively frozen run:
+  1,152 observations, 384 matched route triples and 576 access pairs. Known
+  chronology yields 8/8 expected facts for the repair on both stores, with and
+  without prior stale access; 0.6.1 falls to 0/8 after access. The repair has zero
+  access-induced changes, scope leaks or budget failures. Tied and unknown
+  chronology still force a return and receive no correctness or abstention
+  credit. A read-only float32 audit correction preserves the original audit and
+  all raw results. This completes the bounded legacy development comparison;
+  fresh semantic, native, platform, release and actual pilot obligations remain.

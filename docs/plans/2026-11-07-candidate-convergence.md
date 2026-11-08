@@ -234,3 +234,14 @@ now passes source/artifact comparisons and isolated storage, recency and migrati
 checks. Version and documentation changes preserve the tested repair's runtime
 implementation. This is a separate unpublished candidate, with no replacement
 benchmark score and no change to the frozen f5 product or inactive pilot.
+
+The [controlled chronology comparison](../validation/2026-11-07/legacy-chronology-v1.md)
+now closes that separate development check. Across both stores and three
+repetitions, 0.6.2 retains all eight expected facts in each known-chronology
+condition before and after stale access; 0.6.1 drops from eight to zero after
+access. The repair has zero access-induced selection changes in 192 pairs.
+All routes still return candidates when chronology is tied or unknown, so no
+abstention or temporal-correctness claim follows for those conditions. The single
+run and corrected read-only numeric audit are archived. The original benchmark
+and failed gates remain unchanged; this does not reopen the closed f5 tuning
+experiments or authorize publication or pilot activation.
