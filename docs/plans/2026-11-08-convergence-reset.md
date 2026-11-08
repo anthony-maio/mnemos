@@ -31,6 +31,8 @@ The original capture target remains 100 ms. Warm recall remains 500 ms at 10,000
 
 ## Artifact and pilot boundaries
 
+Native transport follow-up: canonical `54cb50e7` [replaces per-header-byte socket operations with bounded reads](../validation/2026-11-08/native-hook-buffered-v1.md). Six Rust and 75 final-binary integration tests passed, including deadline and framing checks. This is an inactive transport implementation change with no complete timing result; it does not solve authoritative Git or durable-commit cost and does not consume the remaining paired comparison. The Python wheel and optional pilot bindings remain unchanged.
+
 Loader-review follow-up: [integration remains withheld](../validation/2026-11-08/git-loader-review-v1.md). The owner and pinned-manifest mechanism are implemented, and Windows home-selection invalidation is repaired, but the runtime closure is not approved. Prepare the single permitted current complete-path attribution next, with authoritative Git still active. Do not extend loader inspection indefinitely before measuring whether the remaining latency budget justifies more cache work. Integration still requires the full freshness contract above.
 
 Attribution completed: [the current native run](../validation/2026-11-08/current-capture-attribution-v1.md) measured median 142.18 ms and p95 376.71 ms, with all 55 events/jobs durable and complete. This consumes the single permitted attribution run. Per-sample subtraction of Git leaves p95 236.69 ms; it is not a causal cache prediction. Keep the cache inactive and inspect the complete acknowledgement contract before choosing the implementation for the remaining paired comparison. Do not remove FULL commits, authorization or privacy checks to pass the clock.
