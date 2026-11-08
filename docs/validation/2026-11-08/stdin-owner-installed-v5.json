@@ -1,0 +1,35 @@
+{
+  "status": "audited",
+  "captures": 6,
+  "events_per_arm": 3,
+  "jobs_per_arm": 3,
+  "latency_acceptance": false,
+  "cleanup": [
+    {
+      "arm": "json",
+      "exit_code": 0,
+      "processes_absent": true,
+      "ports_closed": {
+        "54567": true,
+        "54570": true
+      },
+      "graceful_stop_record": true
+    },
+    {
+      "arm": "sqlite",
+      "exit_code": 0,
+      "processes_absent": true,
+      "ports_closed": {
+        "54590": true,
+        "54593": true
+      },
+      "graceful_stop_record": true
+    }
+  ],
+  "archive_sha256": "9cc0b14b50e9197b5a2bac025eefcc38c3ff8189f3ed03a1b5c008136c8b13bf",
+  "archive_members": 17,
+  "wheel_sha256": "bbfc09d149959669c0098c01f82dcda409f3566cfebd603dff740a6c16fe29be",
+  "source_commit": "98450b397bbaaca0d09c756eb91e40818d3145a8",
+  "freeze_sha256": "3ba4b0b96e06da2a30126867e850ac87d0a4653cc1aeec228f8aadca373a7119",
+  "timings_sha256": "94463e9b05d7fd51f318b978643f4f03c5fd3d1dfce9673e5c33d1141ff44947"
+}
