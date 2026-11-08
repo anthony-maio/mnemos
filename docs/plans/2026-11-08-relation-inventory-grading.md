@@ -32,7 +32,13 @@ An undated present-tense assertion can answer an explicit source-state question 
 
 The new temporal contract and existing query/cache/quotation checks passed 62 tests in 1.92 seconds, retained at `.venv/temporal-support-v1.xml`. Tests cover undated assertions against past/current/future dates, as-of dates without extrapolation, half-open endpoints, incompatible fields and foreign quotations. These establish deterministic behavior, not semantic extraction accuracy.
 
-This contract is not yet wired into a producer or selector. Existing v1 preparation, schemas and tokenizer evidence remain unchanged. A v2 inventory must incorporate this temporal representation and preserve its decision basis through final results. Current evidence objects contain excerpt and source references but no assertion-date field; do not invent dates to fill that gap. If sufficient source timing is absent, report the resulting recall/availability limitation against the original gates. Do not redefine the original goal as source-state recall alone.
+The contract is now integrated in `relation_inventory_cache_v2.py`, `source_relation_producer_v2.py` and `relation_query_v2.py`. These versioned modules preserve the frozen v1 implementation. V2 source relations replace the old applicability fields with a structured temporal annotation. The strict response schema rejects legacy temporal fields, validates own-source quotations and keeps the source producer independent of query dates.
+
+The v2 query response carries explicit temporal intent. Selected results retain a per-claim `selected_bases` record with fact, source, claim index and temporal basis. Unavailable, absent and conflict results carry no successful support basis. The classifier remains fallible: a model that incorrectly labels a current-validity question as source-state would violate the protocol and must fail semantic grading, even if its JSON is valid.
+
+Nine v2 source-to-query checks passed together with the temporal contract and existing boundaries: 127 tests in 2.86 seconds, retained at `.venv/relation-inventory-v2-integration.xml`. They cover undated assertions against past/current/future dates, source-state support with an explicit basis, conflicting query intent/date fields, as-of support without next-day extrapolation, rejection of legacy fields and foreign temporal quotations. These are model-free integration tests.
+
+Existing v1 preparation, schemas and tokenizer evidence remain unchanged. The execution harness still targets v1; a v2 harness and prepared policy are required before any new run. Current evidence objects contain excerpt and source references but no assertion-date field; do not invent dates to fill that gap. If sufficient source timing is absent, report the resulting recall/availability limitation against the original gates. Do not redefine the original goal as source-state recall alone.
 
 ## Scoring and evidence
 
