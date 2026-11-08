@@ -197,7 +197,13 @@ def main():
                 and not pending
                 and state == {"ack": 0, "replay": 0, "pumps_idle": True}
             ):
-                return {"events": count, "jobs": len(jobs), "pending": 0, **state}
+                return {
+                    "events": count,
+                    "jobs": len(jobs),
+                    "pending": 0,
+                    "observed_ns": time.perf_counter_ns(),
+                    **state,
+                }
             time.sleep(0.01)
         raise TimeoutError("Drain barrier did not complete")
 

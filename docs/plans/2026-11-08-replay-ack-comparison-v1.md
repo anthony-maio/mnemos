@@ -1,8 +1,8 @@
 # Replay acknowledgement comparison preparation
 
-Status: package preparation and owner functional preflight complete. See
+Status: package preparation, owner functional preflight and runner/auditor implementation complete. See
 [owner validation](../validation/2026-11-08/replay-ack-owner-preflight-v1.md).
-No measured comparison has run. Execution still requires the completed runner/auditor, review and a manifest
+No measured comparison has run. Execution still requires final review and a manifest
 binding their exact bytes, settings, schedule, dependencies and native binary.
 
 Compare baseline `7a77e40f4ec8dd5b2fbf47ff0b1e3f0862e0129d` with candidate
@@ -45,6 +45,9 @@ These intervals cover the entire acknowledgement method, including lock waits;
 they are not isolated COMMIT durations. The owner's response trace records
 completed server dispatch before HTTP delivery. The auditor must combine it
 with native command outcomes to establish a successfully delivered receipt.
+Report prior-event acknowledgement overlap separately from all overlap: a
+command's own acknowledgement after response dispatch does not establish that
+an earlier replay blocked its dispatch.
 
 ## Audit and interpretation
 
@@ -59,6 +62,19 @@ Freeze all inputs before the first scheduled command. Verify installed members,
 helpers, native binary and selected dependencies before and after. Retain owned
 process identities and require cleanup of both owners and their ports. Do not
 retry a timed-out command or restart based on an observation timeout.
+
+The runner retains all 220 ledger entries, marking a pair in flight before
+launch and writing its results after both commands. An interrupted pair remains
+unknown until its outcomes can be established. Cleanup and input-binding
+failures fail the execution even when the schedule finished. A named Windows
+supervisor job bounds the driver and descendants; the driver checks membership
+in that exact job before starting either owner. The total execution bound is
+300 seconds, including cleanup supervision, with no restart on timeout.
+
+Bind the resolved Git executable and the seven previously observed runtime
+files from the existing private manifest. This is not a dynamic loader-closure
+claim or cache approval. Empty disposable global and project settings files
+prevent ancestor configuration discovery from changing the fixture.
 
 This is the remaining bounded implementation comparison, not another stage-only
 attribution series. The deterministic held-commit regression justifies testing

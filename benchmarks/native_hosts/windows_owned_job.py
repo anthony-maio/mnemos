@@ -15,8 +15,8 @@ raise SystemExit(completed.returncode)
 """
 
 
-def run_owned_job(command, *, cwd, env, output, timeout):
-    """The broker waits for input until assigned to a new, unnamed job object.
+def run_owned_job(command, *, cwd, env, output, timeout, job_name=None):
+    """The broker waits for assignment to a new job, unnamed by default.
 
     No breakaway flags are enabled. Cleanup acts on this job and its owned
     Popen handle only, never a process name or a rediscovered PID.
@@ -25,16 +25,24 @@ def run_owned_job(command, *, cwd, env, output, timeout):
         raise RuntimeError("Windows job containment required")
     if not 0 < timeout <= 300:
         raise ValueError("Expected a bounded native phase timeout")
+    import win32api
     import win32job
 
     output = Path(output)
     output.mkdir(exist_ok=False)
-    result = dict(status="failed", job_assigned=False, input_delivery_started=False)
+    result = dict(
+        status="failed", job_assigned=False, input_delivery_started=False, job_name=job_name
+    )
     job = process = failure = writer = None
     cleanup_errors = []
     started = time.perf_counter()
     try:
-        job = win32job.CreateJobObject(None, "")
+        job = win32job.CreateJobObject(None, job_name or "")
+        if job_name and win32api.GetLastError() == 183:
+            # Never reconfigure or terminate a pre-existing named job.
+            job.Close()
+            job = None
+            raise RuntimeError("Named supervisor job already exists")
         limits = win32job.QueryInformationJobObject(job, win32job.JobObjectExtendedLimitInformation)
         limits["BasicLimitInformation"]["LimitFlags"] = win32job.JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
         win32job.SetInformationJobObject(job, win32job.JobObjectExtendedLimitInformation, limits)

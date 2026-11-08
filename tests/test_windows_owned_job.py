@@ -2,6 +2,9 @@ import json
 import os
 import subprocess
 import sys
+import runpy
+from pathlib import Path
+import uuid
 from unittest.mock import patch
 
 import pytest
@@ -96,3 +99,47 @@ def test_timeout_includes_blocked_input_delivery(tmp_path):
     result = json.loads((tmp_path / "out/process.json").read_text())
     assert result["input_delivery_started"]
     assert result["active_after_cleanup"] == 0
+
+
+def test_named_supervisor_membership_is_verified(tmp_path):
+    name = "Local\\MnemosReplayTest-" + uuid.uuid4().hex
+    helper = (
+        Path(__file__).resolve().parents[1] / "benchmarks/native_hosts/replay_ack_comparison.py"
+    )
+    script = f"import runpy;runpy.run_path({str(helper)!r})['require_job']({name!r})"
+    result = run_owned_job(
+        [sys.executable, "-I", "-c", script],
+        cwd=tmp_path,
+        env=dict(os.environ),
+        output=tmp_path / "out",
+        timeout=15,
+        job_name=name,
+    )
+    assert result["status"] == "passed" and result["job_name"] == name
+    assert result["active_after_cleanup"] == 0
+
+
+def test_unrelated_job_is_rejected_and_never_reconfigured(tmp_path):
+    import win32job
+
+    name = "Local\\MnemosReplayTest-" + uuid.uuid4().hex
+    job = win32job.CreateJobObject(None, name)
+    helper = (
+        Path(__file__).resolve().parents[1] / "benchmarks/native_hosts/replay_ack_comparison.py"
+    )
+    try:
+        with pytest.raises(RuntimeError, match="outside"):
+            runpy.run_path(str(helper))["require_job"](name)
+        with pytest.raises(RuntimeError, match="already exists"):
+            run_owned_job(
+                [sys.executable, "-c", "pass"],
+                cwd=tmp_path,
+                env=dict(os.environ),
+                output=tmp_path / "out",
+                timeout=10,
+                job_name=name,
+            )
+        limits = win32job.QueryInformationJobObject(job, win32job.JobObjectExtendedLimitInformation)
+        assert limits["BasicLimitInformation"]["LimitFlags"] == 0
+    finally:
+        job.Close()
