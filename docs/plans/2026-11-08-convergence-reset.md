@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Patch actual-host follow-up: [Claude direct-MCP v3 passes](../validation/2026-11-08/storage-native-claude-v3.md) store/inspect followed by fresh-process retrieve/inspect against the installed patch, with matching durable state and successful cleanup. Preserve v1 empty-catalog and v2 envelope-parser failures. This clears only the direct-MCP persistence check; plugin/Desktop and original functional/native/pilot gates remain open. Do not repeat this passing scenario without a changed runtime or distinct requirement.
+
 Patch native preparation: [the two-session runner and current CI state](../validation/2026-11-08/storage-native-preparation-v1.md) are recorded. All eight jobs pass on documentation head `fcf02a2e`. Harness review is resolved; actual Claude execution awaits a fresh isolated login. No native process was launched. Independent semantic/capture work can continue while authentication is pending.
 
 Patch CI and claims follow-up: [all eight jobs pass on runtime 1319e1c6](../validation/2026-11-08/storage-pr9-ci-and-claims.md). Documentation-only head `fcf02a2e` corrects automated-versus-native host claims and the storage event name; its own CI is pending. Avoid another unchanged runtime/package matrix. Next substantive patch acceptance work is an isolated actual-host check. The existing sdist needs the final documentation at release preparation, without transferring old artifact hashes.
