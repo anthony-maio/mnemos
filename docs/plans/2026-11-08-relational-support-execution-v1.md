@@ -2,6 +2,8 @@
 
 Status: requests prepared; no semantic inference authorized by passing parser tests alone. Complete tokenizer preflight and freeze the execution helper before the run. This screen uses known development data and cannot establish fresh acceptance.
 
+Final status: [closed after the first development request exceeded the fixed deadline](../validation/2026-11-08/relational-support-execution-v1.md). One unavailable attempt and 67 unattempted questions are preserved. No retries, deadline extension or promotion. The prospective protocol below remains unchanged.
+
 Use the first baseline repetition of the frozen retrieval/support study: all 68 questions and their original candidate cohorts, totaling 127 candidate observations. Preserve the full cohort, including competing facts. Do not import expected answers into request construction. Inputs, original observations and grading labels must match the earlier archive-member hashes. Retain the original study and all failed later treatments unchanged.
 
 The prepared requests live in `.venv/relational-support-v1/inputs.json`, SHA256 2f51213ee236f99f011b9143908fe2307d32dc08d8b9d7b811a2528bddcb1c2e. Grading labels are separate, SHA256 f2af04ad22b277dc096d9d084b85b871816e514814739673fcf52ed9f790e916. Preparation made zero semantic calls. Exact frames contain 5,535-6,581 UTF-8 bytes before tokenizer preflight.
