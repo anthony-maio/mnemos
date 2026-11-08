@@ -24,6 +24,7 @@ from .utils.storage import MemoryStore
 
 
 class IntersectionConfig(BaseModel):
+    execution: Literal["sequential", "concurrent"] = "sequential"
     max_candidates: int = Field(default=20, ge=1, le=100, strict=True)
     max_evidence_per_fact: int = Field(default=8, ge=1, le=32, strict=True)
     # Bound the shared snapshot; each selector also enforces its model's input limits.
@@ -131,6 +132,8 @@ async def assess_support_intersection(
     earn successful abstention. Configuration and storage failures propagate.
     Selectors must call the supplied fence around internal provider awaits and
     retain their model inputs/outputs for independent audit.
+    Concurrent execution is opt-in and overlaps cooperative provider waits only.
+    Selectors must support cancellation; all tasks are drained before returning.
     """
     config = (config or IntersectionConfig()).model_copy(deep=True)
     if type(reference_date) is not date:
@@ -196,12 +199,27 @@ async def assess_support_intersection(
         query, reference_date, candidates, hashlib.sha256(binding).hexdigest()
     )
 
+    async def run_selector(selector: SupportSelector) -> ComponentSelection:
+        check_current()
+        value = await selector(snapshot, check_current)
+        check_current()
+        return _checked_component(value, snapshot)
+
     async def collect() -> None:
-        for selector in (extractive, contrast):
-            check_current()
-            value = await selector(snapshot, check_current)
-            check_current()
-            components.append(_checked_component(value, snapshot))
+        if config.execution == "sequential":
+            for selector in (extractive, contrast):
+                components.append(await run_selector(selector))
+            return
+        tasks = [asyncio.create_task(run_selector(selector)) for selector in (extractive, contrast)]
+        try:
+            # Gather preserves selector order, independent of completion order.
+            # It does not cancel siblings on failure, so cleanup is explicit.
+            components.extend(await asyncio.gather(*tasks))
+        finally:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     try:
         if len(binding) > config.max_request_bytes:
