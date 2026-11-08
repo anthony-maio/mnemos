@@ -11,3 +11,5 @@ The focused replay case delivers 35 entries with one failed delivery and one con
 Batch transaction tests verify one commit, duplicate-ID handling, preservation of unrelated entries, and rollback of every deletion on commit denial. JUnit is retained at `.venv/batch-ack-green-v1.xml`; the adjacent receipt binds source and test hashes.
 
 This is source validation, not installed validation or a measured latency improvement. The v6 package and its frozen results are unchanged. A fresh artifact and bounded backlog measurement are required before making a performance claim. The canonical runtime, live pilot, memory databases and publication state remain unchanged. Original capture, retrieval, quality and daily-use gates remain open.
+
+Follow-up: [installed v7 validation](sqlite-outbox-installed-v7.md) passed 42 selected checks with one expected Windows skip. The backlog timing comparison remains outstanding.
