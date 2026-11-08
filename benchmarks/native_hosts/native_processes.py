@@ -34,6 +34,7 @@ MCP_TOOLS = frozenset(
         "mnemos_consolidate",
         "mnemos_retrieve",
         "mnemos_inspect",
+        "mnemos_inspect_batch",
         "mnemos_correct",
         "mnemos_forget",
         "mnemos_forget_preview",

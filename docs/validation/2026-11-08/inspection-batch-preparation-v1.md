@@ -12,8 +12,22 @@ Complete results are presented as lossless JSON fragments under the existing
 including versions and evidence, and changes or order changes invalidate a
 continuation cursor. Focused batch, existing forget-paging and MCP wiring tests
 pass: 48 tests. The tool is not yet part of native acceptance or an installed
-candidate. Independent review and contract support requiring complete page
-coverage for every selected fact remain outstanding.
+candidate. Product review found no blocking authorization or paging defect;
+canonical implementation is saved at `de45f13b`. The acceptance extension now
+requires contiguous pages from zero, unchanged ordered IDs and digest, complete
+reconstruction, and exact per-selected-fact ID/version/content before apply.
+Its initial 69 related tests passed, including full forget acceptance and a
+missing selected-inspection rejection. Review then identified two integration
+defects: the raw parser lacked the new tool, and result order alone could credit
+inspection requested concurrently with deletion. Both were repaired. Claude
+normalization now retains invocation positions and hashes as well as result
+positions. Batch mode requires those positions and checks that inspection and
+review results precede their dependent request invocations. A raw Claude trace
+test rejects a batch-page request issued in the same response as deletion.
+The expanded trace, contract and runner suite passes 164 tests. Adversarial
+recheck remains pending; no fresh native execution has occurred.
+Each page re-fetches the full batch to detect changes; timing and cost savings
+are unproven. No source-cache shortcut or weaker stale-result check was added.
 
 A separate experimental string-sharing codec was evaluated but is not the
 production format. All 13 codec tests pass, including reserved-key injection,

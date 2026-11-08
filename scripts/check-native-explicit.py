@@ -231,6 +231,9 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
     import mnemos
 
     host = getattr(args, "host", "claude-code")
+    batch_inspection = getattr(args, "batch_inspection", False)
+    if batch_inspection and host != "claude-code":
+        raise ValueError("This batch-inspection protocol is bound to Claude")
     authentication = (
         codex_auth_preflight(args.auth) if host == "codex" else auth_preflight(args.auth)
     )
@@ -279,6 +282,8 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         )
     )
     require_inventory = getattr(args, "require_tool_inventory", False)
+    if batch_inspection:
+        inputs += ("docs/plans/2026-11-08-native-claude-batch-v7.md",)
     lifecycle_prompts = {}
     if require_inventory:
         if host != "codex":
@@ -348,6 +353,7 @@ def bindings(args: argparse.Namespace) -> dict[str, Any]:
         "model": CODEX_MODEL if host == "codex" else MODEL,
         "authentication_preflight": authentication,
         "input_hashes": {relative: sha(ROOT / relative) for relative in inputs},
+        "batch_inspection": batch_inspection,
     }
 
 
@@ -578,6 +584,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                     "trace_sha256": call.provenance.source_file_sha256,
                     "line": call.line_number,
                     "line_sha256": call.line_sha256,
+                    "invocation_line": call.invocation_line_number,
+                    "invocation_line_sha256": call.invocation_line_sha256,
                 }
                 for call in calls
             ]
@@ -695,18 +703,28 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
                 [json.loads(line) for line in (root / "arrivals.jsonl").read_text().splitlines()],
                 scenario.forgotten_labels,
             )
+            batch_guidance = (
+                " Use mnemos_inspect_batch for every additional fact you intend to select, "
+                "with explicit fact_ids in batches of at most twenty. Read every page "
+                "using the same ordered IDs and returned cursor before applying. "
+                "Check each selected fact's exact ID, version, content and source evidence. "
+                "A final page alone is not a complete inspection. Do not select any "
+                "additional fact whose full inspection has not been read."
+                if bound["batch_inspection"] else ""
+            )
             calls = phase(
                 "forget",
                 base
-                + f'Retrieve query "{scenario.target_query}" and inspect the corrected release fact. Forget that release convention and its reviewed copies in this project. Use mnemos_forget_preview, inspect any additional selected facts, then mnemos_forget_related with the unchanged apply_preconditions and explicitly reviewed eligible source/fact IDs from that preview. Preserve the review convention and unrelated facts. Report the returned deletion coverage; do not repeat deleted labels in your final reply.',
+                + f'Retrieve query "{scenario.target_query}" and inspect the corrected release fact. Forget that release convention and its reviewed copies in this project. Use mnemos_forget_preview, inspect any additional selected facts, then mnemos_forget_related with the unchanged apply_preconditions and explicitly reviewed eligible source/fact IDs from that preview. Preserve the review convention and unrelated facts. Report the returned deletion coverage; do not repeat deleted labels in your final reply.'
+                + batch_guidance,
                 {
                     "mnemos_retrieve",
                     "mnemos_inspect",
                     "mnemos_forget_preview",
                     "mnemos_forget_related",
-                },
+                } | ({"mnemos_inspect_batch"} if bound["batch_inspection"] else set()),
             )
-            contract.require_forget(calls, target)
+            contract.require_forget(calls, target, require_batch=bound["batch_inspection"])
             contract.require_absent(
                 state(root / "memory.sqlite"), target, scenario.forgotten_labels
             )
@@ -807,6 +825,7 @@ def main() -> None:
     parser.add_argument("--host", choices=("claude-code", "codex"), default="claude-code")
     parser.add_argument("--auth", type=Path)
     parser.add_argument("--require-tool-inventory", action="store_true")
+    parser.add_argument("--batch-inspection", action="store_true")
     args = parser.parse_args()
     if args.serve:
         serve(args.serve.resolve())

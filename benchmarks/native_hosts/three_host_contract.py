@@ -177,6 +177,13 @@ def _forget_fact(
     return value
 
 
+def _completed_before(call: Mapping[str, Any], boundary: Mapping[str, Any] | None) -> bool:
+    if boundary is None or boundary.get("invocation_line") is None:
+        return True  # Legacy observations retain their original evidence limits.
+    start, finish = boundary["invocation_line"], call.get("line")
+    return type(start) is int and type(finish) is int and 0 < finish < start
+
+
 def _forget_inspected_before(
     calls: Sequence[Mapping[str, Any]],
     end: int,
@@ -184,7 +191,9 @@ def _forget_inspected_before(
     version: int,
     content: str | None = None,
 ) -> None:
-    for call in calls[:end]:
+    boundary = calls[end] if end < len(calls) else None
+    eligible = [call for call in calls[:end] if _completed_before(call, boundary)]
+    for call in eligible:
         if call.get("name") != "mnemos_inspect":
             continue
         args = call.get("args")
@@ -200,7 +209,102 @@ def _forget_inspected_before(
         except ValueError:
             continue
         return
+    for result in _completed_batch_inspections(eligible):
+        try:
+            _forget_fact(result.get("fact"), fact_id, version, content)
+        except ValueError:
+            continue
+        return
     raise ValueError("Forget lacks prior inspection of the same fact and version")
+
+
+def _completed_batch_inspections(calls: Sequence[Mapping[str, Any]]) -> list[Mapping[str, Any]]:
+    """Accept only complete, independently reconstructed batches before mutation."""
+    completed = []
+    fragments = []
+    expected_cursor = None
+    identities = digest = total = None
+    previous = None
+    for call in calls:
+        if call.get("name") != "mnemos_inspect_batch":
+            continue
+        args, page = call.get("args"), call.get("result")
+        if not isinstance(args, Mapping) or not isinstance(page, Mapping):
+            raise ValueError("Malformed batch inspection")
+        ids = _forget_ids(args.get("fact_ids"), "batch identifiers")
+        if (
+            args.get("cursor") is not None
+            and previous is not None
+            and not _completed_before(previous, call)
+        ):
+            raise ValueError("Batch page was requested before its predecessor completed")
+        previous = call
+        if not 1 <= len(ids) <= 20:
+            raise ValueError("Invalid inspection batch size")
+        review = page.get("review")
+        if (
+            type(page.get("schema_version")) is not int
+            or page["schema_version"] != 1
+            or page.get("status") != "inspection"
+            or not isinstance(review, Mapping)
+            or review.get("format") != "json_fragments_v1"
+        ):
+            raise ValueError("Unknown batch inspection format")
+        page_digest = _forget_digest(review.get("snapshot_digest"))
+        page_total = _review_integer(review.get("total_fragments"))
+        if not fragments:
+            identities, digest, total = ids, page_digest, page_total
+        if (
+            ids != identities
+            or page_digest != digest
+            or page_total != total
+            or total == 0
+            or args.get("cursor") != expected_cursor
+        ):
+            raise ValueError("Batch inspection pages are unbound or inconsistent")
+        if _review_integer(review.get("first_fragment")) != len(fragments):
+            raise ValueError("Batch inspection has missing or overlapping pages")
+        values = page.get("fragments")
+        if (
+            not isinstance(values, list)
+            or not values
+            or any(not isinstance(v, Mapping) for v in values)
+        ):
+            raise ValueError("Batch inspection has invalid fragments")
+        fragments.extend(values)
+        if len(fragments) > total:
+            raise ValueError("Batch inspection has excess fragments")
+        last = len(fragments) == total
+        if page.get("complete") is not last or review.get("last_page") is not last:
+            raise ValueError("Batch inspection completion marker is inconsistent")
+        expected_cursor = None if last else f"{digest}:{len(fragments)}"
+        if review.get("next_cursor") != expected_cursor:
+            raise ValueError("Batch inspection cursor is inconsistent")
+        if last:
+            snapshot = _review_snapshot(fragments)
+            encoded = json.dumps(
+                snapshot, ensure_ascii=True, separators=(",", ":"), allow_nan=False
+            )
+            if hashlib.sha256(encoded.encode()).hexdigest() != digest or set(snapshot) != {
+                "results"
+            }:
+                raise ValueError("Batch inspection snapshot digest mismatch")
+            results = snapshot["results"]
+            if not isinstance(results, list) or len(results) != len(identities):
+                raise ValueError("Batch inspection result count mismatch")
+            for identifier, result in zip(identities, results):
+                _forget_result(result, "inspection")
+                fact = result.get("fact")
+                if not isinstance(fact, Mapping):
+                    raise ValueError("Batch inspection lacks a fact")
+                _forget_fact(
+                    fact, identifier, _forget_version(fact.get("version"), "inspection version")
+                )
+            completed.extend(results)
+            fragments = []
+    if fragments or expected_cursor is not None:
+        raise ValueError("Batch inspection is incomplete before apply")
+    return completed
 
 
 def _forget_limit(value: Any, label: str) -> int:
@@ -326,6 +430,8 @@ def _complete_native_review(
     limit = _forget_limit(first_args.get("limit", 100), "preview argument limit")
     digest = _forget_digest(matching[0][1].get("preview_digest"))
     for number, (call_index, page) in enumerate(matching):
+        if number and not _completed_before(calls[matching[number - 1][0]], calls[call_index]):
+            raise ValueError("Preview page was requested before its predecessor completed")
         _forget_result(page)
         args = calls[call_index]["args"]
         review = page.get("review")
@@ -435,7 +541,9 @@ def _reviewed_forget(
 
     matching: list[tuple[int, Mapping[str, Any]]] = []
     for preview_index, call in enumerate(calls[:apply_index]):
-        if call.get("name") != "mnemos_forget_preview":
+        if call.get("name") != "mnemos_forget_preview" or not _completed_before(
+            call, calls[apply_index]
+        ):
             continue
         preview_args = call.get("args")
         preview_value = call.get("result")
@@ -586,15 +694,35 @@ def _reviewed_forget(
     return True
 
 
-def require_forget(calls: Sequence[Mapping[str, Any]], fact_id: str) -> None:
+def require_forget(
+    calls: Sequence[Mapping[str, Any]], fact_id: str, *, require_batch: bool = False
+) -> None:
     require_native_calls(
         calls,
-        {"mnemos_retrieve", "mnemos_inspect", "mnemos_forget_preview", "mnemos_forget_related"},
+        {
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_inspect_batch",
+            "mnemos_forget_preview",
+            "mnemos_forget_related",
+        },
     )
     writes = [(i, call) for i, call in enumerate(calls) if call["name"] == "mnemos_forget_related"]
     if len(writes) != 1:
         raise ValueError("Expected one reviewed related-forget operation")
     index, write = writes[0]
+    if require_batch and any(
+        type(call.get("invocation_line")) is not int
+        or type(call.get("line")) is not int
+        or not 0 < call["invocation_line"] < call["line"]
+        for call in calls
+    ):
+        raise ValueError("Batch protocol requires invocation and completion positions")
+    inspected = _completed_batch_inspections(
+        [call for call in calls[:index] if _completed_before(call, write)]
+    )
+    if require_batch and not inspected:
+        raise ValueError("Batch protocol requires complete native batch inspection before apply")
     _reviewed_forget(calls, index, write, fact_id)
 
 

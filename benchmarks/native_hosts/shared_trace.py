@@ -21,6 +21,7 @@ _RAW_TOOLS = {
     "mnemos_remember",
     "mnemos_retrieve",
     "mnemos_inspect",
+    "mnemos_inspect_batch",
     "mnemos_correct",
     "mnemos_forget",
     "mnemos_forget_preview",
@@ -92,6 +93,8 @@ class NativeToolCall:
     outcome: str = "success"
     started_sequence: int | None = None
     completed_sequence: int | None = None
+    invocation_line_number: int | None = None
+    invocation_line_sha256: str | None = None
 
 
 def require_tool_sequence(
@@ -979,7 +982,7 @@ def parse_claude_tool_records(
     if tool_prefix not in {_CLAUDE_PREFIX, "mcp__mnemos__"}:
         raise ValueError("Unsupported Claude Mnemos prefix")
 
-    pending: dict[str, tuple[str, str, dict[str, Any]]] = {}
+    pending: dict[str, tuple[str, str, dict[str, Any], int, str]] = {}
     issued: set[tuple[str, str]] = set()
     matched: list[NativeToolCall] = []
     saw_response = False
@@ -1031,7 +1034,7 @@ def parse_claude_tool_records(
                     raise ValueError("duplicate or ambiguous Claude provider call ID")
                 issued.add((response_id, provider_id))
                 call_id = f"{response_id}:{provider_id}"
-                pending[provider_id] = (call_id, name, arguments)
+                pending[provider_id] = (call_id, name, arguments, line, line_hash)
         for node in results:
             if entry.get("type") != "user" or message.get("role") != "user":
                 raise ValueError("Claude tool_result must be in a user message")
@@ -1040,7 +1043,7 @@ def parse_claude_tool_records(
                 raise ValueError("Claude tool_result requires tool_use_id")
             if provider_id not in pending:
                 raise ValueError("Claude tool_result has no preceding unmatched tool_use")
-            call_id, name, arguments = pending.pop(provider_id)
+            call_id, name, arguments, invocation_line, invocation_hash = pending.pop(provider_id)
             result = _claude_result(node)
             matched.append(
                 NativeToolCall(
@@ -1053,6 +1056,8 @@ def parse_claude_tool_records(
                     line_sha256=line_hash,
                     provider_call_id=provider_id,
                     model_call_correlated=True,
+                    invocation_line_number=invocation_line,
+                    invocation_line_sha256=invocation_hash,
                 )
             )
     if not saw_response:
