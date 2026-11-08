@@ -22,6 +22,28 @@ def inspection(identifier="fact-a", version=1):
     }
 
 
+def test_fitting_records_remain_whole_and_legacy_cursors_are_rejected():
+    results = [inspection(f"fact-{i}") for i in range(7)]
+    for result in results:
+        result["fact"]["content"] = "exact content " * 160
+        result["evidence"] = [{"excerpt": "source text " * 100}]
+    fragments, cursor = [], None
+    while True:
+        text = render_inspection_batch(results, cursor)
+        assert len(json.dumps({"result": text}).encode()) <= 12000
+        page = json.loads(text)
+        assert page["review"]["format"] == "json_fragments_v2"
+        assert page["review"]["layout_digest"] != page["review"]["snapshot_digest"]
+        fragments.extend(page["fragments"])
+        cursor = page["review"]["next_cursor"]
+        if cursor is None:
+            break
+    assert [f["path"] for f in fragments] == [["results", i] for i in range(7)]
+    assert [f["value"] for f in fragments] == results
+    with pytest.raises(ValueError, match="changed"):
+        render_inspection_batch(results, page["review"]["snapshot_digest"] + ":1")
+
+
 def test_pages_preserve_every_field_and_stay_within_wire_bound():
     results = [inspection(), inspection("fact-b", 2)]
     frozen = deepcopy(results)

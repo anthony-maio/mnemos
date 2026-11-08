@@ -291,6 +291,14 @@ Both record kinds retain their IDs, versions, content, source dependencies and
 explicit selection requirements. A label does not authorize deletion or replace
 inspection of a selected record.
 
+Large forget previews and inspection batches use `json_fragments_v2`. Values
+that fit stay together; oversized values retain lossless text fragments. Read
+every page in order. The snapshot digest binds the complete content, while the
+layout digest binds the fragments and continuation cursor. Cursors from the
+older layout require restarting the review. Output remains bounded to 12,000
+bytes including the native result wrapper. This presentation change has no
+verified native latency or cost benefit yet.
+
 Corrections use a stable fact ID and an expected version:
 
 ```text

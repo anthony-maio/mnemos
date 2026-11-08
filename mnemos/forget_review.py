@@ -86,6 +86,28 @@ def _fragments(value: Any, path: list[str | int]) -> Iterator[dict[str, Any]]:
         raise ValueError("Forget review contains an unsupported large value")
 
 
+def _record_fragments(value: Any, path: list[str | int]) -> Iterator[dict[str, Any]]:
+    fragment = {"path": path, "value": value}
+    # Keep enough room for page metadata and its outer JSON escaping. The final
+    # renderer still checks the actual complete page against the wire limit.
+    if _wire_bytes(_json(fragment)) <= MAX_REVIEW_WIRE_BYTES // 2:
+        yield fragment
+    elif isinstance(value, dict):
+        for key, item in value.items():
+            yield from _record_fragments(item, [*path, key])
+    elif isinstance(value, list):
+        for index, item in enumerate(value):
+            yield from _record_fragments(item, [*path, index])
+    else:
+        yield from _fragments(value, path)
+
+
+def _record_layout(snapshot: Any) -> tuple[list[dict[str, Any]], str]:
+    fragments = list(_record_fragments(snapshot, []))
+    encoded = _json({"format": "json_fragments_v2", "fragments": fragments})
+    return fragments, hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
 def render_forget_review(preview: dict[str, Any], cursor: str | None = None) -> str:
     """Keep small previews intact; page larger ones without dropping any field."""
     cursor_match = None
@@ -95,11 +117,11 @@ def render_forget_review(preview: dict[str, Any], cursor: str | None = None) -> 
     snapshot = _with_references(preview)
     serialized = _json(snapshot)
     snapshot_digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-    if cursor_match is not None and cursor_match[1] != snapshot_digest:
-        raise RelatedForgetPreviewStale()
     if cursor is None and _wire_bytes(serialized) <= MAX_REVIEW_WIRE_BYTES:
         return serialized
-    fragments = list(_fragments(snapshot, []))
+    fragments, layout_digest = _record_layout(snapshot)
+    if cursor_match is not None and cursor_match[1] != layout_digest:
+        raise RelatedForgetPreviewStale()
     first = int(cursor_match[2]) if cursor_match is not None else 0
     if first >= len(fragments):
         raise ValueError("Forget review cursor is outside the snapshot")
@@ -113,12 +135,13 @@ def render_forget_review(preview: dict[str, Any], cursor: str | None = None) -> 
             "preview_digest": preview.get("preview_digest"),
             "apply_preconditions": preview.get("apply_preconditions") if last else None,
             "review": {
-                "format": "json_fragments_v1",
+                "format": "json_fragments_v2",
                 "snapshot_digest": snapshot_digest,
+                "layout_digest": layout_digest,
                 "first_fragment": first,
                 "total_fragments": len(fragments),
                 "last_page": last,
-                "next_cursor": None if last else f"{snapshot_digest}:{end}",
+                "next_cursor": None if last else f"{layout_digest}:{end}",
                 "instructions": (
                     "Read all pages in order. Paths locate exact snapshot fields; text fragments "
                     "continue at character offsets. Nothing is summarized. Copy next_cursor into "

@@ -3,7 +3,7 @@
 import hashlib
 from typing import Any
 
-from .forget_review import MAX_REVIEW_WIRE_BYTES, _CURSOR, _fragments, _json, _wire_bytes
+from .forget_review import MAX_REVIEW_WIRE_BYTES, _CURSOR, _json, _record_layout, _wire_bytes
 
 
 def render_inspection_batch(results: list[dict[str, Any]], cursor: str | None = None) -> str:
@@ -27,13 +27,13 @@ def render_inspection_batch(results: list[dict[str, Any]], cursor: str | None = 
         raise ValueError("Duplicate facts are not allowed in an inspection batch")
     snapshot = {"results": results}
     digest = hashlib.sha256(_json(snapshot).encode()).hexdigest()
+    fragments, layout_digest = _record_layout(snapshot)
     match = None
     if cursor is not None:
         if not isinstance(cursor, str) or (match := _CURSOR.fullmatch(cursor)) is None:
             raise ValueError("Invalid inspection cursor")
-        if match[1] != digest:
+        if match[1] != layout_digest:
             raise ValueError("Inspection snapshot changed; restart the batch")
-    fragments = list(_fragments(snapshot, []))
     first = int(match[2]) if match else 0
     if first >= len(fragments):
         raise ValueError("Inspection cursor is outside the snapshot")
@@ -45,12 +45,13 @@ def render_inspection_batch(results: list[dict[str, Any]], cursor: str | None = 
             "status": "inspection",
             "complete": last,
             "review": {
-                "format": "json_fragments_v1",
+                "format": "json_fragments_v2",
                 "snapshot_digest": digest,
+                "layout_digest": layout_digest,
                 "first_fragment": first,
                 "total_fragments": len(fragments),
                 "last_page": last,
-                "next_cursor": None if last else f"{digest}:{end}",
+                "next_cursor": None if last else f"{layout_digest}:{end}",
                 "instructions": "Read every page in order with the same ordered fact_ids. Paths reconstruct complete results including fact IDs, versions and evidence. Changed results invalidate the cursor. This inspects only explicitly requested facts and selects nothing for deletion.",
             },
             "fragments": fragments[first:end],
