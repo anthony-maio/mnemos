@@ -43,7 +43,7 @@ Candidates f8-f19 are `similarity_candidate`; they were neither inspected nor
 selected by an apply call. All 22 source events were eligible. There is no
 evidence here of a paging defect or of an unsafe deletion selection.
 
-Read-only SQLite inspection found all 23 pre-forget fact contents and versions
+Read-only SQLite inspection found all 23 pre-forget stored record contents and versions
 unchanged, retained controls intact, zero suppressions and a passing integrity
 check. Deletion, source suppression and final restart recall remain unperformed.
 
