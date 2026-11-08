@@ -14,6 +14,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import time
@@ -175,10 +176,28 @@ def _ensure_runtime(venv_dir: Path, plugin_root: Path, env: dict[str, str]) -> P
         return venv_python
 
 
+def _explicit_runtime_python(explicit_python: str, env: dict[str, str]) -> str:
+    """Resolve commands without replacing a virtual environment's symlink."""
+    if os.path.dirname(explicit_python):
+        return explicit_python
+    names = [explicit_python]
+    if _is_windows():
+        extensions = env.get("PATHEXT", ".COM;.EXE;.BAT;.CMD").split(os.pathsep)
+        if not any(explicit_python.lower().endswith(ext.lower()) for ext in extensions if ext):
+            names.extend(explicit_python + ext for ext in extensions if ext)
+    for directory in env.get("PATH", os.defpath).split(os.pathsep):
+        for name in names:
+            candidate = os.path.join(os.path.abspath(directory), name)
+            resolved = shutil.which(candidate)
+            if resolved:
+                return os.path.abspath(resolved)
+    raise FileNotFoundError("MNEMOS_PLUGIN_PYTHON command is not available on PATH")
+
+
 def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
     explicit_python = env.get("MNEMOS_PLUGIN_PYTHON", "").strip()
     if explicit_python:
-        return explicit_python
+        return _explicit_runtime_python(explicit_python, env)
 
     venv_dir = plugin_root / ".claude-plugin" / ".venv"
     return str(_ensure_runtime(venv_dir, plugin_root, env))
@@ -188,7 +207,10 @@ def _ready_runtime_python(plugin_root: Path, env: dict[str, str]) -> str | None:
     """Return the runtime only if it is already installed for this source."""
     explicit_python = env.get("MNEMOS_PLUGIN_PYTHON", "").strip()
     if explicit_python:
-        return explicit_python
+        try:
+            return _explicit_runtime_python(explicit_python, env)
+        except OSError:
+            return None
     venv_dir = plugin_root / ".claude-plugin" / ".venv"
     venv_python = _venv_python(venv_dir)
     try:
@@ -220,6 +242,13 @@ def main() -> int:
     try:
         runtime_python = _resolve_runtime_python(plugin_root, env)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as exc:
+        if env.get("MNEMOS_PLUGIN_PYTHON", "").strip():
+            print(
+                f"Mnemos configured Python is unavailable ({type(exc).__name__}); "
+                "check MNEMOS_PLUGIN_PYTHON and PATH",
+                file=sys.stderr,
+            )
+            return 1
         # Offline pip, a failed venv, or another session holding the install
         # lock. No stamp is written, so the next server start tries again.
         print(

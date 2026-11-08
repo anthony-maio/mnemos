@@ -352,7 +352,10 @@ async def test_tier1_stdio_configs_execute_real_roundtrip(
 
 
 @pytest.mark.asyncio
-async def test_tier1_claude_code_plugin_manifest_executes_real_roundtrip(tmp_path: Path) -> None:
+@pytest.mark.parametrize("path_command", [False, True], ids=["absolute-path", "path-command"])
+async def test_tier1_claude_code_plugin_manifest_executes_real_roundtrip(
+    tmp_path: Path, path_command: bool
+) -> None:
     spec = _load_server_spec(ROOT / ".claude-plugin" / "plugin.json")
     service, registry_path = _start_scoped_service(tmp_path, "claude-code-plugin")
     try:
@@ -362,7 +365,8 @@ async def test_tier1_claude_code_plugin_manifest_executes_real_roundtrip(tmp_pat
             env_overrides={
                 "CLAUDE_PLUGIN_ROOT": str(ROOT),
                 "MNEMOS_TEST_PYTHON": sys.executable,
-                "MNEMOS_PLUGIN_PYTHON": sys.executable,
+                "MNEMOS_PLUGIN_PYTHON": "python" if path_command else sys.executable,
+                "PATH": str(Path(sys.executable).parent) + os.pathsep + os.environ.get("PATH", ""),
                 **_service_env(service, registry_path),
             },
         )
