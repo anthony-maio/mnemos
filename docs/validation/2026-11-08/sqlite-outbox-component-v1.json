@@ -1,0 +1,85 @@
+{
+  "status": "verified_component_only",
+  "source_commit": "c515bf31c77f01b731b4341a1d7eb778f60c6e09",
+  "summary": {
+    "json": {
+      "append_ms": {
+        "min": 48.256,
+        "median": 68.82135,
+        "p95": 87.3407,
+        "max": 523.4883
+      },
+      "acknowledge_ms": {
+        "min": 1.061,
+        "median": 3.18175,
+        "p95": 8.3509,
+        "max": 15.1068
+      },
+      "cycle_ms": {
+        "min": 51.8834,
+        "median": 71.12854999999999,
+        "p95": 90.0351,
+        "max": 527.8655
+      }
+    },
+    "sqlite": {
+      "append_ms": {
+        "min": 30.2091,
+        "median": 40.40375,
+        "p95": 50.2321,
+        "max": 50.9362
+      },
+      "acknowledge_ms": {
+        "min": 27.7976,
+        "median": 41.97,
+        "p95": 62.593,
+        "max": 79.9692
+      },
+      "cycle_ms": {
+        "min": 66.6407,
+        "median": 80.4414,
+        "p95": 104.4984,
+        "max": 118.3133
+      }
+    }
+  },
+  "paired": {
+    "append_ms": {
+      "sqlite_faster_pairs": 50,
+      "sqlite_slower_pairs": 0,
+      "median_sqlite_minus_json_ms": -26.781899999999997
+    },
+    "acknowledge_ms": {
+      "sqlite_faster_pairs": 0,
+      "sqlite_slower_pairs": 50,
+      "median_sqlite_minus_json_ms": 38.63395
+    },
+    "cycle_ms": {
+      "sqlite_faster_pairs": 9,
+      "sqlite_slower_pairs": 41,
+      "median_sqlite_minus_json_ms": 14.062550000000005
+    }
+  },
+  "samples": 110,
+  "measured_pairs": 50,
+  "integrity_check": "ok",
+  "final_queues_empty": true,
+  "source_unchanged": true,
+  "python_checks": 28,
+  "platform_skips": 1,
+  "strict_mypy_modules": 2,
+  "cold_start_measured": false,
+  "protocol_clarification": "The initial untimed pending() call initializes SQLite before append, including before warmups. No cold initialization latency is measured.",
+  "complete_command_tested": false,
+  "live_configuration_changed": false,
+  "private_archive_sha256": "f56b0c51629206b70367ccbeac9d13e4906073f5c269efc8f255afb7b4e8b1e2",
+  "private_archive_members": 15,
+  "source_hashes": {
+    "mnemos/client.py": "2abe63963dcfe2cd1a1cb13469c605fbe1c0f9d656ba26aa2d6aed5be2ea638b",
+    "mnemos/sqlite_outbox.py": "fc448b2c82585d316af99578bc755bc8c56a6e5845b406192ac6457d53cd038c",
+    "tests/test_sqlite_outbox.py": "7132cfac87d9af99a43883aa87f9b29eb35124ded72ab980e5485f2697e353b1"
+  },
+  "helper_sha256": "39c9f76f6c49b6b4b17a1ff8901122b1d3cc5bf96b71f8132c94996f15e1dd2f",
+  "protocol_sha256": "6f52c1909e8336e2dccddf1725e9030f07fd113828cc30cc9bafabe024b4eadf",
+  "junit_sha256": "75e830a0c28cbbfc2af0d416c7d769e00412eb7535d32287f4eb7e55b4e1e81a"
+}
