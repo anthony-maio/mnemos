@@ -1,0 +1,72 @@
+{
+  "status": "audited",
+  "samples": 110,
+  "measured_pairs": 50,
+  "summary": {
+    "json": {
+      "command_ms": {
+        "min": 164.97100004926324,
+        "median": 207.95189996715635,
+        "p95": 690.0277000386268,
+        "max": 850.8510999381542
+      },
+      "post_command_completion_ms": {
+        "min": 153.99350016377866,
+        "median": 189.48129995260388,
+        "p95": 571.9163999892771,
+        "max": 883.4819998592138
+      },
+      "meets_command_100ms": false
+    },
+    "sqlite": {
+      "command_ms": {
+        "min": 138.39390012435615,
+        "median": 168.29109995160252,
+        "p95": 476.3659001328051,
+        "max": 810.4371998924762
+      },
+      "post_command_completion_ms": {
+        "min": 182.19890003092587,
+        "median": 220.97909997683018,
+        "p95": 456.66839997284114,
+        "max": 883.2446997985244
+      },
+      "meets_command_100ms": false
+    }
+  },
+  "sqlite_minus_json_ms": {
+    "median": -35.64190003089607,
+    "sqlite_faster_pairs": 35
+  },
+  "cleanup": [
+    {
+      "arm": "json",
+      "exit_code": 0,
+      "processes_absent": true,
+      "ports_closed": {
+        "52231": true,
+        "52234": true
+      },
+      "graceful_stop_record": true
+    },
+    {
+      "arm": "sqlite",
+      "exit_code": 0,
+      "processes_absent": true,
+      "ports_closed": {
+        "62011": true,
+        "62015": true
+      },
+      "graceful_stop_record": true
+    }
+  ],
+  "freeze_sha256": "480eed11bea8ddfe9a8520518c915739b5f1c449329f42f5261e5d58261ec320",
+  "timings_sha256": "538c231f96c13a3a8dc7f218d62d773a3edfd78ac2d07227b601074b1f591f0e",
+  "failed_runs_preserved": [
+    "outbox-backend-command-v1",
+    "outbox-owner-blocking-probe-v1",
+    "outbox-backend-command-v2"
+  ],
+  "archive_sha256": "e703c52c661dca27a50f25f08b281bc396447abf400b86a95d9fd27cf293cfc3",
+  "archive_members": 128
+}
