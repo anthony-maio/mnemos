@@ -1,0 +1,13 @@
+# Joint support batch and head contract
+
+The inactive experiment now has an executable batch/head path in `benchmarks/local_memory/joint_support_head.py`. It accepts trusted in-process serializer frames and a bare decoder backbone. It rejects a causal LM wrapper with a vocabulary head, uses one backbone call for a mixed batch, disables KV caching and optional hidden-layer/attention outputs, and gathers only the final states at recorded decision positions. A shared linear head produces one raw logit per real target.
+
+Right padding preserves recorded positions and supplies an attention mask. Output rows retain target IDs and frame hashes. There are no padded target logits to select or include in a loss. An all-empty cohort batch bypasses the backbone and returns empty results. Invalid marker positions, mixed tokenizer bindings, token-budget violations and nonfinite logits fail the operation. These checks do not authenticate arbitrary externally supplied frames; the trusted serializer remains the input boundary. Device and precision must be set consistently on the complete module by the eventual runner.
+
+Five unittest checks passed in the existing isolated torch runtime. A deterministic backbone verified exact marker gathering, one-call behavior, padding, zero through five targets and gradient flow. A tiny randomly initialized one-layer Qwen3Model verified that mixed-batch right padding agrees with standalone outputs within numerical tolerance. No retained checkpoint weights were loaded. Nonfinite results and accidentally passing an LM wrapper were rejected.
+
+The regular serializer/data pytest selection passed 35 tests and skipped the optional torch test module because torch is absent from that environment. The five torch checks ran separately and passed; the skip is not their evidence. The retained runtime gained no dependencies.
+
+This is wiring validation, not a computational capacity preflight, trained model, semantic result, deployment or latency measurement. The runner still needs frozen workload/device/precision/batch bounds and actual retained-model capacity evidence after the data gate. The corpus, training recipe, independent development audit, complete installed retrieval timing and fresh acceptance remain outstanding.
+
+Independent read-only review found no concrete correctness defect within the documented trusted-serializer boundary. It confirmed that the checks do not authenticate arbitrary frame digests or prove external marker provenance, and that random-model tests do not establish retained-weight compatibility or training behavior. The review did not rerun tests.

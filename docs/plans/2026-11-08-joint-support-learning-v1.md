@@ -1,8 +1,8 @@
 # Joint-cohort supervised support candidate
 
-Status: design selected for data and computational feasibility preparation only. No training, new inference, acceptance case or integration has occurred. This is a prospective amendment to the convergence reset, not a reopening of a failed prompt, threshold or cohort.
+Status: design selected for data and computational feasibility preparation only. Tiny random-model wiring checks have run; no retained-checkpoint inference, training, acceptance case or integration has occurred. This is a prospective amendment to the convergence reset, not a reopening of a failed prompt, threshold or cohort.
 
-Preparation progress: [the serializer and retained tokenizer contract](../validation/2026-11-08/joint-support-frame-v1.md) now pass. Input IDs are built in fixed body/marker segments, with trusted token positions and target IDs recorded during construction. Padding/head behavior, grouped data, capacity and training remain open.
+Preparation progress: [the serializer and retained tokenizer contract](../validation/2026-11-08/joint-support-frame-v1.md) now pass. Input IDs are built in fixed body/marker segments, with trusted token positions and target IDs recorded during construction. [Batch padding and the shared head](../validation/2026-11-08/joint-support-head-v1.md) pass synthetic wiring checks, including a tiny random Qwen backbone. Retained-model capacity, grouped data readiness and training remain open.
 
 Data-audit implementation: [grouped split and label-binding checks](../validation/2026-11-08/joint-support-data-audit-v1.md) are implemented and tested. This is audit machinery, not a completed corpus or semantic label review. It always reports training readiness as false; a separate reviewed corpus and the remaining feasibility gates are required.
 
