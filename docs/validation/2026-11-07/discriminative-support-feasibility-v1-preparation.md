@@ -1,5 +1,7 @@
 # Discriminative support screen preparation
 
+Historical preparation record. The experiment subsequently [completed and failed](discriminative-support-feasibility-v1.md); inference is no longer pending. The preparation details below describe the earlier checkpoint.
+
 The [prospective protocol](../../plans/2026-11-07-discriminative-support-feasibility-v1.md)
 was committed at `29e34cfd` before input preparation. Preparation succeeded on
 its first attempt. It produced 68 known-question records containing 123 support
