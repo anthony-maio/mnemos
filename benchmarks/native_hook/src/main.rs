@@ -172,20 +172,42 @@ fn remaining(deadline: Instant) -> Result<Duration, ()> {
     if value.is_zero() { Err(()) } else { Ok(value) }
 }
 
-fn read_response(stream: &mut TcpStream, deadline: Instant) -> Result<Vec<u8>, ()> {
+trait DeadlineRead {
+    fn read_before(&mut self, bytes: &mut [u8], deadline: Instant) -> Result<usize, ()>;
+}
+
+impl DeadlineRead for TcpStream {
+    fn read_before(&mut self, bytes: &mut [u8], deadline: Instant) -> Result<usize, ()> {
+        self.set_read_timeout(Some(remaining(deadline)?))
+            .map_err(|_| ())?;
+        let count = self.read(bytes).map_err(|_| ())?;
+        remaining(deadline)?;
+        Ok(count)
+    }
+}
+
+fn read_response(stream: &mut impl DeadlineRead, deadline: Instant) -> Result<Vec<u8>, ()> {
     let mut header = Vec::new();
-    while !header.ends_with(b"\r\n\r\n") {
+    let header_end = loop {
         if header.len() == MAX_HEADERS {
             return Err(());
         }
-        stream
-            .set_read_timeout(Some(remaining(deadline)?))
-            .map_err(|_| ())?;
-        let mut byte = [0];
-        stream.read_exact(&mut byte).map_err(|_| ())?;
-        header.push(byte[0]);
-    }
-    let text = std::str::from_utf8(&header).map_err(|_| ())?;
+        let mut chunk = [0; 1024];
+        let capacity = chunk.len().min(MAX_HEADERS - header.len());
+        let read = stream.read_before(&mut chunk[..capacity], deadline)?;
+        if read == 0 {
+            return Err(());
+        }
+        let scan_from = header.len().saturating_sub(3);
+        header.extend_from_slice(&chunk[..read]);
+        if let Some(index) = header[scan_from..]
+            .windows(4)
+            .position(|w| w == b"\r\n\r\n")
+        {
+            break scan_from + index + 4;
+        }
+    };
+    let text = std::str::from_utf8(&header[..header_end]).map_err(|_| ())?;
     let mut lines = text.split("\r\n");
     let status: Vec<_> = lines.next().ok_or(())?.split_whitespace().collect();
     if status.len() < 2 || !["HTTP/1.0", "HTTP/1.1"].contains(&status[0]) || status[1] != "200" {
@@ -220,17 +242,18 @@ fn read_response(stream: &mut TcpStream, deadline: Instant) -> Result<Vec<u8>, (
         return Err(());
     }
     let mut body = vec![0; size];
-    let mut offset = 0;
+    // A single socket read can contain both headers and body. Preserve those
+    // body bytes, without treating them as headers or waiting for them again.
+    let mut offset = size.min(header.len() - header_end);
+    body[..offset].copy_from_slice(&header[header_end..header_end + offset]);
     while offset < size {
-        stream
-            .set_read_timeout(Some(remaining(deadline)?))
-            .map_err(|_| ())?;
-        let read = stream.read(&mut body[offset..]).map_err(|_| ())?;
+        let read = stream.read_before(&mut body[offset..], deadline)?;
         if read == 0 {
             return Err(());
         }
         offset += read;
     }
+    remaining(deadline)?;
     Ok(body)
 }
 
@@ -514,6 +537,120 @@ mod tests {
     use super::*;
     use std::net::TcpListener;
     use std::thread;
+
+    struct Fragmented {
+        bytes: std::io::Cursor<Vec<u8>>,
+        width: usize,
+        reads: usize,
+    }
+
+    impl DeadlineRead for Fragmented {
+        fn read_before(&mut self, bytes: &mut [u8], deadline: Instant) -> Result<usize, ()> {
+            remaining(deadline)?;
+            self.reads += 1;
+            let size = bytes.len().min(self.width);
+            self.bytes.read(&mut bytes[..size]).map_err(|_| ())
+        }
+    }
+
+    fn reader(bytes: Vec<u8>, width: usize) -> Fragmented {
+        Fragmented {
+            bytes: std::io::Cursor::new(bytes),
+            width,
+            reads: 0,
+        }
+    }
+
+    #[test]
+    fn response_preserves_coalesced_body_and_fragmented_delimiters() {
+        let wire = b"HTTP/1.1 200 OK\r\nContent-Length: 5\r\n\r\n\xff\0abc";
+        for width in 1..=wire.len() {
+            let mut input = reader(wire.to_vec(), width);
+            assert_eq!(
+                read_response(&mut input, Instant::now() + DEADLINE),
+                Ok(b"\xff\0abc".to_vec())
+            );
+            if width == wire.len() {
+                assert_eq!(input.reads, 1);
+            }
+        }
+    }
+
+    #[test]
+    fn complete_prefetched_body_cannot_bypass_expired_deadline() {
+        struct Late;
+        impl DeadlineRead for Late {
+            fn read_before(&mut self, bytes: &mut [u8], deadline: Instant) -> Result<usize, ()> {
+                while Instant::now() <= deadline {
+                    thread::sleep(Duration::from_millis(1));
+                }
+                let wire = b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n{}";
+                bytes[..wire.len()].copy_from_slice(wire);
+                Ok(wire.len())
+            }
+        }
+        assert!(read_response(&mut Late, Instant::now() + Duration::from_millis(5)).is_err());
+    }
+
+    #[test]
+    fn response_rejects_ambiguous_oversized_and_truncated_frames() {
+        for wire in [
+            "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nContent-Length: 2\r\n\r\n{}".to_owned(),
+            "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nTransfer-Encoding: chunked\r\n\r\n{}"
+                .to_owned(),
+            format!(
+                "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n",
+                MAX_FRAME + 1
+            ),
+            "HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\n{}".to_owned(),
+            "HTTP/1.1 200 OK\r\nContent-Length: 0\r\n".to_owned(),
+            "HTTP/1.1 500 Error\r\nContent-Length: 0\r\n\r\n".to_owned(),
+        ] {
+            for width in [1, 1024] {
+                assert!(
+                    read_response(
+                        &mut reader(wire.as_bytes().to_vec(), width),
+                        Instant::now() + DEADLINE
+                    )
+                    .is_err()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn header_limit_applies_to_header_not_prefetched_body() {
+        let prefix = "HTTP/1.1 200 OK\r\nContent-Length: 2\r\nX-Pad: ";
+        for extra in [0, 1] {
+            let wire = format!(
+                "{}{}\r\n\r\n{{}}",
+                prefix,
+                "x".repeat(MAX_HEADERS - prefix.len() - 4 + extra)
+            );
+            let result = read_response(
+                &mut reader(wire.into_bytes(), 1024),
+                Instant::now() + DEADLINE,
+            );
+            if extra == 0 {
+                assert_eq!(result, Ok(b"{}".to_vec()));
+            } else {
+                assert!(result.is_err());
+            }
+        }
+        let body = "x".repeat(MAX_FRAME);
+        let wire = format!(
+            "HTTP/1.1 200 OK\r\nContent-Length: {}\r\n\r\n{}",
+            body.len(),
+            body
+        );
+        assert_eq!(
+            read_response(
+                &mut reader(wire.into_bytes(), 1024),
+                Instant::now() + DEADLINE
+            ),
+            Ok(body.into_bytes())
+        );
+    }
 
     #[test]
     fn slow_header_cannot_extend_the_overall_deadline() {

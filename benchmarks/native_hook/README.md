@@ -57,6 +57,11 @@ Headers and body are bounded; header and body reads share the original
 30-second operation deadline. The worker's fixed Content-Length response is
 required; chunked or ambiguous framing fails without fallback.
 
+Response reads use bounded 1 KiB header chunks and retain body bytes received
+with the final header chunk. The client checks the remaining deadline before
+each socket read. This avoids a socket read and timeout update for each header
+byte; it does not establish a complete capture-latency improvement.
+
 Rust's [TCP timeout API](https://doc.rust-lang.org/std/net/struct.TcpStream.html)
 provides per-operation timeouts; the executable recomputes the remaining total
 deadline before each operation. Windows descriptor reads retain the standard
