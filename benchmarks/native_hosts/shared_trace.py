@@ -29,6 +29,7 @@ _RAW_TOOLS = {
 }
 _CLAUDE_PREFIX = "mcp__plugin_mnemos-memory_mnemos__"
 _BAD_STATUS = {"rejected", "degraded", "error", "failed", "failure"}
+_DISCOVERY_TOOLS = {"list_mcp_resources", "list_mcp_resource_templates"}
 CODEX_INVENTORY_SOURCE = "text(ALL_TOOLS.map(tool => tool.name).sort());"
 CODEX_INVENTORY_PREFIX = (
     "Before any memory call, run one Code Mode cell containing exactly this JavaScript:\n"
@@ -84,6 +85,8 @@ class NativeToolCall:
     line_sha256: str
     provider_call_id: str | None = None
     model_call_correlated: bool = False
+    dispatch_kind: str = "mnemos_mcp"
+    outcome: str = "success"
 
 
 def require_tool_sequence(
@@ -97,6 +100,8 @@ def require_tool_sequence(
     if len(calls) != len(expected_names):
         raise ValueError("native tool count differs from the expected phase")
     for call, expected in zip(calls, expected_names):
+        if call.outcome != "success":
+            raise ValueError("native tool result was unsuccessful")
         if call.name != expected:
             raise ValueError("native tool sequence differs from the expected phase")
         if require_model_correlation and not call.model_call_correlated:
@@ -204,7 +209,7 @@ def _codex_invocation(payload: Mapping[str, Any]) -> tuple[str, str, dict[str, A
     return call_id, name, _arguments(invocation.get("arguments"))
 
 
-def _codex_result(payload: Mapping[str, Any]) -> dict[str, Any]:
+def _codex_result(payload: Mapping[str, Any], *, observe_outcome: bool = False) -> dict[str, Any]:
     result = _object(payload.get("result"), "Codex result")
     if set(result) != {"Ok"}:
         raise ValueError("Codex result contains Ok and/or Err alternatives")
@@ -226,11 +231,56 @@ def _codex_result(payload: Mapping[str, Any]) -> dict[str, Any]:
         raise ValueError("Codex result is not JSON") from exc
     if structured_value != content_value:
         raise ValueError("Codex structured/content results differ")
+    if observe_outcome:
+        return _object(structured_value, "tool result")
     return _result(structured_value)
+
+
+def _codex_discovery_result(payload: Mapping[str, Any]) -> dict[str, Any]:
+    """Read the successful built-in wire format without inventing MCP IDs."""
+    result = _object(payload.get("result"), "discovery result")
+    if set(result) != {"Ok"}:
+        raise ValueError("Discovery result contains Ok and/or Err alternatives")
+    ok = _object(result["Ok"], "discovery result content")
+    content = ok.get("content")
+    if (
+        ok.get("isError") is not False
+        or not isinstance(content, list)
+        or len(content) != 1
+        or not isinstance(content[0], dict)
+        or content[0].get("type") != "text"
+        or not isinstance(content[0].get("text"), str)
+    ):
+        raise ValueError("Discovery result was unsuccessful or malformed")
+    return _result(json.loads(content[0]["text"]))
 
 
 def parse_codex_code_mode_trace(
     directory: Path, *, provenance: TraceProvenance, model: str
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str]]:
+    """Accept only successful Mnemos calls with complete native correlation."""
+    return _read_codex_code_mode_trace(directory, provenance=provenance, model=model)
+
+
+def observe_codex_code_mode_trace(
+    directory: Path, *, provenance: TraceProvenance, model: str
+) -> tuple[tuple[NativeToolCall, ...], dict[str, str]]:
+    """Record bound calls and application outcomes; this is not acceptance.
+
+    Includes the two native discovery helpers and unsuccessful Mnemos results.
+    Structural or transport failures still raise. No calls are discarded.
+    """
+    return _read_codex_code_mode_trace(
+        directory, provenance=provenance, model=model, observe_outcomes=True
+    )
+
+
+def _read_codex_code_mode_trace(
+    directory: Path,
+    *,
+    provenance: TraceProvenance,
+    model: str,
+    observe_outcomes: bool = False,
 ) -> tuple[tuple[NativeToolCall, ...], dict[str, str]]:
     """Bind model -> cell -> MCP through native IDs in a schema-1 rollout.
 
@@ -457,7 +507,18 @@ def parse_codex_code_mode_trace(
     pairs("tool_call_runtime_started", "tool_call_runtime_ended")
     pairs("tool_call_runtime_ended", "tool_call_ended")
     correlations = groups.get("mcp_tool_call_correlation_assigned", {})
-    if set(correlations) != set(groups.get("tool_call_started", {})):
+    expected_correlations = set(groups.get("tool_call_started", {}))
+    discovery_ids: set[str] = set()
+    if observe_outcomes:
+        for identity, start in groups.get("tool_call_started", {}).items():
+            invocation = payload(start["payload"].get("invocation_payload"), "tool_invocation")
+            if (
+                invocation.get("tool_namespace") is None
+                and invocation.get("tool_name") in _DISCOVERY_TOOLS
+            ):
+                discovery_ids.add(identity)
+        expected_correlations -= discovery_ids
+    if set(correlations) != expected_correlations:
         raise ValueError("Native MCP dispatch correlation is incomplete")
     mcp_ids: set[str] = set()
     for identity, assigned in correlations.items():
@@ -491,15 +552,30 @@ def parse_codex_code_mode_trace(
             raise ValueError("MCP call does not lie within its parent cell")
         invocation = payload(event.get("invocation_payload"), "tool_invocation")
         function = _object(invocation.get("payload"), "function invocation")
-        name = _tool_name(invocation.get("tool_name"))
+        discovery = identity in discovery_ids
+        name = (
+            str(invocation["tool_name"]) if discovery else _tool_name(invocation.get("tool_name"))
+        )
         args = _arguments(function.get("arguments"))
-        if invocation.get("tool_namespace") != "mcp__mnemos" or function.get("type") != "function":
+        expected_namespace = None if discovery else "mcp__mnemos"
+        if (
+            invocation.get("tool_namespace") != expected_namespace
+            or function.get("type") != "function"
+        ):
             raise ValueError("Call is outside the Mnemos MCP namespace")
         runtime_end = None
         for kind in ("tool_call_runtime_started", "tool_call_runtime_ended"):
             record = groups[kind][identity]["payload"]
             runtime = payload(record.get("runtime_payload"), "tool_runtime_event")
-            observed_id, observed_name, observed_args = _codex_invocation(runtime)
+            if discovery:
+                observed = _object(runtime.get("invocation"), "discovery invocation")
+                if observed.get("server") != "codex":
+                    raise ValueError("Discovery invocation used a different server")
+                observed_id = runtime.get("call_id")
+                observed_name = observed.get("tool")
+                observed_args = _arguments(observed.get("arguments"))
+            else:
+                observed_id, observed_name, observed_args = _codex_invocation(runtime)
             if (observed_id, observed_name, observed_args, runtime.get("turn_id")) != (
                 identity,
                 name,
@@ -512,13 +588,33 @@ def parse_codex_code_mode_trace(
                     raise ValueError("Native MCP runtime failed")
                 runtime_end = runtime
         assert runtime_end is not None
-        result = _codex_result(runtime_end)
+        result = (
+            _codex_discovery_result(runtime_end)
+            if discovery
+            else _codex_result(runtime_end, observe_outcome=observe_outcomes)
+        )
+        outcome = "success"
+        if observe_outcomes:
+            try:
+                _result(result)
+            except ValueError:
+                outcome = "unsuccessful"
         returned = payload(end["payload"].get("result_payload"), "tool_result")
-        visible = _result(returned.get("value"))
+        if discovery:
+            visible_text = returned.get("value")
+            if (
+                not isinstance(visible_text, str)
+                or visible_text != runtime_end["result"]["Ok"]["content"][0]["text"]
+            ):
+                raise ValueError("Discovery visible result differs from native result")
+            content_matches = _result(json.loads(visible_text)) == result
+        else:
+            visible = _result(returned.get("value"))
+            content_matches = visible.get("content") == runtime_end["result"]["Ok"]["content"]
         if (
             end["payload"].get("status") != "completed"
             or returned.get("type") != "code_mode_response"
-            or visible.get("content") != runtime_end["result"]["Ok"]["content"]
+            or not content_matches
         ):
             raise ValueError("Code Mode result differs from native MCP result")
         calls.append(
@@ -532,6 +628,8 @@ def parse_codex_code_mode_trace(
                 end["line_sha256"],
                 model_id,
                 True,
+                "codex_discovery" if discovery else "mnemos_mcp",
+                outcome,
             )
         )
     if not calls:

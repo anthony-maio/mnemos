@@ -119,7 +119,7 @@ def fixture():
     return events, payloads, session
 
 
-def parse(tmp_path, events, payloads, session, *, bad_path=False):
+def parse(tmp_path, events, payloads, session, *, bad_path=False, observe=False):
     root = tmp_path / "trace"
     (root / "payloads").mkdir(parents=True)
     manifest = {
@@ -150,7 +150,8 @@ def parse(tmp_path, events, payloads, session, *, bad_path=False):
     provenance = trace.TraceProvenance(
         "codex", 42, "session-1", str(source), hashlib.sha256(source.read_bytes()).hexdigest()
     )
-    return trace.parse_codex_code_mode_trace(root, provenance=provenance, model="pinned")
+    reader = trace.observe_codex_code_mode_trace if observe else trace.parse_codex_code_mode_trace
+    return reader(root, provenance=provenance, model="pinned")
 
 
 def test_native_parent_ids_bind_streamed_model_cell_and_mcp_result(tmp_path):
@@ -195,7 +196,8 @@ def test_native_parent_ids_bind_streamed_model_cell_and_mcp_result(tmp_path):
         "late-correlation",
     ],
 )
-def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
+@pytest.mark.parametrize("observe", [False, True])
+def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation, observe):
     events, payloads, session = fixture()
     if mutation == "parent":
         events[5]["requester"]["runtime_cell_id"] = "other"
@@ -261,4 +263,109 @@ def test_broken_native_chain_cannot_be_accepted(tmp_path, mutation):
     elif mutation == "late-correlation":
         events.insert(11, events.pop(7))
     with pytest.raises(ValueError):
-        parse(tmp_path, events, payloads, session)
+        parse(tmp_path, events, payloads, session, observe=observe)
+
+
+def discovery_fixture(tool):
+    events, payloads, session = fixture()
+    events.pop(7)  # Built-in calls have no MCP dispatch correlation.
+    payloads["2"].update(tool_name=tool, tool_namespace=None)
+    for key in ["3", "5"]:
+        payloads[key]["invocation"].update(server="codex", tool=tool)
+    answer = {"resources" if tool == "list_mcp_resources" else "resourceTemplates": []}
+    content = json.dumps(answer)
+    payloads["5"]["result"] = {
+        "Ok": {"content": [{"type": "text", "text": content}], "isError": False}
+    }
+    payloads["6"]["value"] = content
+    return events, payloads, session
+
+
+@pytest.mark.parametrize("tool", ["list_mcp_resources", "list_mcp_resource_templates"])
+def test_discovery_is_observed_with_model_parent_but_never_invented_mcp_id(tmp_path, tool):
+    calls, hashes = parse(tmp_path / "observation", *discovery_fixture(tool), observe=True)
+    assert len(calls) == 1 and calls[0].name == tool
+    assert calls[0].dispatch_kind == "codex_discovery" and calls[0].outcome == "success"
+    assert calls[0].model_call_correlated and calls[0].provider_call_id == "model-1"
+    assert len(hashes) == 8
+    with pytest.raises(ValueError, match="MCP dispatch correlation is incomplete"):
+        parse(tmp_path / "strict", *discovery_fixture(tool))
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    [
+        "namespace",
+        "server",
+        "arguments",
+        "runtime-id",
+        "tool",
+        "unknown-helper",
+        "correlation",
+        "content",
+        "error",
+        "transport",
+        "parent",
+    ],
+)
+def test_discovery_observation_rejects_tampered_or_unsupported_calls(tmp_path, mutation):
+    events, payloads, session = discovery_fixture("list_mcp_resources")
+    if mutation == "namespace":
+        payloads["2"]["tool_namespace"] = "mcp__other"
+    elif mutation == "server":
+        payloads["5"]["invocation"]["server"] = "mnemos"
+    elif mutation == "arguments":
+        payloads["5"]["invocation"]["arguments"] = {"server": "other"}
+    elif mutation == "runtime-id":
+        payloads["5"]["call_id"] = "other"
+    elif mutation == "tool":
+        payloads["3"]["invocation"]["tool"] = "list_mcp_resource_templates"
+    elif mutation == "unknown-helper":
+        payloads["2"]["tool_name"] = "read_mcp_resource"
+    elif mutation == "correlation":
+        events.insert(
+            7,
+            {
+                "type": "mcp_tool_call_correlation_assigned",
+                "tool_call_id": "tool-1",
+                "mcp_call_id": "fake",
+            },
+        )
+    elif mutation == "content":
+        payloads["6"]["value"] = "{}"
+    elif mutation == "error":
+        payloads["5"]["result"]["Ok"]["isError"] = True
+    elif mutation == "transport":
+        payloads["5"]["result"] = {"Err": "unavailable"}
+    elif mutation == "parent":
+        events[5]["requester"]["runtime_cell_id"] = "other"
+    with pytest.raises(ValueError):
+        parse(tmp_path, events, payloads, session, observe=True)
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        {
+            "status": "degraded",
+            "committed": False,
+            "error": "Mnemos service returned HTTP 404 (fact_not_found)",
+        },
+        {"status": "rejected", "committed": False},
+        {"error": "connection unavailable"},
+        {"status": "ok", "isError": True},
+    ],
+)
+def test_application_failure_is_retained_as_unsuccessful_not_accepted(tmp_path, answer):
+    events, payloads, session = fixture()
+    ok = payloads["5"]["result"]["Ok"]
+    ok["content"][0]["text"] = json.dumps(answer)
+    ok["structuredContent"]["result"] = json.dumps(answer)
+    # fixture shares the original content list with the visible response.
+    calls, _ = parse(tmp_path / "observation", events, payloads, session, observe=True)
+    assert len(calls) == 1 and dict(calls[0].result) == answer
+    assert calls[0].outcome == "unsuccessful" and calls[0].dispatch_kind == "mnemos_mcp"
+    with pytest.raises(ValueError, match="unsuccessful"):
+        trace.require_tool_sequence(calls, ["mnemos_retrieve"])
+    with pytest.raises(ValueError):
+        parse(tmp_path / "strict", events, payloads, session)
