@@ -83,12 +83,12 @@ def render_context_chunk(chunk: MemoryChunk) -> str:
     qualifier = ""
     if status == "conflict":
         qualifier = "; unresolved conflict"
+    # Raw conversation remains unverified even if imported or inconsistent
+    # metadata labels it asserted. Keep a conflict warning as well when present.
+    if chunk.metadata.get("source") == "captured_passthrough":
+        qualifier += "; captured conversation; unverified, may be outdated"
     elif status == "unknown":
-        qualifier = (
-            "; captured conversation; unverified, may be outdated"
-            if chunk.metadata.get("source") == "captured_passthrough"
-            else "; unverified"
-        )
+        qualifier = "; unverified"
     trace = chunk.metadata.get("retrieval_trace")
     if isinstance(trace, dict) and trace.get("retrieval_mode") == "lexical_only":
         qualifier += "; lexical match only; semantic retrieval unavailable"

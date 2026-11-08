@@ -11,6 +11,17 @@ def chunk(identifier, content="Use Python", status="asserted"):
     return MemoryChunk(id=identifier, content=content, metadata={"assertion_status": status})
 
 
+@pytest.mark.parametrize("status", ["asserted", "conflict", "unknown"])
+def test_raw_capture_keeps_warning_regardless_of_assertion_label(status):
+    record = chunk("raw", "A conversation claim.", status)
+    record.metadata["source"] = "captured_passthrough"
+    packed = pack_context([record], max_tokens=1000, top_k=1)
+    assert "captured conversation; unverified, may be outdated" in packed.text
+    assert ("unresolved conflict" in packed.text) == (status == "conflict")
+    assert packed.token_count == len(packed.text.encode("utf-8"))
+    assert record.metadata["assertion_status"] == status
+
+
 def test_fallback_counts_utf8_including_identifiers_qualifiers_and_newlines():
     records = [chunk("a", "caf\u00e9", "conflict"), chunk("b", "\u6771\u4eac", "unknown")]
     expected = "".join(render_context_chunk(item) for item in records)
