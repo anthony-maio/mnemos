@@ -6,7 +6,10 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 from mnemos.client import MnemosClient, Outbox
+from mnemos.sqlite_outbox import SQLiteOutbox
 from mnemos.engine import MnemosEngine
 from mnemos.hook_worker import HookWorker
 from mnemos.memory_service import LocalMemoryService
@@ -32,30 +35,52 @@ def memory_owner(root):
     return MnemosService(dispatcher_factory=factory, descriptor_path=root / "memory-runtime.json")
 
 
-def wait_empty(root):
-    deadline = time.monotonic() + 5
-    while Outbox(root / "outbox.json").pending() and time.monotonic() < deadline:
+def pending_queue(root, backend):
+    if backend == "json":
+        return Outbox(root / "outbox.json").pending()
+    queue = SQLiteOutbox(root / "outbox.sqlite")
+    try:
+        return queue.pending()
+    finally:
+        queue.close()
+
+
+def wait_empty(root, backend="json"):
+    deadline = time.monotonic() + 8
+    while time.monotonic() < deadline:
+        if not pending_queue(root, backend) and not Outbox(root / "outbox.json").pending():
+            return
         time.sleep(0.01)
+    assert not pending_queue(root, backend)
     assert not Outbox(root / "outbox.json").pending()
 
 
-def test_duplicate_queue_delivery_completion_correction_and_forgotten_replay(configured):
+@pytest.mark.parametrize("backend", ["json", "sqlite"])
+def test_duplicate_queue_delivery_completion_correction_and_forgotten_replay(configured, backend):
     root = configured
     worker = HookWorker(
-        "codex", descriptor_path=root / "worker.json", cwd=root, queue_captures=True
+        "codex",
+        descriptor_path=root / "worker.json",
+        cwd=root,
+        queue_captures=True,
+        outbox_backend=backend,
     )
     worker.start()
     try:
         result = send(root, payload(root))
         assert result["capture_state"] == "queued"
-        original = Outbox(root / "outbox.json").pending()[0]["payload"]
+        original = pending_queue(root, backend)[0]["payload"]
     finally:
         worker.stop()
 
     memory = memory_owner(root)
     memory.start()
     restarted = HookWorker(
-        "codex", descriptor_path=root / "worker.json", cwd=root, queue_captures=True
+        "codex",
+        descriptor_path=root / "worker.json",
+        cwd=root,
+        queue_captures=True,
+        outbox_backend=backend,
     )
     restarted.start()
 
@@ -72,7 +97,7 @@ def test_duplicate_queue_delivery_completion_correction_and_forgotten_replay(con
             replies = list(pool.map(lambda _: asyncio.run(duplicate()), range(2)))
         assert all(r["status"] == "committed" for r in replies)
         assert len({r["job_id"] for r in replies}) == 1
-        wait_empty(root)
+        wait_empty(root, backend)
         reader = SQLiteStore(str(root / "memory.sqlite"))
         try:
             assert len(reader.list_episodic_events()) == 1
@@ -135,14 +160,24 @@ def test_duplicate_queue_delivery_completion_correction_and_forgotten_replay(con
 
     # Recreate the old queue after forgetting, then reopen both owners.
     Outbox(root / "outbox.json").append(original)
+    if backend == "sqlite":
+        stale_queue = SQLiteOutbox(root / "outbox.sqlite")
+        try:
+            stale_queue.append(original)
+        finally:
+            stale_queue.close()
     memory = memory_owner(root)
     memory.start()
     restarted = HookWorker(
-        "codex", descriptor_path=root / "worker.json", cwd=root, queue_captures=True
+        "codex",
+        descriptor_path=root / "worker.json",
+        cwd=root,
+        queue_captures=True,
+        outbox_backend=backend,
     )
     restarted.start()
     try:
-        wait_empty(root)
+        wait_empty(root, backend)
         assert memory.submit("maintenance", {})["completed"] == 0
         reader = SQLiteStore(str(root / "memory.sqlite"))
         try:

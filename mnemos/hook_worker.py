@@ -18,6 +18,7 @@ from typing import Any
 from .adapters.claude_code import ClaudeCodeAdapter, _native_output
 from .adapters.codex import CodexAdapter, hook_output
 from .client import MnemosClient
+from .sqlite_outbox import SQLiteOutbox
 from .outbox_replay import OutboxReplayPump
 from .hook_client import HOOK_PROTOCOL, environment_fingerprint
 from .scopes import ScopeRegistry, default_registry_path
@@ -46,11 +47,18 @@ class HookDispatcher:
         client: MnemosClient | None = None,
         queue_captures: bool = False,
         notify_queued_captures: bool = True,
+        outbox_backend: str = "json",
     ) -> None:
         if host not in {"codex", "claude-code"}:
             raise ValueError("Unsupported adapter host")
         if queue_captures and host != "codex":
             raise ValueError("Queued capture is currently supported only for Codex")
+        if outbox_backend not in {"json", "sqlite"}:
+            raise ValueError("Unknown outbox backend")
+        if outbox_backend == "sqlite" and not queue_captures:
+            raise ValueError("SQLite outbox requires queued capture")
+        if outbox_backend == "sqlite" and client is not None:
+            raise ValueError("SQLite backend selection owns its client")
         self.cwd = Path(cwd).resolve(strict=True)
         if self.cwd != Path.cwd().resolve():
             raise ValueError("Start the hook worker in its bound working directory")
@@ -62,6 +70,27 @@ class HookDispatcher:
         if not self.profile:
             raise ValueError("MNEMOS_USER_PROFILE_ID is required")
         self.client = client if client is not None else MnemosClient()
+        self._owned_outbox: SQLiteOutbox | None = None
+        legacy_outbox = self.client.outbox
+        sqlite_path = legacy_outbox.path.with_suffix(".sqlite")
+        if outbox_backend == "sqlite" or (
+            client is None and queue_captures and sqlite_path.exists()
+        ):
+            self._owned_outbox = SQLiteOutbox(sqlite_path, firewall=legacy_outbox.firewall)
+            if outbox_backend == "sqlite":
+                self.client.outbox = self._owned_outbox
+        self.compatibility_replay: OutboxReplayPump | None = None
+        if self._owned_outbox is not None:
+            self.compatibility_replay = OutboxReplayPump(
+                MnemosClient(
+                    descriptor_path=self.client.descriptor_path,
+                    outbox=(legacy_outbox if outbox_backend == "sqlite" else self._owned_outbox),
+                    auto_start=self.client.auto_start,
+                    startup_timeout=self.client.startup_timeout,
+                    request_timeout=self.client.request_timeout,
+                    python_executable=self.client.python_executable,
+                )
+            )
         self._lock = asyncio.Lock()
         self.queue_captures = queue_captures
         self.notify_queued_captures = notify_queued_captures
@@ -81,6 +110,8 @@ class HookDispatcher:
     def start(self) -> None:
         if self.replay is not None:
             self.replay.start()
+        if self.compatibility_replay is not None:
+            self.compatibility_replay.start()
 
     async def dispatch(self, operation: str, request: dict[str, Any]) -> dict[str, Any]:
         response = {
@@ -165,9 +196,19 @@ class HookDispatcher:
             return response
 
     async def close(self) -> None:
-        if self.replay is not None:
-            await self.replay.close()
-        await self.client.close()
+        try:
+            if self.replay is not None:
+                await self.replay.close()
+        finally:
+            try:
+                if self.compatibility_replay is not None:
+                    await self.compatibility_replay.close()
+            finally:
+                try:
+                    await self.client.close()
+                finally:
+                    if self._owned_outbox is not None:
+                        self._owned_outbox.close()
 
 
 class HookWorker(MnemosService):
@@ -180,22 +221,32 @@ class HookWorker(MnemosService):
         descriptor_path: str | Path,
         cwd: str | Path,
         queue_captures: bool = False,
+        outbox_backend: str = "json",
     ) -> None:
         if queue_captures and host != "codex":
             raise ValueError("Queued capture is currently supported only for Codex")
+        if outbox_backend not in {"json", "sqlite"}:
+            raise ValueError("Unknown outbox backend")
+        if outbox_backend == "sqlite" and not queue_captures:
+            raise ValueError("SQLite outbox requires queued capture")
         target = Path(descriptor_path).expanduser().resolve()
         memory_descriptor = default_descriptor_path().expanduser().resolve()
         if target == memory_descriptor or target.with_suffix(
             ".lock"
         ) == memory_descriptor.with_suffix(".lock"):
             raise ValueError("Hook worker must not use the memory service descriptor")
+        self.outbox_backend = outbox_backend
         self.adapter_host = host
         self.capture_mode = "queued" if queue_captures else "synchronous"
         self.environment_sha256 = environment_fingerprint()
 
         def create_dispatcher() -> HookDispatcher:
             dispatcher = HookDispatcher(
-                host, cwd=cwd, queue_captures=queue_captures, notify_queued_captures=False
+                host,
+                cwd=cwd,
+                queue_captures=queue_captures,
+                notify_queued_captures=False,
+                outbox_backend=outbox_backend,
             )
             # Factory runs on the service owner loop before run_forever. Drain
             # restart leftovers even if no new hook event arrives.
@@ -244,9 +295,13 @@ class HookWorker(MnemosService):
             "adapter_host": self.adapter_host,
             "environment_sha256": self.environment_sha256,
             "capture_mode": self.capture_mode,
+            "outbox_backend": self.outbox_backend,
         }
         if self._external:
-            if any(descriptor.get(key) != value for key, value in expected.items()):
+            if any(
+                descriptor.get(key, "json" if key == "outbox_backend" else None) != value
+                for key, value in expected.items()
+            ):
                 self.stop()
                 raise RuntimeError("Existing runtime is not this hook worker")
             return descriptor
@@ -266,9 +321,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--descriptor", type=Path, required=True)
     parser.add_argument("--cwd", type=Path, default=Path.cwd())
     parser.add_argument("--queue-captures", action="store_true")
+    parser.add_argument("--outbox-backend", choices=("json", "sqlite"), default="json")
     args = parser.parse_args(argv)
     worker = HookWorker(
-        args.host, descriptor_path=args.descriptor, cwd=args.cwd, queue_captures=args.queue_captures
+        args.host,
+        descriptor_path=args.descriptor,
+        cwd=args.cwd,
+        queue_captures=args.queue_captures,
+        outbox_backend=args.outbox_backend,
     )
     try:
         worker.start()
