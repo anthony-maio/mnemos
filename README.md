@@ -37,9 +37,11 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ---
 
-## Public Beta
+## Unreleased content-recency repair
 
-Mnemos is now in broad public beta. The core engine and onboarding control plane are ready for real coding-agent usage, and the intended setup path is:
+This checkout prepares version `0.6.2`, separate from the unpublished `0.6.1` storage patch and frozen functional-memory candidate. It prevents access from being treated as a content revision. The source checks pass, but the original legacy benchmark still has a failed gate; publication and release readiness remain open. See the [content-recency contract](docs/legacy-content-recency.md) for unknown revision history, schema 3 migration and older-client compatibility limits.
+
+The commands below install the published package, which does not contain this unreleased repair. They describe the existing onboarding path:
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
@@ -826,7 +828,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.6.1},
+  version      = {0.6.2},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

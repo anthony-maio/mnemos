@@ -10,10 +10,11 @@ What it does:
 - reinforces the `retrieve -> work -> store -> consolidate` loop
 - keeps host claims accurate by not promising hard auto-capture outside verified hook-capable hosts
 
-Publish command:
+Draft publish command for the unreleased 0.6.2 candidate. Its validation and
+publication decision remain open:
 
 ```bash
-clawhub publish ./skills/mnemos-memory --slug mnemos-memory --name "Mnemos Memory" --version 0.6.1 --tags latest
+clawhub publish ./skills/mnemos-memory --slug mnemos-memory --name "Mnemos Memory" --version 0.6.2 --tags latest
 ```
 
 Positioning:

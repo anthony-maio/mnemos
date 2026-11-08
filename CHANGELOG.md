@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2 (unreleased)
+
+- Separate known content revision time from legacy access activity. Retrieving
+  an old fact no longer makes it rank as newly written content.
+- Add SQLite schema 3 with transactional migration and nullable revision history.
+  Unknown legacy history stays unknown. Older clients must be stopped before
+  migration because their positional row readers do not support the new column.
+- Keep the existing failed benchmark and original fixture unchanged. This is a
+  separate repair candidate and has not been published or qualified for release.
+
 ## 0.6.1 (unreleased)
 
 - Make graph-neighbor replacement atomic. A failed insert restores the previous
