@@ -2,6 +2,13 @@
 
 ## Current disposition
 
+The remaining chronology input has now been adapted in canonical `7a77e40f`;
+see [benchmark contract repair](canonical-benchmark-contract-v1.md). Direct
+timestamp and ingestion-timing regressions pass, but the old perfect-MRR
+expectation does not transfer to current retrieval. Historical scores remain
+frozen. Older FastEmbed, auto-priming, first-run UI and durable-pipeline commits
+still require behavioral comparison; this is not a blanket merge of 0.7.0.
+
 Rechecked November 8 against the original working copy and remote backup. The
 17 tracked edits remain unchanged from checkpoint `cc5ecf68`; the untracked
 sleep-settings test remains in the original checkout. The remote backup still
