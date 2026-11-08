@@ -1,5 +1,12 @@
 # Eight-layer learning recipe proposal
 
+Implementation update: [adapters and the disposable retained-weight backward
+probe pass](../validation/2026-11-08/joint-support-backward-v1.md). The probe fixes
+the proposed scaler at initial scale 128, growth factor 2, backoff factor 0.5 and
+growth interval 2000, with nonfinite/skipped updates treated as failures. The
+full training/evaluation execution and baseline bindings remain outstanding;
+one synthetic step does not establish stability across full-corpus updates.
+
 Coverage update: [corpus-v3](../validation/2026-11-08/joint-support-contrasts-v1.md)
 adds the reviewed constructions required below. Review clears that specific
 coverage blocker for a bounded diagnostic attempt. Original training inputs,
