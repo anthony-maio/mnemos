@@ -1,0 +1,13 @@
+# Bounded SQLite replay acknowledgment batches
+
+The isolated capture candidate now acknowledges successfully delivered SQLite backlog entries in batches of at most 32. Each batch uses one FULL synchronous transaction. Individual capture appends remain durably committed before their queued receipt. JSON retains its existing one-entry acknowledgment behavior.
+
+Replay only collects IDs after the same committed, rejected or blocked results accepted by the previous implementation. Ambiguous and failed deliveries remain queued. A batch deletes only its named IDs, preserving entries appended during replay. A failed commit rolls back the complete deletion batch. Cancellation or process exit before acknowledgment leaves already delivered entries in the outbox for idempotent retry with their original IDs. This trades a bounded set of possible duplicate deliveries for fewer deletion commits; it does not weaken durable capture.
+
+New regression checks first failed because batch acknowledgment was absent. The completed implementation passed 42 queue, replay, worker, real-service lifecycle, lost-acknowledgment and outbox-selection checks in 32.00 seconds. One Windows replacement-path test skipped because the operating system prevents renaming an open SQLite database. Strict type checks passed for both changed modules.
+
+The focused replay case delivers 35 entries with one failed delivery and one concurrent append. It acknowledges 34 entries in two deletion commits, retaining the failed entry and concurrent append. The trace records three total commits: those two acknowledgments plus the concurrent capture append. Another case cancels after two successful deliveries, reopens the queue, verifies all original entries remain unchanged and then drains them using duplicate-success replies. The existing real-service tests separately exercise idempotent delivery, correction, forgetting and replay suppression. Synthetic duplicate replies in the new cancellation test are not a new real-service crash-recovery proof.
+
+Batch transaction tests verify one commit, duplicate-ID handling, preservation of unrelated entries, and rollback of every deletion on commit denial. JUnit is retained at `.venv/batch-ack-green-v1.xml`; the adjacent receipt binds source and test hashes.
+
+This is source validation, not installed validation or a measured latency improvement. The v6 package and its frozen results are unchanged. A fresh artifact and bounded backlog measurement are required before making a performance claim. The canonical runtime, live pilot, memory databases and publication state remain unchanged. Original capture, retrieval, quality and daily-use gates remain open.
