@@ -14,6 +14,8 @@ The joint-cohort supervised support hypothesis completed data/serializer prepara
 
 ## Next bounded implementation: capture routing freshness
 
+Retained-model follow-up: the portable GQA candidate [failed its frozen numerical gate](../validation/2026-11-08/portable-gqa-capacity-v1.md) on the first nonempty workload. Of 100,352 final hidden values, 28 exceeded the predeclared tolerance. No timing ran. This candidate is closed; do not relax tolerance or substitute a logits-only gate. The dispatch finding remains evidence, but it does not establish a numerically accepted fast support path. The historical candidate description below records the hypothesis before this failure.
+
 Computational follow-up: [runtime dispatch inspection and parity work](../validation/2026-11-08/portable-gqa-parity-v1.md) identifies a concrete native-GQA versus repeated-K/V dispatch mismatch on the installed Windows runtime. The [new inference-only representation candidate](2026-11-08-portable-gqa-v1.md) is a prospective implementation change, not a regrade of the failed configuration. It preserves dtype, masks, tokens and evidence and does not force a backend. The initial fused-backward parity failure is retained; gradient-bearing calls now preserve native GQA. Numerical tests do not establish speed. Any later capacity run requires a new freeze with the original workloads and limits, plus retained-model parity, and must preserve the old 876.17 ms failure.
 
 Complete the missing external Git-policy invalidation owner for the resident-worker identity-cache prototype, in its isolated worktree. The cache must remain inactive until its complete contract is verified. This is an implementation hypothesis, not a promised 100 ms result.
