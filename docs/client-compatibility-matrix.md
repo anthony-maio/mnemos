@@ -1,5 +1,31 @@
 # Client compatibility and observed evidence
 
+## November 7, 2026 latest acceptance limits
+
+The frozen `f5a944ea` wheel passes its bounded native Codex v12 explicit-memory
+lifecycle with hooks disabled. Full configuration acceptance and actual pilot
+use remain open. No later test below transfers acceptance to another artifact.
+
+The [installed retrieval/support comparison](validation/2026-11-07/retrieval-support-development-v1.md)
+uses actual returned candidates across 272 observations and 68 known questions.
+Precision is 94.74%, expected-fact retention is 90%, correct abstention is 52/56
+and complete p95 is 8,641.48 ms. Precision, retention and latency fail. The
+comparison is closed, the treatment stays experimental and no fresh acceptance
+has been started from this result.
+
+The [installed pilot command timing](validation/2026-11-07/installed-pilot-command-timing-v1.md)
+uses the same frozen wheel and 10,000-fact snapshot for both launchers. Complete
+recall p95 is 1,098.84 ms for Python and 1,508.41 ms for the native experiment,
+above 500 ms. Stop p95 is 1,359.04/360.88 ms and prompt p95 is 2,992.09/2,036.34 ms.
+Neither launcher provides an early durable acknowledgment. Internal persistence
+is not a host acknowledgment or a replacement for the 100 ms capture target.
+The 160 matching output pairs and 208 recovered captures establish integrity
+for this run, not native-host timing or pilot reliability. All prior results
+retain their dates, artifacts and original pass/fail labels.
+
+The optional explicit-MCP learning proposal is inactive and unapproved. It
+cannot count toward the original two-week pilot or semantic-quality gates.
+
 ## November 7, 2026 evidence-index checkpoint
 
 Product `f5a944ea` passes [3,674 full-suite tests with four platform skips](validation/2026-11-07/full-regression-fact-evidence-index-v1.md).
