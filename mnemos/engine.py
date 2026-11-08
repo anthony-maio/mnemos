@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
@@ -524,8 +525,9 @@ class MnemosEngine:
         # Gather IDs of activated nodes to boost them in final scoring
         activated_ids: set[str] = {node.id for node in activated_nodes}
         query_lower = query.lower()
-        recency_hint = any(
-            token in query_lower for token in ("current", "now", "latest", "today", "recent")
+        recency_hint = (
+            re.search(r"\b(?:current(?:ly)?|now|latest|today|recent(?:ly)?)\b", query_lower)
+            is not None
         )
 
         # Step 3: AffectiveRouter — retrieve and re-rank from store

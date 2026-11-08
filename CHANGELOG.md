@@ -10,6 +10,8 @@ plugin interpreter repairs. It is not published or approved for live upgrade.
 - Resolve explicit plugin Python commands against PATH on Windows.
 - Complete float32 array annotations without changing embedding calculations.
 - Preserve the original benchmark failures and separate development comparisons.
+- Match temporal words at word boundaries so known, unknown and concurrent do
+  not accidentally enable recency reranking. Keep currently and recently supported.
 
 See [upgrade and rollback boundaries](docs/legacy-upgrade.md).
 
