@@ -97,6 +97,8 @@ def canonical_project_root(path: str | Path) -> str:
         try:
             result = subprocess.run(
                 ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                # Discovery must never read the host's protocol/control stream.
+                stdin=subprocess.DEVNULL,
                 capture_output=True,
                 text=True,
                 timeout=5,

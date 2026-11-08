@@ -1,9 +1,45 @@
 import os
 import subprocess
+import sys
+from pathlib import Path
 
 import pytest
 
 from mnemos.scopes import ScopeRegistry, canonical_project_root
+
+
+def test_git_discovery_cannot_consume_host_standard_input(tmp_path):
+    # A process-level stand-in for Git deliberately reads stdin. Discovery must
+    # isolate that child from the host protocol stream, even if a Git wrapper
+    # unexpectedly attempts to read it.
+    script = tmp_path / "discover.py"
+    script.write_text(
+        "import sys, subprocess\n"
+        "from pathlib import Path\n"
+        "from mnemos.scopes import canonical_project_root\n"
+        "original = subprocess.run\n"
+        "def discovery(command, **kwargs):\n"
+        "    probe = 'import sys; from pathlib import Path; "
+        "Path(sys.argv[1]).write_text(sys.stdin.read()); print(sys.argv[2])'\n"
+        "    return original([sys.executable, '-c', probe, sys.argv[2], sys.argv[1]], **kwargs)\n"
+        "subprocess.run = discovery\n"
+        "assert canonical_project_root(sys.argv[1])\n"
+        "print(sys.stdin.read(), end='')\n",
+        encoding="utf-8",
+    )
+    consumed = tmp_path / "consumed.txt"
+    env = dict(os.environ, PYTHONPATH=str(Path(__file__).resolve().parents[1]))
+    result = subprocess.run(
+        [sys.executable, str(script), str(tmp_path), str(consumed)],
+        input="host protocol must remain available\n",
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=20,
+    )
+    assert result.returncode == 0, result.stderr
+    assert consumed.read_text() == ""
+    assert result.stdout == "host protocol must remain available\n"
 
 
 def test_transient_git_timeout_does_not_register_fallback_identity(tmp_path, monkeypatch):
