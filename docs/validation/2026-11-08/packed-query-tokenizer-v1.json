@@ -1,0 +1,85 @@
+{
+  "status": "tokenizer_comparison_passed",
+  "semantic_calls": 0,
+  "actual_query_cases": 3,
+  "synthetic_reply_states": 243,
+  "groups": {
+    "minified_original_reply": {
+      "items": 3,
+      "minimum": 134,
+      "maximum": 145,
+      "median": 143
+    },
+    "original_prompt": {
+      "items": 3,
+      "minimum": 2312,
+      "maximum": 2322,
+      "median": 2316
+    },
+    "original_reply": {
+      "items": 3,
+      "minimum": 188,
+      "maximum": 199,
+      "median": 197
+    },
+    "packed_prompt": {
+      "items": 3,
+      "minimum": 614,
+      "maximum": 617,
+      "median": 616
+    },
+    "synthetic_packed_reply": {
+      "items": 243,
+      "minimum": 4,
+      "maximum": 14,
+      "median": 6
+    }
+  },
+  "prompt_pairs": [
+    {
+      "key": "sparse/approval-status/approver",
+      "original": 2312,
+      "packed": 614,
+      "reduction_fraction": 0.7344290657439446
+    },
+    {
+      "key": "sparse/approval-status/date",
+      "original": 2322,
+      "packed": 617,
+      "reduction_fraction": 0.7342807924203273
+    },
+    {
+      "key": "sparse/approval-status/status",
+      "original": 2316,
+      "packed": 616,
+      "reduction_fraction": 0.7340241796200345
+    }
+  ],
+  "control": {
+    "status": "passed",
+    "completion_requests": 0,
+    "requests": 255,
+    "min_tokens": 4,
+    "max_tokens": 2322,
+    "model_unloaded": true,
+    "stop_exit": 0,
+    "server_exit": 1,
+    "process_absent": true,
+    "port_closed": true,
+    "native_absent": true,
+    "native_port_closed": true,
+    "bindings_unchanged": true,
+    "prepared_unchanged": true
+  },
+  "evidence": {
+    "control.json": "dd6236cd33fbc3369fe619698c90787d0f1f6202b1aa2315c74918b6f89fba2c",
+    "freeze.json": "04314d2fecdafec55b9fc9c178d929d895eef9dffcda570a72b821ff4f3f48f1",
+    "token-journal.jsonl": "e27a0e39145397514945e02dcc97ee57c381bc0c4a82f98cca9f4ab34c36abad"
+  },
+  "limitations": [
+    "Only three completed-prefix query inputs; not the complete cohort.",
+    "Packed replies are synthetic state enumerations, not model answers.",
+    "Reply-body token counts use no special tokens and may differ from contextual generation.",
+    "Token savings do not establish semantic accuracy, latency or fresh acceptance."
+  ]
+}
