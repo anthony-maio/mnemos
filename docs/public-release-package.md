@@ -31,8 +31,12 @@ Safe to claim today:
 - recorded negative quality and latency results; bundled synthetic mechanism
   checks do not establish real-model improvement
 
-The optional proposal passed validation but remains inactive pending activation.
-Neither that pass nor the closed support experiments establish daily-use reliability.
+The optional explicit-memory pilot was activated after separate approval. No
+qualifying days for the original two-week pilot are recorded here. Neither
+activation nor the closed support experiments establish daily-use reliability.
+See [current readiness](validation/current-readiness.md) for exact artifact
+bindings and remaining gates. Earlier bounded workflow passes do not certify
+the latest candidate, whose complete native lifecycle remains open.
 
 ## Claims To Avoid
 

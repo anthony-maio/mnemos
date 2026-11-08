@@ -39,49 +39,19 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ## Current release posture
 
-Version `0.7.0b1` is an unpublished development candidate. It includes a local service, scoped registry, durable jobs and SQLite persistence. PyPI still provides `0.6.0` as of November 7, 2026; that release does not contain this functional-memory workflow. The candidate has not passed its quality, performance or daily-use pilot requirements.
+`0.7.0b1` is an unpublished development candidate. The [published PyPI package](https://pypi.org/project/mnemos-memory/) remains `0.6.0` (checked November 8, 2026); it does not contain this service-based explicit-memory workflow.
 
-The frozen product is `f5a944ea`, with [3,674 full-suite checks and four platform skips](docs/validation/2026-11-07/full-regression-fact-evidence-index-v1.md) on the recorded source and an [installed CLI/MCP restart check](docs/validation/2026-11-07/fact-evidence-index-install-v1.md) using real local embeddings. Its [native Codex lifecycle](docs/validation/2026-11-07/native-codex-v12.md) passes six phases with 19 correlated MCP calls: remember, inspect, restart recall, same-ID correction, reviewed forgetting and absence after restart and original-source replay. Hooks were disabled. This establishes that bounded explicit workflow; normal hook trust, full pilot configuration and reliability during daily use remain unverified. The [private pilot preparation](docs/validation/2026-11-07/persistent-pilot-v4.md) is inactive at zero days.
+Use the candidate to evaluate explicit storage, source inspection, same-ID correction and scoped restart recall. Automatic enrichment and biomimetic modules remain experimental. Quality, complete-command latency and the original two-week daily-use pilot have not passed.
 
-The latest [installed retrieval/support comparison](docs/validation/2026-11-07/retrieval-support-development-v1.md) uses 68 known questions with two paired repetitions and identical retrieved candidates. The fixed QA/contrast treatment reaches 94.74% supported-fact precision, retains 72/80 expected facts and correctly abstains on 52/56 absent-answer observations. It still selects four unsupported facts and rejects eight expected answers. Complete p95 latency is 8,641.48 ms. Precision, retention and latency fail the original requirements, so the comparison is closed and the treatment remains experimental. These development results are not fresh acceptance.
+| Area | Verified state |
+| --- | --- |
+| Latest private package | Runtime source `4d2d5c53`; 99 installed package files, 57 pinned dependencies and a passing real-embedding CLI/MCP restart smoke check. This is not a published release. |
+| Native workflow | The earlier Codex v12 lifecycle passed against `f5a944ea` with hooks disabled. The latest Claude v8 attempt timed out during inspection before deletion; the current complete lifecycle remains open. |
+| Answer support | No evaluated configuration meets the quality and latency requirements. Related text and a retrieved source ID do not establish a supported answer. |
+| Capture | Durable queued status and completed fact storage are distinct. Check the original job before reporting completion; the 100 ms complete-capture target remains unmet. |
+| Pilot | The optional explicit-memory pilot was activated separately. It does not start or satisfy the original two-week pilot, and no qualifying pilot days are recorded here. |
 
-The recorded [10,000-fact installed command timing](docs/validation/2026-11-07/installed-pilot-command-timing-v1.md) retains 160 identical output/context pairs and 208 captures surviving restart with completed jobs. Both launchers fail the complete recall and hook-command limits:
-
-| Boundary | Proposed Python command p95 | Experimental native command p95 |
-| --- | ---: | ---: |
-| Complete recall | 1,098.84 ms | 1,508.41 ms |
-| Complete Stop command | 1,359.04 ms | 360.88 ms |
-| Complete prompt command | 2,992.09 ms | 2,036.34 ms |
-
-Recall has a 500 ms target. The capture requirement is 100 ms, and neither launcher in that frozen wheel exposes a separate early durable acknowledgment; internal transaction time does not satisfy it. Command timing excludes native-host dispatch and outer PowerShell startup. The [earlier evidence-index comparison](docs/validation/2026-11-07/fact-evidence-index-performance-v1.md) retains its separate 104.92 ms recall p95 and failed Stop/prompt results. These runs do not isolate the cause of timing differences across operating-system conditions.
-
-A later isolated [queued-capture package](docs/validation/2026-11-08/queued-capture-package-v3.md) exposes durable queued status separately from completed storage and defers replay notification until the HTTP response finishes. All 107 installed checks passed. Its [actual command timing](docs/validation/2026-11-08/response-completion-command-timing-v1.md) still fails 100 ms: Python p95 is 598.64 ms and native p95 is 621.55 ms. All 110 events and jobs completed. This small deterministic-store experiment does not establish native-host dispatch, scale or daily-use reliability. The package remains isolated from canonical runtime code and the optional pilot installation.
-
-A subsequent [paired backend comparison](docs/validation/2026-11-08/outbox-backend-command-v3.md) completed 110 captures with the same installed package and native launcher. SQLite command p95 was 476.37 ms versus JSON's 690.03 ms; both fail 100 ms. SQLite remains experimental. Separately, canonical source now isolates Git discovery from host stdin. Its [canonical regression checks](docs/validation/2026-11-08/canonical-stdin-fix-v1.md) pass, while the isolated [v5 installation](docs/validation/2026-11-08/git-discovery-installed-v5.md) passes 165 tests and the [original stdin-owner scenario](docs/validation/2026-11-08/stdin-owner-installed-v5.md) completes six captures. The v5 wheel was built before queue integration and is not a canonical release artifact. The local delivery branch now includes [opt-in queued capture](docs/queued-capture.md), with synchronous capture still the default; the [rebuilt delivery package](docs/validation/2026-11-08/canonical-queue-package-v1.md) passed 250 selected installed checks with one Windows skip and remains unpublished. These checks do not establish latency acceptance or pilot days.
-
-The later [identity-coverage development study](docs/validation/2026-11-08/identity-coverage-v10.md) also failed: 42/72 correct operations, 73/198 correct relations and two unsafe target choices. The stronger historical pairwise comparator had 66/72 and 167/198, but six unsafe choices. The added check lost eighteen valid corrections and ten valid additions. An [offline exhaustive analysis](docs/validation/2026-11-08/coverage-label-bound-v1.md) rules out repairing the recorded outputs by remapping their two categorical labels alone. These are twelve development seeds with repeated views, not fresh acceptance. Neither treatment is promoted.
-
-The subsequent [instruction-trained reranker screen](docs/validation/2026-11-08/reranker-support-v1.md) also failed: it retained all 40 expected facts but selected 73 unsupported facts, reaching 35.40% precision and 17.86% correct abstention. GPU support-only p95 was 375.64 ms, excluding retrieval. This does not satisfy full retrieval timing or offset the quality failure. The configuration remains closed and outside defaults; no fresh acceptance cases were used.
-
-The later [reusable source-inventory screen](docs/validation/2026-11-08/relation-inventory-execution-v2.md) stopped on a source timeout after 15 generation requests. All six query observations were unavailable; 130 scheduled observations were unattempted, and the reuse pass never started. Completed-output review found missing condition fields, unresolved support for qualified reports, invalid source quotations and incorrect claim references. The candidate is closed without retry or promotion. This incomplete run establishes neither full-cohort accuracy nor a warm-cache latency benefit; the original quality and pilot requirements remain open.
-
-A subsequent [packed query probe](docs/validation/2026-11-08/packed-query-probe-v1.md) completed 16 calls with supplied annotations. All replies were validly formatted, but none of 14 semantic cases had fully correct judgments; only 7 of 28 claim judgments matched. No answerable case selected a fact. Provider time had a 536.49 ms median before initial retrieval or extraction. Two separate support controls matched final decisions despite incorrect judgments. This failed development candidate is closed and has not been promoted.
-
-The later [readable-label query probe](docs/validation/2026-11-08/readable-query-execution-v1.md) completed 22 calls with supplied annotations. Across 18 semantic cases, it retained all eight expected selections but made two unsupported selections by treating an unresolved condition as satisfied: 80% precision. Thirteen cases had fully correct judgments; four separate support controls passed. Provider p95 was 2,113.34 ms before initial retrieval or extraction. This candidate fails quality and latency requirements and remains closed and unpromoted. These authored, paired development cases are not fresh acceptance.
-
-The subsequent [condition-query probe](docs/validation/2026-11-08/condition-query-execution-v1.md) completed 16 structurally valid replies, but only 26 of 30 predicate states were correct. Final applicability was correct in 15 of 16 cases because another missing prerequisite masked two false establishments. Nine of 11 returned witnesses were semantically adequate; only three of four applicable cases were retained. Provider p95 was 1,781.68 ms before retrieval or source extraction. This supplied-condition development probe is closed and failed; exact quotations did not establish semantic support, and it is not a production or acceptance result.
-
-The separate legacy [0.6.1rc2 package](docs/validation/2026-11-08/legacy-rc2-package-v1.md) remains unpublished. Its unchanged wheel passed [90 installed checks on each of Windows Python 3.10, 3.11 and 3.12](docs/validation/2026-11-08/legacy-rc2-fresh-windows-matrix-v1.md), with freshly resolved MCP dependencies: 270 executions of 90 distinct cases, including nine automated MCP roundtrips. All passed without skips. The same wheel subsequently passed [90 installed checks on Debian WSL Python 3.12](docs/validation/2026-11-08/legacy-rc2-fresh-linux312-v1.md), including three automated MCP roundtrips, without skips. This establishes one Linux environment; macOS and interactive native-host acceptance remain unverified. The earlier rc1 benchmark remains failed; quality, complete-command timing and the original two-week pilot remain open. This legacy candidate is separate from canonical service delivery and the optional explicit-memory pilot.
-
-The [retrieval-only evaluation](docs/validation/2026-11-07/fresh-accepted-v1.md) independently audits 5,220 observations over 200 synthetic sessions with supplied accepted facts. Vector/hybrid Recall@5 is 100% and lexical Recall@5 is 93.5%, but all three strategies reach only 22.7% correct abstention. With candidates present, each abstains on 0/170 unique no-answer questions. Extraction, support and the full biomimetic profile remain separate obligations. The [October recovery report](docs/validation/2026-10-26/recovery-and-evaluation.md) and earlier [support development results](docs/validation/2026-11-07/extractive-answer-support-v1-v2.md) retain their original scores and limits.
-
-The explicit-memory example below uses real local embeddings and disables experimental enrichment. It needs no hosted extraction LLM. The candidate has not been validated in native Hermes; loading its Python provider entrypoint is only an installation check. Earlier Claude and other host results retain their artifact bindings in the [compatibility matrix](docs/client-compatibility-matrix.md). The [delivery inventory](docs/validation/2026-11-06/delivery-state.md) separates local preparation, public source and PyPI.
-
-The [local canonical integration](docs/validation/2026-11-07/canonical-integration-v1.md) passes 3,758 tests with four platform skips, full local typing and formatting, and desktop/mobile website checks on its recorded revisions. The original wheel is unchanged. Code and website are integrated locally; this has not updated the public source, PyPI or hosted site, and the failed entry requirements remain open.
-
-The later [plugin launcher integration](docs/validation/2026-11-07/functional-plugin-integration-v1.md) brings the verified interpreter-selection repair into local canonical code. Its wrapper and installed MCP checks retain their own revision bindings. The memory package and website are unchanged; this source-only repair does not qualify the native host or pilot.
-
-Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
+[Current readiness and exact evidence](docs/validation/current-readiness.md) distinguish tested source, private packages, host results and publication. The [historical evidence log](docs/validation/development-history-through-2026-11-08.md) preserves earlier scores and artifact bindings. See the [functional local memory guide](docs/functional-local-memory.md) for behavior and limitations.
 
 The intended setup path is:
 
@@ -115,19 +85,21 @@ Manual env-var setup is still supported for advanced users, but it is no longer 
 
 ## Quick Start
 
-This installs the public development preview. As of the November 6 inventory, it does not include the newer local improvement checkpoint described above.
+This installs the exact development source used for the latest private package smoke check. It does not upgrade the separately configured pilot or establish release readiness.
 
 Use Python 3.10 or newer and Git. Start in a fresh virtual environment. Clone the development branch without downloading historical LFS captures, then install the checkout:
 
 ```bash
-git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false clone --depth 1 --branch fix/mnemos-delivery-20261026 https://github.com/anthony-maio/mnemos.git mnemos-preview
+git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false clone --depth 1 --branch wt/backup-20261108-delivery https://github.com/anthony-maio/mnemos.git mnemos-preview
+git -C mnemos-preview fetch --depth 1 origin 4d2d5c5333ed230bcb59f917c3a03e674a41a35c
+git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false -C mnemos-preview checkout --detach FETCH_HEAD
 python -m pip install "./mnemos-preview[mcp]"
 python mnemos-preview/examples/restart_recall.py --output restart-recall.json
 ```
 
 The example creates two disposable Git repositories and an isolated config, scope registry, database, and service. It stores a synthetic project convention, waits for the durable job, stops the service, starts a new process, and recalls and inspects the same fact through both CLI and real MCP stdio. It also verifies that the second project sees no fact. It stops its service and removes its temporary state on exit.
 
-The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) records the tested commit and captured result. This is a development install, not a release recommendation.
+The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) preserves the earlier `7d5fc277` check and captured result. The commands above select the newer `4d2d5c53` runtime. Both are development evaluations, not release recommendations.
 
 FastEmbed downloads `BAAI/bge-small-en-v1.5` on first use (about 100 MB). Subsequent embeddings run locally. This verifies explicit persistence and scope isolation; it does not measure retrieval quality, automatic extraction, or native host behavior.
 
@@ -848,7 +820,7 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ## Compatibility and Release Posture
 
-Mnemos is an active public beta. It is not ready for definitive replacement claims across every host and workflow. The evidence below includes unreleased local-memory worktree changes; it does not certify the published package:
+The functional-memory candidate remains unpublished. The table below preserves earlier transport observations; [current readiness](docs/validation/current-readiness.md) controls the latest artifact and lifecycle status. None of these observations certifies the published package:
 
 | Client / Surface | Status | Notes |
 |---|---|---|
@@ -863,7 +835,7 @@ The current product promise is narrower than the architecture story:
 
 - safe scoped memory for solo coding-agent workflows
 - local-first persistence with a single SQLite database
-- biomimetic retrieval and consolidation under the hood
+- optional experimental biomimetic retrieval and consolidation
 - focused transport and adapter evidence for Claude Code, Claude Desktop, and generic MCP hosts
 
 Source-of-truth release docs:
