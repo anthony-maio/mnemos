@@ -10,12 +10,19 @@ from .joint_support_critical import apply_critical_registry
 from .joint_support_data import audit_groups
 from .joint_support_expansion import build_expansion
 from .joint_support_partitions import build_partitions
+from .joint_support_provenance import build_provenance
 from .joint_support_seed import build_seed
 
 
 def assemble():
     examples, labels = build_seed()
-    for build in (build_expansion, build_partitions, build_coverage, build_adversarial):
+    for build in (
+        build_expansion,
+        build_partitions,
+        build_coverage,
+        build_adversarial,
+        build_provenance,
+    ):
         added, annotations = build()
         examples.extend(added)
         labels.update(annotations)
