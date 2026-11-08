@@ -28,6 +28,7 @@ from typing import Any
 
 import httpx
 import numpy as np
+from numpy.typing import NDArray
 
 from ..observability import log_event
 from .reliability import (
@@ -161,7 +162,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         self._doc_freq: Counter[str] = Counter()
         self._doc_count: int = 0
         # Projection matrix for hash trick (words → dim-space via random projection)
-        self._projection: dict[str, np.ndarray] = {}
+        self._projection: dict[str, NDArray[np.float32]] = {}
 
     @property
     def dim(self) -> int:
@@ -172,7 +173,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         """Simple local embeddings are cheap enough to run inline."""
         return False
 
-    def _get_word_vector(self, word: str) -> np.ndarray:
+    def _get_word_vector(self, word: str) -> NDArray[np.float32]:
         """
         Get a deterministic random projection vector for a word.
 
@@ -190,7 +191,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
             self._projection[word] = vec
         return self._projection[word]
 
-    def _compute_tfidf_vector(self, tokens: list[str]) -> np.ndarray:
+    def _compute_tfidf_vector(self, tokens: list[str]) -> NDArray[np.float32]:
         """
         Compute a TF-IDF weighted embedding for a list of tokens.
 
