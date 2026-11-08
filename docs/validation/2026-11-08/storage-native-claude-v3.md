@@ -41,7 +41,7 @@ attempts passed cleanup and credential-preservation checks.
 
 Private evidence is `.venv/storage-native-evidence-v3.zip`, containing runners,
 raw tool streams, process and cleanup receipts, MCP configuration/bootstrap,
-execution logs, the decoder check and final database audit. Credential files
+execution logs, the decoder check and final database audit.
 Archive SHA256: `3d18e5044c3960692470719161786e0b8514a80914e19e26a4d51621565c5609`.
 Its 41 evidence files and manifest were read back and hash-verified. Credential files
 are excluded and were absent from every disposable attempt directory. No raw
