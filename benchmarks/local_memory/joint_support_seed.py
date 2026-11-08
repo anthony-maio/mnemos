@@ -25,7 +25,7 @@ FAMILIES = [
             ),
             (
                 "c",
-                "Larch may skip a backup only during approved maintenance.",
+                "Larch may skip a backup if and only if it is undergoing approved maintenance.",
                 "Larch backup policy permits skipping a backup during approved maintenance and prohibits skipping otherwise.",
             ),
             (
@@ -135,7 +135,7 @@ FAMILIES = [
             ),
             (
                 "c",
-                "An Ibis conservator may open the sealed cabinet when both a curator and a guard are present.",
+                "An Ibis conservator may open the sealed cabinet if and only if both a curator and a guard are present.",
                 "Cabinet access at Ibis is allowed exactly when a curator and a guard are both present; otherwise the cabinet stays sealed.",
             ),
             (
@@ -251,7 +251,7 @@ FAMILIES = [
             ),
             (
                 "c",
-                "Kestrel may leave early when the pilot is aboard or harbor control has issued a waiver.",
+                "Kestrel may leave early if and only if the pilot is aboard or harbor control has issued a waiver.",
                 "Kestrel departure rule: either a pilot aboard or an issued harbor-control waiver permits early departure; without either, early departure is forbidden.",
             ),
             (
@@ -418,7 +418,7 @@ def build_seed():
                     )
                 )
             labels[identity] = dict(
-                request_sha256=request_digest(request), review_status="pending", targets=targets
+                request_sha256=request_digest(request), review_status="reviewed", targets=targets
             )
     return examples, labels
 
@@ -434,7 +434,7 @@ def write_seed(destination: Path):
     ):
         (destination / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
     manifest = dict(
-        status="seed_pending_independent_review_not_training_ready",
+        status="reviewed_training_seed_not_training_ready",
         families=len(FAMILIES),
         examples=len(examples),
         targets=sum(len(v["targets"]) for v in labels.values()),

@@ -1,4 +1,4 @@
-"""Separately authored training constructions; labels still require adjudication."""
+"""Reviewed training constructions; review does not establish corpus readiness."""
 
 from copy import deepcopy
 import hashlib
@@ -50,7 +50,7 @@ def build_expansion():
         )
         labels[identity] = dict(
             request_sha256=request_digest(request),
-            review_status="pending",
+            review_status="reviewed",
             targets=[
                 dict(
                     id=c["id"],
@@ -244,7 +244,7 @@ def write_expansion(destination: Path):
     ):
         (destination / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
     manifest = dict(
-        status="training_only_pending_label_review",
+        status="reviewed_training_expansion_not_training_ready",
         added_examples=len(added),
         total_examples=len(examples),
         targets=sum(len(v["targets"]) for v in labels.values()),

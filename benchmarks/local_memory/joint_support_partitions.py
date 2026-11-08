@@ -1,4 +1,4 @@
-"""Authored audit partitions, pending independent label and ancestry review."""
+"""Reviewed audit constructions; population independence remains unproven."""
 
 from copy import deepcopy
 import hashlib
@@ -42,7 +42,7 @@ def build_partitions():
         )
         labels[identity] = dict(
             request_sha256=request_digest(request),
-            review_status="pending",
+            review_status="reviewed",
             targets=[
                 dict(
                     id=c["id"], supported=r == "supported", reason=r, critical=False, rationale=why
@@ -353,7 +353,7 @@ def write_partitions(destination: Path):
     ):
         (destination / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
     manifest = dict(
-        status="draft_partitions_pending_review",
+        status="reviewed_partition_draft_not_training_ready",
         examples=len(examples),
         targets=sum(len(v["targets"]) for v in labels.values()),
         files={
