@@ -727,6 +727,10 @@ class LocalMemoryService:
             decision = "facts" if chunks else "review_pending"
         elif not chunks and decision == "facts":
             decision = "no_durable_facts"
+        # Provider and embedding awaits can outlive the authorization checked
+        # at job entry. Recheck before committing staged results or completion.
+        self._refresh_registry()
+        self.registry.validate_context(context)
         committed = self.engine.store.commit_fact_and_job(
             job.id,
             owner=job.lease_owner,
