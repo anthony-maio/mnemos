@@ -15,6 +15,10 @@
   preserving virtual-environment selection on Windows.
 - Complete float32 embedding annotations and retain per-query benchmark timings.
 - Run existing CI jobs for stacked pull requests as well as master-targeted PRs.
+- Log graph replacement failures after successful rollback without memory content,
+  identifiers or exception messages. A logging failure preserves the storage error.
+- Distinguish automated MCP transport checks from pending native-host acceptance
+  in the compatibility matrix.
 
 This candidate is not published. It does not establish the separate semantic
 quality, complete-command latency, interactive-host or two-week pilot gates.

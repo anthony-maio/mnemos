@@ -26,7 +26,9 @@ Use this checklist before tagging a release candidate or making category-definin
 - `mnemos_health` MCP tool reports readiness + backend stats + scope-isolation status
 - structured logs verified for:
   - startup (`mnemos.startup`)
-  - provider/storage failures (`mnemos.provider_failure`)
+  - provider failures (`mnemos.provider_failure`)
+  - graph replacement failures after successful savepoint rollback (`mnemos.storage_failure`);
+    failed savepoint creation, rollback and lost connections remain outside this event's coverage
   - retrieval latency (`mnemos.retrieval_latency`)
 
 ## PyPI Publish Approval
