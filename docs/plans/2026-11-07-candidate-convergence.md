@@ -228,3 +228,9 @@ revision times remain null and the original failed benchmark is unchanged.
 This repair stays outside the narrow storage backport, 0.6.1 candidate and f5
 product. Any later benchmark must first declare explicit chronology and
 prior-access coverage; the existing ambiguous fixture is not a fresh gate.
+
+Its [installed 0.6.2 package](../validation/2026-11-07/legacy-content-package-v1.md)
+now passes source/artifact comparisons and isolated storage, recency and migration
+checks. Version and documentation changes preserve the tested repair's runtime
+implementation. This is a separate unpublished candidate, with no replacement
+benchmark score and no change to the frozen f5 product or inactive pilot.

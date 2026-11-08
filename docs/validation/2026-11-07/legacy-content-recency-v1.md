@@ -70,3 +70,7 @@ declare source ordering and prior-access cases prospectively. This repair does
 not resolve the frozen functional-memory candidate's support-quality or timing
 failures, qualify its native configuration, or start either pilot. Nothing was
 published or activated.
+
+The subsequent [0.6.2 installed-package check](legacy-content-package-v1.md)
+verifies the same functional repair under its separate artifact identity. It
+retains the source and benchmark limits recorded here.

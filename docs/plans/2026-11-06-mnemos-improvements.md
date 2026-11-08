@@ -902,3 +902,11 @@ No historical archive is removed or rewritten.
   and feedback controls without loss. The 0.6.1 candidate and frozen f5 product
   remain unchanged. Original scores are preserved; installed-package validation
   and a prospective chronology benchmark for this repair remain open.
+
+- The [installed recency package](../validation/2026-11-07/legacy-content-package-v1.md)
+  is separately identified as unpublished 0.6.2. All 35 package files match the
+  source, archive, wheel and clean installation. Its 56 metadata/CLI/docs checks
+  and 41 installed regressions pass. Two additional copied-database migration
+  checks pass with graph and feedback controls. The original 0.6.1 and f5 artifacts
+  are unchanged. No benchmark was rerun; chronology evaluation, native acceptance
+  and release qualification remain open.
