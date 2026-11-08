@@ -1,5 +1,7 @@
 # Convergence reset after condition-query failure
 
+Patch CI and claims follow-up: [all eight jobs pass on runtime 1319e1c6](../validation/2026-11-08/storage-pr9-ci-and-claims.md). Documentation-only head `fcf02a2e` corrects automated-versus-native host claims and the storage event name; its own CI is pending. Avoid another unchanged runtime/package matrix. Next substantive patch acceptance work is an isolated actual-host check. The existing sdist needs the final documentation at release preparation, without transferring old artifact hashes.
+
 Installed patch follow-up: [package v2](../validation/2026-11-08/storage-merged-package-v2.md) verifies the rebuilt `1319e1c6` candidate, including the previously missing storage event. Fifteen installed storage tests, three automated MCP flows and isolated operational checks pass. Draft PR #9 is open; hosted CI, interactive acceptance and actual pilot requirements remain separate. No tag or publication occurred.
 
 Storage operational follow-up: [installed checks and logging repair](../validation/2026-11-08/storage-operational-v2.md) verify doctor, legacy counts, MCP health and existing events on the private wheel. A missing graph-failure event is repaired in source `1319e1c6`, with 329 tests passing and review resolved. That code is pushed but not in the existing wheel. Rebuild and validate the changed installed artifact next; no publication or broader gate claim follows.
