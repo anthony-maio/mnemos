@@ -1,5 +1,29 @@
 # Existing local 0.7.0 work
 
+## Current disposition
+
+Rechecked November 8 against the original working copy and remote backup. The
+17 tracked edits remain unchanged from checkpoint `cc5ecf68`; the untracked
+sleep-settings test remains in the original checkout. The remote backup still
+points to `cc5ecf681c261409aad30c99e4fa52a1c47786dd`.
+
+The two missing repairs identified below have since been integrated into the
+delivery branch: complete sleep settings in `7c6dd114` (94 relevant checks),
+and episode identity/buffer consistency in `036357fe` (156 tests). See
+[sleep settings](canonical-sleep-settings-v1.md) and
+[episode identity](canonical-episode-identity-v1.md) for evidence and limits.
+These are source integrations; existing installed artifacts remain unchanged.
+
+Delivery already contains the MCP 1.x constraint and content-only FTS trigger.
+The remaining benchmark chronology change and older FastEmbed, auto-priming,
+first-run UI and durable-pipeline commits remain migration inputs requiring
+behavioral comparison. They are not implicitly accepted by the two repairs.
+Keep benchmark evidence frozen and review release prose against current results.
+PR #9 remains the separate 0.6.1 patch.
+
+The inventory and original integration decisions below describe the initial
+recovery state; this disposition supersedes their pending-fix language.
+
 The original checkout `D:/Development/mnemos/mnemos` is version 0.7.0 at local
 master `5fcc925d`. It contains 11 commits absent from origin/master, followed by
 17 modified tracked files and an untracked tests/test_sleep_settings.py. The
