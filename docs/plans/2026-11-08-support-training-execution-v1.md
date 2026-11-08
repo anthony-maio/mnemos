@@ -1,8 +1,9 @@
 # Training execution contract
 
-Status: bundle and tokenized frames prepared; the training/evaluation worker is
-not implemented or execution-frozen yet. This document fixes comparison and
-selection rules before any trained outcome is observed. It does not change the
+The bundle and tokenized frames are prepared and the worker is implemented.
+Tests, scoped review and a separate execution freeze precede the first run.
+This document fixes comparison and selection rules before any trained outcome
+is observed. It does not change the
 original quality, latency, native, publication or pilot obligations.
 
 Use corpus-v3 with its recorded inputs/labels/critical-registry hashes. Training
