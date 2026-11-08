@@ -1,0 +1,27 @@
+{
+  "status": "durability_passed_command_latency_failed",
+  "summary": {
+    "sync": {
+      "observations": 50,
+      "min_ms": 366.0222999751568,
+      "p95_ms": 872.2128998488188,
+      "max_ms": 1044.7849999181926,
+      "meets_command_100ms": false
+    },
+    "queued": {
+      "observations": 50,
+      "min_ms": 321.72659994103014,
+      "p95_ms": 796.7428001575172,
+      "max_ms": 1064.4592000171542,
+      "meets_command_100ms": false
+    }
+  },
+  "completed_events": 110,
+  "completed_jobs": 110,
+  "native_host_dispatch_tested": false,
+  "scope": "Installed traced command completion; deterministic embeddings, empty backlog. No general latency or native-host acceptance.",
+  "report": "docs/validation/2026-11-08/queued-command-timing-v2.md",
+  "private_archive_sha256": "2c8d544ffe8661a0a39e2d17dbbd2b0bd96873c2b3ab868f63937b6e39188c59",
+  "all_terminal": true,
+  "next_action": "Attribute complete command overhead on same artifact before further delivery changes. Preserve 100 ms failure; consider exact native launcher comparison with receipt correlation, not internal-only timing."
+}
