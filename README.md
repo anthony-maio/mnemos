@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Local-first memory for coding agents that keeps project, workspace, and global context separate.</strong><br />
-  Mnemos plugs into Claude Code and other MCP hosts, rewrites stale facts instead of appending forever, and compacts raw agent history into durable memory.
+  Store project context in local SQLite and inspect it through the CLI or MCP. This checkout contains an unreleased content-recency repair.
 </p>
 
 <p align="center">
@@ -31,7 +31,7 @@ Mnemos is a local-first memory layer for coding agents. The v1 target is straigh
 - safe scoped memory for solo agent workflows
 - persistent local storage that survives restarts
 - MCP compatibility for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup
-- biomimetic memory modules under the hood so retrieval stays compact and adaptive instead of append-only
+- experimental biomimetic modules that require separate quality validation
 
 This is not a hosted memory platform, team memory system, or remote sync product in v1.
 
@@ -710,7 +710,7 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ## Compatibility and Release Posture
 
-Mnemos is ready for a disciplined public open-source release. It is not yet ready for “definitive replacement” claims across every host and workflow. The verified public surface today is:
+Version `0.6.2` is not release-ready. The source repair has passed local checks, but the original legacy benchmark remains failed and native-host acceptance has not been repeated for this candidate. The following table preserves the earlier release's host inventory; it is not a validation result for `0.6.2`.
 
 | Client / Surface | Status | Notes |
 |---|---|---|
@@ -720,14 +720,14 @@ Mnemos is ready for a disciplined public open-source release. It is not yet read
 | Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack and optional maintenance Automations; host-hook auto-capture is still not shipped. |
 | Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path, but host-hook auto-capture is not yet shipped. |
 
-The current product promise is narrower than the architecture story:
+The earlier release was positioned around:
 
 - safe scoped memory for solo coding-agent workflows
 - local-first persistence with a single SQLite database
 - biomimetic retrieval and consolidation under the hood
 - verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
 
-Source-of-truth release docs:
+Earlier release documentation, which does not establish `0.6.2` acceptance:
 
 - [docs/public-release-package.md](docs/public-release-package.md)
 - [docs/release-checklist.md](docs/release-checklist.md)
