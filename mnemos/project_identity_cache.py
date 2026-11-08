@@ -16,6 +16,32 @@ from typing import Callable
 from .scopes import canonical_project_root
 
 
+def _security_identity(path: Path, info: os.stat_result) -> object:
+    """Read current ownership/access metadata; never reuse an ACL observation."""
+    if os.name != "nt":
+        return (info.st_uid, info.st_gid, info.st_mode)
+    import ctypes
+    from ctypes import wintypes
+
+    api = ctypes.WinDLL("advapi32", use_last_error=True).GetFileSecurityW
+    api.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, ctypes.c_void_p,
+                    wintypes.DWORD, ctypes.POINTER(wintypes.DWORD)]
+    api.restype = wintypes.BOOL
+    size = wintypes.DWORD()
+    # OWNER | GROUP | DACL. The buffer is a self-relative descriptor, including
+    # inheritance/protection flags. Reading it requires no SACL privilege.
+    api(str(path), 7, None, 0, ctypes.byref(size))
+    error = ctypes.get_last_error()
+    if error != 122 or not 20 <= size.value <= 1_048_576:
+        raise OSError(error, "Cannot snapshot project security descriptor")
+    buffer = ctypes.create_string_buffer(size.value)
+    if not api(str(path), 7, buffer, len(buffer), ctypes.byref(size)):
+        raise ctypes.WinError(ctypes.get_last_error())
+    if not 20 <= size.value <= len(buffer):
+        raise ValueError("Invalid project security descriptor size")
+    return buffer.raw[:size.value]
+
+
 def _unsupported_git_environment() -> bool:
     # Configuration overrides belong to the caller's external-policy generation.
     # These routing overrides are explicitly stripped by canonical_project_root.
@@ -53,7 +79,7 @@ def _entry(path: Path) -> tuple[object, ...]:
         return (str(path), "absent")
     if stat.S_ISLNK(info.st_mode) or getattr(info, "st_file_attributes", 0) & 0x400:
         raise ValueError("Reparse points require authoritative resolution")
-    identity = (str(path), info.st_dev, info.st_ino, info.st_mode)
+    identity = (str(path), info.st_dev, info.st_ino, info.st_mode, _security_identity(path, info))
     if stat.S_ISDIR(info.st_mode):
         return (*identity, "directory")
     if not stat.S_ISREG(info.st_mode) or info.st_size > 65_536:

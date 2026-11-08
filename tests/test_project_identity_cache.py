@@ -186,3 +186,46 @@ def test_unknown_git_selector_bypasses_cache(repo, monkeypatch):
         repo, policy_generation="policy"
     )
     assert len(calls) == 2 and cache._cached is None
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows security descriptor invalidation")
+def test_acl_only_change_invalidates_repository_identity(repo):
+    from mnemos.service import _protect_private_path
+
+    cache, calls = recorder()
+    first = cache.resolve(repo, policy_generation="unchanged-external-policy")
+    # Change only the synthetic repository's DACL. No live project is touched.
+    _protect_private_path(repo / ".git")
+    assert cache.resolve(repo, policy_generation="unchanged-external-policy") == first
+    assert len(calls) == 2
+
+
+def test_unreadable_security_metadata_delegates_without_caching(repo, monkeypatch):
+    cache, calls = recorder()
+    cache.resolve(repo, policy_generation="policy")
+
+    def unavailable(path, info):
+        raise PermissionError("Cannot inspect security metadata")
+
+    monkeypatch.setattr(module, "_security_identity", unavailable)
+    assert cache.resolve(repo, policy_generation="policy") == canonical_project_root(repo)
+    assert cache.resolve(repo, policy_generation="policy") == canonical_project_root(repo)
+    assert len(calls) == 3 and cache._cached is None
+
+
+def test_security_change_during_authoritative_resolution_is_not_cached(repo, monkeypatch):
+    original = module._security_identity
+    generation = [0]
+
+    def security(path, info):
+        return (original(path, info), generation[0])
+
+    def changing(path):
+        result = canonical_project_root(path)
+        generation[0] += 1
+        return result
+
+    monkeypatch.setattr(module, "_security_identity", security)
+    cache = module.ProjectIdentityCache(changing)
+    assert cache.resolve(repo, policy_generation="policy") == canonical_project_root(repo)
+    assert cache._cached is None
