@@ -53,6 +53,13 @@ restoration/grading, TypeSafe behavior and backend settings. A separate
 read-only review checked execution bounds, raw probabilities, model identity
 and credential handling before the run. No product runtime source changed.
 
+A separate post-run audit matched all 44 inputs and labels to the historical
+hybrid subset, checked all 45 wire request/response pairs including warmup,
+validated every raw distribution and model identity, and independently
+recomputed the grades, p95 and usage. All 95 frozen file hashes matched.
+It found no material execution or scoring issue. Credential absence relies
+on the guarded writer and execution receipt; the reviewer did not access the key.
+
 The [machine-readable summary](jev-support-screen-v1.json) preserves all
 denominators and missing requirements. Private raw evidence is retained in
 `.venv/jev-support-screen-v1`, with a portable archive at
