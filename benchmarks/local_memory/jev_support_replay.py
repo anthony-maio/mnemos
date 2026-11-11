@@ -5,13 +5,20 @@ from __future__ import annotations
 import asyncio
 from dataclasses import asdict
 import json
+import math
 from pathlib import Path
 import time
 
 import httpx
 
 from benchmarks.local_memory.support_request_replay import restore_questions
-from mnemos.judgment import Choice, estimate_tokens, guard_state, serialize_question
+from mnemos.judgment import (
+    Choice,
+    JudgmentContractError,
+    estimate_tokens,
+    guard_state,
+    serialize_question,
+)
 from mnemos.memory_safety import source_firewall
 from mnemos.utils.reliability import RetryPolicy
 from mnemos.utils.typesafe import TypeSafeJudge
@@ -33,6 +40,46 @@ class RecordedJevJudge(TypeSafeJudge):
         self.output = output
         self.request_id = "unrelated-warmup"
         self.transport = transport
+
+    async def ask(self, *args, **kwargs):
+        # HTTPX timeouts limit socket inactivity, not total operation duration.
+        async with asyncio.timeout(15):
+            return await super().ask(*args, **kwargs)
+
+    async def _post(self, body, purpose):
+        data = await super()._post(body, purpose)
+        if (
+            not isinstance(data, dict)
+            or not isinstance(data.get("model"), str)
+            or not data["model"]
+        ):
+            raise JudgmentContractError("Hosted model identity is missing")
+        answers = data.get("answers")
+        if not isinstance(answers, dict) or set(answers) != set(body["questions"]):
+            raise JudgmentContractError("Required choice answers are incomplete")
+        for key, question in body["questions"].items():
+            item = answers[key]
+            distribution = item.get("probabilities") if isinstance(item, dict) else None
+            if not isinstance(distribution, dict) or set(distribution) != set(question["criteria"]):
+                raise JudgmentContractError("Required choice probabilities are incomplete")
+            if any(
+                isinstance(value, bool)
+                or not isinstance(value, (int, float))
+                or not math.isfinite(value)
+                or not 0 <= value <= 1
+                for value in distribution.values()
+            ) or not math.isclose(sum(distribution.values()), 1.0, abs_tol=0.01):
+                raise JudgmentContractError("Required choice probabilities must sum to 1")
+            chosen = item.get("choice")
+            if chosen not in distribution or distribution[chosen] < max(distribution.values()):
+                raise JudgmentContractError("Chosen answer does not have the highest probability")
+        usage = data.get("usage")
+        if not isinstance(usage, dict) or any(
+            type(usage.get(key)) is not int or usage[key] < 0
+            for key in ("input_tokens", "output_tokens")
+        ):
+            raise JudgmentContractError("Hosted token usage is missing")
+        return data
 
     def _append(self, filename, row):
         encoded = json.dumps(row, ensure_ascii=True)
@@ -146,5 +193,9 @@ async def run_jev_replays(inputs, api_key: str, output: Path, *, transport=None)
         "total": len(inputs),
         "completed": sum(row["status"] == "assessed" for row in completed),
         "observed_model": warmup.model,
-        "model_identity_kind": "vendor_version_string",
+        "model_identity_kind": (
+            "vendor_alias"
+            if warmup.model in {"jev-latest", "jev-preview"}
+            else "vendor_version_string"
+        ),
     }

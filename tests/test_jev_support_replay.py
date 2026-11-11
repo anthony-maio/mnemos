@@ -5,6 +5,8 @@ import pytest
 
 from benchmarks.local_memory.jev_support_replay import RecordedJevJudge, run_jev_replays
 from mnemos.judgment import PREAMBLE
+from mnemos.judgment import JudgmentContractError
+from benchmarks.local_memory.support_request_replay import restore_questions
 
 
 def _row(request_id="first"):
@@ -95,3 +97,34 @@ async def test_endpoint_and_recording_failures_abort_before_sending(tmp_path):
         with pytest.raises(FileNotFoundError):
             await client.post("https://api.typesafe.ai/v1/systemone", json={})
     assert not calls
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "distribution,chosen",
+    [
+        (None, "evidence:0"),
+        ({"evidence:0": 1.0}, "evidence:0"),
+        ({"evidence:0": 0.8, "unsupported": 0.8}, "evidence:0"),
+        ({"evidence:0": 0.2, "unsupported": 0.8}, "evidence:0"),
+        ({"evidence:0": True, "unsupported": 0.0}, "evidence:0"),
+    ],
+)
+async def test_invalid_raw_probabilities_cannot_become_supported_answers(
+    tmp_path, distribution, chosen
+):
+    def respond(request):
+        return httpx.Response(
+            200,
+            json={
+                "model": "jev-test",
+                "usage": {"input_tokens": 1, "output_tokens": 1},
+                "answers": {
+                    "support:0": {"type": "choice", "choice": chosen, "probabilities": distribution}
+                },
+            },
+        )
+
+    judge = RecordedJevJudge("secret-value", tmp_path, transport=httpx.MockTransport(respond))
+    with pytest.raises(JudgmentContractError):
+        await judge.ask(_row()["state"], restore_questions(_row()["questions"]), purpose="test")
