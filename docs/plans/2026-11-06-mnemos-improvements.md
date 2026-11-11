@@ -1,29 +1,29 @@
 # Mnemos improvement work
 
-Status: blocked pending user direction. Started November 6, 2026 from delivery commit `9770c00` on
+Status: resumed with user direction on November 11. Started November 6, 2026 from delivery commit `9770c00` on
 `wt/mnemos-improvements`. This goal resumes the work deferred on October 28.
 No release, live configuration change, or pilot completion is implied.
 
-The hosted TypeSafe/Jev versus strictly local support decision has remained
-unanswered through three consecutive goal turns. The configured key is still
-absent, and completed local configurations remain closed failures. Do not
-interpret automatic goal continuations as an answer or launch another sweep.
+The user requires local operation with an explicit Jev option. The private
+workspace `.env` contains `TYPESAFE_API_KEY`; it must never be committed or
+printed. Existing local configurations remain closed failures. The next bounded
+step is the [44-question optional Jev comparison](2026-11-11-local-default-optional-jev.md),
+without changing local defaults, live configuration or the pilot installation.
 The final independent release audit also rechecked PR #9: it remains draft/open
 at `b51b06c6`, with Desktop and daily-use requirements incomplete. Checked
 Sandbox/VM launchers remain unavailable. Source, failed evidence and backups
-are saved; no owned validation process remains running. Resume with the user's
-backend decision, preserving the full six-priority objective and all gates.
+are saved. Preserve the full six-priority objective and all gates.
 
 Latest storage delivery state: [PRs #7 and #8 are merged into master at 588a190b](../validation/2026-11-08/storage-merged-pr8.md) after explicit approval and a passing hosted integration run. The repair is accepted upstream. Package publication remains outstanding; the newer functional candidate and optional pilot remain separate artifacts.
 
-Latest semantic result: [the retained Qwen3.5 support screen failed](../validation/2026-11-08/qwen35-support-screen-v1.md) after all 176 requests completed. Its configuration is closed. Independent audit verified the raw requests, responses, choices and all grades. The user has been asked whether answer-support inference may use the existing hosted TypeSafe/Jev backend or must remain strictly local. Do not infer that choice from a generic goal continuation; no hosted key is configured.
+Latest semantic result: [the retained Qwen3.5 support screen failed](../validation/2026-11-08/qwen35-support-screen-v1.md) after all 176 requests completed. Its configuration is closed. Independent audit verified the raw requests, responses, choices and all grades. The November 11 direction permits evaluating optional Jev while keeping local operation as the required product direction. A configured key alone does not enable hosted inference.
 
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
 | --- | --- | --- |
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
-| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | The trained eight-layer candidate remains closed. The later retained Qwen3.5 screen also failed: hybrid precision 65.85%, abstention 9/17, support-only p95 2,416 ms. Critical retention is unmeasured. Hosted TypeSafe/Jev versus local-only direction is awaiting user input; no key is configured. |
+| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | The trained eight-layer candidate remains closed. The later retained Qwen3.5 screen also failed: hybrid precision 65.85%, abstention 9/17, support-only p95 2,416 ms. Critical retention is unmeasured. November 11 direction: required local operation with optional Jev; evaluate the existing hosted backend once on the frozen hybrid requests. |
 | 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation  | Earlier paired retrieval results remain frozen. The Qwen3.5 screen replays the same immutable support requests; it is not a new extraction or retrieval run. No passing candidate qualifies for fresh acceptance yet. |
 | 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Latest Claude v8 failed before deletion, with incomplete inspection and no final replay/recall. Earlier native passes retain their own bindings. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
 | 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The paging experiment is closed without demonstrated native latency benefit. Complete 500 ms recall and 100 ms capture gates remain unmet. |
