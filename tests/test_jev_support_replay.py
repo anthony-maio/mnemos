@@ -128,3 +128,10 @@ async def test_invalid_raw_probabilities_cannot_become_supported_answers(
     judge = RecordedJevJudge("secret-value", tmp_path, transport=httpx.MockTransport(respond))
     with pytest.raises(JudgmentContractError):
         await judge.ask(_row()["state"], restore_questions(_row()["questions"]), purpose="test")
+
+
+def test_escaped_credentials_are_rejected_before_evidence_is_written(tmp_path):
+    judge = RecordedJevJudge("secret-value", tmp_path)
+    with pytest.raises(ValueError, match="Credential"):
+        judge._append("responses.jsonl", {"body": '{"model":"\\u0073ecret-value"}'})
+    assert not list(tmp_path.iterdir())

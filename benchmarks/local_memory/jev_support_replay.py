@@ -54,6 +54,8 @@ class RecordedJevJudge(TypeSafeJudge):
             or not data["model"]
         ):
             raise JudgmentContractError("Hosted model identity is missing")
+        if data["model"] in {"jev-latest", "jev-preview"}:
+            raise JudgmentContractError("Hosted model identity is an unresolved alias")
         answers = data.get("answers")
         if not isinstance(answers, dict) or set(answers) != set(body["questions"]):
             raise JudgmentContractError("Required choice answers are incomplete")
@@ -82,6 +84,27 @@ class RecordedJevJudge(TypeSafeJudge):
         return data
 
     def _append(self, filename, row):
+        def check(value):
+            if isinstance(value, dict):
+                for key, item in value.items():
+                    check(key)
+                    check(item)
+            elif isinstance(value, (list, tuple)):
+                for item in value:
+                    check(item)
+            elif isinstance(value, str):
+                if self._api_key in value:
+                    raise ValueError("Credential appeared in evidence body")
+                # Wire bodies can hide reflected strings behind JSON escapes.
+                if value.lstrip().startswith(("{", "[", '"')):
+                    try:
+                        decoded = json.loads(value)
+                    except ValueError:
+                        return
+                    if decoded != value:
+                        check(decoded)
+
+        check(row)
         encoded = json.dumps(row, ensure_ascii=True)
         if self._api_key in encoded:
             raise ValueError("Credential appeared in evidence body")
@@ -168,7 +191,7 @@ async def run_jev_replays(inputs, api_key: str, output: Path, *, transport=None)
             },
             purpose="unrelated-warmup",
         )
-        (output / "warmup.json").write_text(json.dumps(asdict(warmup)), encoding="utf-8")
+        judge._append("warmup.json", asdict(warmup))
         # Bind subsequent calls to the model identity returned by the warmup.
         judge.model = warmup.model
         for row, questions in prepared:
