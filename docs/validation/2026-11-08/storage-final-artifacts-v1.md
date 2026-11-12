@@ -50,3 +50,30 @@ not available on this machine. This is not proof that no VM exists elsewhere.
 Desktop acceptance, daily-use pilot completion and any final publication
 authorization remain outstanding. The six-priority goal also retains its
 semantic, complete-latency and current functional-delivery obligations.
+
+## November 12 delivery refresh
+
+The [installation/rollback handoff](../../releases/v0.6.1-handoff.md) now collects
+the existing exact artifacts and open release requirements. PR #9 is still
+draft/open at the same head; all eight CI jobs still show success. Fresh
+SHA-256 checks match both artifact hashes above. PyPI's current JSON metadata
+and GitHub release list still identify 0.6.0 as the published version; 0.6.1
+is absent. No package or native matrix was repeated.
+
+Installed Claude Desktop is now 5.1231.2.0. Read-only inspection finds that its
+packaged startup rejects CLAUDE_USER_DATA_DIR without a developer-signed,
+path-bound authorization token. The native-host-install skip flag requires
+the same developer-approved gate. Native-host synchronization still contains
+direct registry write/delete calls, and the app manifest disables registry
+write virtualization and excludes the relevant NativeMessagingHosts keys.
+The previous build's specific OpenWith finding was not established for this
+new build and is not transferred to it.
+
+No safe environment-only launch is proven. Desktop was not launched. Current
+Hyper-V enumeration is denied by the host authorization policy; the checked
+Sandbox/VM launch commands remain unavailable. A separate Windows environment
+choice is pending from the user. The new read-only inspection receipt is
+retained privately in the existing artifact packet as
+`desktop-isolation-51231-review.json`, SHA-256
+`eba8ca90afc4b0af1bb63df449a79408345181e35eedcb7882124c6a8612583f`.
+Normal registry, profile, credentials and databases remain unchanged.

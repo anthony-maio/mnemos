@@ -44,6 +44,17 @@ are saved. Preserve the full six-priority objective and all gates.
 
 Latest storage delivery state: [PRs #7 and #8 are merged into master at 588a190b](../validation/2026-11-08/storage-merged-pr8.md) after explicit approval and a passing hosted integration run. The repair is accepted upstream. Package publication remains outstanding; the newer functional candidate and optional pilot remain separate artifacts.
 
+November 12 delivery refresh: the [affected-user handoff](../releases/v0.6.1-handoff.md)
+now contains exact artifact hashes, prospective isolated installation and
+rollback instructions, and the unwaived release requirements. PR #9 remains
+draft/open at b51b06c6 with eight successful exact-head CI jobs; artifact hashes
+still match. PyPI and GitHub releases remain at 0.6.0. Installed Claude Desktop
+is now 5.1231.2.0 and rejects ordinary profile redirection without developer
+authorization. Its direct registry registrations still require OS isolation.
+Hyper-V access is denied and Sandbox/checked VM launchers are unavailable.
+An isolated Windows account/VM choice is pending from the user. No application,
+installation, publication or live configuration change was performed.
+
 Latest local workflow repair: [consistent evidence inspection](../validation/2026-11-11/inspection-snapshot-v1.md)
 at canonical runtime `f1314f6d` fixes a reproduced concurrent-forget/correction
 race using one SQLite read snapshot per inspection. 116 distinct checks pass;
@@ -198,11 +209,13 @@ but reserved quality and numerical export fail. Close that candidate too.
 No minor readout/head, threshold, seed or data adjustment is justified as an
 automatic next run. Preserve the full six-priority goal and progress an
 independent required delivery blocker rather than repeat this model family.
-Next use the existing affected-user storage release handoff: verify only its
-current upstream/version/publication state and inspect the documented Desktop,
-actual-use and approval dependencies. Present the existing artifacts and
-install/rollback instructions; do not create another report or unchanged test
-matrix. Do not publish, refresh a pilot or waive the outstanding dependencies.
+The affected-user storage handoff is now prepared and current upstream,
+publication and artifact state rechecked. Desktop acceptance requires a
+separate Windows account or VM; the current installed app does not honor
+ordinary profile isolation and this user lacks Hyper-V access. Await the
+environment choice already requested, then prepare that isolated host before
+the outstanding Desktop test. Keep actual pilot use and publication approval
+open. Do not repeat the unchanged checks, publish or refresh a live pilot.
 The completed capture comparison remains a failure and does not justify another
 attribution run or speculative cache change. The original acceptance gates remain
 active; no time spent or completed computation replaces them. Local operation
