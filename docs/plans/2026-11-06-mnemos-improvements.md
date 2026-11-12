@@ -19,8 +19,12 @@ Latest storage delivery state: [PRs #7 and #8 are merged into master at 588a190b
 Latest local workflow repair: [consistent evidence inspection](../validation/2026-11-11/inspection-snapshot-v1.md)
 at canonical runtime `f1314f6d` fixes a reproduced concurrent-forget/correction
 race using one SQLite read snapshot per inspection. 116 distinct checks pass;
-two unchanged baseline mypy errors remain. This source fix is pushed but not
-packaged, installed or natively accepted, and does not resolve the Claude timeout.
+two unchanged baseline mypy errors remain. The new private wheel now passes
+five installed race tests, real FastEmbed CLI/MCP restart smoke and the
+[six-phase Codex v13 lifecycle](../validation/2026-11-11/native-codex-v13.md),
+with independent reconstruction of all 19 calls. This validates the explicit
+Codex preset only, not multi-fact deletion, batch review, normal hooks or the
+full pilot configuration. The prior Claude timeout remains a failed result.
 
 Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/jev-support-screen-v1.md) completed all 44 frozen hybrid questions with 100% selected precision and no-answer abstention, but 77.78% retention/recall. It fails the original gates. Support-only p95 was 441.73 ms; complete recall and critical retention remain unmeasured. The earlier [Qwen3.5 screen](../validation/2026-11-08/qwen35-support-screen-v1.md) remains a closed failure. The November 11 direction requires local operation with optional Jev; no defaults or live configuration changed. Do not launch another support-model or threshold sweep.
 
@@ -31,9 +35,9 @@ Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/j
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
 | 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | Local configurations remain closed failures. Optional Jev completed 44 frozen hybrid questions: 21/21 supported selections, 17/17 correct no-answer abstentions, 21/27 retention/recall and 441.73 ms support-only p95. It fails retention/recall. Required local operation, critical retention and complete timing remain unresolved. |
 | 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation  | Earlier paired retrieval results remain frozen. The Qwen3.5 screen replays the same immutable support requests; it is not a new extraction or retrieval run. No passing candidate qualifies for fresh acceptance yet. |
-| 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Latest Claude v8 failed before deletion, with incomplete inspection and no final replay/recall. The November 11 source repair makes each SQLite inspection coherent during concurrent correction/forget; installed and native acceptance remain open. Earlier native passes retain their own bindings. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
+| 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Codex v13 passes all six phases on installed `f1314f6d`, with original-source replay suppression, 19 independently reconstructed calls and successful cleanup. This is the explicit preset with hooks off, not full pilot or multi-fact/batch acceptance. Claude v8 remains failed on its own artifact. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
 | 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The paging experiment is closed without demonstrated native latency benefit. Complete 500 ms recall and 100 ms capture gates remain unmet. |
-| 6 | Consistent verified code/package/docs/site and explicit delivery state  | Runtime 4d2d5c53 has a private wheel and installed smoke pass. Delivery documentation at 23c49c62 distinguishes current and historical evidence; source-download instructions reproduce the tested runtime's 99 files. Published PyPI 0.6.0, private candidate, optional pilot and live website example remain distinct. No publication or live update occurred. |
+| 6 | Consistent verified code/package/docs/site and explicit delivery state  | Runtime f1314f6d has a new private wheel, installed smoke and explicit Codex lifecycle pass. Source-download instructions reproduce all 99 tested runtime files. Current README/readiness/compatibility changes distinguish this from the failed earlier Claude artifact. Published package, private candidate, optional pilot and live website example remain distinct. No publication or live update occurred. |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
@@ -42,6 +46,12 @@ synthetic sessions for actual pilot days or treat protocol checks as native
 host acceptance.
 
 ## Work order
+
+The current installed/native artifact gap is closed for the explicit Codex
+preset. Return to required local answer-support quality and complete latency;
+do not repeat an unchanged packaging or native matrix. A further semantic
+candidate needs a substantive prospective architecture decision. The failed
+Jev configuration does not authorize threshold rescue or cloud fallback.
 
 The [November 8 convergence reset](2026-11-08-convergence-reset.md) controls
 next work. It preserves all six priorities and all original thresholds. The
