@@ -66,6 +66,15 @@ The integrated configuration is closed without training or a timing retry.
 Local operation remains required and Jev remains explicitly optional. No
 candidate currently satisfies the original combined quality/timing gates.
 
+The [embedding resource comparison](../validation/2026-11-11/embedding-thread-budget-v1.md)
+identified substantial idle CPU use in the default embedding pool. Its one-thread
+proposal preserved every vector and all 50 recall pairs and eliminated measured
+idle CPU, but failed recall p95 non-regression (150.04 -> 161.43 ms). The final
+source keeps automatic allocation by default and exposes only an explicit
+resource-budget option. This is not a full support-enabled timing result and
+does not reopen the closed resident model configuration. No retry or live
+configuration change occurred.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |

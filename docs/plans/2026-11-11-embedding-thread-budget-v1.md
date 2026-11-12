@@ -1,5 +1,11 @@
 # One local embedding resource comparison
 
+Status: [the sole comparison failed recall non-regression](../validation/2026-11-11/embedding-thread-budget-v1.md).
+All vectors and 50 result pairs matched, and idle CPU fell to zero. Candidate
+p95 rose from 150.04 to 161.43 ms. Automatic allocation remains the source
+default; the thread budget is retained as opt-in only. The prospective protocol
+below is historical and does not authorize a retry or default change.
+
 The current installed embedding session uses automatic ONNX thread allocation.
 A single cached BGE embedding took 6.1142 ms, followed by 5,796.875 ms of process
 CPU time during the next approximately one second of wall time with no requests.
