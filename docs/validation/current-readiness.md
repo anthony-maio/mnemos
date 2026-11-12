@@ -39,6 +39,15 @@ the development branch. A source install still resolves dependencies; it does
 not reproduce the private environment's exact dependency inventory. Existing
 pilot environments are separate and are not silently refreshed.
 
+Newer source adds an opt-in FastEmbed resource budget, `embedding.threads` or
+`MNEMOS_EMBEDDING_THREADS`. The default remains upstream automatic allocation
+(zero); one selects a single thread. The [frozen resource comparison](https://github.com/anthony-maio/mnemos/blob/2f9e929a/docs/validation/2026-11-11/embedding-thread-budget-v1.md)
+found identical vectors and 50 identical recall results with idle CPU reduced
+to zero, but recall p95 increased from 150.04 to 161.43 ms. Default adoption
+therefore failed; no latency improvement is claimed. The final opt-in source
+passes 58 checks and focused typing. This option is not in the private 9c326cbc
+wheel or its native acceptance, and no live setting or pilot changed.
+
 The independent validation runner at `bee4f320` passed 4,545 tests with 89 skips.
 That suite belongs to the improvement worktree; it is not a full-suite result
 for the distinct runtime checkout.
