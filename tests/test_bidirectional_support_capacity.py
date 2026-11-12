@@ -4,7 +4,7 @@ from copy import deepcopy
 
 import pytest
 
-from benchmarks.local_memory.bidirectional_support_capacity import frame_request
+from benchmarks.local_memory.bidirectional_support_capacity import frame_request, finish_result
 from benchmarks.local_memory.joint_support_capacity import request
 from benchmarks.local_memory.joint_support_frame import serialize_joint_cohort
 
@@ -74,3 +74,14 @@ def test_empty_cohort_still_preserves_query_and_has_no_decision_positions():
     framed = frame_request(request(0), Tokenizer(), "a" * 64)
     assert framed.input_ids[0] == 1 and framed.input_ids[-1] == 2
     assert framed.target_ids == framed.decision_positions == framed.marker_starts == ()
+
+
+def test_missing_binding_still_records_a_terminal_failed_result(tmp_path):
+    import json
+
+    result = {"status": "passed"}
+    finish_result(tmp_path, result, {str(tmp_path / "disappeared"): "a" * 64})
+    recorded = json.loads((tmp_path / "result.json").read_text())
+    assert recorded["status"] == "failed"
+    assert recorded["bindings_unchanged"] is False
+    assert recorded["binding_errors"][0]["error_type"] == "FileNotFoundError"

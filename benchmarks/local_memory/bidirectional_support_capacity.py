@@ -41,6 +41,20 @@ def save(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
+def finish_result(root, result, files):
+    errors = []
+    for path, expected in files.items():
+        try:
+            if sha(path) != expected:
+                errors.append(dict(path=path, error_type="sha256_mismatch"))
+        except BaseException as exc:
+            errors.append(dict(path=path, error_type=type(exc).__name__))
+    result.update(bindings_unchanged=bool(files) and not errors, binding_errors=errors)
+    if not result["bindings_unchanged"]:
+        result["status"] = "failed"
+    save(root / "result.json", result)
+
+
 def frame_request(value, tokenizer, binding, *, max_tokens=TOKEN_LIMIT):
     if type(max_tokens) is not int or max_tokens < 3:
         raise ValueError("Invalid token budget")
@@ -231,11 +245,12 @@ def prepare(root):
 
 def run(root):
     import torch
+    import transformers
     from transformers import AutoModel
 
     freeze = json.loads((root / "freeze.json").read_bytes())
     assert all(sha(p) == h for p, h in freeze["files"].items())
-    assert torch.__version__ == "2.10.0+cu128"
+    assert torch.__version__ == "2.10.0+cu128" and transformers.__version__ == "4.57.6"
     with (root / "attempt.started").open("x") as marker:
         marker.write(str(time.time()))
     result = dict(
@@ -252,6 +267,31 @@ def run(root):
     active = None
     forwards = {"count": 0}
     try:
+        versions = json.loads(
+            subprocess.check_output(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "list",
+                    "--format=json",
+                    "--disable-pip-version-check",
+                ],
+                text=True,
+            )
+        )
+        assert versions == freeze["versions"]
+        gpu = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=name,driver_version,memory.total,memory.used",
+                "--format=csv,noheader",
+            ],
+            text=True,
+        ).strip()
+        assert gpu.split(",")[:3] == freeze["gpu"].split(",")[:3]
+        assert torch.cuda.get_device_name(0) == "NVIDIA GeForce RTX 4080"
+        result["gpu_before_loading"] = gpu
         torch.set_num_threads(4)
         torch.set_num_interop_threads(1)
         torch.manual_seed(SEED)
@@ -395,10 +435,7 @@ def run(root):
         result["expected_model_forward_calls"] = 106
         result["measured_samples_completed"] = len(rows)
         result["expected_measured_samples"] = 120
-        result["bindings_unchanged"] = all(sha(p) == h for p, h in freeze["files"].items())
-        if not result["bindings_unchanged"]:
-            result["status"] = "failed"
-        save(root / "result.json", result)
+        finish_result(root, result, freeze["files"])
         print(json.dumps(result, indent=2), flush=True)
     return 0 if result["status"] == "passed" else 1
 
