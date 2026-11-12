@@ -28,14 +28,19 @@ with independent reconstruction of all 19 calls. This validates the explicit
 Codex preset only, not multi-fact deletion, batch review, normal hooks or the
 full pilot configuration. The prior Claude timeout remains a failed result.
 
-Newer source-only follow-up: [consistent ordinary recall](../validation/2026-11-11/recall-snapshot-v1.md)
+Newer installed follow-up: [consistent ordinary recall](../validation/2026-11-11/recall-snapshot-v1.md)
 at canonical `73d4a242` repairs a reproduced service-boundary race after engine
 selection. Concurrent deletion/correction, authority/status/view changes and
 context recount are covered by 13 new regressions; 178 targeted checks pass.
 SQLite assembly uses one snapshot and preserves caller transactions on failure.
-The new source is not in the private `f1314f6d` wheel or its native acceptance.
-Package and validate this changed runtime before transferring installed/native
-claims. No new semantic model or timing retry is implied.
+The new [private package and Codex v14 lifecycle](../validation/2026-11-11/native-codex-v14.md)
+now pass on source `9c326cbc`: all 99 installed files, 57 dependency versions,
+18 installed regressions, real-embedding CLI/MCP restart and all six native
+phases. Offline reconstruction verifies 19 calls and successful replay
+suppression; all 4,361 bindings and normal controls stayed unchanged with zero
+owned survivors. This closes current explicit-preset artifact acceptance only.
+Return to local support quality and complete latency; do not repeat an unchanged
+packaging/native matrix. No new semantic model or timing retry is implied.
 
 Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/jev-support-screen-v1.md) completed all 44 frozen hybrid questions with 100% selected precision and no-answer abstention, but 77.78% retention/recall. It fails the original gates. Support-only p95 was 441.73 ms; complete recall and critical retention remain unmeasured. The earlier [Qwen3.5 screen](../validation/2026-11-08/qwen35-support-screen-v1.md) remains a closed failure. The November 11 direction requires local operation with optional Jev; no defaults or live configuration changed. Do not launch another support-model or threshold sweep.
 
@@ -68,9 +73,9 @@ candidate currently satisfies the original combined quality/timing gates.
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
 | 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | Local configurations remain closed failures. Optional Jev completed 44 frozen hybrid questions: 21/21 supported selections, 17/17 correct no-answer abstentions, 21/27 retention/recall and 441.73 ms support-only p95. It fails retention/recall. Required local operation, critical retention and complete timing remain unresolved. |
 | 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation  | Earlier paired retrieval results remain frozen. The Qwen3.5 screen replays the same immutable support requests; it is not a new extraction or retrieval run. No passing candidate qualifies for fresh acceptance yet. |
-| 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Codex v13 passes all six phases on installed `f1314f6d`, with original-source replay suppression, 19 independently reconstructed calls and successful cleanup. This is the explicit preset with hooks off, not full pilot or multi-fact/batch acceptance. Claude v8 remains failed on its own artifact. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
+| 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Codex v14 passes all six phases on installed `9c326cbc`, with original-source replay suppression, 19 offline-reconstructed calls and successful cleanup. This is the explicit preset with hooks off, not full pilot or multi-fact/batch acceptance. Claude v8 remains failed on its own artifact. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
 | 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The paging experiment is closed without demonstrated native latency benefit. Complete 500 ms recall and 100 ms capture gates remain unmet. |
-| 6 | Consistent verified code/package/docs/site and explicit delivery state  | Runtime f1314f6d has a new private wheel, installed smoke and explicit Codex lifecycle pass. Source-download instructions reproduce all 99 tested runtime files. Current README/readiness/compatibility changes distinguish this from the failed earlier Claude artifact. Published package, private candidate, optional pilot and live website example remain distinct. No publication or live update occurred. |
+| 6 | Consistent verified code/package/docs/site and explicit delivery state  | Source `9c326cbc` now has a new private wheel, 18 installed race tests, real-embedding smoke and the explicit Codex v14 pass. All 99 packaged files match source. Current documentation must use this artifact without transferring other native or full-pilot claims. Published package, private candidate, optional pilot and live website example remain distinct. No publication or live update occurred. |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
 development data for tuning, then new evaluation data. The recovered 600-row
