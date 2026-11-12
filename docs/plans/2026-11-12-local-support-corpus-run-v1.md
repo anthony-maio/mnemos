@@ -84,3 +84,35 @@ known development result still needs trained complete retrieval timing,
 independent fresh acceptance and the original capture, native, two-week pilot
 and delivery obligations. No live activation, package publication or PR merge
 is part of this run.
+
+## Prospective infrastructure amendment after the first failure
+
+The first execution at `88bbcabb` failed on Windows atomic progress-file
+replacement after 62 updates and 251 microbatches. All completed updates passed
+numerical checks; update 63 is partial. No final weights or trained assessment
+exists. The failed archive is verified at SHA-256
+`625ba65bf3f3565ef045c809972de13da7672d21471f8a17af73e1e90d91cd98`.
+A concurrent reader without delete sharing is plausible; the locking process
+was not established. A focused Windows test reproduces the same access-denied
+error while a reader holds the target file open.
+
+Permit one separately frozen and reviewed infrastructure-only restart within
+the authorized local improvement work. This is an explicit amendment to the
+no-automatic-rerun rule above, not a semantic or numerical rescue. The only
+runner change retries PermissionError during JSON atomic replacement, waiting
+10, 20, 40, 80 and 160 ms before the final sixth attempt. A persistent lock
+still fails, and the enclosing 600-second job remains unchanged. The original
+probe writer stays untouched. Monitoring reads append-only training ledgers,
+leaving the replaceable progress snapshot alone during execution.
+
+Preserve the first run and archive before editing its bound source. Start
+from the original checkpoint and seed, never partial update 63. Require exact
+recipe/runtime/tokenizer equality and byte-identical prepared weights, epoch
+orders, schedule, all 123 frames, parity requests and timeout-only supervisor.
+Bind the original archive and terminal receipts into the amended freeze.
+The full original schedule, all evaluation/parity gates, allocator/free-memory
+limits and process budget stay unchanged. No result from the incomplete run
+selects a model, threshold, checkpoint, data or hyperparameter. Validate the
+bounded write repair, including a real Windows reader lock, without models
+before independent review of this amended freeze. No further automatic
+restart is permitted after the amended execution.

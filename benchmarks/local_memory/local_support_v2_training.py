@@ -24,7 +24,19 @@ learning = probe.learning
 ROOT = learning.ROOT
 PROBE_ROOT = ROOT / ".venv/local-support-v2-backward-probe-v1-repair1"
 PROBE_ARCHIVE_SHA = "ac60b110ad32c71aaca095128d1f64e087b924e68aca90b4c362422dc830b012"
-read, save = probe.read, probe.save
+read = probe.read
+
+
+def save(path, value):
+    """Allow a short-lived Windows reader to release the atomic-replace target."""
+    delays = (0.01, 0.02, 0.04, 0.08, 0.16)
+    for attempt in range(len(delays) + 1):
+        try:
+            return probe.save(path, value)
+        except PermissionError:
+            if attempt == len(delays):
+                raise
+            time.sleep(delays[attempt])
 
 
 def training_schedule(examples, rows, orders):

@@ -7,6 +7,8 @@ from pathlib import Path
 import sys
 import tempfile
 import runpy
+import threading
+from unittest.mock import patch
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -179,6 +181,61 @@ class TrainingContracts(unittest.TestCase):
         self.assertEqual(grade["unavailable"], 4)
         self.assertEqual(grade["unavailable_supported"], 17)
         self.assertEqual(grade["supported_retention"], 21 / 38)
+
+    def test_transient_windows_replace_denial_does_not_abort_training(self):
+        m = self.module()
+        original = Path.replace
+        calls = []
+
+        def transient(source, target):
+            calls.append(1)
+            if len(calls) < 3:
+                raise PermissionError("injected short-lived reader")
+            return original(source, target)
+
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "progress.json"
+            with patch.object(Path, "replace", autospec=True, side_effect=transient):
+                m.save(target, dict(completed_updates=62))
+            self.assertEqual(json.loads(target.read_bytes()), dict(completed_updates=62))
+            self.assertEqual(len(calls), 3)
+
+    def test_persistent_replace_denial_fails_with_a_bounded_number_of_attempts(self):
+        m = self.module()
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(
+                Path, "replace", side_effect=PermissionError("persistent")
+            ) as replace:
+                with self.assertRaises(PermissionError):
+                    m.save(Path(directory) / "progress.json", dict(completed_updates=62))
+                self.assertGreater(replace.call_count, 1)
+                self.assertLess(replace.call_count, 12)
+
+    def test_actual_windows_reader_lock_can_clear_before_bounded_replace_retry(self):
+        m = self.module()
+        if os.name != "nt" or importlib.util.find_spec("win32file") is None:
+            self.skipTest("Requires the controller Windows runtime")
+        import win32file, win32con
+
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "progress.json"
+            target.write_text("{}", encoding="utf-8")
+            handle = win32file.CreateFile(
+                str(target),
+                win32con.GENERIC_READ,
+                win32con.FILE_SHARE_READ | win32con.FILE_SHARE_WRITE,
+                None,
+                win32con.OPEN_EXISTING,
+                0,
+                None,
+            )
+            timer = threading.Timer(0.05, handle.Close)
+            timer.start()
+            try:
+                m.save(target, dict(completed_updates=62))
+            finally:
+                timer.join()
+            self.assertEqual(json.loads(target.read_bytes()), dict(completed_updates=62))
 
 
 if __name__ == "__main__":
