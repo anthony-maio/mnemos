@@ -108,6 +108,16 @@ question. Exact framing and combined integrity/ancestry audits pass; sparse
 reserved coverage and missing operational boundaries still block the data
 gate. No training, hosted call or fresh acceptance occurred.
 
+The [model-free boundary controls](../validation/2026-11-11/local-support-boundary-controls-v1.md)
+now pass all eleven cases, with seven admitted and four correctly unavailable.
+Complete 8,192-token frames and 64,000-byte payloads are retained; beyond-bound
+inputs are rejected whole. All ten answerable requests and 38 supported target
+opportunities remain in accounting, including four unavailable requests and
+17 opportunities. Independent review verifies every owned-support label in a
+separate ledger. The 35 focused tests, full-frame audit and unchanged bindings
+pass. No classifier inference ran, and these repeated synthetic controls do
+not add independent learning or holdout examples or qualify latency.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
@@ -130,8 +140,10 @@ host acceptance.
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
 computational admission. Follow the separate local data/learning design by
-extending the reviewed corpus's sparse reserved categories and missing boundary
-cases before fixing a training recipe. The training and partition preparation
+extending the reviewed corpus's sparse reserved categories and source-supported
+counterparts before fixing a training recipe. Mechanical boundary controls are
+closed for the explicit candidate; they are not semantic coverage. The training
+and partition preparation
 do not establish data sufficiency. Training and semantic
 grading remain unauthorized by capacity alone. Do not repeat an unchanged
 packaging/native matrix or
