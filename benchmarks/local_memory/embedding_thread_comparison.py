@@ -44,12 +44,13 @@ def prepare(root):
     assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=REPO)
     root.mkdir(exist_ok=False)
     package = read(PACKAGE)
-    requests = [
+    available = [
         json.loads(line)["request"]
         for line in (SOURCE / "observations.jsonl").read_text().splitlines()
         if (lambda r: r["path"] == "recall" and not r["warmup"])(json.loads(line))
-    ][:50]
-    assert len(requests) == 50
+    ]
+    assert len(available) == 25
+    requests = available + available
     texts = [
         "",
         "Synthetic diagnostic: the notebook keeps release checklists locally.",

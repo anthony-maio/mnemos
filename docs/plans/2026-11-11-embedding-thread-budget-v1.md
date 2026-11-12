@@ -40,8 +40,9 @@ at least 90% below baseline. CPU intervals sum across process threads and are
 not wall-clock durations. This is a bounded diagnostic, not a power guarantee.
 
 Then use the unchanged complete client.retrieve boundary for 50 measured ordinary
-recalls after three warmups per arm. Replay the same first 50 measured recall
-requests from the existing frozen fixture log, in the same order. Include actual
+recalls after three warmups per arm. The fixture log contains 25 measured recall
+requests; replay two consecutive passes over those same 25 requests, in the
+same order in both arms. This is reused diagnostic data. Include actual
 BGE, scoped retrieval, access writes, source assembly, transport and decoding.
 Record all results and failures; stop on an operational failure and retain
 unattempted denominators. Require identical returned fact IDs/content/versions,
