@@ -3,6 +3,7 @@
 from dataclasses import asdict, replace
 import hashlib
 import importlib.util
+from importlib.metadata import distributions
 import json
 import math
 from pathlib import Path
@@ -35,6 +36,13 @@ SEED = 2026111101
 
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def runtime_versions():
+    return sorted(
+        [dict(name=d.metadata["Name"], version=d.version) for d in distributions()],
+        key=lambda row: row["name"].lower().replace("_", "-"),
+    )
 
 
 def save(path, value):
@@ -109,7 +117,8 @@ def tokenizer_at(root):
 def prepare(root):
     from huggingface_hub import HfApi, hf_hub_download
 
-    root.mkdir(exist_ok=False)
+    assert not (root / "attempt.started").exists() and not (root / "freeze.json").exists()
+    root.mkdir(exist_ok=True)
     metadata = HfApi(endpoint="https://huggingface.co", token=False).model_info(
         MODEL, revision=REVISION, files_metadata=True
     )
@@ -188,12 +197,7 @@ def prepare(root):
         root / "requests.json",
         root / "frames.json",
     ]
-    versions = json.loads(
-        subprocess.check_output(
-            [sys.executable, "-m", "pip", "list", "--format=json", "--disable-pip-version-check"],
-            text=True,
-        )
-    )
+    versions = runtime_versions()
     save(
         root / "freeze.json",
         dict(
@@ -267,19 +271,7 @@ def run(root):
     active = None
     forwards = {"count": 0}
     try:
-        versions = json.loads(
-            subprocess.check_output(
-                [
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "list",
-                    "--format=json",
-                    "--disable-pip-version-check",
-                ],
-                text=True,
-            )
-        )
+        versions = runtime_versions()
         assert versions == freeze["versions"]
         gpu = subprocess.check_output(
             [
