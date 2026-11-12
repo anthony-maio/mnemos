@@ -108,3 +108,29 @@ two-week daily-use pilot and release delivery also remain separate obligations.
 
 This increment prepares only the data gate. Do not repeat closed package/native
 matrices, alter live pilot files, publish, merge PR #9 or start a hosted call.
+
+## Model-free boundary controls
+
+Use a separate synthetic control suite outside gradient data and reserved
+semantic partitions. The inactive candidate's admission wrapper reuses the
+frozen complete native framing and adds the explicit eight-source limit;
+historical frame code and its timing results stay unchanged. The new wrapper
+is not live or performance-qualified by the old capacity pass.
+
+Run the already frozen local tokenizer only. Check genuinely empty, one-,
+four- and five-target requests, eight versus nine owned sources, exact 8,192
+tokens including native boundaries and all decision markers versus 8,193,
+exact 64,000 payload bytes versus 64,001, and six targets. Keep complete
+sources. Padding is deliberate boundary stress, not independent semantic
+data or a shortened workload. Wider diagnostic serialization may describe a
+rejected input but never admits it to the candidate.
+
+The eleven controls contain ten answerable requests and 38 supported target
+opportunities. Four answerable controls with 17 supported opportunities must
+be unavailable under this policy and remain in coverage/recall denominators.
+Do not report classifier precision, recall or abstention: no predictions run.
+Missing or duplicate outcomes fail accounting. Bind source, tokenizer, input
+and dependency inventories before/after, retain raw cases and complete frames,
+and review owned semantic labels separately. A pass closes this mechanical
+boundary check only; sparse semantic coverage and the numerical learning
+recipe remain open.
