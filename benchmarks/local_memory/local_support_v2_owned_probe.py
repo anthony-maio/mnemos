@@ -58,7 +58,7 @@ def run(root):
         command = [str(loader["MODEL_PYTHON"]), "-I", str(worker), "run", str(root)]
         record["command"] = command
         record["job"] = runpy.run_path(str(supervisor))["run_owned_job"](
-            command, cwd=ROOT, env=loader["environment"](), output=root / "job", timeout=180
+            command, cwd=ROOT, env=loader["environment"](root), output=root / "job", timeout=180
         )
         record["status"] = "passed"
     except BaseException as error:

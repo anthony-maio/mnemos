@@ -2,6 +2,7 @@
 
 import importlib.util
 import math
+import os
 from pathlib import Path
 import sys
 import json
@@ -9,6 +10,7 @@ import subprocess
 import tempfile
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -248,6 +250,39 @@ class LearningContracts(unittest.TestCase):
             [sys.executable, "-S", str(path), "--help"], capture_output=True, text=True, timeout=15
         )
         self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_isolated_environment_preserves_username_without_provider_credentials(self):
+        module = self.probe()
+        with patch.dict(
+            os.environ, {"USERNAME": "validation-user", "TYPESAFE_API_KEY": "do-not-forward"}
+        ):
+            env = module.environment()
+        self.assertEqual(env.get("USERNAME"), "validation-user")
+        self.assertNotIn("TYPESAFE_API_KEY", env)
+
+    def test_tokenizer_import_uses_private_cache_in_the_isolated_environment(self):
+        module = self.probe()
+        self.torch()
+        env = module.environment()
+        self.assertTrue("TORCHINDUCTOR_CACHE_DIR" in env, "Private Torch import cache is missing")
+        with tempfile.TemporaryDirectory() as directory:
+            env = module.environment(Path(directory))
+            self.assertTrue(Path(env["TORCHINDUCTOR_CACHE_DIR"]).is_relative_to(Path(directory)))
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-I",
+                    "-c",
+                    'from transformers import AutoTokenizer; print("tokenizer-import-ok")',
+                ],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=45,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("tokenizer-import-ok", result.stdout)
 
 
 if __name__ == "__main__":

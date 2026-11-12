@@ -53,7 +53,7 @@ def assert_interpreter():
         raise ValueError("The exact frozen model interpreter is required")
 
 
-def environment():
+def environment(directory=None):
     names = {
         "PATH",
         "SYSTEMROOT",
@@ -63,6 +63,7 @@ def environment():
         "COMSPEC",
         "PATHEXT",
         "USERPROFILE",
+        "USERNAME",
         "LOCALAPPDATA",
         "APPDATA",
         "PROGRAMDATA",
@@ -82,6 +83,10 @@ def environment():
         TOKENIZERS_PARALLELISM="false",
         PYTHONIOENCODING="utf-8",
         CUDA_VISIBLE_DEVICES="0",
+        TORCHINDUCTOR_CACHE_DIR=str(
+            (Path(directory) if directory is not None else ROOT / ".venv/local-support-v2-runtime")
+            / "torch-cache"
+        ),
     )
     return result
 
