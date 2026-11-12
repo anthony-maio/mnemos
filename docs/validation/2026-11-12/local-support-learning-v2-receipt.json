@@ -1,0 +1,5448 @@
+{
+  "status": "closed_semantic_failure",
+  "source_commit": "22bbc32fd815920cf8a8f1ed65f8cd24223e7e21",
+  "freeze_sha256": "da20e5ad75ac2fcc350614328a77dd4e89d3fa67d47304c5c8bc83c2cbd826f7",
+  "bound_files": 103,
+  "runtime_packages": 25,
+  "result": {
+    "status": "corpus_attempt_completed",
+    "expected_updates": 84,
+    "completed_updates": 84,
+    "completed_microbatches": 336,
+    "corpus_training_started": true,
+    "weights_saved": true,
+    "active_update": null,
+    "free_before_bytes": 15806234624,
+    "total_device_bytes": 17170956288,
+    "stage": "terminal_bindings",
+    "elapsed_seconds": 92.38345519965515,
+    "peak_allocated_bytes": 2787564544,
+    "peak_reserved_bytes": 3005218816,
+    "initial_head_sha256": "da88e30e11194dee428b7f10f1f9fabe04fad4283641d40c0f48afb1415943b2",
+    "active_case": null,
+    "training_forward_entries": {
+      "backbone": 336,
+      "layers": [
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672
+      ]
+    },
+    "body_changed": true,
+    "head_changed": true,
+    "bindings_unchanged": true,
+    "dependency_versions_unchanged": true,
+    "deployment_parity_passed": true,
+    "uncompleted_updates": 0,
+    "semantic_status": "diagnostic_failed",
+    "fresh_acceptance": false,
+    "full_retrieval_timing": false,
+    "live_activation": false
+  },
+  "execution": {
+    "status": "passed",
+    "bindings_unchanged": true,
+    "head_unchanged": true,
+    "dependency_versions_unchanged": true,
+    "owned_processes_stopped": true,
+    "owned_job_bound_satisfied": true,
+    "child_terminal_verified": true,
+    "elapsed_seconds": 96.02565150009468
+  },
+  "job": {
+    "status": "passed",
+    "job_assigned": true,
+    "input_delivery_started": true,
+    "exit_code": 0,
+    "active_before_cleanup": 1,
+    "total_job_processes": 5,
+    "active_after_cleanup": 0,
+    "elapsed_seconds": 94.23629519995302
+  },
+  "archive": {
+    "archive": "local-support-v2-corpus-run-v1-repair1.zip",
+    "sha256": "568cf0fd3f208ede61991a0dcbbe5759dd247f8df5d1ca00edc98f28cfbd105f",
+    "bytes": 2238721,
+    "members": 111,
+    "readback_verified": true,
+    "large_files": "Saved final-master and deployment safetensors retained in the private run root and SHA256-verified; excluded from this archive. Original model/runtime files are hash-bound only."
+  },
+  "original_failure": {
+    "source_commit": "88bbcabb73d1b8cf98522f388a263a4970ebbe8c",
+    "completed_updates": 62,
+    "completed_microbatches": 251,
+    "uncompleted_microbatches": 85,
+    "partial_update": 63,
+    "error_type": "PermissionError",
+    "archive_sha256": "625ba65bf3f3565ef045c809972de13da7672d21471f8a17af73e1e90d91cd98"
+  },
+  "repair": {
+    "infrastructure_restart_index": 1,
+    "original_source_commit": "88bbcabb73d1b8cf98522f388a263a4970ebbe8c",
+    "repaired_source_commit": "22bbc32fd815920cf8a8f1ed65f8cd24223e7e21",
+    "failed_archive_sha256": "625ba65bf3f3565ef045c809972de13da7672d21471f8a17af73e1e90d91cd98",
+    "original_freeze_sha256": "c9446918f47cc961583256079121ec1bdf470367dc97c49ef3783965aed07a31",
+    "unchanged_fields": [
+      "recipe",
+      "versions",
+      "python",
+      "tokenizer_binding",
+      "model_root",
+      "expected_updates",
+      "training_cases",
+      "training_targets",
+      "comparison_cases",
+      "parity_cases",
+      "timeout_seconds",
+      "cleanup_seconds",
+      "allocator_limit_bytes",
+      "minimum_free_bytes",
+      "backward_archive_sha256"
+    ],
+    "byte_identical_prepared_artifacts": {
+      "training-weights.json": "420f37601b609f196ac8a697eb0b1d6a34357d197697003e5eb73048f5c4d852",
+      "epoch-orders.json": "941c0db223ac314984756f4052f5e0fed9056986e5e87a6b6264747653c5992f",
+      "schedule.json": "7272c00fd13797f9fd85ec092c8433ecfe1f3d1eb1f3b0dcbbb551f83c1b5b1a",
+      "frames.json": "27a252d42fc18bf66e3264846e0d42376cf6e65f8fcdfaaeeecd3d7ee13b4727",
+      "deployment-parity-requests.json": "bfd8d9a11bd79f7177f022bab21639c202d3e8993819b1badc17a8a7352a4af1",
+      "owned-job-600.py": "701d74d6328478ff74340df109b77bf381cfb20edaab07fa127af7a198c0a04c"
+    },
+    "restart_from": "original checkpoint and seed, not partial update63",
+    "change": "Only bounded PermissionError retries for atomic JSON replacement;31/100seconds maximum wait per write"
+  },
+  "parity": {
+    "passed": true,
+    "max_absolute_logit_error": 0.01806640625,
+    "failures": [],
+    "cases": 123
+  },
+  "grades": {
+    "initial": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 19,
+          "unsupported": 37,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 3,
+          "answerable": 38,
+          "hits": 19,
+          "no_answer": 18,
+          "correct_abstention": 0,
+          "exact_cohorts": 17,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 0.3392857142857143,
+          "supported_retention": 0.475,
+          "critical_retention": 0.3333333333333333,
+          "answerable_recall": 0.5,
+          "abstention": 0.0,
+          "exact_cohorts": 0.30357142857142855
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "aster-window-1",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-2",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "nacre-quorum-1",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-2",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "pavo-amendment-1",
+            "valid": true,
+            "expected": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "pavo-amendment-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "vela-quotation-1",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-2",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "orin-ownership-1",
+            "valid": true,
+            "expected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-ownership-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-1",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0"
+            ],
+            "missing": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-2",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0"
+            ],
+            "missing": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "616cf6713066536cb86770f0"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "sol-delegation-1",
+            "valid": true,
+            "expected": [
+              "12abb234b208497e6914f613"
+            ],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [
+              "12abb234b208497e6914f613"
+            ],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "rill-log-gap-1",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-3",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "bracken-roster-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ee7df39b70a3b955f409946"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ee7df39b70a3b955f409946"
+            ]
+          },
+          {
+            "id": "petrel-payload-1",
+            "valid": true,
+            "expected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "petrel-payload-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "zephyr-study-1",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "zephyr-study-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "a4115752ef15f0e6bbae5f4f"
+            ]
+          },
+          {
+            "id": "zephyr-study-permutation",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "missing": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "maru-event-roles-initiator-r",
+            "valid": true,
+            "expected": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "missing": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "maru-event-roles-direct-human",
+            "valid": true,
+            "expected": [
+              "774d02610da4f691234ab303"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "missing": [
+              "774d02610da4f691234ab303"
+            ],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-partial",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-complete",
+            "valid": true,
+            "expected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "6056470cae7ea33f75dad5fb"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-policy-only",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "5c699940d6c597312af9640d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "incomplete_source_support": 17,
+          "temporal_mismatch": 3,
+          "wrong_subject_relation": 11,
+          "attribution_mismatch": 3,
+          "unresolved_conflict": 1,
+          "unresolved_condition": 2
+        },
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [
+              "nacre-quorum-permutation"
+            ],
+            "missing_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2"
+            ],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [
+              "vireo-exclusive-permutation"
+            ],
+            "missing_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2"
+            ],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [
+              "aster-window-permutation"
+            ],
+            "missing_cases": [
+              "aster-window-1",
+              "aster-window-2"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 11,
+          "unsupported": 20,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 4,
+          "answerable": 26,
+          "hits": 11,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 10,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.3548387096774194,
+          "supported_retention": 0.4074074074074074,
+          "critical_retention": 0.3333333333333333,
+          "answerable_recall": 0.4230769230769231,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3225806451612903
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-1",
+            "valid": true,
+            "expected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "kestrel-compatibility-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-first",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-finished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-unfinished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ceee6a791f08d0a29669328"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-a-duration",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 11,
+          "unresolved_condition": 1,
+          "temporal_mismatch": 2,
+          "unresolved_conflict": 2,
+          "attribution_mismatch": 4
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-permutation"
+            ],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [
+              "kestrel-compatibility-permutation"
+            ],
+            "missing_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2"
+            ],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 9,
+          "unsupported": 20,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 4,
+          "answerable": 24,
+          "hits": 9,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 9,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.3103448275862069,
+          "supported_retention": 0.375,
+          "critical_retention": 0.5,
+          "answerable_recall": 0.375,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3103448275862069
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "2be85655a140003969339cc5"
+            ],
+            "missing": [],
+            "unsupported": [
+              "2be85655a140003969339cc5"
+            ]
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-missing-global",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c35ab77cf64cd48ea598ebe3"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-rename",
+            "valid": true,
+            "expected": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 10,
+          "unresolved_conflict": 1,
+          "incomplete_source_support": 4,
+          "unresolved_condition": 5
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [
+              "calyx-timezone-permutation"
+            ],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [
+              "oriel-implication-permutation"
+            ],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    },
+    "final-master": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 31,
+          "unsupported": 43,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 9,
+          "answerable": 38,
+          "hits": 31,
+          "no_answer": 18,
+          "correct_abstention": 0,
+          "exact_cohorts": 13,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 0.4189189189189189,
+          "supported_retention": 0.775,
+          "critical_retention": 1.0,
+          "answerable_recall": 0.8157894736842105,
+          "abstention": 0.0,
+          "exact_cohorts": 0.23214285714285715
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": true,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "aster-window-1",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-2",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-permutation",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "nacre-quorum-1",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-2",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-permutation",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "pavo-amendment-1",
+            "valid": true,
+            "expected": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "pavo-amendment-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "vela-quotation-1",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-2",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc",
+              "998ed5d082b9e95580fde92f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "orin-ownership-1",
+            "valid": true,
+            "expected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-ownership-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-1",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0",
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-2",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0",
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "616cf6713066536cb86770f0"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "sol-delegation-1",
+            "valid": true,
+            "expected": [
+              "12abb234b208497e6914f613"
+            ],
+            "selected": [
+              "12abb234b208497e6914f613",
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "rill-log-gap-1",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-3",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "74e667c49217d6f38753cd00",
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "bracken-roster-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ee7df39b70a3b955f409946"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ee7df39b70a3b955f409946"
+            ]
+          },
+          {
+            "id": "petrel-payload-1",
+            "valid": true,
+            "expected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "petrel-payload-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "zephyr-study-1",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "zephyr-study-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "a4115752ef15f0e6bbae5f4f"
+            ]
+          },
+          {
+            "id": "zephyr-study-permutation",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "missing": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "maru-event-roles-initiator-r",
+            "valid": true,
+            "expected": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "unsupported": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-executor-s",
+            "valid": true,
+            "expected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-direct-human",
+            "valid": true,
+            "expected": [
+              "774d02610da4f691234ab303"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "774d02610da4f691234ab303",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-permutation",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-partial",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-complete",
+            "valid": true,
+            "expected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "selected": [
+              "6056470cae7ea33f75dad5fb",
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "6056470cae7ea33f75dad5fb"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-policy-only",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "5c699940d6c597312af9640d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "incomplete_source_support": 19,
+          "temporal_mismatch": 3,
+          "wrong_subject_relation": 14,
+          "attribution_mismatch": 4,
+          "unresolved_conflict": 1,
+          "unresolved_condition": 2
+        },
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 11,
+          "unsupported": 20,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 4,
+          "answerable": 26,
+          "hits": 11,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 10,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.3548387096774194,
+          "supported_retention": 0.4074074074074074,
+          "critical_retention": 0.3333333333333333,
+          "answerable_recall": 0.4230769230769231,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3225806451612903
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-1",
+            "valid": true,
+            "expected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "kestrel-compatibility-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-first",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-finished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-unfinished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ceee6a791f08d0a29669328"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-a-duration",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 11,
+          "unresolved_condition": 1,
+          "temporal_mismatch": 2,
+          "unresolved_conflict": 2,
+          "attribution_mismatch": 4
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-permutation"
+            ],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [
+              "kestrel-compatibility-permutation"
+            ],
+            "missing_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2"
+            ],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 9,
+          "unsupported": 20,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 4,
+          "answerable": 24,
+          "hits": 9,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 9,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.3103448275862069,
+          "supported_retention": 0.375,
+          "critical_retention": 0.5,
+          "answerable_recall": 0.375,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3103448275862069
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "2be85655a140003969339cc5"
+            ],
+            "missing": [],
+            "unsupported": [
+              "2be85655a140003969339cc5"
+            ]
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-missing-global",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c35ab77cf64cd48ea598ebe3"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-rename",
+            "valid": true,
+            "expected": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 10,
+          "unresolved_conflict": 1,
+          "incomplete_source_support": 4,
+          "unresolved_condition": 5
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [
+              "calyx-timezone-permutation"
+            ],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [
+              "oriel-implication-permutation"
+            ],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    },
+    "deployment": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 31,
+          "unsupported": 43,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 9,
+          "answerable": 38,
+          "hits": 31,
+          "no_answer": 18,
+          "correct_abstention": 0,
+          "exact_cohorts": 13,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 0.4189189189189189,
+          "supported_retention": 0.775,
+          "critical_retention": 1.0,
+          "answerable_recall": 0.8157894736842105,
+          "abstention": 0.0,
+          "exact_cohorts": 0.23214285714285715
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": true,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "aster-window-1",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-2",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "aster-window-permutation",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [
+              "9d15e6c8595d8e1e84cf40bc",
+              "c0db6320b8f97f0e7975325a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c0db6320b8f97f0e7975325a"
+            ]
+          },
+          {
+            "id": "nacre-quorum-1",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-2",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "nacre-quorum-permutation",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [
+              "105b0e9e4a265824eebc6a47",
+              "e171a307115e573bb0c749bb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e171a307115e573bb0c749bb"
+            ]
+          },
+          {
+            "id": "pavo-amendment-1",
+            "valid": true,
+            "expected": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "pavo-amendment-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "missing": [],
+            "unsupported": [
+              "606a559b53af39fe19838d03"
+            ]
+          },
+          {
+            "id": "vela-quotation-1",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-2",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc",
+              "998ed5d082b9e95580fde92f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "vela-quotation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0fa327c4c2f27bc7f40757cc"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0fa327c4c2f27bc7f40757cc"
+            ]
+          },
+          {
+            "id": "orin-ownership-1",
+            "valid": true,
+            "expected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-ownership-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-1",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0",
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-2",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [
+              "616cf6713066536cb86770f0",
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "vireo-exclusive-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "616cf6713066536cb86770f0"
+            ],
+            "missing": [],
+            "unsupported": [
+              "616cf6713066536cb86770f0"
+            ]
+          },
+          {
+            "id": "sol-delegation-1",
+            "valid": true,
+            "expected": [
+              "12abb234b208497e6914f613"
+            ],
+            "selected": [
+              "12abb234b208497e6914f613",
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "sol-delegation-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e22b537dd6bcad1e73417603"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e22b537dd6bcad1e73417603"
+            ]
+          },
+          {
+            "id": "rill-log-gap-1",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "rill-log-gap-3",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [
+              "74e667c49217d6f38753cd00",
+              "d7b491783d9016a1bc65eba8"
+            ],
+            "missing": [],
+            "unsupported": [
+              "d7b491783d9016a1bc65eba8"
+            ]
+          },
+          {
+            "id": "bracken-roster-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b26465925adc5ea7f861d9ea"
+            ]
+          },
+          {
+            "id": "bracken-roster-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ee7df39b70a3b955f409946"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ee7df39b70a3b955f409946"
+            ]
+          },
+          {
+            "id": "petrel-payload-1",
+            "valid": true,
+            "expected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "petrel-payload-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "missing": [],
+            "unsupported": [
+              "08263540bc38fd6a10ed723a"
+            ]
+          },
+          {
+            "id": "zephyr-study-1",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "zephyr-study-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "a4115752ef15f0e6bbae5f4f"
+            ]
+          },
+          {
+            "id": "zephyr-study-permutation",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "87e62ea727ed0e6ded422b0f"
+            ],
+            "missing": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "maru-event-roles-initiator-r",
+            "valid": true,
+            "expected": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "unsupported": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-executor-s",
+            "valid": true,
+            "expected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-direct-human",
+            "valid": true,
+            "expected": [
+              "774d02610da4f691234ab303"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "774d02610da4f691234ab303",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ]
+          },
+          {
+            "id": "maru-event-roles-permutation",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [
+              "125bc081eaff390a02f00b36",
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "125bc081eaff390a02f00b36"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-partial",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-complete",
+            "valid": true,
+            "expected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "selected": [
+              "6056470cae7ea33f75dad5fb",
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e2df6a2df6e2a36f2f434188"
+            ]
+          },
+          {
+            "id": "orin-owned-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "6056470cae7ea33f75dad5fb"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-policy-only",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": [
+              "377f9ee5e6206107663e9cde"
+            ]
+          },
+          {
+            "id": "vireo-observation-counterparts-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "5c699940d6c597312af9640d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "incomplete_source_support": 19,
+          "temporal_mismatch": 3,
+          "wrong_subject_relation": 14,
+          "attribution_mismatch": 4,
+          "unresolved_conflict": 1,
+          "unresolved_condition": 2
+        },
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 11,
+          "unsupported": 20,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 4,
+          "answerable": 26,
+          "hits": 11,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 10,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.3548387096774194,
+          "supported_retention": 0.4074074074074074,
+          "critical_retention": 0.3333333333333333,
+          "answerable_recall": 0.4230769230769231,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3225806451612903
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-1",
+            "valid": true,
+            "expected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "kestrel-compatibility-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "missing": [],
+            "unsupported": [
+              "b4c6da2946a6060a2ff63651"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "missing": [],
+            "unsupported": [
+              "65ca80223881aa5bd37c2cf4"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": [
+              "3d1c65490eb18277da0e0994"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-first",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-finished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-a-unfinished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": [
+              "bcdd291ff182c4d6e50c5c01"
+            ]
+          },
+          {
+            "id": "nori-precedence-cycle-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "missing": [],
+            "unsupported": [
+              "8ceee6a791f08d0a29669328"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": [
+              "9c6ce17f8bc983085d342b99"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-a-duration",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 11,
+          "unresolved_condition": 1,
+          "temporal_mismatch": 2,
+          "unresolved_conflict": 2,
+          "attribution_mismatch": 4
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-permutation"
+            ],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [
+              "kestrel-compatibility-permutation"
+            ],
+            "missing_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2"
+            ],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 9,
+          "unsupported": 20,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 4,
+          "answerable": 24,
+          "hits": 9,
+          "no_answer": 5,
+          "correct_abstention": 0,
+          "exact_cohorts": 9,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.3103448275862069,
+          "supported_retention": 0.375,
+          "critical_retention": 0.5,
+          "answerable_recall": 0.375,
+          "abstention": 0.0,
+          "exact_cohorts": 0.3103448275862069
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": false,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": [
+              "02ade02a31e56307967d2f18"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-1",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": [
+              "0640a402252a83ecacf5b524"
+            ]
+          },
+          {
+            "id": "lumen-vector-clocks-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "2be85655a140003969339cc5"
+            ],
+            "missing": [],
+            "unsupported": [
+              "2be85655a140003969339cc5"
+            ]
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-3",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-missing-global",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": [
+              "50e6171faf0853de07361ce6"
+            ]
+          },
+          {
+            "id": "tern-unset-resolution-permutation",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "missing": [],
+            "unsupported": [
+              "c35ab77cf64cd48ea598ebe3"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-rename",
+            "valid": true,
+            "expected": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 10,
+          "unresolved_conflict": 1,
+          "incomplete_source_support": 4,
+          "unresolved_condition": 5
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [
+              "calyx-timezone-permutation"
+            ],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [
+              "oriel-implication-permutation"
+            ],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    }
+  },
+  "boundaries": {
+    "cases": 11,
+    "expected_supported": 38,
+    "retained_supported": 7,
+    "unavailable": 4,
+    "unavailable_supported": 17,
+    "unsupported": 0,
+    "supported_retention": 0.18421052631578946,
+    "repeated_synthetic_controls": true,
+    "fresh_acceptance": false,
+    "outcomes": [
+      {
+        "id": "empty",
+        "status": "assessed",
+        "target_ids": [],
+        "frame_sha256": "807395137a5e18ced69ab3f9f3e9aa3fb76bd2ab3ff19c3924e82a41d18ce70e",
+        "logits": [],
+        "selected_ids": []
+      },
+      {
+        "id": "one-fact",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ],
+        "frame_sha256": "896127690a3682d7919650a1cc88f74c0c0a5b604fcd48793463e066e87a7a21",
+        "logits": [
+          0.263427734375
+        ],
+        "selected_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ]
+      },
+      {
+        "id": "four-facts",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5"
+        ],
+        "frame_sha256": "c43b143c62ef80cf173e3e23133f16215b686d2f372ee1554a980d65cdd46f81",
+        "logits": [
+          -0.2412109375,
+          -0.72998046875,
+          -0.75439453125,
+          0.315185546875
+        ],
+        "selected_ids": [
+          "7f87bb012ce664d81a2f12f5"
+        ]
+      },
+      {
+        "id": "five-facts",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "85bd716c6542573360801223530ba06d9ccb7beee0f8e9dc9eaa67bf87e59df9",
+        "logits": [
+          0.05731201171875,
+          -0.457763671875,
+          -0.353759765625,
+          -0.64404296875,
+          0.299072265625
+        ],
+        "selected_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "169e12947f3b98dab57e2f8c"
+        ]
+      },
+      {
+        "id": "eight-owned-sources",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ],
+        "frame_sha256": "b3509509922b97c51ee854ff9df2509cdb7aa0cfc91f04bab920cad4bc565edd",
+        "logits": [
+          0.267578125
+        ],
+        "selected_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ]
+      },
+      {
+        "id": "nine-owned-sources",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      },
+      {
+        "id": "exact-token-bound",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "a74aeac94ebc43caff19028310201f24f0e6323093f47cf70586cba688339b26",
+        "logits": [
+          -0.1932373046875,
+          -0.57373046875,
+          -0.433837890625,
+          -0.50439453125,
+          0.30859375
+        ],
+        "selected_ids": [
+          "169e12947f3b98dab57e2f8c"
+        ]
+      },
+      {
+        "id": "token-overflow",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      },
+      {
+        "id": "exact-byte-bound",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "ff70b6835db959b57dab6b9eac5b2be2adc62a64e76edb5ee0d62fa84b0e7949",
+        "logits": [
+          -0.9814453125,
+          -1.3525390625,
+          -1.5634765625,
+          -1.46875,
+          0.2978515625
+        ],
+        "selected_ids": [
+          "169e12947f3b98dab57e2f8c"
+        ]
+      },
+      {
+        "id": "byte-overflow",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      },
+      {
+        "id": "six-facts",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      }
+    ]
+  },
+  "artifact_receipt": {
+    "files": {
+      "deployment\\config.json": "7da389b4a35805ef53e414036e4a927f535a8ea238eeabee0b84b31348f31925",
+      "deployment\\model.safetensors": "cd5cea8b63655b1d90c6718a8ac678490181bb9503bfcaaf0bbd71993fc4f3de",
+      "deployment\\recipe.json": "bb916e06fb81e885e8e01873d7d12287abc312a2a23ca12771bcd709dab39efb",
+      "deployment\\special_tokens_map.json": "ea97ecdbcc73713039d8d64dbb05e3689495c96657fbd9a18f5bed381be81049",
+      "deployment\\support-head.safetensors": "62e3897b9b0025d952780a187cfd156d0dc1604f425049e6064a7edc85096c03",
+      "deployment\\tokenizer.json": "05c5c40d6a7c23400de4486f6cb365b9a858de6da81bdcbfe1aff016d2a2cc23",
+      "deployment\\tokenizer_config.json": "9654072f7c873161814043cf08cb5ed72f71d0b935abcd4e267935cb34352c21",
+      "final-master.safetensors": "5b3bb5a496a1250688e67417fa43be3ff757ab37fa0b9ea0e99e23c521de0502"
+    },
+    "parity_passed": true,
+    "active": false
+  },
+  "independent_review": "All schedule, metric, parity, hash and cleanup accounting reconstructed; no discrepancy found.",
+  "observed_pattern": "Initial, final-master and deployed selections are exactly the last candidate for every one of the 31 tuning and 29 development cases; this does not establish the internal cause.",
+  "runtime_default_change": false,
+  "hosted_provider_calls": 0,
+  "fresh_acceptance": false,
+  "full_retrieval_timing": false,
+  "pilot_days_qualified": 0,
+  "live_activation": false
+}
