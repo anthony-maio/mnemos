@@ -1,0 +1,351 @@
+{
+  "status": "combined_structural_audit_passed_not_semantic_readiness",
+  "inputs": {
+    "seed": "da765b672862eea22fedca8cfe7f599283ac335eeebe387694ad3516b88660ad",
+    "new": "0d6f0a3ed721c01bde0e0f631b7597a20da24ef40b8030b6c7c055c99f88a952"
+  },
+  "labels": {
+    "seed": "f6e5e81cf3e092ef0f262e6dd313720a811a89ea83e76e199c70fbf9291295eb",
+    "new": "6247e0982e02df6c33149596ed97d0cc6ba6eff819e661d11f0b61f382b60ac9"
+  },
+  "seed_files_unchanged": true,
+  "audit": {
+    "status": "structural_audit_passed",
+    "examples": {
+      "train": 44,
+      "tuning": 8,
+      "development": 12
+    },
+    "independent_groups": {
+      "train": 11,
+      "tuning": 2,
+      "development": 3
+    },
+    "reason_counts": {
+      "train": {
+        "supported": 32,
+        "incomplete_source_support": 24,
+        "wrong_subject_relation": 22,
+        "temporal_mismatch": 9,
+        "attribution_mismatch": 12,
+        "unresolved_condition": 1,
+        "unresolved_conflict": 4
+      },
+      "tuning": {
+        "supported": 7,
+        "incomplete_source_support": 8,
+        "wrong_subject_relation": 7,
+        "unresolved_condition": 2
+      },
+      "development": {
+        "supported": 9,
+        "incomplete_source_support": 8,
+        "wrong_subject_relation": 11,
+        "unresolved_conflict": 4
+      }
+    },
+    "supported_critical_targets": {
+      "train": 9,
+      "tuning": 3,
+      "development": 7
+    },
+    "review_status": {
+      "reviewed": 64
+    },
+    "minimum_partition_checks": true,
+    "semantic_labels_verified": false,
+    "training_ready": false,
+    "request_bindings": {
+      "aster-window-1": "85e7813df0722b7db5d12e0fe41d5e95abdedbca83b069503ae81798211f8d8e",
+      "aster-window-2": "a4f1f1b3d153f865e8df8d75b2ccd439fb99de3d93137ff87d695e702d6b20b6",
+      "aster-window-3": "df50f722bd30178b5189037d4fb7603c5c2d0cbd610df7714eea967f66a77cd5",
+      "aster-window-permutation": "26722d5ce74dc45a60f34d3e4ee5d02962f381488642eb0bb1b4fb1d6fa64c3a",
+      "nacre-quorum-1": "66158ceff22afcd44abae5097e32ee646998dcd072a2dd7282e1e45c5dbeba32",
+      "nacre-quorum-2": "0b364f8fe6c49325b7ea1fc064fce04cb3f6f5871207a041d249fc31b230ab75",
+      "nacre-quorum-3": "1e41f15b48697f91ec0c471b50bd13922ff5303f8934a3528cdf7f3cf6ad43bc",
+      "nacre-quorum-permutation": "2257c2d623ae13ceff98f013e0cfa6d193b1e5275e3a09a724ad0f8b071a7356",
+      "pavo-amendment-1": "a4a5c01e166357aa3e08ccab047ef90a7cff0e37f44139ad9d6196a4435dabc6",
+      "pavo-amendment-2": "9b709fec8d3c812df0d4ecb02cf6882799b82a148f72e2773a563758472e5a4c",
+      "pavo-amendment-3": "68179f567a78aeafd41764cb22063b8429fb1428e0347e251cc762eb332d11d6",
+      "pavo-amendment-permutation": "3210471830b8deba90b9d683c45293f18bd8da31dc69404c6e30ed809f1b5a89",
+      "vela-quotation-1": "b208bcfb3e47b72761b28029d19c7aa00dae73c6d80f19eae2e553f07d90d2fd",
+      "vela-quotation-2": "fe25828d2d7ac7ca1d34d5edecf17611cae0f8a12056cb02f3250e8cf78a7dc8",
+      "vela-quotation-3": "743a170f8eb0449783d976a68d7f6d02c639e4b5c7f62d02e721f2b35f05db18",
+      "vela-quotation-permutation": "4e2a93343df30991d8294fd56ebde83fb3033d839ac13f5dc0ac983cbd2698a3",
+      "orin-ownership-1": "05ad06c404da7e8ac11d94842f059f313100f355c245e395bb28cd8a6adc9868",
+      "orin-ownership-2": "0b6581a85c77651ef97222ae0e76b891615ff4f08045a9af4f60147764b12ffa",
+      "orin-ownership-3": "bbf63f70e57dd577ddd1b0a5619ea9c992c4aed86ab1cc16bec470358197d09f",
+      "orin-ownership-permutation": "218f1a1171e2e619662a1331f41362aa05a45bc6bfda3950390964e0416ed930",
+      "vireo-exclusive-1": "26f58a5b72734a35fb77f2a740f6fb868b92c80a43fb12dc662d4a650d2ace68",
+      "vireo-exclusive-2": "7630878f856f4a777cb0e8a80e10d274c041e1511a262bb5db6f26fcf2b518d4",
+      "vireo-exclusive-3": "36d0f3148e110df0c6f832faec5f4349d99c242866c2819930dc85452150e4b9",
+      "vireo-exclusive-permutation": "bc8049137c48f992bc8aaae32ddb60d58b98221511e1cedfd80e294a9b069e88",
+      "sol-delegation-1": "21a340c7eaa4edcdd456173b772061f46ca825e61b99b06349bfecbe3c94cb54",
+      "sol-delegation-2": "2e04d7f79db275e92351c2c5c743587d515031481c0ad73ad3854d0473812959",
+      "sol-delegation-3": "b50be0861fe3db9148df40698645ef5348750fe8bfe1a125731c5b6c15f75f57",
+      "sol-delegation-permutation": "758d9f0fdafbdf5f5b5c6fdd01ca07042f74a606137ebddec39539209e1dbf80",
+      "rill-log-gap-1": "a2962cb92db9097b7e66ca5d47ec6b77f01ed0794627178a1c5dc1e1b30ab682",
+      "rill-log-gap-2": "f64d8fe80f0fb5191a5ea39080fd1fc02d72b9bbc68be0449fe0bc3c5bcc6b00",
+      "rill-log-gap-3": "0a8b7e6da9ef8ba2b042d801d37e8140d2867b3fb1051a3825bc9303e1b7adfc",
+      "rill-log-gap-permutation": "0e1d2a20b1f7548c75cf3b758955c66134771805ecd98b7fbca64414362002d8",
+      "kestrel-compatibility-1": "8b566460b856f0bd543d548ca62e314ffdb867c19af93a194ef1aa32113017ed",
+      "kestrel-compatibility-2": "530e2b71e02cf1be42afbe16f6dea154d4874ee5a94731ab4d3a87e85443824d",
+      "kestrel-compatibility-3": "85e2d5689c9c0d35d070967c4944a292b27fe6632cb36b2a3f52017621d9a742",
+      "kestrel-compatibility-permutation": "020e392e3a5a1f0fb99a76f288eadb3d0eeefb8f14033278f3f86ef1f5875d64",
+      "bracken-roster-1": "8f9f691d30af6506d456c97a427f041dcf788d443068425824714c6c3e2e8a82",
+      "bracken-roster-2": "0c2205ab40f45a4c2062c467074438ec78af13232f487ff163f6fb830e0e63ec",
+      "bracken-roster-3": "94831625a812d605847a6eb87fcd55b5e17664f4b889321273409ae736bfabbd",
+      "bracken-roster-permutation": "6560eddfb2bbc13b94b1ed362a92c766a473b3c7bee1bfca7fa38f171153c636",
+      "mica-batch-joins-1": "85c5e92da4754699edc5aadab321770cbfa45ea435fbb12f44e47a9233d6577a",
+      "mica-batch-joins-2": "0d0384b0c1377b33efd08651e99d595435ebab13ec10247ff5a39f8d1c78340b",
+      "mica-batch-joins-3": "9f74d43c525a96e230b10a2a97ba23fad53323619530b11f24427a6a8329598c",
+      "mica-batch-joins-permutation": "9f39bd07c70e323ab264271151d6efa5242d6a131e9ab3b01388e629ee516eb9",
+      "petrel-payload-1": "8bb2a47f23f5a40d08b1994a7dc65233798b2ebe73b85ef07a865874fcc90fea",
+      "petrel-payload-2": "0687c3849cb844921ce22b30f48b5bd973ea1e38afa0f36349cbfce2b9cff5fb",
+      "petrel-payload-3": "ef2bc42a127ba2017a55edd566dc08954b3d9c8eeb67d1ad634c0d4ece8d4999",
+      "petrel-payload-permutation": "403fbb388e3b61237d985ae646a61c3772880604268b533299117a6fb107e233",
+      "calyx-timezone-1": "5af8e3e5f28f2d9e92d2578d5e0ce5b28cbc43bc0e1af8a46b34ecc691791ff0",
+      "calyx-timezone-2": "fd5977d26ea74c351f0037a448c111c6184340d3c13a9b5a2e4fad7800f10fd3",
+      "calyx-timezone-3": "35731b4056c6947bf7d8643fd9f6fbd138000a8e75c70bb1f809c42422abf92a",
+      "calyx-timezone-permutation": "4850db44302d4246700889c19f4b7b7c9d230f74b5c17a0fb8046f5c1379e1ef",
+      "lumen-vector-clocks-1": "f11d0d7ff84f09f696d1b2e952f2706ee2c7e652d8923940d60129a7b2866a65",
+      "lumen-vector-clocks-2": "bfd56585f27c9e204ba40c48d5827b6a7d6cda037cbcb53488956430e0b85300",
+      "lumen-vector-clocks-3": "29634c1c36908b1fb1aa62ee53097ea3809de49c19c926d2db442be2ad0ae698",
+      "lumen-vector-clocks-permutation": "e21db069f7d40f9468b75688ca4b9a695efbbb6097dd90874393c18a6e852a17",
+      "zephyr-study-1": "f52721417d3b3bb4f310ca5977167531876d6e9ce52abcf30b259a588dc7a609",
+      "zephyr-study-2": "60a7ed88d7f8624eb88d3961e26326062e23a6995055e6e3a11013689033ed05",
+      "zephyr-study-3": "2334da62a0b04dc541f05a991a25a0847f45a689db7dd0dd497b2138f9bda340",
+      "zephyr-study-permutation": "fe3e8729f2b78831c072aec478ee4bb51f582c48d0197eb3fbe15de1c15bfc1b",
+      "oriel-implication-1": "c2855372a5e87c8d15b68dc0b9b8cfe801e9f418e83e26d38a970a66bd84861b",
+      "oriel-implication-2": "d064fbc3e8041e954e0b8331845a79ceab4a81ea79673bc821947619ecdead2f",
+      "oriel-implication-3": "6e9f130bef61e9f81d084ad2de4f3df9e4fde3b1b5c9de66e4a1bb73389cac58",
+      "oriel-implication-permutation": "6279142ec4c9135a518ecac55956044a6b23c50e024fb7aaf4d67c495092ede8"
+    },
+    "groups": [
+      [
+        "aster-window-1",
+        "aster-window-2",
+        "aster-window-3",
+        "aster-window-permutation"
+      ],
+      [
+        "nacre-quorum-1",
+        "nacre-quorum-2",
+        "nacre-quorum-3",
+        "nacre-quorum-permutation"
+      ],
+      [
+        "pavo-amendment-1",
+        "pavo-amendment-2",
+        "pavo-amendment-3",
+        "pavo-amendment-permutation"
+      ],
+      [
+        "vela-quotation-1",
+        "vela-quotation-2",
+        "vela-quotation-3",
+        "vela-quotation-permutation"
+      ],
+      [
+        "orin-ownership-1",
+        "orin-ownership-2",
+        "orin-ownership-3",
+        "orin-ownership-permutation"
+      ],
+      [
+        "vireo-exclusive-1",
+        "vireo-exclusive-2",
+        "vireo-exclusive-3",
+        "vireo-exclusive-permutation"
+      ],
+      [
+        "sol-delegation-1",
+        "sol-delegation-2",
+        "sol-delegation-3",
+        "sol-delegation-permutation"
+      ],
+      [
+        "rill-log-gap-1",
+        "rill-log-gap-2",
+        "rill-log-gap-3",
+        "rill-log-gap-permutation"
+      ],
+      [
+        "kestrel-compatibility-1",
+        "kestrel-compatibility-2",
+        "kestrel-compatibility-3",
+        "kestrel-compatibility-permutation"
+      ],
+      [
+        "bracken-roster-1",
+        "bracken-roster-2",
+        "bracken-roster-3",
+        "bracken-roster-permutation"
+      ],
+      [
+        "mica-batch-joins-1",
+        "mica-batch-joins-2",
+        "mica-batch-joins-3",
+        "mica-batch-joins-permutation"
+      ],
+      [
+        "petrel-payload-1",
+        "petrel-payload-2",
+        "petrel-payload-3",
+        "petrel-payload-permutation"
+      ],
+      [
+        "calyx-timezone-1",
+        "calyx-timezone-2",
+        "calyx-timezone-3",
+        "calyx-timezone-permutation"
+      ],
+      [
+        "lumen-vector-clocks-1",
+        "lumen-vector-clocks-2",
+        "lumen-vector-clocks-3",
+        "lumen-vector-clocks-permutation"
+      ],
+      [
+        "zephyr-study-1",
+        "zephyr-study-2",
+        "zephyr-study-3",
+        "zephyr-study-permutation"
+      ],
+      [
+        "oriel-implication-1",
+        "oriel-implication-2",
+        "oriel-implication-3",
+        "oriel-implication-permutation"
+      ]
+    ]
+  },
+  "critical": {
+    "criterion": "critical-action-constraint-v1",
+    "registered_facts_by_partition": {
+      "train": 3,
+      "tuning": 1,
+      "development": 3
+    },
+    "supported_critical_opportunities_by_partition": {
+      "train": 9,
+      "tuning": 3,
+      "development": 7
+    },
+    "facts": {
+      "9d15e6c8595d8e1e84cf40bc": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "aster-window-1",
+          "aster-window-2",
+          "aster-window-3",
+          "aster-window-permutation"
+        ],
+        "supported_opportunities": [
+          "aster-window-1",
+          "aster-window-2",
+          "aster-window-permutation"
+        ]
+      },
+      "105b0e9e4a265824eebc6a47": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "nacre-quorum-1",
+          "nacre-quorum-2",
+          "nacre-quorum-3",
+          "nacre-quorum-permutation"
+        ],
+        "supported_opportunities": [
+          "nacre-quorum-1",
+          "nacre-quorum-2",
+          "nacre-quorum-permutation"
+        ]
+      },
+      "69bb1ca5aba7db68bda4e273": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "vireo-exclusive-1",
+          "vireo-exclusive-2",
+          "vireo-exclusive-3",
+          "vireo-exclusive-permutation"
+        ],
+        "supported_opportunities": [
+          "vireo-exclusive-1",
+          "vireo-exclusive-2",
+          "vireo-exclusive-permutation"
+        ]
+      },
+      "c045a0b307adb96d1ef0487f": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "kestrel-compatibility-1",
+          "kestrel-compatibility-2",
+          "kestrel-compatibility-3",
+          "kestrel-compatibility-permutation"
+        ],
+        "supported_opportunities": [
+          "kestrel-compatibility-1",
+          "kestrel-compatibility-2",
+          "kestrel-compatibility-permutation"
+        ]
+      },
+      "d3a5884cdf674cf94de35e92": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "calyx-timezone-1",
+          "calyx-timezone-2",
+          "calyx-timezone-3",
+          "calyx-timezone-permutation"
+        ],
+        "supported_opportunities": [
+          "calyx-timezone-1",
+          "calyx-timezone-2",
+          "calyx-timezone-permutation"
+        ]
+      },
+      "0640a402252a83ecacf5b524": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "lumen-vector-clocks-1",
+          "lumen-vector-clocks-2",
+          "lumen-vector-clocks-3",
+          "lumen-vector-clocks-permutation"
+        ],
+        "supported_opportunities": [
+          "lumen-vector-clocks-3"
+        ]
+      },
+      "e2a4b73671d4d7e5dbd3f984": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "oriel-implication-1",
+          "oriel-implication-2",
+          "oriel-implication-3",
+          "oriel-implication-permutation"
+        ],
+        "supported_opportunities": [
+          "oriel-implication-1",
+          "oriel-implication-2",
+          "oriel-implication-permutation"
+        ]
+      }
+    },
+    "metric_scope": "Critical selection retention only; no extraction or durable-retention result",
+    "measured": false
+  },
+  "limits": "Normalized exact content and declared ancestry only. Independent review is required for undeclared template ancestry and semantic label correctness. Partition minimums do not establish training readiness."
+}

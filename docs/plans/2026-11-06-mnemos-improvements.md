@@ -98,6 +98,16 @@ Exact tokenizer framing and 43 existing integrity tests pass. This is partial
 training preparation only: independent tuning/development data, fuller category
 and boundary coverage, and the numerical learning recipe remain open.
 
+The [partition preparation follow-up](../../benchmarks/local_memory/data/local-support-v2-partitions/README.md)
+adds 32 reviewed records and 92 labels. Three inherited families were moved
+intact to known training material. Combined counts are now 44 training, eight
+tuning and 12 development cases, with seven unique critical facts. The two
+tuning and three development families have provisional ancestry clearance
+only. Review also removed two rule selections that did not answer a numeric
+question. Exact framing and combined integrity/ancestry audits pass; sparse
+reserved coverage and missing operational boundaries still block the data
+gate. No training, hosted call or fresh acceptance occurred.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
@@ -120,9 +130,9 @@ host acceptance.
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
 computational admission. Follow the separate local data/learning design by
-extending the reviewed training seed and preparing independent grouped tuning
-and development data before fixing a training recipe. The known three training
-groups and new partial seed are not enough. Training and semantic
+extending the reviewed corpus's sparse reserved categories and missing boundary
+cases before fixing a training recipe. The training and partition preparation
+do not establish data sufficiency. Training and semantic
 grading remain unauthorized by capacity alone. Do not repeat an unchanged
 packaging/native matrix or
 the admitted computation screen. Any further model architecture needs its own

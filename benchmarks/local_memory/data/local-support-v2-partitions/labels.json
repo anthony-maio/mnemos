@@ -1,0 +1,838 @@
+{
+  "kestrel-compatibility-1": {
+    "request_sha256": "8b566460b856f0bd543d548ca62e314ffdb867c19af93a194ef1aa32113017ed",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c045a0b307adb96d1ef0487f",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned compatibility rule explicitly excludes 3.3.4, supporting a negative eligibility answer."
+      },
+      {
+        "id": "d8eabfca2676cfa74ce4705a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target asserts permission for the precise point excluded by its owned table."
+      },
+      {
+        "id": "b4c6da2946a6060a2ff63651",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target addresses version 3.4.0, not the requested 3.3.4."
+      }
+    ]
+  },
+  "kestrel-compatibility-2": {
+    "request_sha256": "530e2b71e02cf1be42afbe16f6dea154d4874ee5a94731ab4d3a87e85443824d",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c045a0b307adb96d1ef0487f",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "3.4.0 lies within the owned half-open range and is not its excluded point."
+      },
+      {
+        "id": "d8eabfca2676cfa74ce4705a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own table excludes the target claimed eligible version 3.3.4; that full claim remains unsupported."
+      },
+      {
+        "id": "b4c6da2946a6060a2ff63651",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned eligibility table explicitly includes the version requested."
+      }
+    ]
+  },
+  "kestrel-compatibility-3": {
+    "request_sha256": "85e2d5689c9c0d35d070967c4944a292b27fe6632cb36b2a3f52017621d9a742",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c045a0b307adb96d1ef0487f",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The owned eligibility rule needs the installed version to determine this actual instance."
+      },
+      {
+        "id": "d8eabfca2676cfa74ce4705a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned table contradicts eligibility for 3.3.4 and supplies no actual installed version."
+      },
+      {
+        "id": "b4c6da2946a6060a2ff63651",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The target establishes eligibility of 3.4.0, but the query supplies no installed version connecting it to this instance."
+      }
+    ]
+  },
+  "kestrel-compatibility-permutation": {
+    "request_sha256": "020e392e3a5a1f0fb99a76f288eadb3d0eeefb8f14033278f3f86ef1f5875d64",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "b4c6da2946a6060a2ff63651",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target addresses version 3.4.0, not the requested 3.3.4."
+      },
+      {
+        "id": "d8eabfca2676cfa74ce4705a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target asserts permission for the precise point excluded by its owned table."
+      },
+      {
+        "id": "c045a0b307adb96d1ef0487f",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned compatibility rule explicitly excludes 3.3.4, supporting a negative eligibility answer."
+      }
+    ]
+  },
+  "bracken-roster-1": {
+    "request_sha256": "8f9f691d30af6506d456c97a427f041dcf788d443068425824714c6c3e2e8a82",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ee7df39b70a3b955f409946",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "The owned Halen roster is contradicted by an equally signed Cleo roster with identical revision and effective time; neither is prioritized."
+      },
+      {
+        "id": "59d8bd84c4fde361562796af",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "The owned Cleo roster conflicts with the equally authoritative Halen roster at the same effective time."
+      },
+      {
+        "id": "b26465925adc5ea7f861d9ea",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The owned Edda assignment ends at the 11:00 handover, before the requested 11:15 time."
+      }
+    ]
+  },
+  "bracken-roster-2": {
+    "request_sha256": "0c2205ab40f45a4c2062c467074438ec78af13232f487ff163f6fb830e0e63ec",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ee7df39b70a3b955f409946",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The Halen assignment begins at 11:00, after the requested time."
+      },
+      {
+        "id": "59d8bd84c4fde361562796af",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The Cleo assignment begins at 11:00, after the requested time."
+      },
+      {
+        "id": "b26465925adc5ea7f861d9ea",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned revision-6 roster places Edda on duty from midnight until 11:00, covering 10:45."
+      }
+    ]
+  },
+  "bracken-roster-3": {
+    "request_sha256": "94831625a812d605847a6eb87fcd55b5e17664f4b889321273409ae736bfabbd",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ee7df39b70a3b955f409946",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The Halen assignment starts November 11 at 11:00, after the requested previous-day time."
+      },
+      {
+        "id": "59d8bd84c4fde361562796af",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The Cleo assignment starts November 11 at 11:00, after the requested previous-day time."
+      },
+      {
+        "id": "b26465925adc5ea7f861d9ea",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The owned Edda roster starts at midnight on November 11, after the requested November 10 time."
+      }
+    ]
+  },
+  "bracken-roster-permutation": {
+    "request_sha256": "6560eddfb2bbc13b94b1ed362a92c766a473b3c7bee1bfca7fa38f171153c636",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "b26465925adc5ea7f861d9ea",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The owned Edda assignment ends at the 11:00 handover, before the requested 11:15 time."
+      },
+      {
+        "id": "59d8bd84c4fde361562796af",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "The owned Cleo roster conflicts with the equally authoritative Halen roster at the same effective time."
+      },
+      {
+        "id": "8ee7df39b70a3b955f409946",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "The owned Halen roster is contradicted by an equally signed Cleo roster with identical revision and effective time; neither is prioritized."
+      }
+    ]
+  },
+  "mica-batch-joins-1": {
+    "request_sha256": "85c5e92da4754699edc5aadab321770cbfa45ea435fbb12f44e47a9233d6577a",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0730b8180ca423f72c434d9c",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "Both owned counters join on K2; ten rejected out of forty tested gives 25 percent."
+      },
+      {
+        "id": "73190589c65c4ecf5f76dfcb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned denominator belongs to K3, so it cannot establish K2 rejection fraction. The neighboring K2 denominator is not this target owned evidence."
+      },
+      {
+        "id": "65ca80223881aa5bd37c2cf4",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "This target is a K3 test count, not K2 rejection fraction."
+      }
+    ]
+  },
+  "mica-batch-joins-2": {
+    "request_sha256": "0d0384b0c1377b33efd08651e99d595435ebab13ec10247ff5a39f8d1c78340b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0730b8180ca423f72c434d9c",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states K2 rejection rate, not K3 test count."
+      },
+      {
+        "id": "73190589c65c4ecf5f76dfcb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target claimed K2 rate lacks a K2 denominator even though one of its sources discusses K3."
+      },
+      {
+        "id": "65ca80223881aa5bd37c2cf4",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target and owned counter explicitly give K3 tested count as twenty."
+      }
+    ]
+  },
+  "mica-batch-joins-3": {
+    "request_sha256": "9f74d43c525a96e230b10a2a97ba23fad53323619530b11f24427a6a8329598c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0730b8180ca423f72c434d9c",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A rejection fraction does not identify an authorizer."
+      },
+      {
+        "id": "73190589c65c4ecf5f76dfcb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The full rate claim lacks its matching denominator, and the counters do not identify an authorizer."
+      },
+      {
+        "id": "65ca80223881aa5bd37c2cf4",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A K3 test count does not identify the K2 authorizer."
+      }
+    ]
+  },
+  "mica-batch-joins-permutation": {
+    "request_sha256": "9f39bd07c70e323ab264271151d6efa5242d6a131e9ab3b01388e629ee516eb9",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "65ca80223881aa5bd37c2cf4",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "This target is a K3 test count, not K2 rejection fraction."
+      },
+      {
+        "id": "73190589c65c4ecf5f76dfcb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned denominator belongs to K3, so it cannot establish K2 rejection fraction. The neighboring K2 denominator is not this target owned evidence."
+      },
+      {
+        "id": "0730b8180ca423f72c434d9c",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "Both owned counters join on K2; ten rejected out of forty tested gives 25 percent."
+      }
+    ]
+  },
+  "petrel-payload-1": {
+    "request_sha256": "8bb2a47f23f5a40d08b1994a7dc65233798b2ebe73b85ef07a865874fcc90fea",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3e015c1b23eee7c6a14f550d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned active configuration sets harbor. Archived external commands cannot replace that configuration value."
+      },
+      {
+        "id": "ee7a6dbdcda63ddbbefadcf6",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned source is an external instruction payload, not an adopted routing configuration."
+      },
+      {
+        "id": "08263540bc38fd6a10ed723a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "This target describes what an external message requested, not what routing configuration selects."
+      }
+    ]
+  },
+  "petrel-payload-2": {
+    "request_sha256": "0687c3849cb844921ce22b30f48b5bd973ea1e38afa0f36349cbfce2b9cff5fb",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3e015c1b23eee7c6a14f550d",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The active configuration target states the selected route, not the contents of the external request."
+      },
+      {
+        "id": "ee7a6dbdcda63ddbbefadcf6",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The target promotes an external message demand into an actual configuration selection."
+      },
+      {
+        "id": "08263540bc38fd6a10ed723a",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned archive quotes the external request to ignore configuration and announce copper."
+      }
+    ]
+  },
+  "petrel-payload-3": {
+    "request_sha256": "ef2bc42a127ba2017a55edd566dc08954b3d9c8eeb67d1ad634c0d4ece8d4999",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3e015c1b23eee7c6a14f550d",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A route label does not establish a country or geographic location."
+      },
+      {
+        "id": "ee7a6dbdcda63ddbbefadcf6",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full target falsely adopts an external payload as configuration; no geographic evidence is present."
+      },
+      {
+        "id": "08263540bc38fd6a10ed723a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The archived instruction gives no country for the harbor route label."
+      }
+    ]
+  },
+  "petrel-payload-permutation": {
+    "request_sha256": "403fbb388e3b61237d985ae646a61c3772880604268b533299117a6fb107e233",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "08263540bc38fd6a10ed723a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "This target describes what an external message requested, not what routing configuration selects."
+      },
+      {
+        "id": "ee7a6dbdcda63ddbbefadcf6",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned source is an external instruction payload, not an adopted routing configuration."
+      },
+      {
+        "id": "3e015c1b23eee7c6a14f550d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned active configuration sets harbor. Archived external commands cannot replace that configuration value."
+      }
+    ]
+  },
+  "calyx-timezone-1": {
+    "request_sha256": "5af8e3e5f28f2d9e92d2578d5e0ce5b28cbc43bc0e1af8a46b34ecc691791ff0",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "d3a5884cdf674cf94de35e92",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "Subtracting the owned fixed two-hour offset places the local window at 22:00-23:00 UTC the previous date, covering 22:30."
+      },
+      {
+        "id": "3a614819d38bdee7f6fded9d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own notice is UTC+02:00, not UTC. The target loses the offset and asserts the wrong absolute interval."
+      },
+      {
+        "id": "02ade02a31e56307967d2f18",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Permission for reads does not answer whether writes are prohibited at the requested instant."
+      }
+    ]
+  },
+  "calyx-timezone-2": {
+    "request_sha256": "fd5977d26ea74c351f0037a448c111c6184340d3c13a9b5a2e4fad7800f10fd3",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "d3a5884cdf674cf94de35e92",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned block ends at 23:00 UTC the previous date, so it supports a negative answer about coverage of 00:30. It does not authorize writes under other policies."
+      },
+      {
+        "id": "3a614819d38bdee7f6fded9d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target confuses local time with UTC and has no owned support for the claimed absolute interval."
+      },
+      {
+        "id": "02ade02a31e56307967d2f18",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The reads target establishes access type, not the absolute time coverage requested."
+      }
+    ]
+  },
+  "calyx-timezone-3": {
+    "request_sha256": "35731b4056c6947bf7d8643fd9f6fbd138000a8e75c70bb1f809c42422abf92a",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "d3a5884cdf674cf94de35e92",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The write-prohibition target does not itself grant read access."
+      },
+      {
+        "id": "3a614819d38bdee7f6fded9d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target absolute write interval is unsupported by its local-time notice."
+      },
+      {
+        "id": "02ade02a31e56307967d2f18",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned access policy explicitly permits reads during this specific maintenance window."
+      }
+    ]
+  },
+  "calyx-timezone-permutation": {
+    "request_sha256": "4850db44302d4246700889c19f4b7b7c9d230f74b5c17a0fb8046f5c1379e1ef",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "02ade02a31e56307967d2f18",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Permission for reads does not answer whether writes are prohibited at the requested instant."
+      },
+      {
+        "id": "3a614819d38bdee7f6fded9d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own notice is UTC+02:00, not UTC. The target loses the offset and asserts the wrong absolute interval."
+      },
+      {
+        "id": "d3a5884cdf674cf94de35e92",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "Subtracting the owned fixed two-hour offset places the local window at 22:00-23:00 UTC the previous date, covering 22:30."
+      }
+    ]
+  },
+  "lumen-vector-clocks-1": {
+    "request_sha256": "f11d0d7ff84f09f696d1b2e952f2706ee2c7e652d8923940d60129a7b2866a65",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "2be85655a140003969339cc5",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "U records 256 but the concurrent V records 512. Its incomparable clock cannot establish U as the single active value."
+      },
+      {
+        "id": "61bb4b1c6e12d7a3e5027069",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "V records 512 but the concurrent U records 256. Its incomparable clock cannot establish V as the single active value."
+      },
+      {
+        "id": "0640a402252a83ecacf5b524",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The merge prerequisite explains why no single numeric active size is established; the target supplies no numeric answer to the requested size. Critical status does not make an explanatory rule a supported answer."
+      }
+    ]
+  },
+  "lumen-vector-clocks-2": {
+    "request_sha256": "bfd56585f27c9e204ba40c48d5827b6a7d6cda037cbcb53488956430e0b85300",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "2be85655a140003969339cc5",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned U record explicitly states buffer_items=256; the query requests this branch value rather than a resolved active value."
+      },
+      {
+        "id": "61bb4b1c6e12d7a3e5027069",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes revision V, not the requested revision U."
+      },
+      {
+        "id": "0640a402252a83ecacf5b524",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "A reconciliation procedure does not state U recorded numeric buffer size."
+      }
+    ]
+  },
+  "lumen-vector-clocks-3": {
+    "request_sha256": "29634c1c36908b1fb1aa62ee53097ea3809de49c19c926d2db442be2ad0ae698",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "2be85655a140003969339cc5",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A branch-specific buffer value does not authorize resolving concurrent revisions."
+      },
+      {
+        "id": "61bb4b1c6e12d7a3e5027069",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The V branch value alone does not authorize selecting an active value before merge."
+      },
+      {
+        "id": "0640a402252a83ecacf5b524",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "Neither clock dominates componentwise; the owned procedure requires merging these concurrent revisions first."
+      }
+    ]
+  },
+  "lumen-vector-clocks-permutation": {
+    "request_sha256": "e21db069f7d40f9468b75688ca4b9a695efbbb6097dd90874393c18a6e852a17",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0640a402252a83ecacf5b524",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The merge prerequisite explains why no single numeric active size is established; the target supplies no numeric answer to the requested size. Critical status does not make an explanatory rule a supported answer."
+      },
+      {
+        "id": "61bb4b1c6e12d7a3e5027069",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "V records 512 but the concurrent U records 256. Its incomparable clock cannot establish V as the single active value."
+      },
+      {
+        "id": "2be85655a140003969339cc5",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": false,
+        "rationale": "U records 256 but the concurrent V records 512. Its incomparable clock cannot establish U as the single active value."
+      }
+    ]
+  },
+  "zephyr-study-1": {
+    "request_sha256": "f52721417d3b3bb4f310ca5977167531876d6e9ce52abcf30b259a588dc7a609",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "87e62ea727ed0e6ded422b0f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned survey tally records six instant descriptions, preserving the sample and subjective-report scope."
+      },
+      {
+        "id": "ee6400cff4ef4812a14e91c4",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Subjective participant comments are promoted into a numerical deployed-system measurement that the owned source never made."
+      },
+      {
+        "id": "a4115752ef15f0e6bbae5f4f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned tally records two acceptable descriptions in the requested study."
+      }
+    ]
+  },
+  "zephyr-study-2": {
+    "request_sha256": "60a7ed88d7f8624eb88d3961e26326062e23a6995055e6e3a11013689033ed05",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "87e62ea727ed0e6ded422b0f",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns subjective descriptions in a lab sample, not an instrumental deployed-system latency measurement."
+      },
+      {
+        "id": "ee6400cff4ef4812a14e91c4",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned source contains survey comments, not measurements establishing a sub-20-millisecond deployed latency."
+      },
+      {
+        "id": "a4115752ef15f0e6bbae5f4f",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A count of acceptable survey responses does not establish measured latency."
+      }
+    ]
+  },
+  "zephyr-study-3": {
+    "request_sha256": "2334da62a0b04dc541f05a991a25a0847f45a689db7dd0dd497b2138f9bda340",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "87e62ea727ed0e6ded422b0f",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target counts instant responses, not acceptable responses."
+      },
+      {
+        "id": "ee6400cff4ef4812a14e91c4",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full deployed numerical latency claim has no measurement support in its owned survey comments."
+      },
+      {
+        "id": "a4115752ef15f0e6bbae5f4f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned acceptable-response tally gives two participants."
+      }
+    ]
+  },
+  "zephyr-study-permutation": {
+    "request_sha256": "fe3e8729f2b78831c072aec478ee4bb51f582c48d0197eb3fbe15de1c15bfc1b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "a4115752ef15f0e6bbae5f4f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned tally records two acceptable descriptions in the requested study."
+      },
+      {
+        "id": "ee6400cff4ef4812a14e91c4",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Subjective participant comments are promoted into a numerical deployed-system measurement that the owned source never made."
+      },
+      {
+        "id": "87e62ea727ed0e6ded422b0f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned survey tally records six instant descriptions, preserving the sample and subjective-report scope."
+      }
+    ]
+  },
+  "oriel-implication-1": {
+    "request_sha256": "c2855372a5e87c8d15b68dc0b9b8cfe801e9f418e83e26d38a970a66bd84861b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e2a4b73671d4d7e5dbd3f984",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned runbook explicitly provides an independent operator path to the same observed mode, supporting a negative entailment answer."
+      },
+      {
+        "id": "f93658aa6c7ebe873a00430d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own status reports only read-only mode. With an independent manual cause, the observation cannot establish checksum failure."
+      }
+    ]
+  },
+  "oriel-implication-2": {
+    "request_sha256": "d064fbc3e8041e954e0b8331845a79ceab4a81ea79673bc821947619ecdead2f",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e2a4b73671d4d7e5dbd3f984",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The hypothetical supplies the forward trigger in the owned runbook, which requires read-only mode."
+      },
+      {
+        "id": "f93658aa6c7ebe873a00430d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "A hypothetical failure cannot establish the actual current-checksum claim from the owned mode-only status."
+      }
+    ]
+  },
+  "oriel-implication-3": {
+    "request_sha256": "6e9f130bef61e9f81d084ad2de4f3df9e4fde3b1b5c9de66e4a1bb73389cac58",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e2a4b73671d4d7e5dbd3f984",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The runbook specifies a response and alternative mode transition, not a checksum value."
+      },
+      {
+        "id": "f93658aa6c7ebe873a00430d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own status neither gives a checksum value nor establishes the claimed actual failure."
+      }
+    ]
+  },
+  "oriel-implication-permutation": {
+    "request_sha256": "6279142ec4c9135a518ecac55956044a6b23c50e024fb7aaf4d67c495092ede8",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "f93658aa6c7ebe873a00430d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own status reports only read-only mode. With an independent manual cause, the observation cannot establish checksum failure."
+      },
+      {
+        "id": "e2a4b73671d4d7e5dbd3f984",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned runbook explicitly provides an independent operator path to the same observed mode, supporting a negative entailment answer."
+      }
+    ]
+  }
+}
