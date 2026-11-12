@@ -1,0 +1,1750 @@
+[
+  {
+    "id": "aster-window-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "aster-window"
+      ],
+      "source": [
+        "aster-window"
+      ],
+      "template": [
+        "interrupted-continuous-clock"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "aster-window"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "At 10:12, does the recorded Aster trace satisfy the promotion waiting rule?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9d15e6c8595d8e1e84cf40bc",
+          "version": 1,
+          "content": "Aster may promote a build only after 12 uninterrupted passing minutes; a failure resets this timer.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e7f8e043c00d05adc735666d",
+              "source_event_id": "545ea86e69ee11a48b3c4161",
+              "excerpt": "Aster promotion instruction: require 12 continuous passing minutes. A failure resets elapsed passing time to zero."
+            },
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        },
+        {
+          "id": "c0db6320b8f97f0e7975325a",
+          "version": 1,
+          "content": "Aster satisfied its 12-minute uninterrupted passing requirement at 10:12.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "aster-window-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "aster-window"
+      ],
+      "source": [
+        "aster-window"
+      ],
+      "template": [
+        "interrupted-continuous-clock"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "aster-window"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Assume Aster has passed for 12 minutes with no failure. Is its waiting requirement satisfied in this hypothetical?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9d15e6c8595d8e1e84cf40bc",
+          "version": 1,
+          "content": "Aster may promote a build only after 12 uninterrupted passing minutes; a failure resets this timer.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e7f8e043c00d05adc735666d",
+              "source_event_id": "545ea86e69ee11a48b3c4161",
+              "excerpt": "Aster promotion instruction: require 12 continuous passing minutes. A failure resets elapsed passing time to zero."
+            },
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        },
+        {
+          "id": "c0db6320b8f97f0e7975325a",
+          "version": 1,
+          "content": "Aster satisfied its 12-minute uninterrupted passing requirement at 10:12.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "aster-window-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "aster-window"
+      ],
+      "source": [
+        "aster-window"
+      ],
+      "template": [
+        "interrupted-continuous-clock"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "aster-window"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Which artifact digest did Aster promote?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9d15e6c8595d8e1e84cf40bc",
+          "version": 1,
+          "content": "Aster may promote a build only after 12 uninterrupted passing minutes; a failure resets this timer.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e7f8e043c00d05adc735666d",
+              "source_event_id": "545ea86e69ee11a48b3c4161",
+              "excerpt": "Aster promotion instruction: require 12 continuous passing minutes. A failure resets elapsed passing time to zero."
+            },
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        },
+        {
+          "id": "c0db6320b8f97f0e7975325a",
+          "version": 1,
+          "content": "Aster satisfied its 12-minute uninterrupted passing requirement at 10:12.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "aster-window-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "aster-window"
+      ],
+      "source": [
+        "aster-window"
+      ],
+      "template": [
+        "interrupted-continuous-clock"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "aster-window"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "At 10:12, does the recorded Aster trace satisfy the promotion waiting rule?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "c0db6320b8f97f0e7975325a",
+          "version": 1,
+          "content": "Aster satisfied its 12-minute uninterrupted passing requirement at 10:12.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        },
+        {
+          "id": "9d15e6c8595d8e1e84cf40bc",
+          "version": 1,
+          "content": "Aster may promote a build only after 12 uninterrupted passing minutes; a failure resets this timer.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e7f8e043c00d05adc735666d",
+              "source_event_id": "545ea86e69ee11a48b3c4161",
+              "excerpt": "Aster promotion instruction: require 12 continuous passing minutes. A failure resets elapsed passing time to zero."
+            },
+            {
+              "id": "704681be12c3caabfac46b5e",
+              "source_event_id": "27de1100b82c9bd8aa24c27f",
+              "excerpt": "Aster trace: passing 10:00-10:07; failure at 10:07; passing restarted at 10:08 and continued until 10:12."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "nacre-quorum-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "nacre-quorum"
+      ],
+      "source": [
+        "nacre-quorum"
+      ],
+      "template": [
+        "distinct-identity-deduplication"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "nacre-quorum"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "The manifest has r17 and r18, both submitted by Inez. Does it meet Nacre approval requirements?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "105b0e9e4a265824eebc6a47",
+          "version": 1,
+          "content": "Nacre requires approvals from two distinct reviewers; multiple approvals by one person count once.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a083886e8308959636880334",
+              "source_event_id": "fa3cd71da1b5805831e6576e",
+              "excerpt": "Nacre approval rule: at least two different reviewer identities must approve. Repeated submissions by the same person contribute one approval identity."
+            }
+          ]
+        },
+        {
+          "id": "e171a307115e573bb0c749bb",
+          "version": 1,
+          "content": "The Nacre manifest has approvals from two distinct reviewers.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a453975b7619cab95c88ebfc",
+              "source_event_id": "0903e05685cdff0241e2b888",
+              "excerpt": "Manifest review ledger: Inez submitted approval r17 and approval r18. Both records identify the same person, Inez. There are no other approval records."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "nacre-quorum-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "nacre-quorum"
+      ],
+      "source": [
+        "nacre-quorum"
+      ],
+      "template": [
+        "distinct-identity-deduplication"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "nacre-quorum"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Suppose Inez and Oren each approve a Nacre manifest once. Is its reviewer-count requirement met?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "105b0e9e4a265824eebc6a47",
+          "version": 1,
+          "content": "Nacre requires approvals from two distinct reviewers; multiple approvals by one person count once.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a083886e8308959636880334",
+              "source_event_id": "fa3cd71da1b5805831e6576e",
+              "excerpt": "Nacre approval rule: at least two different reviewer identities must approve. Repeated submissions by the same person contribute one approval identity."
+            }
+          ]
+        },
+        {
+          "id": "e171a307115e573bb0c749bb",
+          "version": 1,
+          "content": "The Nacre manifest has approvals from two distinct reviewers.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a453975b7619cab95c88ebfc",
+              "source_event_id": "0903e05685cdff0241e2b888",
+              "excerpt": "Manifest review ledger: Inez submitted approval r17 and approval r18. Both records identify the same person, Inez. There are no other approval records."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "nacre-quorum-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "nacre-quorum"
+      ],
+      "source": [
+        "nacre-quorum"
+      ],
+      "template": [
+        "distinct-identity-deduplication"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "nacre-quorum"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What cryptographic digest is recorded for the Nacre manifest?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "105b0e9e4a265824eebc6a47",
+          "version": 1,
+          "content": "Nacre requires approvals from two distinct reviewers; multiple approvals by one person count once.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a083886e8308959636880334",
+              "source_event_id": "fa3cd71da1b5805831e6576e",
+              "excerpt": "Nacre approval rule: at least two different reviewer identities must approve. Repeated submissions by the same person contribute one approval identity."
+            }
+          ]
+        },
+        {
+          "id": "e171a307115e573bb0c749bb",
+          "version": 1,
+          "content": "The Nacre manifest has approvals from two distinct reviewers.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a453975b7619cab95c88ebfc",
+              "source_event_id": "0903e05685cdff0241e2b888",
+              "excerpt": "Manifest review ledger: Inez submitted approval r17 and approval r18. Both records identify the same person, Inez. There are no other approval records."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "nacre-quorum-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "nacre-quorum"
+      ],
+      "source": [
+        "nacre-quorum"
+      ],
+      "template": [
+        "distinct-identity-deduplication"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "nacre-quorum"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "The manifest has r17 and r18, both submitted by Inez. Does it meet Nacre approval requirements?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e171a307115e573bb0c749bb",
+          "version": 1,
+          "content": "The Nacre manifest has approvals from two distinct reviewers.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a453975b7619cab95c88ebfc",
+              "source_event_id": "0903e05685cdff0241e2b888",
+              "excerpt": "Manifest review ledger: Inez submitted approval r17 and approval r18. Both records identify the same person, Inez. There are no other approval records."
+            }
+          ]
+        },
+        {
+          "id": "105b0e9e4a265824eebc6a47",
+          "version": 1,
+          "content": "Nacre requires approvals from two distinct reviewers; multiple approvals by one person count once.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "a083886e8308959636880334",
+              "source_event_id": "fa3cd71da1b5805831e6576e",
+              "excerpt": "Nacre approval rule: at least two different reviewer identities must approve. Repeated submissions by the same person contribute one approval identity."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "pavo-amendment-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "pavo-amendment"
+      ],
+      "source": [
+        "pavo-amendment"
+      ],
+      "template": [
+        "withdrawn-proposal-versus-published-amendment"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "pavo-amendment"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "According to the latest published Pavo amendment in the retained record, what export encoding applies?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e7717d1318a11784f61713a1",
+          "version": 1,
+          "content": "Pavo published amendment 14 specifies UTF-8 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "8cce635a57d8c4e0ca25df55",
+              "source_event_id": "675dc77e43eb03a1a140acbc",
+              "excerpt": "Published Pavo amendment 14: exports use UTF-8. This amendment withdraws draft 13. No later published amendment exists in this record."
+            }
+          ]
+        },
+        {
+          "id": "606a559b53af39fe19838d03",
+          "version": 1,
+          "content": "Withdrawn Pavo draft 13 proposed UTF-16 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "6c1ce293d052115d94cfc4f7",
+              "source_event_id": "ddb7ece854a88203f5989872",
+              "excerpt": "Pavo draft 13 proposed UTF-16 export encoding. The draft was withdrawn by published amendment 14 and was never the published specification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "pavo-amendment-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "pavo-amendment"
+      ],
+      "source": [
+        "pavo-amendment"
+      ],
+      "template": [
+        "withdrawn-proposal-versus-published-amendment"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "pavo-amendment"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What encoding did withdrawn Pavo draft 13 propose?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e7717d1318a11784f61713a1",
+          "version": 1,
+          "content": "Pavo published amendment 14 specifies UTF-8 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "8cce635a57d8c4e0ca25df55",
+              "source_event_id": "675dc77e43eb03a1a140acbc",
+              "excerpt": "Published Pavo amendment 14: exports use UTF-8. This amendment withdraws draft 13. No later published amendment exists in this record."
+            }
+          ]
+        },
+        {
+          "id": "606a559b53af39fe19838d03",
+          "version": 1,
+          "content": "Withdrawn Pavo draft 13 proposed UTF-16 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "6c1ce293d052115d94cfc4f7",
+              "source_event_id": "ddb7ece854a88203f5989872",
+              "excerpt": "Pavo draft 13 proposed UTF-16 export encoding. The draft was withdrawn by published amendment 14 and was never the published specification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "pavo-amendment-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "pavo-amendment"
+      ],
+      "source": [
+        "pavo-amendment"
+      ],
+      "template": [
+        "withdrawn-proposal-versus-published-amendment"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "pavo-amendment"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What does the unpublished Pavo amendment 15 require?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e7717d1318a11784f61713a1",
+          "version": 1,
+          "content": "Pavo published amendment 14 specifies UTF-8 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "8cce635a57d8c4e0ca25df55",
+              "source_event_id": "675dc77e43eb03a1a140acbc",
+              "excerpt": "Published Pavo amendment 14: exports use UTF-8. This amendment withdraws draft 13. No later published amendment exists in this record."
+            }
+          ]
+        },
+        {
+          "id": "606a559b53af39fe19838d03",
+          "version": 1,
+          "content": "Withdrawn Pavo draft 13 proposed UTF-16 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "6c1ce293d052115d94cfc4f7",
+              "source_event_id": "ddb7ece854a88203f5989872",
+              "excerpt": "Pavo draft 13 proposed UTF-16 export encoding. The draft was withdrawn by published amendment 14 and was never the published specification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "pavo-amendment-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "pavo-amendment"
+      ],
+      "source": [
+        "pavo-amendment"
+      ],
+      "template": [
+        "withdrawn-proposal-versus-published-amendment"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "pavo-amendment"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "According to the latest published Pavo amendment in the retained record, what export encoding applies?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "606a559b53af39fe19838d03",
+          "version": 1,
+          "content": "Withdrawn Pavo draft 13 proposed UTF-16 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "6c1ce293d052115d94cfc4f7",
+              "source_event_id": "ddb7ece854a88203f5989872",
+              "excerpt": "Pavo draft 13 proposed UTF-16 export encoding. The draft was withdrawn by published amendment 14 and was never the published specification."
+            }
+          ]
+        },
+        {
+          "id": "e7717d1318a11784f61713a1",
+          "version": 1,
+          "content": "Pavo published amendment 14 specifies UTF-8 for exports.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "8cce635a57d8c4e0ca25df55",
+              "source_event_id": "675dc77e43eb03a1a140acbc",
+              "excerpt": "Published Pavo amendment 14: exports use UTF-8. This amendment withdraws draft 13. No later published amendment exists in this record."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vela-quotation-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vela-quotation"
+      ],
+      "source": [
+        "vela-quotation"
+      ],
+      "template": [
+        "forged-quotation-and-explicit-denial"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vela-quotation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What did Vela report receiving about the Brindle checksum?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "998ed5d082b9e95580fde92f",
+          "version": 1,
+          "content": "Vela received an allegation that the Brindle checksum was verified, and explicitly denied having verified it.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "28a28beb31b11c7d02d67fd0",
+              "source_event_id": "e375bb21b54b79332ea9d863",
+              "excerpt": "Vela incident note: I received a courier message claiming the Brindle checksum was verified. The quotation attributed to me is fabricated. I have not verified that checksum."
+            }
+          ]
+        },
+        {
+          "id": "0fa327c4c2f27bc7f40757cc",
+          "version": 1,
+          "content": "Vela verified the Brindle checksum.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "63b864b0c9425f86eeb5ab93",
+              "source_event_id": "27690244f6bca59cbe648ab2",
+              "excerpt": "Courier message attributed the words \"I verified the Brindle checksum\" to Vela. Vela incident note calls this quotation fabricated and denies performing verification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vela-quotation-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vela-quotation"
+      ],
+      "source": [
+        "vela-quotation"
+      ],
+      "template": [
+        "forged-quotation-and-explicit-denial"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vela-quotation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "According to Vela, did Vela verify the Brindle checksum?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "998ed5d082b9e95580fde92f",
+          "version": 1,
+          "content": "Vela received an allegation that the Brindle checksum was verified, and explicitly denied having verified it.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "28a28beb31b11c7d02d67fd0",
+              "source_event_id": "e375bb21b54b79332ea9d863",
+              "excerpt": "Vela incident note: I received a courier message claiming the Brindle checksum was verified. The quotation attributed to me is fabricated. I have not verified that checksum."
+            }
+          ]
+        },
+        {
+          "id": "0fa327c4c2f27bc7f40757cc",
+          "version": 1,
+          "content": "Vela verified the Brindle checksum.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "63b864b0c9425f86eeb5ab93",
+              "source_event_id": "27690244f6bca59cbe648ab2",
+              "excerpt": "Courier message attributed the words \"I verified the Brindle checksum\" to Vela. Vela incident note calls this quotation fabricated and denies performing verification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vela-quotation-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vela-quotation"
+      ],
+      "source": [
+        "vela-quotation"
+      ],
+      "template": [
+        "forged-quotation-and-explicit-denial"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vela-quotation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Which checksum algorithm was used for Brindle?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "998ed5d082b9e95580fde92f",
+          "version": 1,
+          "content": "Vela received an allegation that the Brindle checksum was verified, and explicitly denied having verified it.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "28a28beb31b11c7d02d67fd0",
+              "source_event_id": "e375bb21b54b79332ea9d863",
+              "excerpt": "Vela incident note: I received a courier message claiming the Brindle checksum was verified. The quotation attributed to me is fabricated. I have not verified that checksum."
+            }
+          ]
+        },
+        {
+          "id": "0fa327c4c2f27bc7f40757cc",
+          "version": 1,
+          "content": "Vela verified the Brindle checksum.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "63b864b0c9425f86eeb5ab93",
+              "source_event_id": "27690244f6bca59cbe648ab2",
+              "excerpt": "Courier message attributed the words \"I verified the Brindle checksum\" to Vela. Vela incident note calls this quotation fabricated and denies performing verification."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vela-quotation-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vela-quotation"
+      ],
+      "source": [
+        "vela-quotation"
+      ],
+      "template": [
+        "forged-quotation-and-explicit-denial"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vela-quotation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What did Vela report receiving about the Brindle checksum?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "0fa327c4c2f27bc7f40757cc",
+          "version": 1,
+          "content": "Vela verified the Brindle checksum.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "63b864b0c9425f86eeb5ab93",
+              "source_event_id": "27690244f6bca59cbe648ab2",
+              "excerpt": "Courier message attributed the words \"I verified the Brindle checksum\" to Vela. Vela incident note calls this quotation fabricated and denies performing verification."
+            }
+          ]
+        },
+        {
+          "id": "998ed5d082b9e95580fde92f",
+          "version": 1,
+          "content": "Vela received an allegation that the Brindle checksum was verified, and explicitly denied having verified it.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "28a28beb31b11c7d02d67fd0",
+              "source_event_id": "e375bb21b54b79332ea9d863",
+              "excerpt": "Vela incident note: I received a courier message claiming the Brindle checksum was verified. The quotation attributed to me is fabricated. I have not verified that checksum."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "orin-ownership-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "orin-ownership"
+      ],
+      "source": [
+        "orin-ownership"
+      ],
+      "template": [
+        "conjunctive-claim-with-split-owned-measurements",
+        "expansion-owned-multisource",
+        "conflicting-records-subject-negation-partial-support"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "orin-ownership"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "How many segments are in Orin snapshot S?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9de9544c4d9f017b838f969b",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e1bebb98106fe5ff245b05a8",
+              "source_event_id": "c541f46c017d9bff8620c3c0",
+              "excerpt": "Orin snapshot S segment counter: 72 segments."
+            }
+          ]
+        },
+        {
+          "id": "6056470cae7ea33f75dad5fb",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments and has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f8f3e4ce8ec141ddd4e9b298",
+              "source_event_id": "ccc23a733803682285347d25",
+              "excerpt": "Orin snapshot S compression report: compressed size is 9 MB. This report contains no segment count."
+            }
+          ]
+        },
+        {
+          "id": "e2df6a2df6e2a36f2f434188",
+          "version": 1,
+          "content": "Orin index snapshot S has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "017cfe43174a5645b9eacd7d",
+              "source_event_id": "b4fdf441e22742a9078f67cf",
+              "excerpt": "Orin snapshot S size meter records compressed size 9 MB."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "orin-ownership-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "orin-ownership"
+      ],
+      "source": [
+        "orin-ownership"
+      ],
+      "template": [
+        "conjunctive-claim-with-split-owned-measurements",
+        "expansion-owned-multisource",
+        "conflicting-records-subject-negation-partial-support"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "orin-ownership"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "What is the compressed size of Orin snapshot S?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9de9544c4d9f017b838f969b",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e1bebb98106fe5ff245b05a8",
+              "source_event_id": "c541f46c017d9bff8620c3c0",
+              "excerpt": "Orin snapshot S segment counter: 72 segments."
+            }
+          ]
+        },
+        {
+          "id": "6056470cae7ea33f75dad5fb",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments and has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f8f3e4ce8ec141ddd4e9b298",
+              "source_event_id": "ccc23a733803682285347d25",
+              "excerpt": "Orin snapshot S compression report: compressed size is 9 MB. This report contains no segment count."
+            }
+          ]
+        },
+        {
+          "id": "e2df6a2df6e2a36f2f434188",
+          "version": 1,
+          "content": "Orin index snapshot S has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "017cfe43174a5645b9eacd7d",
+              "source_event_id": "b4fdf441e22742a9078f67cf",
+              "excerpt": "Orin snapshot S size meter records compressed size 9 MB."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "orin-ownership-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "orin-ownership"
+      ],
+      "source": [
+        "orin-ownership"
+      ],
+      "template": [
+        "conjunctive-claim-with-split-owned-measurements",
+        "expansion-owned-multisource",
+        "conflicting-records-subject-negation-partial-support"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "orin-ownership"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "Which encryption key identifier protects Orin snapshot S?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "9de9544c4d9f017b838f969b",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e1bebb98106fe5ff245b05a8",
+              "source_event_id": "c541f46c017d9bff8620c3c0",
+              "excerpt": "Orin snapshot S segment counter: 72 segments."
+            }
+          ]
+        },
+        {
+          "id": "6056470cae7ea33f75dad5fb",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments and has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f8f3e4ce8ec141ddd4e9b298",
+              "source_event_id": "ccc23a733803682285347d25",
+              "excerpt": "Orin snapshot S compression report: compressed size is 9 MB. This report contains no segment count."
+            }
+          ]
+        },
+        {
+          "id": "e2df6a2df6e2a36f2f434188",
+          "version": 1,
+          "content": "Orin index snapshot S has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "017cfe43174a5645b9eacd7d",
+              "source_event_id": "b4fdf441e22742a9078f67cf",
+              "excerpt": "Orin snapshot S size meter records compressed size 9 MB."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "orin-ownership-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "orin-ownership"
+      ],
+      "source": [
+        "orin-ownership"
+      ],
+      "template": [
+        "conjunctive-claim-with-split-owned-measurements",
+        "expansion-owned-multisource",
+        "conflicting-records-subject-negation-partial-support"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "orin-ownership"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "How many segments are in Orin snapshot S?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e2df6a2df6e2a36f2f434188",
+          "version": 1,
+          "content": "Orin index snapshot S has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "017cfe43174a5645b9eacd7d",
+              "source_event_id": "b4fdf441e22742a9078f67cf",
+              "excerpt": "Orin snapshot S size meter records compressed size 9 MB."
+            }
+          ]
+        },
+        {
+          "id": "6056470cae7ea33f75dad5fb",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments and has compressed size 9 MB.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f8f3e4ce8ec141ddd4e9b298",
+              "source_event_id": "ccc23a733803682285347d25",
+              "excerpt": "Orin snapshot S compression report: compressed size is 9 MB. This report contains no segment count."
+            }
+          ]
+        },
+        {
+          "id": "9de9544c4d9f017b838f969b",
+          "version": 1,
+          "content": "Orin index snapshot S contains 72 segments.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "e1bebb98106fe5ff245b05a8",
+              "source_event_id": "c541f46c017d9bff8620c3c0",
+              "excerpt": "Orin snapshot S segment counter: 72 segments."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vireo-exclusive-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vireo-exclusive"
+      ],
+      "source": [
+        "vireo-exclusive"
+      ],
+      "template": [
+        "exclusive-choice-versus-fixed-choice",
+        "audit-choice-versus-conjunction"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vireo-exclusive"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "What channel-selection constraint applies to a Vireo revision 4 release?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "69bb1ca5aba7db68bda4e273",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting exactly one of the red and blue channels for each release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c50b01fd95be45a105a71ea1",
+              "source_event_id": "469d449c2cfe710ba20917b7",
+              "excerpt": "Vireo revision 4 routing instruction: choose either red or blue, exactly one, per release. Neither color is mandatory by itself. Never enable both for the same release."
+            }
+          ]
+        },
+        {
+          "id": "616cf6713066536cb86770f0",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting the red channel for every release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "eaa1aca756e4d5801fa9bc91",
+              "source_event_id": "ea1e30db1c300bfe998fdad8",
+              "excerpt": "Revision 4 permits either color and mandates neither one individually. Selecting blue alone is valid."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vireo-exclusive-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vireo-exclusive"
+      ],
+      "source": [
+        "vireo-exclusive"
+      ],
+      "template": [
+        "exclusive-choice-versus-fixed-choice",
+        "audit-choice-versus-conjunction"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vireo-exclusive"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "Blue is already enabled for this Vireo release. May red also be enabled under revision 4?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "69bb1ca5aba7db68bda4e273",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting exactly one of the red and blue channels for each release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c50b01fd95be45a105a71ea1",
+              "source_event_id": "469d449c2cfe710ba20917b7",
+              "excerpt": "Vireo revision 4 routing instruction: choose either red or blue, exactly one, per release. Neither color is mandatory by itself. Never enable both for the same release."
+            }
+          ]
+        },
+        {
+          "id": "616cf6713066536cb86770f0",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting the red channel for every release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "eaa1aca756e4d5801fa9bc91",
+              "source_event_id": "ea1e30db1c300bfe998fdad8",
+              "excerpt": "Revision 4 permits either color and mandates neither one individually. Selecting blue alone is valid."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vireo-exclusive-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vireo-exclusive"
+      ],
+      "source": [
+        "vireo-exclusive"
+      ],
+      "template": [
+        "exclusive-choice-versus-fixed-choice",
+        "audit-choice-versus-conjunction"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vireo-exclusive"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "Which color has the current Vireo release actually selected? Its selection state is unknown.",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "69bb1ca5aba7db68bda4e273",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting exactly one of the red and blue channels for each release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c50b01fd95be45a105a71ea1",
+              "source_event_id": "469d449c2cfe710ba20917b7",
+              "excerpt": "Vireo revision 4 routing instruction: choose either red or blue, exactly one, per release. Neither color is mandatory by itself. Never enable both for the same release."
+            }
+          ]
+        },
+        {
+          "id": "616cf6713066536cb86770f0",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting the red channel for every release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "eaa1aca756e4d5801fa9bc91",
+              "source_event_id": "ea1e30db1c300bfe998fdad8",
+              "excerpt": "Revision 4 permits either color and mandates neither one individually. Selecting blue alone is valid."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "vireo-exclusive-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "vireo-exclusive"
+      ],
+      "source": [
+        "vireo-exclusive"
+      ],
+      "template": [
+        "exclusive-choice-versus-fixed-choice",
+        "audit-choice-versus-conjunction"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "vireo-exclusive"
+      ]
+    },
+    "known_material": true,
+    "request": {
+      "query": "What channel-selection constraint applies to a Vireo revision 4 release?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "616cf6713066536cb86770f0",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting the red channel for every release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "eaa1aca756e4d5801fa9bc91",
+              "source_event_id": "ea1e30db1c300bfe998fdad8",
+              "excerpt": "Revision 4 permits either color and mandates neither one individually. Selecting blue alone is valid."
+            }
+          ]
+        },
+        {
+          "id": "69bb1ca5aba7db68bda4e273",
+          "version": 1,
+          "content": "Vireo revision 4 requires selecting exactly one of the red and blue channels for each release.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c50b01fd95be45a105a71ea1",
+              "source_event_id": "469d449c2cfe710ba20917b7",
+              "excerpt": "Vireo revision 4 routing instruction: choose either red or blue, exactly one, per release. Neither color is mandatory by itself. Never enable both for the same release."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "sol-delegation-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "sol-delegation"
+      ],
+      "source": [
+        "sol-delegation"
+      ],
+      "template": [
+        "request-versus-completion-of-delegated-work"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "sol-delegation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Who asked Sol to rotate the Cedar credential?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "12abb234b208497e6914f613",
+          "version": 1,
+          "content": "Nima asked Sol to rotate the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "571e8aba5e94a40901dc3887",
+              "source_event_id": "ca0f9971267f20244020bf9f",
+              "excerpt": "Cedar task inbox: from Nima to Sol, please rotate the Cedar service credential. Delivery was acknowledged; this record does not confirm execution."
+            }
+          ]
+        },
+        {
+          "id": "e22b537dd6bcad1e73417603",
+          "version": 1,
+          "content": "Sol completed rotation of the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c9695c91858d7e2472730472",
+              "source_event_id": "618e804f21e95d7de3f324c5",
+              "excerpt": "The only Cedar record is Nima asking Sol to rotate the credential and a delivery acknowledgment. No execution or completion receipt is present."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "sol-delegation-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "sol-delegation"
+      ],
+      "source": [
+        "sol-delegation"
+      ],
+      "template": [
+        "request-versus-completion-of-delegated-work"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "sol-delegation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Has the Cedar credential actually been rotated?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "12abb234b208497e6914f613",
+          "version": 1,
+          "content": "Nima asked Sol to rotate the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "571e8aba5e94a40901dc3887",
+              "source_event_id": "ca0f9971267f20244020bf9f",
+              "excerpt": "Cedar task inbox: from Nima to Sol, please rotate the Cedar service credential. Delivery was acknowledged; this record does not confirm execution."
+            }
+          ]
+        },
+        {
+          "id": "e22b537dd6bcad1e73417603",
+          "version": 1,
+          "content": "Sol completed rotation of the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c9695c91858d7e2472730472",
+              "source_event_id": "618e804f21e95d7de3f324c5",
+              "excerpt": "The only Cedar record is Nima asking Sol to rotate the credential and a delivery acknowledgment. No execution or completion receipt is present."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "sol-delegation-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "sol-delegation"
+      ],
+      "source": [
+        "sol-delegation"
+      ],
+      "template": [
+        "request-versus-completion-of-delegated-work"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "sol-delegation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Who actually completed the Cedar rotation?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "12abb234b208497e6914f613",
+          "version": 1,
+          "content": "Nima asked Sol to rotate the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "571e8aba5e94a40901dc3887",
+              "source_event_id": "ca0f9971267f20244020bf9f",
+              "excerpt": "Cedar task inbox: from Nima to Sol, please rotate the Cedar service credential. Delivery was acknowledged; this record does not confirm execution."
+            }
+          ]
+        },
+        {
+          "id": "e22b537dd6bcad1e73417603",
+          "version": 1,
+          "content": "Sol completed rotation of the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c9695c91858d7e2472730472",
+              "source_event_id": "618e804f21e95d7de3f324c5",
+              "excerpt": "The only Cedar record is Nima asking Sol to rotate the credential and a delivery acknowledgment. No execution or completion receipt is present."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "sol-delegation-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "sol-delegation"
+      ],
+      "source": [
+        "sol-delegation"
+      ],
+      "template": [
+        "request-versus-completion-of-delegated-work"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "sol-delegation"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Who asked Sol to rotate the Cedar credential?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "e22b537dd6bcad1e73417603",
+          "version": 1,
+          "content": "Sol completed rotation of the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "c9695c91858d7e2472730472",
+              "source_event_id": "618e804f21e95d7de3f324c5",
+              "excerpt": "The only Cedar record is Nima asking Sol to rotate the credential and a delivery acknowledgment. No execution or completion receipt is present."
+            }
+          ]
+        },
+        {
+          "id": "12abb234b208497e6914f613",
+          "version": 1,
+          "content": "Nima asked Sol to rotate the Cedar service credential.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "571e8aba5e94a40901dc3887",
+              "source_event_id": "ca0f9971267f20244020bf9f",
+              "excerpt": "Cedar task inbox: from Nima to Sol, please rotate the Cedar service credential. Delivery was acknowledged; this record does not confirm execution."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "rill-log-gap-1",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "rill-log-gap"
+      ],
+      "source": [
+        "rill-log-gap"
+      ],
+      "template": [
+        "incomplete-observation-versus-negative-event-claim"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "rill-log-gap"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What does the Rill capture establish about success entries and log coverage from 09:00 to 10:00?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "74e667c49217d6f38753cd00",
+          "version": 1,
+          "content": "No Rill export-success entry appears in the captured 09:00-10:00 log, whose transport was unavailable from 09:12 to 09:22.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f90e89b0977b6a34bdfa256e",
+              "source_event_id": "d231df42d40a054b721b446e",
+              "excerpt": "Rill capture summary 09:00-10:00: one export-start entry; no export-success entry captured. Log transport was unavailable 09:12-09:22. The summary does not determine whether an export completed during the gap."
+            }
+          ]
+        },
+        {
+          "id": "d7b491783d9016a1bc65eba8",
+          "version": 1,
+          "content": "Rill completed no export between 09:00 and 10:00.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "9d59d9f9695fdf813b243fc9",
+              "source_event_id": "95dfcb3f45ae46669ec2822c",
+              "excerpt": "No success entry was captured, but the logging gap prevents determining whether an export completed between 09:12 and 09:22."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "rill-log-gap-2",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "rill-log-gap"
+      ],
+      "source": [
+        "rill-log-gap"
+      ],
+      "template": [
+        "incomplete-observation-versus-negative-event-claim"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "rill-log-gap"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "Did a Rill export actually complete between 09:00 and 10:00?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "74e667c49217d6f38753cd00",
+          "version": 1,
+          "content": "No Rill export-success entry appears in the captured 09:00-10:00 log, whose transport was unavailable from 09:12 to 09:22.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f90e89b0977b6a34bdfa256e",
+              "source_event_id": "d231df42d40a054b721b446e",
+              "excerpt": "Rill capture summary 09:00-10:00: one export-start entry; no export-success entry captured. Log transport was unavailable 09:12-09:22. The summary does not determine whether an export completed during the gap."
+            }
+          ]
+        },
+        {
+          "id": "d7b491783d9016a1bc65eba8",
+          "version": 1,
+          "content": "Rill completed no export between 09:00 and 10:00.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "9d59d9f9695fdf813b243fc9",
+              "source_event_id": "95dfcb3f45ae46669ec2822c",
+              "excerpt": "No success entry was captured, but the logging gap prevents determining whether an export completed between 09:12 and 09:22."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "rill-log-gap-3",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "rill-log-gap"
+      ],
+      "source": [
+        "rill-log-gap"
+      ],
+      "template": [
+        "incomplete-observation-versus-negative-event-claim"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "rill-log-gap"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "During which interval was the Rill log transport unavailable?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "74e667c49217d6f38753cd00",
+          "version": 1,
+          "content": "No Rill export-success entry appears in the captured 09:00-10:00 log, whose transport was unavailable from 09:12 to 09:22.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f90e89b0977b6a34bdfa256e",
+              "source_event_id": "d231df42d40a054b721b446e",
+              "excerpt": "Rill capture summary 09:00-10:00: one export-start entry; no export-success entry captured. Log transport was unavailable 09:12-09:22. The summary does not determine whether an export completed during the gap."
+            }
+          ]
+        },
+        {
+          "id": "d7b491783d9016a1bc65eba8",
+          "version": 1,
+          "content": "Rill completed no export between 09:00 and 10:00.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "9d59d9f9695fdf813b243fc9",
+              "source_event_id": "95dfcb3f45ae46669ec2822c",
+              "excerpt": "No success entry was captured, but the logging gap prevents determining whether an export completed between 09:12 and 09:22."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "rill-log-gap-permutation",
+    "split": "train",
+    "lineage": {
+      "scenario": [
+        "rill-log-gap"
+      ],
+      "source": [
+        "rill-log-gap"
+      ],
+      "template": [
+        "incomplete-observation-versus-negative-event-claim"
+      ],
+      "paraphrase": [],
+      "counterfactual": [
+        "rill-log-gap"
+      ]
+    },
+    "known_material": false,
+    "request": {
+      "query": "What does the Rill capture establish about success entries and log coverage from 09:00 to 10:00?",
+      "reference_date": "2026-11-11",
+      "candidates": [
+        {
+          "id": "d7b491783d9016a1bc65eba8",
+          "version": 1,
+          "content": "Rill completed no export between 09:00 and 10:00.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "9d59d9f9695fdf813b243fc9",
+              "source_event_id": "95dfcb3f45ae46669ec2822c",
+              "excerpt": "No success entry was captured, but the logging gap prevents determining whether an export completed between 09:12 and 09:22."
+            }
+          ]
+        },
+        {
+          "id": "74e667c49217d6f38753cd00",
+          "version": 1,
+          "content": "No Rill export-success entry appears in the captured 09:00-10:00 log, whose transport was unavailable from 09:12 to 09:22.",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "id": "f90e89b0977b6a34bdfa256e",
+              "source_event_id": "d231df42d40a054b721b446e",
+              "excerpt": "Rill capture summary 09:00-10:00: one export-start entry; no export-success entry captured. Log transport was unavailable 09:12-09:22. The summary does not determine whether an export completed during the gap."
+            }
+          ]
+        }
+      ]
+    }
+  }
+]

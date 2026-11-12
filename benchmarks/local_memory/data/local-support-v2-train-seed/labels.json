@@ -1,0 +1,670 @@
+{
+  "aster-window-1": {
+    "request_sha256": "85e7813df0722b7db5d12e0fe41d5e95abdedbca83b069503ae81798211f8d8e",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9d15e6c8595d8e1e84cf40bc",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned instruction requires 12 continuous minutes; the owned trace gives only four since the reset, so it supports denying promotion under this rule."
+      },
+      {
+        "id": "c0db6320b8f97f0e7975325a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned trace records a failure and only four subsequent passing minutes, contradicting the claimed completed uninterrupted requirement."
+      }
+    ]
+  },
+  "aster-window-2": {
+    "request_sha256": "a4f1f1b3d153f865e8df8d75b2ccd439fb99de3d93137ff87d695e702d6b20b6",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9d15e6c8595d8e1e84cf40bc",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The hypothetical supplies exactly the continuous passing interval required by the owned instruction."
+      },
+      {
+        "id": "c0db6320b8f97f0e7975325a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The hypothetical does not repair the historical 10:12 claim; its own trace still lacks a 12-minute interval."
+      }
+    ]
+  },
+  "aster-window-3": {
+    "request_sha256": "df50f722bd30178b5189037d4fb7603c5c2d0cbd610df7714eea967f66a77cd5",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9d15e6c8595d8e1e84cf40bc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The owned instruction specifies a timer, not an artifact digest or a completed promotion."
+      },
+      {
+        "id": "c0db6320b8f97f0e7975325a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The trace fails to establish the claimed waiting completion and contains no artifact digest."
+      }
+    ]
+  },
+  "aster-window-permutation": {
+    "request_sha256": "26722d5ce74dc45a60f34d3e4ee5d02962f381488642eb0bb1b4fb1d6fa64c3a",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c0db6320b8f97f0e7975325a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned trace records a failure and only four subsequent passing minutes, contradicting the claimed completed uninterrupted requirement."
+      },
+      {
+        "id": "9d15e6c8595d8e1e84cf40bc",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned instruction requires 12 continuous minutes; the owned trace gives only four since the reset, so it supports denying promotion under this rule."
+      }
+    ]
+  },
+  "nacre-quorum-1": {
+    "request_sha256": "66158ceff22afcd44abae5097e32ee646998dcd072a2dd7282e1e45c5dbeba32",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "105b0e9e4a265824eebc6a47",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned rule counts identities, so the two submissions by Inez establish only one of two required identities."
+      },
+      {
+        "id": "e171a307115e573bb0c749bb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned ledger explicitly identifies only one reviewer, contradicting the claim of two distinct reviewers."
+      }
+    ]
+  },
+  "nacre-quorum-2": {
+    "request_sha256": "0b364f8fe6c49325b7ea1fc064fce04cb3f6f5871207a041d249fc31b230ab75",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "105b0e9e4a265824eebc6a47",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The two named distinct reviewers satisfy the identity-count requirement in the owned rule."
+      },
+      {
+        "id": "e171a307115e573bb0c749bb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "A hypothetical different manifest cannot establish the actual manifest claim; its owned ledger has only Inez."
+      }
+    ]
+  },
+  "nacre-quorum-3": {
+    "request_sha256": "1e41f15b48697f91ec0c471b50bd13922ff5303f8934a3528cdf7f3cf6ad43bc",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "105b0e9e4a265824eebc6a47",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The owned rule specifies reviewer counting and contains no manifest digest."
+      },
+      {
+        "id": "e171a307115e573bb0c749bb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned ledger establishes one identity rather than two and contains no manifest digest."
+      }
+    ]
+  },
+  "nacre-quorum-permutation": {
+    "request_sha256": "2257c2d623ae13ceff98f013e0cfa6d193b1e5275e3a09a724ad0f8b071a7356",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e171a307115e573bb0c749bb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned ledger explicitly identifies only one reviewer, contradicting the claim of two distinct reviewers."
+      },
+      {
+        "id": "105b0e9e4a265824eebc6a47",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned rule counts identities, so the two submissions by Inez establish only one of two required identities."
+      }
+    ]
+  },
+  "pavo-amendment-1": {
+    "request_sha256": "a4a5c01e166357aa3e08ccab047ef90a7cff0e37f44139ad9d6196a4435dabc6",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e7717d1318a11784f61713a1",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned published amendment explicitly specifies UTF-8 and withdraws the only cited older draft."
+      },
+      {
+        "id": "606a559b53af39fe19838d03",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The owned source identifies this as a withdrawn, never-published proposal rather than the current published encoding."
+      }
+    ]
+  },
+  "pavo-amendment-2": {
+    "request_sha256": "9b709fec8d3c812df0d4ecb02cf6882799b82a148f72e2773a563758472e5a4c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e7717d1318a11784f61713a1",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states amendment 14 encoding, while the query asks about draft 13."
+      },
+      {
+        "id": "606a559b53af39fe19838d03",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned draft record explicitly names the withdrawn draft and its proposed UTF-16 encoding."
+      }
+    ]
+  },
+  "pavo-amendment-3": {
+    "request_sha256": "68179f567a78aeafd41764cb22063b8429fb1428e0347e251cc762eb332d11d6",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e7717d1318a11784f61713a1",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target and its evidence concern amendment 14; they establish nothing about amendment 15."
+      },
+      {
+        "id": "606a559b53af39fe19838d03",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target and evidence concern draft 13, not amendment 15."
+      }
+    ]
+  },
+  "pavo-amendment-permutation": {
+    "request_sha256": "3210471830b8deba90b9d683c45293f18bd8da31dc69404c6e30ed809f1b5a89",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "606a559b53af39fe19838d03",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": false,
+        "rationale": "The owned source identifies this as a withdrawn, never-published proposal rather than the current published encoding."
+      },
+      {
+        "id": "e7717d1318a11784f61713a1",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned published amendment explicitly specifies UTF-8 and withdraws the only cited older draft."
+      }
+    ]
+  },
+  "vela-quotation-1": {
+    "request_sha256": "b208bcfb3e47b72761b28029d19c7aa00dae73c6d80f19eae2e553f07d90d2fd",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "998ed5d082b9e95580fde92f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned incident note records receipt of the allegation and explicitly denies the attributed verification."
+      },
+      {
+        "id": "0fa327c4c2f27bc7f40757cc",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned material identifies the supposed first-person verification as a fabricated attribution that Vela denies."
+      }
+    ]
+  },
+  "vela-quotation-2": {
+    "request_sha256": "fe25828d2d7ac7ca1d34d5edecf17611cae0f8a12056cb02f3250e8cf78a7dc8",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "998ed5d082b9e95580fde92f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The explicit denial in the owned incident note supports a negative answer about Vela verification."
+      },
+      {
+        "id": "0fa327c4c2f27bc7f40757cc",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The courier attribution cannot establish an action explicitly denied by its supposed speaker."
+      }
+    ]
+  },
+  "vela-quotation-3": {
+    "request_sha256": "743a170f8eb0449783d976a68d7f6d02c639e4b5c7f62d02e721f2b35f05db18",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "998ed5d082b9e95580fde92f",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns an allegation and denial, with no checksum algorithm identified."
+      },
+      {
+        "id": "0fa327c4c2f27bc7f40757cc",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The target still promotes a disclaimed fabricated quotation into an actual verification; no algorithm is given."
+      }
+    ]
+  },
+  "vela-quotation-permutation": {
+    "request_sha256": "4e2a93343df30991d8294fd56ebde83fb3033d839ac13f5dc0ac983cbd2698a3",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0fa327c4c2f27bc7f40757cc",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned material identifies the supposed first-person verification as a fabricated attribution that Vela denies."
+      },
+      {
+        "id": "998ed5d082b9e95580fde92f",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned incident note records receipt of the allegation and explicitly denies the attributed verification."
+      }
+    ]
+  },
+  "orin-ownership-1": {
+    "request_sha256": "05ad06c404da7e8ac11d94842f059f313100f355c245e395bb28cd8a6adc9868",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9de9544c4d9f017b838f969b",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target own segment counter explicitly measures 72 segments for snapshot S."
+      },
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target own compression report supports size only. The neighboring candidate segment counter is not owned evidence for this conjunctive claim."
+      },
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The size target answers compressed size, not the requested segment count."
+      }
+    ]
+  },
+  "orin-ownership-2": {
+    "request_sha256": "0b6581a85c77651ef97222ae0e76b891615ff4f08045a9af4f60147764b12ffa",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9de9544c4d9f017b838f969b",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The segment target answers a count, not compressed size."
+      },
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Even for a size query, this full candidate also asserts an unsupported segment count. Its own source does not support every clause."
+      },
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target own size meter explicitly measures 9 MB compressed size for snapshot S."
+      }
+    ]
+  },
+  "orin-ownership-3": {
+    "request_sha256": "bbf63f70e57dd577ddd1b0a5619ea9c992c4aed86ab1cc16bec470358197d09f",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9de9544c4d9f017b838f969b",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The segment measurement contains no encryption key identifier."
+      },
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The full conjunctive target lacks owned support for its count, and its source says nothing about encryption keys."
+      },
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The compressed-size measurement contains no encryption key identifier."
+      }
+    ]
+  },
+  "orin-ownership-permutation": {
+    "request_sha256": "218f1a1171e2e619662a1331f41362aa05a45bc6bfda3950390964e0416ed930",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The size target answers compressed size, not the requested segment count."
+      },
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The target own compression report supports size only. The neighboring candidate segment counter is not owned evidence for this conjunctive claim."
+      },
+      {
+        "id": "9de9544c4d9f017b838f969b",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target own segment counter explicitly measures 72 segments for snapshot S."
+      }
+    ]
+  },
+  "vireo-exclusive-1": {
+    "request_sha256": "26f58a5b72734a35fb77f2a740f6fb868b92c80a43fb12dc662d4a650d2ace68",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "69bb1ca5aba7db68bda4e273",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned routing instruction imposes exactly-one selection without fixing a color."
+      },
+      {
+        "id": "616cf6713066536cb86770f0",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned source explicitly permits blue alone and denies any individually mandatory color."
+      }
+    ]
+  },
+  "vireo-exclusive-2": {
+    "request_sha256": "7630878f856f4a777cb0e8a80e10d274c041e1511a262bb5db6f26fcf2b518d4",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "69bb1ca5aba7db68bda4e273",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "Exactly-one selection and the owned explicit prohibition on both support denying a second enabled channel."
+      },
+      {
+        "id": "616cf6713066536cb86770f0",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned source does not require red, and the existing blue selection cannot convert it into a red mandate."
+      }
+    ]
+  },
+  "vireo-exclusive-3": {
+    "request_sha256": "36d0f3148e110df0c6f832faec5f4349d99c242866c2819930dc85452150e4b9",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "69bb1ca5aba7db68bda4e273",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The owned instruction defines the valid choices but supplies no actual selection state."
+      },
+      {
+        "id": "616cf6713066536cb86770f0",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own source denies a fixed red mandate and contains no actual selection state."
+      }
+    ]
+  },
+  "vireo-exclusive-permutation": {
+    "request_sha256": "bc8049137c48f992bc8aaae32ddb60d58b98221511e1cedfd80e294a9b069e88",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "616cf6713066536cb86770f0",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned source explicitly permits blue alone and denies any individually mandatory color."
+      },
+      {
+        "id": "69bb1ca5aba7db68bda4e273",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned routing instruction imposes exactly-one selection without fixing a color."
+      }
+    ]
+  },
+  "sol-delegation-1": {
+    "request_sha256": "21a340c7eaa4edcdd456173b772061f46ca825e61b99b06349bfecbe3c94cb54",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "12abb234b208497e6914f613",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned inbox record identifies Nima as the sender of the rotation request."
+      },
+      {
+        "id": "e22b537dd6bcad1e73417603",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Acknowledging delivery of a request does not establish the claimed completed rotation."
+      }
+    ]
+  },
+  "sol-delegation-2": {
+    "request_sha256": "2e04d7f79db275e92351c2c5c743587d515031481c0ad73ad3854d0473812959",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "12abb234b208497e6914f613",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target records a request, not completed execution; the owned record explicitly withholds execution confirmation."
+      },
+      {
+        "id": "e22b537dd6bcad1e73417603",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own source records no execution receipt, so it cannot support the completed-action target."
+      }
+    ]
+  },
+  "sol-delegation-3": {
+    "request_sha256": "b50be0861fe3db9148df40698645ef5348750fe8bfe1a125731c5b6c15f75f57",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "12abb234b208497e6914f613",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Being the recipient of a request does not establish who executed it."
+      },
+      {
+        "id": "e22b537dd6bcad1e73417603",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The absence of a completion receipt leaves the target completed action unestablished."
+      }
+    ]
+  },
+  "sol-delegation-permutation": {
+    "request_sha256": "758d9f0fdafbdf5f5b5c6fdd01ca07042f74a606137ebddec39539209e1dbf80",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e22b537dd6bcad1e73417603",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Acknowledging delivery of a request does not establish the claimed completed rotation."
+      },
+      {
+        "id": "12abb234b208497e6914f613",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned inbox record identifies Nima as the sender of the rotation request."
+      }
+    ]
+  },
+  "rill-log-gap-1": {
+    "request_sha256": "a2962cb92db9097b7e66ca5d47ec6b77f01ed0794627178a1c5dc1e1b30ab682",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "74e667c49217d6f38753cd00",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned capture explicitly records no captured success entry and the stated transport gap, without claiming no actual completion."
+      },
+      {
+        "id": "d7b491783d9016a1bc65eba8",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned record leaves completion during the gap unknown; missing observation does not establish no event."
+      }
+    ]
+  },
+  "rill-log-gap-2": {
+    "request_sha256": "f64d8fe80f0fb5191a5ea39080fd1fc02d72b9bbc68be0449fe0bc3c5bcc6b00",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "74e667c49217d6f38753cd00",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes captured entries and a coverage gap, and its own source explicitly cannot determine the actual event."
+      },
+      {
+        "id": "d7b491783d9016a1bc65eba8",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own source explicitly cannot determine completion in the missing interval, so the categorical negative is unsupported."
+      }
+    ]
+  },
+  "rill-log-gap-3": {
+    "request_sha256": "0a8b7e6da9ef8ba2b042d801d37e8140d2867b3fb1051a3825bc9303e1b7adfc",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "74e667c49217d6f38753cd00",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The full target and owned capture both identify 09:12-09:22 as the unavailable interval."
+      },
+      {
+        "id": "d7b491783d9016a1bc65eba8",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own source does not establish the full target categorical no-export claim."
+      }
+    ]
+  },
+  "rill-log-gap-permutation": {
+    "request_sha256": "0e1d2a20b1f7548c75cf3b758955c66134771805ecd98b7fbca64414362002d8",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "d7b491783d9016a1bc65eba8",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned record leaves completion during the gap unknown; missing observation does not establish no event."
+      },
+      {
+        "id": "74e667c49217d6f38753cd00",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned capture explicitly records no captured success entry and the stated transport gap, without claiming no actual completion."
+      }
+    ]
+  }
+}

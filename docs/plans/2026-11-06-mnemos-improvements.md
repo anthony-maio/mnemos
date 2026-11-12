@@ -89,6 +89,15 @@ new independent families, source-bound labels and a reviewed numerical recipe
 are still required. Do not reuse the three known training groups as adequate
 new data. Fresh acceptance and the actual pilot remain separate obligations.
 
+The [first local support training seed](../../benchmarks/local_memory/data/local-support-v2-train-seed/README.md)
+now contains 32 reviewed cases and 68 target labels, with three unique critical
+constraints. Independent review corrected a time-sensitive query and recorded
+two inherited constructions; their eight rows remain known training material.
+The eight scenario families are not eight established new independent designs.
+Exact tokenizer framing and 43 existing integrity tests pass. This is partial
+training preparation only: independent tuning/development data, fuller category
+and boundary coverage, and the numerical learning recipe remain open.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
@@ -111,8 +120,9 @@ host acceptance.
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
 computational admission. Follow the separate local data/learning design by
-preparing and reviewing independent grouped data before fixing a training
-recipe; the known three training groups are not enough. Training and semantic
+extending the reviewed training seed and preparing independent grouped tuning
+and development data before fixing a training recipe. The known three training
+groups and new partial seed are not enough. Training and semantic
 grading remain unauthorized by capacity alone. Do not repeat an unchanged
 packaging/native matrix or
 the admitted computation screen. Any further model architecture needs its own
