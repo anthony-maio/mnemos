@@ -11,16 +11,17 @@ Newer runtime source `f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f` fixes a
 reproduced inspection race during concurrent correction/forget. Each SQLite
 inspection now reads its fact, evidence, source status and revisions from one
 snapshot. 116 distinct relevant checks pass. Two pre-existing mypy errors in
-forget-preview code remain. The fix is source-only: it has not been packaged,
-installed or natively accepted. It does not explain or fix the Claude timeout.
+forget-preview code remain. The fix is now privately packaged and installed,
+with five installed inspection-race tests passing. It does not explain or fix
+the earlier Claude timeout.
 
 The latest private wheel contains runtime source
-`4d2d5c5333ed230bcb59f917c3a03e674a41a35c`. Its SHA-256 is
-`d86b925528bf8cd6eb8f703d2b63730a7595eaf8e982261c7038c324aa64ed5e`.
+`f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f`. Its SHA-256 is
+`d7087a0eae6f287260cd0e7d8b37adde5ae275ab195860a3a2c5c2f967faa9ef`.
 The isolated installation verified 99 package files and 57 pinned dependency
-versions and passed real FastEmbed CLI/MCP restart recall. The surrounding
-forget, transport, paging and suppression suite passed 105 tests. These checks
-do not establish semantic quality or native-host lifecycle completion.
+versions and passed real FastEmbed CLI/MCP restart recall. The current source
+passed 116 relevant storage/service/inspection checks. These checks do not
+establish semantic quality; the separate current native result follows below.
 
 The README's source-install commands pin that exact commit, avoiding drift in
 the development branch. A source install still resolves dependencies; it does
@@ -33,15 +34,30 @@ for the distinct runtime checkout.
 
 ## Native workflow
 
-The [Codex v12 lifecycle](2026-11-07/native-codex-v12.md) passed its six phases
-against `f5a944ea`, with hooks disabled. Its pass remains bound to that artifact.
+The November 11 [Codex v13 attempt](https://github.com/anthony-maio/mnemos/blob/41b371a99aca05ca04a3418d04e6c229ccafce8c/docs/validation/2026-11-11/native-codex-v13.md)
+passed all six explicit-memory phases against
+the current `f1314f6d` wheel: remember, restart recall, same-ID correction,
+corrected recall, reviewed forgetting, and final restart recall after original
+source replay suppression. Six fresh sessions produced 19 correlated MCP calls.
+All six complete tool inventories were verified. Hooks and Jev were disabled;
+the normal hosted Codex model received synthetic scenario text. Memory processing
+and embeddings stayed local. This does not establish offline model inference,
+normal hook trust, the full pilot configuration, quality or latency.
+Independent review reconstructed all 19 calls and verified the original prompts,
+inventories, installed guidance, replay identity and final database state. This
+forget selected only the target; multi-fact selection and batch review are not
+covered by the native pass. Normal files and embedding assets were not reopened
+by the reviewer; their preservation relies on the terminal integrity receipts.
+
+The earlier [Codex v12 lifecycle](2026-11-07/native-codex-v12.md) passed against
+`f5a944ea`; its original evidence remains bound to that artifact.
 
 The [latest Claude v8 attempt](https://github.com/anthony-maio/mnemos/blob/c5cb60ea4e192fe9d91b0bf55bdfc1196e147efb/docs/validation/2026-11-08/native-claude-record-pages-v8.md)
-used the latest private runtime package and failed the 180-second forget deadline.
+used the older `4d2d5c53` private runtime package and failed the 180-second forget deadline.
 The first four phases passed. Inspection reached nine of eighteen candidates;
 no deletion occurred. Final suppression, original-source replay and fresh-host
-recall were not attempted. Cleanup passed. The current complete workflow gate
-remains open; Desktop and native Hermes acceptance also remain unverified.
+recall were not attempted. Cleanup passed. That failure is preserved; the current
+Codex pass does not transfer to Claude, Desktop or native Hermes acceptance.
 
 ## Semantic quality and timing
 

@@ -45,8 +45,8 @@ Use the candidate to evaluate explicit storage, source inspection, same-ID corre
 
 | Area | Verified state |
 | --- | --- |
-| Latest private package | Runtime source `4d2d5c53`; 99 installed package files, 57 pinned dependencies and a passing real-embedding CLI/MCP restart smoke check. This is not a published release. |
-| Native workflow | The earlier Codex v12 lifecycle passed against `f5a944ea` with hooks disabled. The latest Claude v8 attempt timed out during inspection before deletion; the current complete lifecycle remains open. |
+| Latest private package | Runtime source `f1314f6d`; 99 installed package files, 57 pinned dependencies, five installed inspection-race tests and a passing real-embedding CLI/MCP restart smoke check. This is not a published release. |
+| Native workflow | Codex v13 passed all six explicit-memory phases on `f1314f6d` with hooks disabled. The earlier Claude v8 timeout remains a failed result on its own artifact. Other hosts and the full pilot configuration remain separate requirements. |
 | Answer support | No evaluated configuration meets the quality and latency requirements. Related text and a retrieved source ID do not establish a supported answer. |
 | Capture | Durable queued status and completed fact storage are distinct. Check the original job before reporting completion; the 100 ms complete-capture target remains unmet. |
 | Pilot | The optional explicit-memory pilot was activated separately. It does not start or satisfy the original two-week pilot, and no qualifying pilot days are recorded here. |
@@ -91,7 +91,7 @@ Use Python 3.10 or newer and Git. Start in a fresh virtual environment. Clone th
 
 ```bash
 git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false clone --depth 1 --branch wt/backup-20261108-delivery https://github.com/anthony-maio/mnemos.git mnemos-preview
-git -C mnemos-preview fetch --depth 1 origin 4d2d5c5333ed230bcb59f917c3a03e674a41a35c
+git -C mnemos-preview fetch --depth 1 origin f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f
 git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false -C mnemos-preview checkout --detach FETCH_HEAD
 python -m pip install "./mnemos-preview[mcp]"
 python mnemos-preview/examples/restart_recall.py --output restart-recall.json
@@ -99,7 +99,7 @@ python mnemos-preview/examples/restart_recall.py --output restart-recall.json
 
 The example creates two disposable Git repositories and an isolated config, scope registry, database, and service. It stores a synthetic project convention, waits for the durable job, stops the service, starts a new process, and recalls and inspects the same fact through both CLI and real MCP stdio. It also verifies that the second project sees no fact. It stops its service and removes its temporary state on exit.
 
-The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) preserves the earlier `7d5fc277` check and captured result. The commands above select the newer `4d2d5c53` runtime. Both are development evaluations, not release recommendations.
+The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) preserves the earlier `7d5fc277` check and captured result. The commands above select the newer `f1314f6d` runtime. Both are development evaluations, not release recommendations.
 
 FastEmbed downloads `BAAI/bge-small-en-v1.5` on first use (about 100 MB). Subsequent embeddings run locally. This verifies explicit persistence and scope isolation; it does not measure retrieval quality, automatic extraction, or native host behavior.
 

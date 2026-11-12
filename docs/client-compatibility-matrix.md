@@ -1,13 +1,14 @@
 # Client compatibility and observed evidence
 
-## November 8, 2026 current state
+## November 11, 2026 current state
 
 [Current readiness](validation/current-readiness.md) records the latest private
-package and failed Claude v8 lifecycle. The earlier Codex v12 pass remains bound
-to its own artifact. The optional explicit-memory pilot was activated separately;
+`f1314f6d` package and the six-phase Codex v13 explicit-memory pass with hooks
+disabled. The failed Claude v8 lifecycle and earlier Codex v12 pass remain bound
+to their own artifacts. The optional explicit-memory pilot was activated separately;
 the older inactive-proposal statements below describe their dated checkpoints.
-No full daily-use pilot, current complete lifecycle or general host acceptance
-is established by those earlier results.
+No full daily-use pilot, offline model inference or general cross-host acceptance
+is established by the Codex result or the earlier dated checkpoints.
 
 ## November 7, 2026 latest acceptance limits
 
