@@ -36,6 +36,17 @@ invalid, empty, incomplete or ambiguous mappings. Every non-whitespace
 character of the serialized claim, query, reference date and owned source
 must be covered. A token overlapping two semantic fields is ambiguous.
 
+The first tokenizer audit exposed NFC composition: offsets on original text
+can omit a combining accent even though the composed character is encoded.
+Preserve the raw payload and its raw character ranges. Also record explicitly
+NFC-normalized model text and model character ranges, mapping token offsets
+in that normalized space. Verify normalization cannot cross a semantic field
+boundary and require complete non-whitespace coverage there. The pinned
+tokenizer already applies NFC; an actual-tokenizer audit must prove this
+explicit normalization preserves its native token IDs. Do not skip arbitrary
+missing characters or normalize the stored source payload. Preserve the first
+failed tokenizer audit separately from subsequent corrected evidence.
+
 Average all mapped claim hidden states in float32, preserving ID/version and
 candidate order, then apply one shared scalar head. This contract exposes
 the claim's own contextual states instead of requiring an arbitrary tail

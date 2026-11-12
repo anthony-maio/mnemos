@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import unicodedata
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -106,6 +107,19 @@ class ClaimSpanContracts(unittest.TestCase):
         self.assertEqual(
             json.loads('"' + frame.text[start:end] + '"'), value["candidates"][0]["content"]
         )
+
+    def test_nfc_offsets_preserve_raw_payload_and_cover_composed_claim(self):
+        value = request()
+        value["candidates"][0]["content"] = "Cafe\u0301 and \u03b1\u0301 must not deploy."
+        frame = self.frame(value)
+        self.assertTrue(hasattr(frame, "model_text"), "Explicit normalized offset space is missing")
+        self.assertEqual(json.loads(frame.payload_json), value)
+        self.assertEqual(frame.model_text, unicodedata.normalize("NFC", frame.text))
+        claim = frame.claims[0]
+        a, b = claim.characters
+        x, y = claim.model_characters
+        self.assertEqual(frame.model_text[x:y], unicodedata.normalize("NFC", frame.text[a:b]))
+        self.assertTrue(claim.tokens)
 
     def test_reordering_preserves_identity_and_owned_source_binding(self):
         value = request()

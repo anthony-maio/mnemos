@@ -6,6 +6,7 @@ import importlib.util
 import json
 from pathlib import Path
 import sys
+import unicodedata
 
 _name = "local_support_claim_span_learning"
 _spec = importlib.util.spec_from_file_location(
@@ -20,6 +21,7 @@ PREAMBLE = "MNEMOS_CLAIM_SPAN_SUPPORT_V1\n"
 @dataclass(frozen=True)
 class TextSpan:
     characters: tuple[int, int]
+    model_characters: tuple[int, int]
     tokens: tuple[int, ...]
 
 
@@ -28,6 +30,7 @@ class OwnedSourceSpan:
     id: str
     source_event_id: str
     characters: tuple[int, int]
+    model_characters: tuple[int, int]
     tokens: tuple[int, ...]
 
 
@@ -36,6 +39,7 @@ class ClaimSpan:
     id: str
     version: int
     characters: tuple[int, int]
+    model_characters: tuple[int, int]
     tokens: tuple[int, ...]
     sources: tuple[OwnedSourceSpan, ...]
 
@@ -44,6 +48,8 @@ class ClaimSpan:
 class ClaimFrame:
     input_ids: tuple[int, ...]
     text: str
+    model_text: str
+    normalization: str
     payload_json: str
     query: TextSpan
     reference_date: TextSpan
@@ -91,8 +97,9 @@ def _serialize(value):
 def frame_claim_spans(value, tokenizer, binding, *, max_tokens=8192, max_bytes=64000):
     """Keep the whole request; include every token overlapping a complete value.
 
-    Character ranges are half-open offsets in preamble plus JSON, excluding
-    string quotes. JSON escapes stay in their serialized form. A token crossing
+    Raw character ranges are half-open offsets in preamble plus JSON, excluding
+    string quotes. Model ranges explicitly use its NFC-normalized text; the raw
+    payload stays unchanged. JSON escapes stay serialized. A token crossing
     a quote/value boundary is included; a token overlapping two semantic values
     makes the mapping ambiguous and fails. Native CLS/SEP have no text offsets.
     """
@@ -118,11 +125,16 @@ def frame_claim_spans(value, tokenizer, binding, *, max_tokens=8192, max_bytes=6
     if payload != validated.payload_json:
         raise ValueError("Canonical payload changed during span recording")
     text = PREAMBLE + payload
+    model_text = unicodedata.normalize("NFC", text)
     cls, sep = tokenizer.cls_token_id, tokenizer.sep_token_id
     if type(cls) is not int or type(sep) is not int or min(cls, sep) < 0 or cls == sep:
         raise ValueError("Expected distinct native boundary tokens")
     encoded = tokenizer(
-        text, add_special_tokens=False, return_offsets_mapping=True, truncation=False, padding=False
+        model_text,
+        add_special_tokens=False,
+        return_offsets_mapping=True,
+        truncation=False,
+        padding=False,
     )
     ids, offsets = encoded["input_ids"], encoded["offset_mapping"]
     special = set(tokenizer.all_special_ids)
@@ -139,7 +151,7 @@ def frame_claim_spans(value, tokenizer, binding, *, max_tokens=8192, max_bytes=6
         if len(pair) != 2 or any(type(v) is not int for v in pair):
             raise ValueError("Invalid tokenizer offset type")
         a, b = pair
-        if not 0 <= a < b <= len(text) or a < previous[0] or b < previous[1]:
+        if not 0 <= a < b <= len(model_text) or a < previous[0] or b < previous[1]:
             raise ValueError("Invalid or unordered tokenizer offsets")
         previous = (a, b)
     semantic = [("query",), ("reference_date",)]
@@ -150,7 +162,11 @@ def frame_claim_spans(value, tokenizer, binding, *, max_tokens=8192, max_bytes=6
         )
     mappings, owners = {}, {}
     for path in semantic:
-        start, end = characters[path]
+        raw_start, raw_end = characters[path]
+        start = len(unicodedata.normalize("NFC", text[:raw_start]))
+        end = len(unicodedata.normalize("NFC", text[:raw_end]))
+        if model_text[start:end] != unicodedata.normalize("NFC", text[raw_start:raw_end]):
+            raise ValueError("Ambiguous normalization across semantic field boundary")
         tokens, covered = [], set()
         for index, (a, b) in enumerate(offsets, 1):
             if a < end and b > start:
@@ -159,20 +175,41 @@ def frame_claim_spans(value, tokenizer, binding, *, max_tokens=8192, max_bytes=6
                 owners[index] = path
                 tokens.append(index)
                 covered.update(range(max(a, start), min(b, end)))
-        if not tokens or any(i not in covered for i in range(start, end) if not text[i].isspace()):
+        if not tokens or any(
+            i not in covered for i in range(start, end) if not model_text[i].isspace()
+        ):
             raise ValueError("Incomplete semantic span token coverage")
-        mappings[path] = TextSpan((start, end), tuple(tokens))
+        mappings[path] = TextSpan((raw_start, raw_end), (start, end), tuple(tokens))
     claims = []
     for i, c in enumerate(normalized["candidates"]):
         own = []
         for j, s in enumerate(c["sources"]):
             span = mappings[("candidates", i, "sources", j, "excerpt")]
-            own.append(OwnedSourceSpan(s["id"], s["source_event_id"], span.characters, span.tokens))
+            own.append(
+                OwnedSourceSpan(
+                    s["id"],
+                    s["source_event_id"],
+                    span.characters,
+                    span.model_characters,
+                    span.tokens,
+                )
+            )
         span = mappings[("candidates", i, "content")]
-        claims.append(ClaimSpan(c["id"], c["version"], span.characters, span.tokens, tuple(own)))
+        claims.append(
+            ClaimSpan(
+                c["id"],
+                c["version"],
+                span.characters,
+                span.model_characters,
+                span.tokens,
+                tuple(own),
+            )
+        )
     fields = dict(
         input_ids=(cls, *ids, sep),
         text=text,
+        model_text=model_text,
+        normalization="NFC",
         payload_json=payload,
         query=mappings[("query",)],
         reference_date=mappings[("reference_date",)],

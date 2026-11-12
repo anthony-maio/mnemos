@@ -42,6 +42,12 @@ def audit(root):
     original = read(previous / "freeze.json")
     probe.verify(original["files"])
     archive = ROOT / ".venv/local-support-v2-corpus-run-v1-repair1.zip"
+    span_failure_archive = ROOT / ".venv/local-support-claim-spans-v1-failed.zip"
+    if (
+        learning.sha(span_failure_archive)
+        != "ebf6485c42f58d6bfd791fd954ebb5ede18a5a5ff5ddc2306c76214966f990b3"
+    ):
+        raise ValueError("Original Unicode mapping failure archive changed")
     if learning.sha(archive) != "568cf0fd3f208ede61991a0dcbbe5759dd247f8df5d1ca00edc98f28cfbd105f":
         raise ValueError("Original failed semantic evidence changed")
     if probe.capacity().runtime_versions() != original["versions"]:
@@ -60,6 +66,9 @@ def audit(root):
         previous / "deployment.json",
         previous / "loading.json",
         archive,
+        span_failure_archive,
+        ROOT / ".venv/local-support-claim-spans-v1/freeze.json",
+        ROOT / ".venv/local-support-claim-spans-v1/failure.json",
     ]
     files = {**original["files"], **{str(p.resolve()): learning.sha(p) for p in paths}}
     freeze = dict(
@@ -101,6 +110,8 @@ def audit(root):
                 raise ValueError("Original native marker or offset mismatch")
             old_readout_tokens[old["input_ids"][end]] += 1
         frame = spans.frame_claim_spans(value, tokenizer, binding)
+        if list(frame.input_ids[1:-1]) != tokenizer.encode(frame.text, add_special_tokens=False):
+            raise ValueError("Explicit normalization changed native token IDs")
         if (
             frame.payload_json != old["payload_json"]
             or [c.id for c in frame.claims] != old["target_ids"]
@@ -195,6 +206,10 @@ def audit(root):
         for s in c["sources"]:
             s["excerpt"] = 'Quoted "content" text and ' + c["content"]
     extra_frame = spans.frame_claim_spans(extra, tokenizer, binding)
+    if list(extra_frame.input_ids[1:-1]) != tokenizer.encode(
+        extra_frame.text, add_special_tokens=False
+    ):
+        raise ValueError("Unicode normalization changed native token IDs")
     frames["offset-fixture:unicode-repetition"] = asdict(extra_frame)
     save(root / "frames.json", frames)
     probe.verify(files)
@@ -214,11 +229,14 @@ def audit(root):
         original_tail_marker_bindings_valid=True,
         original_positional_selection_counts=positional,
         original_unused_checkpoint_tensors=read(previous / "loading.json")["unexpected_keys"],
+        prior_unicode_mapping_failure_archive_sha256=learning.sha(span_failure_archive),
         historical_controls_reframed=control_rows,
         exact_new_token_bound=8192,
         new_token_overflow=8193,
         new_exact_token_frame_sha256=exact_frame.frame_sha256,
         native_unicode_fixture_sha256=extra_frame.frame_sha256,
+        raw_payloads_preserved=True,
+        explicit_nfc_preserves_native_token_ids=True,
         saved_frames=len(frames),
         bindings_unchanged=True,
         versions_unchanged=True,
