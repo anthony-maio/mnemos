@@ -8,8 +8,9 @@ The user requires local operation with an explicit Jev option. The private
 workspace `.env` contains `TYPESAFE_API_KEY`; it must never be committed or
 printed. The [44-question optional Jev comparison](2026-11-11-local-default-optional-jev.md)
 is complete and failed retention/recall. The later bidirectional encoder screen
-also missed its prospectively reserved component budget. Existing configurations
-remain closed; local defaults, live configuration and the pilot are unchanged.
+also missed its prospectively reserved component budget. Its failed component
+result is preserved; the explicit amendment below permits one complete-path
+test. Other closed configurations, local defaults and the pilot are unchanged.
 The final independent release audit also rechecked PR #9: it remains draft/open
 at `b51b06c6`, with Desktop and daily-use requirements incomplete. Checked
 Sandbox/VM launchers remain unavailable. Source, failed evidence and backups
@@ -34,6 +35,14 @@ completed 120 samples and 106 forwards, with full-length p95 of 226.21/213.99 ms
 It fails the planned 200 ms allocation and is closed before training. That
 allocation reserved an unmeasured 300 ms; it is not the original complete
 500 ms gate. No quality or complete-path result follows from this screen.
+
+The [resident-boundary amendment](2026-11-11-resident-support-boundary-amendment.md)
+corrects treating that self-imposed component allocation as a necessary gate.
+It permits one complete-path computation experiment at the original 500 ms
+boundary with unchanged model geometry and all source/revalidation work.
+The [single current recall diagnostic](../validation/2026-11-11/current-recall-profile-v1.md)
+took 99.8622 ms; it is neither a percentile nor a complete support result.
+No training or additional model sweep is authorized by this amendment.
 
 ## Scope and completion evidence
 
