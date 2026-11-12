@@ -86,6 +86,15 @@ Codex pass does not transfer to Claude, Desktop or native Hermes acceptance.
 ## Semantic quality and timing
 
 No evaluated support configuration meets all required quality and timing gates.
+
+The [explicit CPU-budget computation attempt](https://github.com/anthony-maio/mnemos/blob/9e0bb291/docs/validation/2026-11-11/cooperative-support-capacity-v1.md)
+passes warm complete computational admission on six unchanged full-input
+workloads: all 300 measured calls completed, with worst workload p95 386.35 ms.
+One call took 619.25 ms. The head remains untrained and emits no semantic
+decisions; this establishes feasibility only for that explicit source-based
+configuration. It permits a separate grouped-data/learning-plan review, not
+training, a quality claim, default adoption or native/pilot acceptance. Historical
+timings are not causal controls, and every earlier failure remains unchanged.
 The November 11 direction requires local operation with optional Jev. The
 [one optional Jev comparison](https://github.com/anthony-maio/mnemos/blob/d5af6d34/docs/validation/2026-11-11/jev-support-screen-v1.md)
 completed 44 known hybrid questions with 100% selected precision and no-answer
