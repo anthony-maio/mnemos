@@ -1,10 +1,18 @@
 # Development candidate readiness
 
-Updated November 8, 2026. This is a source and validation summary, not a release
-or pilot-completion announcement. [PyPI](https://pypi.org/project/mnemos-memory/)
-still serves 0.6.0; the local-memory candidate is unpublished 0.7.0b1.
+Updated November 11, 2026. This is a source and validation summary, not a release
+or pilot-completion announcement. The public package and website observations
+below were last checked November 8. [PyPI](https://pypi.org/project/mnemos-memory/)
+served 0.6.0 then; the local-memory candidate remains unpublished 0.7.0b1.
 
 ## Runtime and installation
+
+Newer runtime source `f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f` fixes a
+reproduced inspection race during concurrent correction/forget. Each SQLite
+inspection now reads its fact, evidence, source status and revisions from one
+snapshot. 116 distinct relevant checks pass. Two pre-existing mypy errors in
+forget-preview code remain. The fix is source-only: it has not been packaged,
+installed or natively accepted. It does not explain or fix the Claude timeout.
 
 The latest private wheel contains runtime source
 `4d2d5c5333ed230bcb59f917c3a03e674a41a35c`. Its SHA-256 is
@@ -38,6 +46,13 @@ remains open; Desktop and native Hermes acceptance also remain unverified.
 ## Semantic quality and timing
 
 No evaluated support configuration meets all required quality and timing gates.
+The November 11 direction requires local operation with optional Jev. The
+[one optional Jev comparison](https://github.com/anthony-maio/mnemos/blob/d5af6d34/docs/validation/2026-11-11/jev-support-screen-v1.md)
+completed 44 known hybrid questions with 100% selected precision and no-answer
+abstention, but only 21/27 retention/recall. Its 441.73 ms p95 covers support
+only. It fails the original gates and does not establish local support quality.
+No default or live configuration changed, and there is no automatic cloud fallback.
+
 The [retained Qwen3.5 screen](https://github.com/anthony-maio/mnemos/blob/d615d31de7883bb29cb230d9225c089ff3ae0be9/docs/validation/2026-11-08/qwen35-support-screen-v1.md)
 completed 176 support requests over 44 known questions across four retrieval
 arms. Hybrid precision was 65.85%, correct abstention 9/17, and support-only p95
