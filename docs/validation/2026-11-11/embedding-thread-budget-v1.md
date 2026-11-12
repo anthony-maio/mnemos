@@ -41,7 +41,9 @@ Both arms ran the same two passes over 25 retained measured requests, after
 three warmups. All 50 complete result pairs matched, including scores, facts,
 versions, retained sources, scope and context. The complete client clock includes
 BGE, scoped retrieval, access writes, coherent source assembly, transport and
-decoding. This is ordinary recall with no support classifier. Neither arm
+decoding. No concurrent capture operations were replayed. This is read-only
+ordinary recall with no support classifier; it does not replace the earlier
+interleaved command workload. Neither arm
 establishes the required full support-enabled 500 ms result or semantic quality.
 The closed resident support configuration was not run again.
 
