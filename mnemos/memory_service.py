@@ -20,6 +20,7 @@ from .contracts import (
     ReviewItemRequest,
     ReviewResolutionRequest,
 )
+from .context_budget import pack_context
 from .claude_identity import legacy_event_id, scoped_event_id
 from .hermes_identity import (
     canonical_native_ref,
@@ -922,37 +923,76 @@ class LocalMemoryService:
         # Revalidate before assembling either memory or evidence responses.
         self._refresh_registry()
         self.registry.validate_context(request.context)
-        facts = []
-        for chunk in chunks:
-            support = self.engine.store.list_fact_evidence(chunk.id)
-            sources = []
-            source_statuses = []
-            for item in support:
-                source_status = self._original_source_status(
-                    chunk, item, request.context, tuple(request.allowed_scopes)
+        store = self.engine.store
+        with store.read_snapshot() if isinstance(store, SQLiteStore) else nullcontext():
+            visible_chunks = []
+            for selected in chunks:
+                current = store.get(selected.id)
+                if (
+                    current is None
+                    or current.version != selected.version
+                    or current.content != selected.content
+                    or not scope_allows(
+                        current.metadata, request.context, tuple(request.allowed_scopes)
+                    )
+                    or any(
+                        current.metadata.get(key) != selected.metadata.get(key)
+                        for key in (
+                            "user_profile_id",
+                            "scope",
+                            "scope_id",
+                            "source",
+                            "assertion_status",
+                        )
+                    )
+                ):
+                    continue
+                # Keep only the revision actually ranked and budgeted. A new
+                # correction must go through retrieval before being returned.
+                current = current.model_copy(deep=True)
+                current.metadata["retrieval_trace"] = selected.metadata.get("retrieval_trace", {})
+                visible_chunks.append(current)
+            context_budget = chunks.context_budget if isinstance(chunks, RetrievedChunks) else {}
+            if len(visible_chunks) != len(chunks):
+                packed = pack_context(
+                    visible_chunks,
+                    max_tokens=request.max_context_tokens,
+                    top_k=request.top_k,
+                    tokenizer=getattr(self.engine, "_context_tokenizer", None),
                 )
-                source_statuses.append(source_status)
-                sources.append(
+                visible_chunks = list(packed.chunks)
+                context_budget = packed.metadata()
+            facts = []
+            for chunk in visible_chunks:
+                support = store.list_fact_evidence(chunk.id)
+                sources = []
+                source_statuses = []
+                for item in support:
+                    source_status = self._original_source_status(
+                        chunk, item, request.context, tuple(request.allowed_scopes)
+                    )
+                    source_statuses.append(source_status)
+                    sources.append(
+                        {
+                            **item.model_dump(mode="json"),
+                            "original_source_status": source_status,
+                        }
+                    )
+                facts.append(
                     {
-                        **item.model_dump(mode="json"),
-                        "original_source_status": source_status,
+                        "id": chunk.id,
+                        "version": chunk.version,
+                        "content": chunk.content,
+                        "scope": chunk.metadata.get("scope"),
+                        "scope_id": chunk.metadata.get("scope_id"),
+                        "assertion_status": assertion_status(chunk),
+                        "sources": sources,
+                        "support_available": bool(support),
+                        "original_source_status": self._source_status_summary(source_statuses),
+                        "scores": chunk.metadata.get("retrieval_trace", {}),
                     }
                 )
-            facts.append(
-                {
-                    "id": chunk.id,
-                    "version": chunk.version,
-                    "content": chunk.content,
-                    "scope": chunk.metadata.get("scope"),
-                    "scope_id": chunk.metadata.get("scope_id"),
-                    "assertion_status": assertion_status(chunk),
-                    "sources": sources,
-                    "support_available": bool(support),
-                    "original_source_status": self._source_status_summary(source_statuses),
-                    "scores": chunk.metadata.get("retrieval_trace", {}),
-                }
-            )
-        rendered = "".join(render_context_chunk(chunk) for chunk in chunks)
+            rendered = "".join(render_context_chunk(chunk) for chunk in visible_chunks)
         reviewing_capture = request.view == "captured_evidence"
         result = {
             "schema_version": 1,
@@ -969,7 +1009,7 @@ class LocalMemoryService:
             "evidence_context": rendered if reviewing_capture else "",
             "token_count_method": "utf8_bytes_upper_bound",
             "context_token_upper_bound": len(rendered.encode("utf-8")),
-            **(chunks.context_budget if isinstance(chunks, RetrievedChunks) else {}),
+            **context_budget,
         }
         if request.response_format == "compact":
             from .retrieval_response import compact_retrieval_response
