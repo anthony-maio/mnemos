@@ -6,9 +6,10 @@ No release, live configuration change, or pilot completion is implied.
 
 The user requires local operation with an explicit Jev option. The private
 workspace `.env` contains `TYPESAFE_API_KEY`; it must never be committed or
-printed. Existing local configurations remain closed failures. The next bounded
-step is the [44-question optional Jev comparison](2026-11-11-local-default-optional-jev.md),
-without changing local defaults, live configuration or the pilot installation.
+printed. The [44-question optional Jev comparison](2026-11-11-local-default-optional-jev.md)
+is complete and failed retention/recall. The later bidirectional encoder screen
+also missed its prospectively reserved component budget. Existing configurations
+remain closed; local defaults, live configuration and the pilot are unchanged.
 The final independent release audit also rechecked PR #9: it remains draft/open
 at `b51b06c6`, with Desktop and daily-use requirements incomplete. Checked
 Sandbox/VM launchers remain unavailable. Source, failed evidence and backups
@@ -27,6 +28,12 @@ Codex preset only, not multi-fact deletion, batch review, normal hooks or the
 full pilot configuration. The prior Claude timeout remains a failed result.
 
 Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/jev-support-screen-v1.md) completed all 44 frozen hybrid questions with 100% selected precision and no-answer abstention, but 77.78% retention/recall. It fails the original gates. Support-only p95 was 441.73 ms; complete recall and critical retention remain unmeasured. The earlier [Qwen3.5 screen](../validation/2026-11-08/qwen35-support-screen-v1.md) remains a closed failure. The November 11 direction requires local operation with optional Jev; no defaults or live configuration changed. Do not launch another support-model or threshold sweep.
+
+Latest computation evidence: [the bidirectional support screen](../validation/2026-11-11/bidirectional-support-capacity-v1.md)
+completed 120 samples and 106 forwards, with full-length p95 of 226.21/213.99 ms.
+It fails the planned 200 ms allocation and is closed before training. That
+allocation reserved an unmeasured 300 ms; it is not the original complete
+500 ms gate. No quality or complete-path result follows from this screen.
 
 ## Scope and completion evidence
 

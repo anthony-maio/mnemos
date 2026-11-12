@@ -1,0 +1,104 @@
+{
+  "status": "failed",
+  "semantic_decisions": false,
+  "training_performed": false,
+  "source_commit": "32f1db00476ab27a0261519a461661b7f327c498",
+  "model": "tasksource/ModernBERT-base-nli",
+  "revision": "de4ab7e77845098b7fab7f6ab9d370ddff27b19c",
+  "freeze_sha256": "604735a1e597cf63bc905731a499a10c4fc2490f6030effcaf30427da81cfa33",
+  "gpu_before_loading": "NVIDIA GeForce RTX 4080, 610.60, 16376 MiB, 3891 MiB",
+  "loading": {
+    "missing_keys": [],
+    "unexpected_keys": [
+      "classifier.bias",
+      "classifier.weight",
+      "head.dense.weight",
+      "head.norm.weight"
+    ],
+    "mismatched_keys": [],
+    "error_msgs": []
+  },
+  "layers": 22,
+  "backbone_parameters": 149014272,
+  "load_ms": 15941.826900001615,
+  "workloads": {
+    "empty": {
+      "p95_ms": 0.5955002270638943,
+      "median_ms": 0.4187501035630703,
+      "samples": 20
+    },
+    "one-short": {
+      "p95_ms": 31.734599731862545,
+      "median_ms": 26.167150121182203,
+      "samples": 20
+    },
+    "five-short": {
+      "p95_ms": 31.96630021557212,
+      "median_ms": 25.39309998974204,
+      "samples": 20
+    },
+    "five-token-bound-1-sources": {
+      "p95_ms": 226.20900021865964,
+      "median_ms": 206.5538999158889,
+      "samples": 20
+    },
+    "five-token-bound-8-sources": {
+      "p95_ms": 213.98979984223843,
+      "median_ms": 209.13919992744923,
+      "samples": 20
+    },
+    "five-byte-bound": {
+      "p95_ms": 56.31610006093979,
+      "median_ms": 49.20365009456873,
+      "samples": 20
+    }
+  },
+  "peak_cuda_allocated_bytes": 786842112,
+  "model_forward_calls": 106,
+  "expected_model_forward_calls": 106,
+  "measured_samples_completed": 120,
+  "expected_measured_samples": 120,
+  "bindings_unchanged": true,
+  "binding_errors": [],
+  "archive": {
+    "sha256": "3c54ec6ea35040cd579e986f9b0a7629a7bc8932126c5e002165e0aaa2ee8a9d",
+    "members": 28,
+    "bytes": 712144,
+    "file_hashes_verified": 26,
+    "external_weights": {
+      "model.safetensors": "86c32c52ce38b8f26e028ca959b06daee3a5f3f6947c63258bc8695dde88a465"
+    }
+  },
+  "owned_job": {
+    "status": "failed",
+    "job_assigned": true,
+    "input_delivery_started": true,
+    "job_name": null,
+    "broker_pid": 96860,
+    "exit_code": 1,
+    "error": "RuntimeError: Native command exited unsuccessfully",
+    "active_before_cleanup": 1,
+    "total_job_processes": 6,
+    "active_after_cleanup": 0,
+    "elapsed_seconds": 39.067875899840146
+  },
+  "runtime_versions_unchanged": true,
+  "source_and_marker_tests_passed": 26,
+  "original_complete_500ms_gate_measured": false,
+  "quality_measured": false,
+  "fresh_acceptance": false,
+  "live_changes": false,
+  "independent_audit": {
+    "status": "verified_failed_admission",
+    "material_discrepancies": [],
+    "samples_recomputed": 120,
+    "frames_reconstructed": 6,
+    "forwards_verified": 106,
+    "frozen_files_rehashed": 12,
+    "outer_bindings_rehashed": 4,
+    "runtime_inventory_matched": true,
+    "semantic_quality_measured": false,
+    "complete_500ms_boundary_measured": false,
+    "new_model_forwards": 0
+  }
+}

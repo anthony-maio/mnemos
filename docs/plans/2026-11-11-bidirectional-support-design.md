@@ -1,5 +1,12 @@
 # Local bidirectional support decision
 
+Status: [the sole capacity attempt failed its planned allocation](../validation/2026-11-11/bidirectional-support-capacity-v1.md).
+All 120 samples completed, but the two 8,192-token p95 values were 226.21 and
+213.99 ms, above 200 ms. No training or semantic grading occurred. This exact
+configuration is closed; the allocation result does not establish impossibility
+of the original complete 500 ms requirement. The prospective design below is
+retained without changing its threshold or scope after measurement.
+
 The native artifact gap is closed for the explicit Codex preset. The next
 semantic work must address local support quality and the complete clock, not
 repeat packaging, output formats or threshold searches. Required local operation
