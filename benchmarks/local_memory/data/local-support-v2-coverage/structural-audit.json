@@ -1,0 +1,176 @@
+{
+  "status": "structural_audit_passed",
+  "examples": {
+    "tuning": 23,
+    "development": 17,
+    "train": 12
+  },
+  "independent_groups": {
+    "tuning": 4,
+    "development": 3,
+    "train": 3
+  },
+  "reason_counts": {
+    "development": {
+      "unresolved_condition": 11,
+      "supported": 15,
+      "incomplete_source_support": 16,
+      "wrong_subject_relation": 21,
+      "attribution_mismatch": 10
+    },
+    "tuning": {
+      "supported": 20,
+      "temporal_mismatch": 8,
+      "unresolved_conflict": 6,
+      "wrong_subject_relation": 34,
+      "incomplete_source_support": 9,
+      "attribution_mismatch": 10
+    },
+    "train": {
+      "supported": 8,
+      "attribution_mismatch": 5,
+      "wrong_subject_relation": 13,
+      "incomplete_source_support": 4,
+      "unresolved_condition": 4
+    }
+  },
+  "supported_critical_targets": {
+    "tuning": 9,
+    "development": 1,
+    "train": 0
+  },
+  "review_status": {
+    "reviewed": 52
+  },
+  "minimum_partition_checks": true,
+  "semantic_labels_verified": false,
+  "training_ready": false,
+  "request_bindings": {
+    "taro-bitemporal-known-cutoff": "55dfa8c911bd59d79f6dc16bf1f82f6d1bcf624217d80191b27ad9e80b93df90",
+    "taro-bitemporal-latest-seven": "c609bb0abf9452f15374a24623608e3c025adbc8aeaa0362a3d02214ebce172c",
+    "taro-bitemporal-latest-three": "467bc8d92a33329995f6152b321c3dec579a31c490c3b71c655d65c5eab3e97e",
+    "taro-bitemporal-permutation": "24a81dc65416c00d5af3217583d254dc7ec4ee9ec0f29d362659c847870ec49d",
+    "nori-precedence-cycle-first": "c34c413ce7d61ad65ddc57edd8a2e7c39394362f6187ef614e93145e3186d171",
+    "nori-precedence-cycle-b-start": "9d6fc1c9b9d2200be20a7aeee35209032b31ef8ebfac9688b9bff24e6c267723",
+    "nori-precedence-cycle-proposed-order": "6b7b408e826c7bfc7846fc918356b4e288473874d8bfeba7ebda87ecf0528197",
+    "nori-precedence-cycle-c-start": "ebda12d04dd3faaf1ddbe379afc31ce0512a697c96daa82111acecd3ddc13c27",
+    "nori-precedence-cycle-a-finished": "60460a0424a0a9758d79da721a8c0b3d51a68f4af13e37ca531b53dc54db48f5",
+    "nori-precedence-cycle-a-unfinished": "5f3ce095a337011cab48086859530e54e44db3d3cd839c5ecd8399a64b93c89c",
+    "nori-precedence-cycle-permutation": "85613901cd6faf78d8428c18d160dc07ebad4da5174359083ba7943aa0dfdf67",
+    "tern-unset-resolution-missing-global": "95c83973e9d0eb3dce1ad0ca802686f703c1a59fafee3205b74a485aedc97ddb",
+    "tern-unset-resolution-global-true": "1c4703a3858db6ecf40193e9e200a944dfa4d90bf37a2d0c9b1c70dd7ea83e3b",
+    "tern-unset-resolution-global-false": "eb127bb5f4778db7813b405195795dbdeb5c769a95ac830d750d3722329133e8",
+    "tern-unset-resolution-explicit-false-over-true": "1f8fb167cfa149d7df825d902a274c27e14d1938491f5524d3ee12b9827418b9",
+    "tern-unset-resolution-resolution-rule": "951827db4f70cb1ebf83a82c844f3a844213ec0815d33660088e37398a61fb5b",
+    "tern-unset-resolution-permutation": "4ffd46c0555170113e1a8cfe0fb46464fc0aa2201c521948be6ce20faf4a8097",
+    "maru-event-roles-executor-r": "0b36c3bd50223c7dbc41185b019d479958ba9ffd9159ae43a6074fd2a5f70c0a",
+    "maru-event-roles-initiator-r": "d1a96929cbb4e006fdaad0c9cad401ed3d741c035bb4a0f6bda706cffe51c865",
+    "maru-event-roles-executor-s": "77c61e63e0174e686f0936965f2be527909982b22dbef0d9163e286b734b8ca4",
+    "maru-event-roles-direct-human": "52a69f115e7d2454d2e51cfc5da9e4d8822db504d41d909b01d38db12f0d5c43",
+    "maru-event-roles-permutation": "0344fe2d4b1e07a72408d632d847bcecc71b9c87d74a5233318cb9043d8675ad",
+    "osprey-modular-payload-seed-one": "08889f3741ac8296ca3c2beb116909e4efe088b2a014405039ed591fb168d60e",
+    "osprey-modular-payload-seed-two": "ceb306e57a492de19a856e4064f1e5a4337120f17bff5c273d9652178c90b420",
+    "osprey-modular-payload-seed-zero": "42258c20a70d963ca62f9987318eb6fa7c6dbfc05b9ca482325b575e34d44e85",
+    "osprey-modular-payload-stored-message": "065c815b8e363af94193dfbab9edc5c36e33494de5c24738feae104de716b89d",
+    "osprey-modular-payload-reordered-program": "abc2f92fe11b795f0dc3402bc18d15848f772adc3c850e6a9c29512b42554539",
+    "osprey-modular-payload-permutation": "f668b720b846da51ca5a7ec5a78f9f0058070d088323df1306752ea4fd31069c",
+    "ibis-copy-alias-payload-base": "9c54951ccef2ab1a00f3aabe1a54a9e5063df2b38205c61510e515f5aff76347",
+    "ibis-copy-alias-payload-snapshot": "9e6e9a9236a1392b22bf6575de0fde32b351a0496af1756654124e71e897e673",
+    "ibis-copy-alias-payload-stored-message": "92fe7e9f4a48a2a6a4de9645e2ec39fc6f5f8d87586e3da4f571b332f3f92b6d",
+    "ibis-copy-alias-payload-snapshot-mutation": "0c2ea316b7e28a035f08997488bd257043029cfc4036e14bd799a5662fd26958",
+    "ibis-copy-alias-payload-base-mutation": "84857a603b7511cb6019da6794c9505f0088470bb842851cdb046a76620d7e55",
+    "ibis-copy-alias-payload-permutation": "2df744e5e154f1e805ebf0d192381dedcb1a2a3e56d65a1855634bcf9cb83fa9",
+    "linnet-trace-spans-b-duration": "f52a1d9e9c4e507587edd6a48acbdacbeb1f8526141b50f7b7264aedc566b8e7",
+    "linnet-trace-spans-client-duration": "14819e73b4bb5a214f026a7ab905363a23fbebb1caf83d549de33ba6d4d36ba4",
+    "linnet-trace-spans-a-duration": "e8cd2193393ad63e6007c8979c8ea8e7d5d5a2e3059344abd009b77a2718300d",
+    "linnet-trace-spans-instrumented-a": "c4fd06bb48a4c4abe26d4f85809be97695dbd0013b1868f3fa3721cc2d083643",
+    "linnet-trace-spans-longer-b": "5681734ea8b646e7816d474388f534bb981ed3e6820dcd4a280120a0a3f2b6ee",
+    "linnet-trace-spans-permutation": "cc63cb7606979fde87f2d582058b6db855d25ce509d0b85a658d67e842ce41c4",
+    "rook-expression-origin-origin": "95bee80bea77dac2b699c664b361d2a43e5f5ecc239e085ca915deeec3b89a79",
+    "rook-expression-origin-rename": "01906c15e534b14536971d557c1da6786f0c69cdd140936626522ac88d785c5c",
+    "rook-expression-origin-format": "ff45073712fcb6b6763c27cc5cedf8e9888068afd32bc80b2cdd54c944c63802",
+    "rook-expression-origin-changed-origin": "6ebf0a23854d4e939b1b5f5e4af4db520f600356f174e17537ab80c3c92b1e66",
+    "rook-expression-origin-permutation": "40cc855a9f47842dbfdb3bc1d1c4a3b454bcb7f5e2fa05116cc83a0e87ff039b",
+    "orin-owned-counterparts-partial": "e9d454d3fa1b370060062d5081481fa95b6613ff9306f7fe37aacd5ed482d714",
+    "orin-owned-counterparts-complete": "4176f54a4cc3a6a4a322d82366e6d5303e79b899f7337a1567e99c07f254add8",
+    "orin-owned-counterparts-permutation": "d7324f8c01cf968b69019c92c41fb9b79dc9fa5d964b29bbe5bbd4367172ed60",
+    "vireo-observation-counterparts-policy-only": "6787d99f4baf8352a60c80eff15cef5665f9be03ba8706e125bff66f8007fa7e",
+    "vireo-observation-counterparts-observed-red": "a0f608735bd37a3ad877e63f014dee170edb51de24ef295b29ebdb3b769af46b",
+    "vireo-observation-counterparts-observed-blue": "234eb180789bdb1e4535bd755f6ac43de83ce170e43cfa67f842b455dc79fdb7",
+    "vireo-observation-counterparts-permutation": "c523316ed252b5b5f8edaec36adf7c03bf3b22f680c3af5168cf70f14b0e01fd"
+  },
+  "groups": [
+    [
+      "taro-bitemporal-known-cutoff",
+      "taro-bitemporal-latest-seven",
+      "taro-bitemporal-latest-three",
+      "taro-bitemporal-permutation"
+    ],
+    [
+      "nori-precedence-cycle-first",
+      "nori-precedence-cycle-b-start",
+      "nori-precedence-cycle-proposed-order",
+      "nori-precedence-cycle-c-start",
+      "nori-precedence-cycle-a-finished",
+      "nori-precedence-cycle-a-unfinished",
+      "nori-precedence-cycle-permutation"
+    ],
+    [
+      "tern-unset-resolution-missing-global",
+      "tern-unset-resolution-global-true",
+      "tern-unset-resolution-global-false",
+      "tern-unset-resolution-explicit-false-over-true",
+      "tern-unset-resolution-resolution-rule",
+      "tern-unset-resolution-permutation"
+    ],
+    [
+      "maru-event-roles-executor-r",
+      "maru-event-roles-initiator-r",
+      "maru-event-roles-executor-s",
+      "maru-event-roles-direct-human",
+      "maru-event-roles-permutation"
+    ],
+    [
+      "osprey-modular-payload-seed-one",
+      "osprey-modular-payload-seed-two",
+      "osprey-modular-payload-seed-zero",
+      "osprey-modular-payload-stored-message",
+      "osprey-modular-payload-reordered-program",
+      "osprey-modular-payload-permutation"
+    ],
+    [
+      "ibis-copy-alias-payload-base",
+      "ibis-copy-alias-payload-snapshot",
+      "ibis-copy-alias-payload-stored-message",
+      "ibis-copy-alias-payload-snapshot-mutation",
+      "ibis-copy-alias-payload-base-mutation",
+      "ibis-copy-alias-payload-permutation"
+    ],
+    [
+      "linnet-trace-spans-b-duration",
+      "linnet-trace-spans-client-duration",
+      "linnet-trace-spans-a-duration",
+      "linnet-trace-spans-instrumented-a",
+      "linnet-trace-spans-longer-b",
+      "linnet-trace-spans-permutation"
+    ],
+    [
+      "rook-expression-origin-origin",
+      "rook-expression-origin-rename",
+      "rook-expression-origin-format",
+      "rook-expression-origin-changed-origin",
+      "rook-expression-origin-permutation"
+    ],
+    [
+      "orin-owned-counterparts-partial",
+      "orin-owned-counterparts-complete",
+      "orin-owned-counterparts-permutation"
+    ],
+    [
+      "vireo-observation-counterparts-policy-only",
+      "vireo-observation-counterparts-observed-red",
+      "vireo-observation-counterparts-observed-blue",
+      "vireo-observation-counterparts-permutation"
+    ]
+  ]
+}

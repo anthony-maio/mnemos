@@ -1,0 +1,40 @@
+{
+  "criterion": "critical-action-constraint-v1",
+  "entries": [
+    {
+      "target_id": "9c02a50597756745ae454a9c",
+      "fact_sha256": "a1bbcdf615dda542ecfdc707a3040af3e7cb1c74ba7e2a36529d94409fdba4f0",
+      "justification": "The complete owned ledger imposes the worker-slot cap for November 7 under retained entries recorded on or before November 9; this is a scoped historical deployment action constraint."
+    },
+    {
+      "target_id": "14d6784856c8edf2d8c94c14",
+      "fact_sha256": "decd5519fcc8bc3024d1cba1306555d58c6e42fd2acf05610e52c1c88b84a16f",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Under the latest retained correction, Taro deployments for November 7 are limited to 50 worker slots."
+    },
+    {
+      "target_id": "3d1c65490eb18277da0e0994",
+      "fact_sha256": "a1d4d3e1aadb80d6c91416063f0dc867244f95419587070aca0a94dbe6bbf207",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Under the latest retained ledger, Taro deployments for November 3 were limited to 80 worker slots."
+    },
+    {
+      "target_id": "8ceee6a791f08d0a29669328",
+      "fact_sha256": "ae44c96728066069e815150820e237c8a5312bba45ae77ef30a9027edd1e7166",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Nori one-pass deployment requires step A to finish before step B starts."
+    },
+    {
+      "target_id": "c95c47734e002fc9dd4fd070",
+      "fact_sha256": "32938ebc78fed93eabfdaad4d50ea7cb3ae17de7d6a918554ee8b1d164831b13",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Nori one-pass deployment requires step B to finish before step C starts."
+    },
+    {
+      "target_id": "bcdd291ff182c4d6e50c5c01",
+      "fact_sha256": "949dc3346b286f7a021f6b6cebce741019f95184180f138b5b8214ad80828fd5",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Nori one-pass deployment requires step C to finish before step A starts."
+    },
+    {
+      "target_id": "50e6171faf0853de07361ce6",
+      "fact_sha256": "b9d629fc4fd82346fa7438af101574511b2f484f5c12436aca496a284bdb5136",
+      "justification": "The complete owned instruction imposes an explicit deployment action constraint: Tern must keep capture disabled when its project flag is false even if global is true; an UNSET project flag inherits global."
+    }
+  ]
+}

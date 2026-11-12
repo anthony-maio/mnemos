@@ -1,0 +1,199 @@
+[
+  {
+    "scenario": "taro-bitemporal",
+    "split": "tuning",
+    "declared_template": "recording-cutoff-versus-retroactive-valid-time",
+    "intended_coverage": [
+      "temporal",
+      "revision",
+      "critical-action"
+    ],
+    "examples": [
+      "taro-bitemporal-known-cutoff",
+      "taro-bitemporal-latest-seven",
+      "taro-bitemporal-latest-three",
+      "taro-bitemporal-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "nori-precedence-cycle",
+    "split": "tuning",
+    "declared_template": "directed-precedence-cycle-versus-local-edge-query",
+    "intended_coverage": [
+      "conflict",
+      "critical-action",
+      "negative-answer"
+    ],
+    "examples": [
+      "nori-precedence-cycle-first",
+      "nori-precedence-cycle-b-start",
+      "nori-precedence-cycle-proposed-order",
+      "nori-precedence-cycle-c-start",
+      "nori-precedence-cycle-a-finished",
+      "nori-precedence-cycle-a-unfinished",
+      "nori-precedence-cycle-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "tern-unset-resolution",
+    "split": "development",
+    "declared_template": "three-state-override-resolution-not-missing-prerequisite",
+    "intended_coverage": [
+      "unknown-condition",
+      "explicit-false",
+      "source-counterfactual",
+      "critical-action"
+    ],
+    "examples": [
+      "tern-unset-resolution-missing-global",
+      "tern-unset-resolution-global-true",
+      "tern-unset-resolution-global-false",
+      "tern-unset-resolution-explicit-false-over-true",
+      "tern-unset-resolution-resolution-rule",
+      "tern-unset-resolution-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "maru-event-roles",
+    "split": "train",
+    "declared_template": "observed-executor-versus-initiator-counterpart",
+    "intended_coverage": [
+      "attribution",
+      "supported-completion-counterpart",
+      "source-counterfactual"
+    ],
+    "examples": [
+      "maru-event-roles-executor-r",
+      "maru-event-roles-initiator-r",
+      "maru-event-roles-executor-s",
+      "maru-event-roles-direct-human",
+      "maru-event-roles-permutation"
+    ],
+    "inherited_templates": [
+      "request-versus-completion-of-delegated-work"
+    ],
+    "status": "reviewed_known_training_derivative"
+  },
+  {
+    "scenario": "osprey-modular-payload",
+    "split": "tuning",
+    "declared_template": "modular-list-index-evaluation-with-inert-instruction",
+    "intended_coverage": [
+      "injected-source",
+      "source-counterfactual",
+      "five-target-cohort"
+    ],
+    "examples": [
+      "osprey-modular-payload-seed-one",
+      "osprey-modular-payload-seed-two",
+      "osprey-modular-payload-seed-zero",
+      "osprey-modular-payload-stored-message",
+      "osprey-modular-payload-reordered-program",
+      "osprey-modular-payload-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "ibis-copy-alias-payload",
+    "split": "development",
+    "declared_template": "dictionary-copy-versus-alias-mutation-with-inert-instruction",
+    "intended_coverage": [
+      "injected-source",
+      "source-counterfactual",
+      "five-target-cohort"
+    ],
+    "examples": [
+      "ibis-copy-alias-payload-base",
+      "ibis-copy-alias-payload-snapshot",
+      "ibis-copy-alias-payload-stored-message",
+      "ibis-copy-alias-payload-snapshot-mutation",
+      "ibis-copy-alias-payload-base-mutation",
+      "ibis-copy-alias-payload-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "linnet-trace-spans",
+    "split": "tuning",
+    "declared_template": "nested-measured-interval-ownership-and-subtraction",
+    "intended_coverage": [
+      "attribution",
+      "source-counterfactual",
+      "observed-measurement"
+    ],
+    "examples": [
+      "linnet-trace-spans-b-duration",
+      "linnet-trace-spans-client-duration",
+      "linnet-trace-spans-a-duration",
+      "linnet-trace-spans-instrumented-a",
+      "linnet-trace-spans-longer-b",
+      "linnet-trace-spans-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "rook-expression-origin",
+    "split": "development",
+    "declared_template": "arithmetic-expression-origin-versus-formatting-and-alpha-rename",
+    "intended_coverage": [
+      "attribution",
+      "source-counterfactual",
+      "five-target-cohort"
+    ],
+    "examples": [
+      "rook-expression-origin-origin",
+      "rook-expression-origin-rename",
+      "rook-expression-origin-format",
+      "rook-expression-origin-changed-origin",
+      "rook-expression-origin-permutation"
+    ],
+    "inherited_templates": [],
+    "status": "reviewed_provisional_reserved_construction"
+  },
+  {
+    "scenario": "orin-owned-counterparts",
+    "split": "train",
+    "declared_template": "conjunctive-claim-with-split-owned-measurements",
+    "inherited_templates": [
+      "expansion-owned-multisource",
+      "conflicting-records-subject-negation-partial-support"
+    ],
+    "intended_coverage": [
+      "owned-full-claim-counterpart"
+    ],
+    "examples": [
+      "orin-owned-counterparts-partial",
+      "orin-owned-counterparts-complete",
+      "orin-owned-counterparts-permutation"
+    ],
+    "status": "reviewed_known_training_derivative"
+  },
+  {
+    "scenario": "vireo-observation-counterparts",
+    "split": "train",
+    "declared_template": "exclusive-choice-versus-fixed-choice",
+    "inherited_templates": [
+      "audit-choice-versus-conjunction"
+    ],
+    "intended_coverage": [
+      "unresolved-observation",
+      "owned-observed-counterpart"
+    ],
+    "examples": [
+      "vireo-observation-counterparts-policy-only",
+      "vireo-observation-counterparts-observed-red",
+      "vireo-observation-counterparts-observed-blue",
+      "vireo-observation-counterparts-permutation"
+    ],
+    "status": "reviewed_known_training_derivative"
+  }
+]

@@ -1,0 +1,665 @@
+{
+  "status": "combined_structural_and_declared_ancestry_audit_passed_not_training_readiness",
+  "prior_data": {
+    "local-support-v2-train-seed": {
+      "receipt_sha256": "0244abee7c74f39576a73230c3632e6b968e354dc4d29994624669b334a7d91d",
+      "inputs_sha256": "da765b672862eea22fedca8cfe7f599283ac335eeebe387694ad3516b88660ad",
+      "labels_sha256": "f6e5e81cf3e092ef0f262e6dd313720a811a89ea83e76e199c70fbf9291295eb"
+    },
+    "local-support-v2-partitions": {
+      "receipt_sha256": "cb06604096a0fa7def3403fe20e49b7472a21263c62bf984f43515f21d3c0bac",
+      "inputs_sha256": "0d6f0a3ed721c01bde0e0f631b7597a20da24ef40b8030b6c7c055c99f88a952",
+      "labels_sha256": "6247e0982e02df6c33149596ed97d0cc6ba6eff819e661d11f0b61f382b60ac9"
+    }
+  },
+  "input_sha256": "354964aa9c156eb31ea264ee1774d45d9049d661a6f4102a44694bfb0bc1e068",
+  "labels_sha256": "a10e51f664c895a60eed91401e08624864d202587300c4c402ef30aac5ebe204",
+  "audit": {
+    "status": "structural_audit_passed",
+    "examples": {
+      "train": 56,
+      "tuning": 31,
+      "development": 29
+    },
+    "independent_groups": {
+      "train": 11,
+      "tuning": 6,
+      "development": 6
+    },
+    "reason_counts": {
+      "development": {
+        "supported": 24,
+        "incomplete_source_support": 24,
+        "wrong_subject_relation": 32,
+        "unresolved_conflict": 4,
+        "unresolved_condition": 11,
+        "attribution_mismatch": 10
+      },
+      "tuning": {
+        "supported": 27,
+        "incomplete_source_support": 17,
+        "wrong_subject_relation": 41,
+        "unresolved_condition": 2,
+        "temporal_mismatch": 8,
+        "unresolved_conflict": 6,
+        "attribution_mismatch": 10
+      },
+      "train": {
+        "supported": 40,
+        "incomplete_source_support": 28,
+        "wrong_subject_relation": 35,
+        "temporal_mismatch": 9,
+        "attribution_mismatch": 17,
+        "unresolved_condition": 5,
+        "unresolved_conflict": 4
+      }
+    },
+    "supported_critical_targets": {
+      "train": 9,
+      "tuning": 12,
+      "development": 8
+    },
+    "review_status": {
+      "reviewed": 116
+    },
+    "minimum_partition_checks": true,
+    "semantic_labels_verified": false,
+    "training_ready": false,
+    "request_bindings": {
+      "aster-window-1": "85e7813df0722b7db5d12e0fe41d5e95abdedbca83b069503ae81798211f8d8e",
+      "aster-window-2": "a4f1f1b3d153f865e8df8d75b2ccd439fb99de3d93137ff87d695e702d6b20b6",
+      "aster-window-3": "df50f722bd30178b5189037d4fb7603c5c2d0cbd610df7714eea967f66a77cd5",
+      "aster-window-permutation": "26722d5ce74dc45a60f34d3e4ee5d02962f381488642eb0bb1b4fb1d6fa64c3a",
+      "nacre-quorum-1": "66158ceff22afcd44abae5097e32ee646998dcd072a2dd7282e1e45c5dbeba32",
+      "nacre-quorum-2": "0b364f8fe6c49325b7ea1fc064fce04cb3f6f5871207a041d249fc31b230ab75",
+      "nacre-quorum-3": "1e41f15b48697f91ec0c471b50bd13922ff5303f8934a3528cdf7f3cf6ad43bc",
+      "nacre-quorum-permutation": "2257c2d623ae13ceff98f013e0cfa6d193b1e5275e3a09a724ad0f8b071a7356",
+      "pavo-amendment-1": "a4a5c01e166357aa3e08ccab047ef90a7cff0e37f44139ad9d6196a4435dabc6",
+      "pavo-amendment-2": "9b709fec8d3c812df0d4ecb02cf6882799b82a148f72e2773a563758472e5a4c",
+      "pavo-amendment-3": "68179f567a78aeafd41764cb22063b8429fb1428e0347e251cc762eb332d11d6",
+      "pavo-amendment-permutation": "3210471830b8deba90b9d683c45293f18bd8da31dc69404c6e30ed809f1b5a89",
+      "vela-quotation-1": "b208bcfb3e47b72761b28029d19c7aa00dae73c6d80f19eae2e553f07d90d2fd",
+      "vela-quotation-2": "fe25828d2d7ac7ca1d34d5edecf17611cae0f8a12056cb02f3250e8cf78a7dc8",
+      "vela-quotation-3": "743a170f8eb0449783d976a68d7f6d02c639e4b5c7f62d02e721f2b35f05db18",
+      "vela-quotation-permutation": "4e2a93343df30991d8294fd56ebde83fb3033d839ac13f5dc0ac983cbd2698a3",
+      "orin-ownership-1": "05ad06c404da7e8ac11d94842f059f313100f355c245e395bb28cd8a6adc9868",
+      "orin-ownership-2": "0b6581a85c77651ef97222ae0e76b891615ff4f08045a9af4f60147764b12ffa",
+      "orin-ownership-3": "bbf63f70e57dd577ddd1b0a5619ea9c992c4aed86ab1cc16bec470358197d09f",
+      "orin-ownership-permutation": "218f1a1171e2e619662a1331f41362aa05a45bc6bfda3950390964e0416ed930",
+      "vireo-exclusive-1": "26f58a5b72734a35fb77f2a740f6fb868b92c80a43fb12dc662d4a650d2ace68",
+      "vireo-exclusive-2": "7630878f856f4a777cb0e8a80e10d274c041e1511a262bb5db6f26fcf2b518d4",
+      "vireo-exclusive-3": "36d0f3148e110df0c6f832faec5f4349d99c242866c2819930dc85452150e4b9",
+      "vireo-exclusive-permutation": "bc8049137c48f992bc8aaae32ddb60d58b98221511e1cedfd80e294a9b069e88",
+      "sol-delegation-1": "21a340c7eaa4edcdd456173b772061f46ca825e61b99b06349bfecbe3c94cb54",
+      "sol-delegation-2": "2e04d7f79db275e92351c2c5c743587d515031481c0ad73ad3854d0473812959",
+      "sol-delegation-3": "b50be0861fe3db9148df40698645ef5348750fe8bfe1a125731c5b6c15f75f57",
+      "sol-delegation-permutation": "758d9f0fdafbdf5f5b5c6fdd01ca07042f74a606137ebddec39539209e1dbf80",
+      "rill-log-gap-1": "a2962cb92db9097b7e66ca5d47ec6b77f01ed0794627178a1c5dc1e1b30ab682",
+      "rill-log-gap-2": "f64d8fe80f0fb5191a5ea39080fd1fc02d72b9bbc68be0449fe0bc3c5bcc6b00",
+      "rill-log-gap-3": "0a8b7e6da9ef8ba2b042d801d37e8140d2867b3fb1051a3825bc9303e1b7adfc",
+      "rill-log-gap-permutation": "0e1d2a20b1f7548c75cf3b758955c66134771805ecd98b7fbca64414362002d8",
+      "kestrel-compatibility-1": "8b566460b856f0bd543d548ca62e314ffdb867c19af93a194ef1aa32113017ed",
+      "kestrel-compatibility-2": "530e2b71e02cf1be42afbe16f6dea154d4874ee5a94731ab4d3a87e85443824d",
+      "kestrel-compatibility-3": "85e2d5689c9c0d35d070967c4944a292b27fe6632cb36b2a3f52017621d9a742",
+      "kestrel-compatibility-permutation": "020e392e3a5a1f0fb99a76f288eadb3d0eeefb8f14033278f3f86ef1f5875d64",
+      "bracken-roster-1": "8f9f691d30af6506d456c97a427f041dcf788d443068425824714c6c3e2e8a82",
+      "bracken-roster-2": "0c2205ab40f45a4c2062c467074438ec78af13232f487ff163f6fb830e0e63ec",
+      "bracken-roster-3": "94831625a812d605847a6eb87fcd55b5e17664f4b889321273409ae736bfabbd",
+      "bracken-roster-permutation": "6560eddfb2bbc13b94b1ed362a92c766a473b3c7bee1bfca7fa38f171153c636",
+      "mica-batch-joins-1": "85c5e92da4754699edc5aadab321770cbfa45ea435fbb12f44e47a9233d6577a",
+      "mica-batch-joins-2": "0d0384b0c1377b33efd08651e99d595435ebab13ec10247ff5a39f8d1c78340b",
+      "mica-batch-joins-3": "9f74d43c525a96e230b10a2a97ba23fad53323619530b11f24427a6a8329598c",
+      "mica-batch-joins-permutation": "9f39bd07c70e323ab264271151d6efa5242d6a131e9ab3b01388e629ee516eb9",
+      "petrel-payload-1": "8bb2a47f23f5a40d08b1994a7dc65233798b2ebe73b85ef07a865874fcc90fea",
+      "petrel-payload-2": "0687c3849cb844921ce22b30f48b5bd973ea1e38afa0f36349cbfce2b9cff5fb",
+      "petrel-payload-3": "ef2bc42a127ba2017a55edd566dc08954b3d9c8eeb67d1ad634c0d4ece8d4999",
+      "petrel-payload-permutation": "403fbb388e3b61237d985ae646a61c3772880604268b533299117a6fb107e233",
+      "calyx-timezone-1": "5af8e3e5f28f2d9e92d2578d5e0ce5b28cbc43bc0e1af8a46b34ecc691791ff0",
+      "calyx-timezone-2": "fd5977d26ea74c351f0037a448c111c6184340d3c13a9b5a2e4fad7800f10fd3",
+      "calyx-timezone-3": "35731b4056c6947bf7d8643fd9f6fbd138000a8e75c70bb1f809c42422abf92a",
+      "calyx-timezone-permutation": "4850db44302d4246700889c19f4b7b7c9d230f74b5c17a0fb8046f5c1379e1ef",
+      "lumen-vector-clocks-1": "f11d0d7ff84f09f696d1b2e952f2706ee2c7e652d8923940d60129a7b2866a65",
+      "lumen-vector-clocks-2": "bfd56585f27c9e204ba40c48d5827b6a7d6cda037cbcb53488956430e0b85300",
+      "lumen-vector-clocks-3": "29634c1c36908b1fb1aa62ee53097ea3809de49c19c926d2db442be2ad0ae698",
+      "lumen-vector-clocks-permutation": "e21db069f7d40f9468b75688ca4b9a695efbbb6097dd90874393c18a6e852a17",
+      "zephyr-study-1": "f52721417d3b3bb4f310ca5977167531876d6e9ce52abcf30b259a588dc7a609",
+      "zephyr-study-2": "60a7ed88d7f8624eb88d3961e26326062e23a6995055e6e3a11013689033ed05",
+      "zephyr-study-3": "2334da62a0b04dc541f05a991a25a0847f45a689db7dd0dd497b2138f9bda340",
+      "zephyr-study-permutation": "fe3e8729f2b78831c072aec478ee4bb51f582c48d0197eb3fbe15de1c15bfc1b",
+      "oriel-implication-1": "c2855372a5e87c8d15b68dc0b9b8cfe801e9f418e83e26d38a970a66bd84861b",
+      "oriel-implication-2": "d064fbc3e8041e954e0b8331845a79ceab4a81ea79673bc821947619ecdead2f",
+      "oriel-implication-3": "6e9f130bef61e9f81d084ad2de4f3df9e4fde3b1b5c9de66e4a1bb73389cac58",
+      "oriel-implication-permutation": "6279142ec4c9135a518ecac55956044a6b23c50e024fb7aaf4d67c495092ede8",
+      "taro-bitemporal-known-cutoff": "55dfa8c911bd59d79f6dc16bf1f82f6d1bcf624217d80191b27ad9e80b93df90",
+      "taro-bitemporal-latest-seven": "c609bb0abf9452f15374a24623608e3c025adbc8aeaa0362a3d02214ebce172c",
+      "taro-bitemporal-latest-three": "467bc8d92a33329995f6152b321c3dec579a31c490c3b71c655d65c5eab3e97e",
+      "taro-bitemporal-permutation": "24a81dc65416c00d5af3217583d254dc7ec4ee9ec0f29d362659c847870ec49d",
+      "nori-precedence-cycle-first": "c34c413ce7d61ad65ddc57edd8a2e7c39394362f6187ef614e93145e3186d171",
+      "nori-precedence-cycle-b-start": "9d6fc1c9b9d2200be20a7aeee35209032b31ef8ebfac9688b9bff24e6c267723",
+      "nori-precedence-cycle-proposed-order": "6b7b408e826c7bfc7846fc918356b4e288473874d8bfeba7ebda87ecf0528197",
+      "nori-precedence-cycle-c-start": "ebda12d04dd3faaf1ddbe379afc31ce0512a697c96daa82111acecd3ddc13c27",
+      "nori-precedence-cycle-a-finished": "60460a0424a0a9758d79da721a8c0b3d51a68f4af13e37ca531b53dc54db48f5",
+      "nori-precedence-cycle-a-unfinished": "5f3ce095a337011cab48086859530e54e44db3d3cd839c5ecd8399a64b93c89c",
+      "nori-precedence-cycle-permutation": "85613901cd6faf78d8428c18d160dc07ebad4da5174359083ba7943aa0dfdf67",
+      "tern-unset-resolution-missing-global": "95c83973e9d0eb3dce1ad0ca802686f703c1a59fafee3205b74a485aedc97ddb",
+      "tern-unset-resolution-global-true": "1c4703a3858db6ecf40193e9e200a944dfa4d90bf37a2d0c9b1c70dd7ea83e3b",
+      "tern-unset-resolution-global-false": "eb127bb5f4778db7813b405195795dbdeb5c769a95ac830d750d3722329133e8",
+      "tern-unset-resolution-explicit-false-over-true": "1f8fb167cfa149d7df825d902a274c27e14d1938491f5524d3ee12b9827418b9",
+      "tern-unset-resolution-resolution-rule": "951827db4f70cb1ebf83a82c844f3a844213ec0815d33660088e37398a61fb5b",
+      "tern-unset-resolution-permutation": "4ffd46c0555170113e1a8cfe0fb46464fc0aa2201c521948be6ce20faf4a8097",
+      "maru-event-roles-executor-r": "0b36c3bd50223c7dbc41185b019d479958ba9ffd9159ae43a6074fd2a5f70c0a",
+      "maru-event-roles-initiator-r": "d1a96929cbb4e006fdaad0c9cad401ed3d741c035bb4a0f6bda706cffe51c865",
+      "maru-event-roles-executor-s": "77c61e63e0174e686f0936965f2be527909982b22dbef0d9163e286b734b8ca4",
+      "maru-event-roles-direct-human": "52a69f115e7d2454d2e51cfc5da9e4d8822db504d41d909b01d38db12f0d5c43",
+      "maru-event-roles-permutation": "0344fe2d4b1e07a72408d632d847bcecc71b9c87d74a5233318cb9043d8675ad",
+      "osprey-modular-payload-seed-one": "08889f3741ac8296ca3c2beb116909e4efe088b2a014405039ed591fb168d60e",
+      "osprey-modular-payload-seed-two": "ceb306e57a492de19a856e4064f1e5a4337120f17bff5c273d9652178c90b420",
+      "osprey-modular-payload-seed-zero": "42258c20a70d963ca62f9987318eb6fa7c6dbfc05b9ca482325b575e34d44e85",
+      "osprey-modular-payload-stored-message": "065c815b8e363af94193dfbab9edc5c36e33494de5c24738feae104de716b89d",
+      "osprey-modular-payload-reordered-program": "abc2f92fe11b795f0dc3402bc18d15848f772adc3c850e6a9c29512b42554539",
+      "osprey-modular-payload-permutation": "f668b720b846da51ca5a7ec5a78f9f0058070d088323df1306752ea4fd31069c",
+      "ibis-copy-alias-payload-base": "9c54951ccef2ab1a00f3aabe1a54a9e5063df2b38205c61510e515f5aff76347",
+      "ibis-copy-alias-payload-snapshot": "9e6e9a9236a1392b22bf6575de0fde32b351a0496af1756654124e71e897e673",
+      "ibis-copy-alias-payload-stored-message": "92fe7e9f4a48a2a6a4de9645e2ec39fc6f5f8d87586e3da4f571b332f3f92b6d",
+      "ibis-copy-alias-payload-snapshot-mutation": "0c2ea316b7e28a035f08997488bd257043029cfc4036e14bd799a5662fd26958",
+      "ibis-copy-alias-payload-base-mutation": "84857a603b7511cb6019da6794c9505f0088470bb842851cdb046a76620d7e55",
+      "ibis-copy-alias-payload-permutation": "2df744e5e154f1e805ebf0d192381dedcb1a2a3e56d65a1855634bcf9cb83fa9",
+      "linnet-trace-spans-b-duration": "f52a1d9e9c4e507587edd6a48acbdacbeb1f8526141b50f7b7264aedc566b8e7",
+      "linnet-trace-spans-client-duration": "14819e73b4bb5a214f026a7ab905363a23fbebb1caf83d549de33ba6d4d36ba4",
+      "linnet-trace-spans-a-duration": "e8cd2193393ad63e6007c8979c8ea8e7d5d5a2e3059344abd009b77a2718300d",
+      "linnet-trace-spans-instrumented-a": "c4fd06bb48a4c4abe26d4f85809be97695dbd0013b1868f3fa3721cc2d083643",
+      "linnet-trace-spans-longer-b": "5681734ea8b646e7816d474388f534bb981ed3e6820dcd4a280120a0a3f2b6ee",
+      "linnet-trace-spans-permutation": "cc63cb7606979fde87f2d582058b6db855d25ce509d0b85a658d67e842ce41c4",
+      "rook-expression-origin-origin": "95bee80bea77dac2b699c664b361d2a43e5f5ecc239e085ca915deeec3b89a79",
+      "rook-expression-origin-rename": "01906c15e534b14536971d557c1da6786f0c69cdd140936626522ac88d785c5c",
+      "rook-expression-origin-format": "ff45073712fcb6b6763c27cc5cedf8e9888068afd32bc80b2cdd54c944c63802",
+      "rook-expression-origin-changed-origin": "6ebf0a23854d4e939b1b5f5e4af4db520f600356f174e17537ab80c3c92b1e66",
+      "rook-expression-origin-permutation": "40cc855a9f47842dbfdb3bc1d1c4a3b454bcb7f5e2fa05116cc83a0e87ff039b",
+      "orin-owned-counterparts-partial": "e9d454d3fa1b370060062d5081481fa95b6613ff9306f7fe37aacd5ed482d714",
+      "orin-owned-counterparts-complete": "4176f54a4cc3a6a4a322d82366e6d5303e79b899f7337a1567e99c07f254add8",
+      "orin-owned-counterparts-permutation": "d7324f8c01cf968b69019c92c41fb9b79dc9fa5d964b29bbe5bbd4367172ed60",
+      "vireo-observation-counterparts-policy-only": "6787d99f4baf8352a60c80eff15cef5665f9be03ba8706e125bff66f8007fa7e",
+      "vireo-observation-counterparts-observed-red": "a0f608735bd37a3ad877e63f014dee170edb51de24ef295b29ebdb3b769af46b",
+      "vireo-observation-counterparts-observed-blue": "234eb180789bdb1e4535bd755f6ac43de83ce170e43cfa67f842b455dc79fdb7",
+      "vireo-observation-counterparts-permutation": "c523316ed252b5b5f8edaec36adf7c03bf3b22f680c3af5168cf70f14b0e01fd"
+    },
+    "groups": [
+      [
+        "aster-window-1",
+        "aster-window-2",
+        "aster-window-3",
+        "aster-window-permutation"
+      ],
+      [
+        "nacre-quorum-1",
+        "nacre-quorum-2",
+        "nacre-quorum-3",
+        "nacre-quorum-permutation"
+      ],
+      [
+        "pavo-amendment-1",
+        "pavo-amendment-2",
+        "pavo-amendment-3",
+        "pavo-amendment-permutation"
+      ],
+      [
+        "vela-quotation-1",
+        "vela-quotation-2",
+        "vela-quotation-3",
+        "vela-quotation-permutation"
+      ],
+      [
+        "orin-ownership-1",
+        "orin-ownership-2",
+        "orin-ownership-3",
+        "orin-ownership-permutation",
+        "orin-owned-counterparts-partial",
+        "orin-owned-counterparts-complete",
+        "orin-owned-counterparts-permutation"
+      ],
+      [
+        "vireo-exclusive-1",
+        "vireo-exclusive-2",
+        "vireo-exclusive-3",
+        "vireo-exclusive-permutation",
+        "vireo-observation-counterparts-policy-only",
+        "vireo-observation-counterparts-observed-red",
+        "vireo-observation-counterparts-observed-blue",
+        "vireo-observation-counterparts-permutation"
+      ],
+      [
+        "sol-delegation-1",
+        "sol-delegation-2",
+        "sol-delegation-3",
+        "sol-delegation-permutation",
+        "maru-event-roles-executor-r",
+        "maru-event-roles-initiator-r",
+        "maru-event-roles-executor-s",
+        "maru-event-roles-direct-human",
+        "maru-event-roles-permutation"
+      ],
+      [
+        "rill-log-gap-1",
+        "rill-log-gap-2",
+        "rill-log-gap-3",
+        "rill-log-gap-permutation"
+      ],
+      [
+        "kestrel-compatibility-1",
+        "kestrel-compatibility-2",
+        "kestrel-compatibility-3",
+        "kestrel-compatibility-permutation"
+      ],
+      [
+        "bracken-roster-1",
+        "bracken-roster-2",
+        "bracken-roster-3",
+        "bracken-roster-permutation"
+      ],
+      [
+        "mica-batch-joins-1",
+        "mica-batch-joins-2",
+        "mica-batch-joins-3",
+        "mica-batch-joins-permutation"
+      ],
+      [
+        "petrel-payload-1",
+        "petrel-payload-2",
+        "petrel-payload-3",
+        "petrel-payload-permutation"
+      ],
+      [
+        "calyx-timezone-1",
+        "calyx-timezone-2",
+        "calyx-timezone-3",
+        "calyx-timezone-permutation"
+      ],
+      [
+        "lumen-vector-clocks-1",
+        "lumen-vector-clocks-2",
+        "lumen-vector-clocks-3",
+        "lumen-vector-clocks-permutation"
+      ],
+      [
+        "zephyr-study-1",
+        "zephyr-study-2",
+        "zephyr-study-3",
+        "zephyr-study-permutation"
+      ],
+      [
+        "oriel-implication-1",
+        "oriel-implication-2",
+        "oriel-implication-3",
+        "oriel-implication-permutation"
+      ],
+      [
+        "taro-bitemporal-known-cutoff",
+        "taro-bitemporal-latest-seven",
+        "taro-bitemporal-latest-three",
+        "taro-bitemporal-permutation"
+      ],
+      [
+        "nori-precedence-cycle-first",
+        "nori-precedence-cycle-b-start",
+        "nori-precedence-cycle-proposed-order",
+        "nori-precedence-cycle-c-start",
+        "nori-precedence-cycle-a-finished",
+        "nori-precedence-cycle-a-unfinished",
+        "nori-precedence-cycle-permutation"
+      ],
+      [
+        "tern-unset-resolution-missing-global",
+        "tern-unset-resolution-global-true",
+        "tern-unset-resolution-global-false",
+        "tern-unset-resolution-explicit-false-over-true",
+        "tern-unset-resolution-resolution-rule",
+        "tern-unset-resolution-permutation"
+      ],
+      [
+        "osprey-modular-payload-seed-one",
+        "osprey-modular-payload-seed-two",
+        "osprey-modular-payload-seed-zero",
+        "osprey-modular-payload-stored-message",
+        "osprey-modular-payload-reordered-program",
+        "osprey-modular-payload-permutation"
+      ],
+      [
+        "ibis-copy-alias-payload-base",
+        "ibis-copy-alias-payload-snapshot",
+        "ibis-copy-alias-payload-stored-message",
+        "ibis-copy-alias-payload-snapshot-mutation",
+        "ibis-copy-alias-payload-base-mutation",
+        "ibis-copy-alias-payload-permutation"
+      ],
+      [
+        "linnet-trace-spans-b-duration",
+        "linnet-trace-spans-client-duration",
+        "linnet-trace-spans-a-duration",
+        "linnet-trace-spans-instrumented-a",
+        "linnet-trace-spans-longer-b",
+        "linnet-trace-spans-permutation"
+      ],
+      [
+        "rook-expression-origin-origin",
+        "rook-expression-origin-rename",
+        "rook-expression-origin-format",
+        "rook-expression-origin-changed-origin",
+        "rook-expression-origin-permutation"
+      ]
+    ]
+  },
+  "critical": {
+    "criterion": "critical-action-constraint-v1",
+    "registered_facts_by_partition": {
+      "tuning": 7,
+      "development": 4,
+      "train": 3
+    },
+    "supported_critical_opportunities_by_partition": {
+      "tuning": 12,
+      "development": 8,
+      "train": 9
+    },
+    "facts": {
+      "9c02a50597756745ae454a9c": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "taro-bitemporal-known-cutoff",
+          "taro-bitemporal-latest-seven",
+          "taro-bitemporal-latest-three",
+          "taro-bitemporal-permutation"
+        ],
+        "supported_opportunities": [
+          "taro-bitemporal-known-cutoff",
+          "taro-bitemporal-permutation"
+        ]
+      },
+      "14d6784856c8edf2d8c94c14": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "taro-bitemporal-known-cutoff",
+          "taro-bitemporal-latest-seven",
+          "taro-bitemporal-latest-three",
+          "taro-bitemporal-permutation"
+        ],
+        "supported_opportunities": [
+          "taro-bitemporal-latest-seven"
+        ]
+      },
+      "3d1c65490eb18277da0e0994": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "taro-bitemporal-known-cutoff",
+          "taro-bitemporal-latest-seven",
+          "taro-bitemporal-latest-three",
+          "taro-bitemporal-permutation"
+        ],
+        "supported_opportunities": [
+          "taro-bitemporal-latest-three"
+        ]
+      },
+      "8ceee6a791f08d0a29669328": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "nori-precedence-cycle-first",
+          "nori-precedence-cycle-b-start",
+          "nori-precedence-cycle-proposed-order",
+          "nori-precedence-cycle-c-start",
+          "nori-precedence-cycle-a-finished",
+          "nori-precedence-cycle-a-unfinished",
+          "nori-precedence-cycle-permutation"
+        ],
+        "supported_opportunities": [
+          "nori-precedence-cycle-b-start",
+          "nori-precedence-cycle-a-finished",
+          "nori-precedence-cycle-a-unfinished"
+        ]
+      },
+      "c95c47734e002fc9dd4fd070": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "nori-precedence-cycle-first",
+          "nori-precedence-cycle-b-start",
+          "nori-precedence-cycle-proposed-order",
+          "nori-precedence-cycle-c-start",
+          "nori-precedence-cycle-a-finished",
+          "nori-precedence-cycle-a-unfinished",
+          "nori-precedence-cycle-permutation"
+        ],
+        "supported_opportunities": [
+          "nori-precedence-cycle-c-start"
+        ]
+      },
+      "bcdd291ff182c4d6e50c5c01": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "nori-precedence-cycle-first",
+          "nori-precedence-cycle-b-start",
+          "nori-precedence-cycle-proposed-order",
+          "nori-precedence-cycle-c-start",
+          "nori-precedence-cycle-a-finished",
+          "nori-precedence-cycle-a-unfinished",
+          "nori-precedence-cycle-permutation"
+        ],
+        "supported_opportunities": [
+          "nori-precedence-cycle-proposed-order"
+        ]
+      },
+      "50e6171faf0853de07361ce6": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "tern-unset-resolution-missing-global",
+          "tern-unset-resolution-global-true",
+          "tern-unset-resolution-global-false",
+          "tern-unset-resolution-explicit-false-over-true",
+          "tern-unset-resolution-resolution-rule",
+          "tern-unset-resolution-permutation"
+        ],
+        "supported_opportunities": [
+          "tern-unset-resolution-resolution-rule"
+        ]
+      },
+      "9d15e6c8595d8e1e84cf40bc": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "aster-window-1",
+          "aster-window-2",
+          "aster-window-3",
+          "aster-window-permutation"
+        ],
+        "supported_opportunities": [
+          "aster-window-1",
+          "aster-window-2",
+          "aster-window-permutation"
+        ]
+      },
+      "105b0e9e4a265824eebc6a47": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "nacre-quorum-1",
+          "nacre-quorum-2",
+          "nacre-quorum-3",
+          "nacre-quorum-permutation"
+        ],
+        "supported_opportunities": [
+          "nacre-quorum-1",
+          "nacre-quorum-2",
+          "nacre-quorum-permutation"
+        ]
+      },
+      "69bb1ca5aba7db68bda4e273": {
+        "partitions": [
+          "train"
+        ],
+        "occurrences": [
+          "vireo-exclusive-1",
+          "vireo-exclusive-2",
+          "vireo-exclusive-3",
+          "vireo-exclusive-permutation"
+        ],
+        "supported_opportunities": [
+          "vireo-exclusive-1",
+          "vireo-exclusive-2",
+          "vireo-exclusive-permutation"
+        ]
+      },
+      "c045a0b307adb96d1ef0487f": {
+        "partitions": [
+          "tuning"
+        ],
+        "occurrences": [
+          "kestrel-compatibility-1",
+          "kestrel-compatibility-2",
+          "kestrel-compatibility-3",
+          "kestrel-compatibility-permutation"
+        ],
+        "supported_opportunities": [
+          "kestrel-compatibility-1",
+          "kestrel-compatibility-2",
+          "kestrel-compatibility-permutation"
+        ]
+      },
+      "d3a5884cdf674cf94de35e92": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "calyx-timezone-1",
+          "calyx-timezone-2",
+          "calyx-timezone-3",
+          "calyx-timezone-permutation"
+        ],
+        "supported_opportunities": [
+          "calyx-timezone-1",
+          "calyx-timezone-2",
+          "calyx-timezone-permutation"
+        ]
+      },
+      "0640a402252a83ecacf5b524": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "lumen-vector-clocks-1",
+          "lumen-vector-clocks-2",
+          "lumen-vector-clocks-3",
+          "lumen-vector-clocks-permutation"
+        ],
+        "supported_opportunities": [
+          "lumen-vector-clocks-3"
+        ]
+      },
+      "e2a4b73671d4d7e5dbd3f984": {
+        "partitions": [
+          "development"
+        ],
+        "occurrences": [
+          "oriel-implication-1",
+          "oriel-implication-2",
+          "oriel-implication-3",
+          "oriel-implication-permutation"
+        ],
+        "supported_opportunities": [
+          "oriel-implication-1",
+          "oriel-implication-2",
+          "oriel-implication-permutation"
+        ]
+      }
+    },
+    "metric_scope": "Critical selection retention only; no extraction or durable-retention result",
+    "measured": false
+  },
+  "recorded_new_to_prior_ancestry": [
+    {
+      "new": [
+        "orin-owned-counterparts-partial",
+        "orin-owned-counterparts-complete",
+        "orin-owned-counterparts-permutation"
+      ],
+      "prior": [
+        "sequoia-hoists-0",
+        "sequoia-hoists-1",
+        "sequoia-hoists-2",
+        "sequoia-hoists-3",
+        "sequoia-hoists-4",
+        "sequoia-hoists-5",
+        "sequoia-hoists-6",
+        "orchard-delivery-0",
+        "orchard-delivery-1",
+        "orchard-delivery-2",
+        "orchard-delivery-3",
+        "orchard-delivery-4",
+        "orchard-delivery-5",
+        "orchard-delivery-6",
+        "observatory-hardware-0",
+        "observatory-hardware-1",
+        "observatory-hardware-2",
+        "observatory-hardware-3",
+        "observatory-hardware-4",
+        "observatory-hardware-5",
+        "observatory-hardware-6",
+        "expansion-owned-multisource-properties",
+        "expansion-owned-multisource-reordered",
+        "expansion-owned-multisource-missing-clause",
+        "orin-ownership-1",
+        "orin-ownership-2",
+        "orin-ownership-3",
+        "orin-ownership-permutation"
+      ]
+    },
+    {
+      "new": [
+        "vireo-observation-counterparts-policy-only",
+        "vireo-observation-counterparts-observed-red",
+        "vireo-observation-counterparts-observed-blue",
+        "vireo-observation-counterparts-permutation"
+      ],
+      "prior": [
+        "audit-choice-versus-conjunction-alternatives",
+        "audit-choice-versus-conjunction-preferred",
+        "audit-choice-versus-conjunction-both",
+        "audit-choice-versus-conjunction-reordered",
+        "vireo-exclusive-1",
+        "vireo-exclusive-2",
+        "vireo-exclusive-3",
+        "vireo-exclusive-permutation"
+      ]
+    },
+    {
+      "new": [
+        "maru-event-roles-executor-r",
+        "maru-event-roles-initiator-r",
+        "maru-event-roles-executor-s",
+        "maru-event-roles-direct-human",
+        "maru-event-roles-permutation"
+      ],
+      "prior": [
+        "sol-delegation-1",
+        "sol-delegation-2",
+        "sol-delegation-3",
+        "sol-delegation-permutation"
+      ]
+    }
+  ],
+  "historical_input_sha256": "987c807df4d82a09deaf69199a00cee431a99dac8e7a30468accb6dd4bb9c412",
+  "retired_historical_examples": 127,
+  "limits": "Historical ancestry uses an in-memory train-bucket copy only; original records/partitions/scores unchanged. Structural audit does not prove labels or independence. Known derivative joins existing training family; no new independent training group is inferred."
+}

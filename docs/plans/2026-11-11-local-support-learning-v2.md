@@ -1,12 +1,15 @@
 # Local support learning after computational admission
 
-Status: proposed data and learning design. No training is authorized by this
-document. Bounded independent review permits synthetic data preparation; its
-full-claim, critical-counting and overflow-coverage corrections are included.
+Status: the [semantic data gate](../../benchmarks/local_memory/data/local-support-v2-coverage/README.md)
+is reviewed for one bounded learning preparation. All 116 cases and 354 labels
+are reviewed; the earlier 64 records remain unchanged. No further data increment
+is required by this review. No training is authorized by this document.
+Full-claim, critical-counting and overflow-coverage corrections are included.
 The [capacity result](../validation/2026-11-11/cooperative-support-capacity-v1.md)
-admits one explicit runtime configuration for computation only. The next
-executable increment is new grouped development data and independent label
-review. Resolve that gate before implementing or running a training attempt.
+admits one explicit runtime configuration for computation only. The next step
+is freezing one numerical recipe and reviewing a bounded backward/memory probe.
+Those gates remain before training. These synthetic development records do not
+establish semantic quality or original fresh acceptance.
 
 ## Preserve the local and optional hosted paths
 

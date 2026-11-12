@@ -1,0 +1,1672 @@
+{
+  "taro-bitemporal-known-cutoff": {
+    "request_sha256": "55dfa8c911bd59d79f6dc16bf1f82f6d1bcf624217d80191b27ad9e80b93df90",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9c02a50597756745ae454a9c",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned first ledger entry was recorded by the requested knowledge cutoff and gives an 80-slot limit covering November 7."
+      },
+      {
+        "id": "14d6784856c8edf2d8c94c14",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target depends on a correction first recorded November 10, after the requested November 9 knowledge cutoff."
+      },
+      {
+        "id": "3d1c65490eb18277da0e0994",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target concerns November 3 rather than the requested November 7 valid time."
+      }
+    ]
+  },
+  "taro-bitemporal-latest-seven": {
+    "request_sha256": "c609bb0abf9452f15374a24623608e3c025adbc8aeaa0362a3d02214ebce172c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9c02a50597756745ae454a9c",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target preserves what records said on November 9, not the later corrected effective cap requested here."
+      },
+      {
+        "id": "14d6784856c8edf2d8c94c14",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "Both owned entries establish the correction recorded November 10 and effective November 5, so November 7 has the 50-slot cap."
+      },
+      {
+        "id": "3d1c65490eb18277da0e0994",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target states the November 3 cap and cannot answer the corrected November 7 cap."
+      }
+    ]
+  },
+  "taro-bitemporal-latest-three": {
+    "request_sha256": "467bc8d92a33329995f6152b321c3dec579a31c490c3b71c655d65c5eab3e97e",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9c02a50597756745ae454a9c",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target addresses November 7 as known November 9, not November 3 under the latest ledger."
+      },
+      {
+        "id": "14d6784856c8edf2d8c94c14",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target November 7 cap is within the retroactive change; November 3 precedes that effective boundary."
+      },
+      {
+        "id": "3d1c65490eb18277da0e0994",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned correction explicitly leaves the earlier entry applicable before November 5, retaining the 80-slot cap for November 3."
+      }
+    ]
+  },
+  "taro-bitemporal-permutation": {
+    "request_sha256": "24a81dc65416c00d5af3217583d254dc7ec4ee9ec0f29d362659c847870ec49d",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3d1c65490eb18277da0e0994",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target concerns November 3 rather than the requested November 7 valid time."
+      },
+      {
+        "id": "14d6784856c8edf2d8c94c14",
+        "supported": false,
+        "reason": "temporal_mismatch",
+        "critical": true,
+        "rationale": "The target depends on a correction first recorded November 10, after the requested November 9 knowledge cutoff."
+      },
+      {
+        "id": "9c02a50597756745ae454a9c",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned first ledger entry was recorded by the requested knowledge cutoff and gives an 80-slot limit covering November 7."
+      }
+    ]
+  },
+  "nori-precedence-cycle-first": {
+    "request_sha256": "c34c413ce7d61ad65ddc57edd8a2e7c39394362f6187ef614e93145e3186d171",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "The complete cohort forms A-before-B-before-C-before-A, so this locally supported edge cannot establish any valid first step."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "This edge participates in a directed cycle; choosing a first step cannot satisfy every active constraint."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "The return edge closes the cycle, leaving no valid first step under all three constraints."
+      }
+    ]
+  },
+  "nori-precedence-cycle-b-start": {
+    "request_sha256": "9d6fc1c9b9d2200be20a7aeee35209032b31ef8ebfac9688b9bff24e6c267723",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned instruction explicitly requires A to finish before B starts; the query asks for this direct edge rather than a feasible whole schedule."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target constrains C start after B finish, not the requested condition on B start."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target constrains A start after C finish, not B start."
+      }
+    ]
+  },
+  "nori-precedence-cycle-proposed-order": {
+    "request_sha256": "6b7b408e826c7bfc7846fc918356b4e288473874d8bfeba7ebda87ecf0528197",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target is the A-before-B edge, not the specific C-before-A constraint being tested."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target is the B-before-C edge, not the C-before-A constraint."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned C-before-A instruction is violated by placing C last, supporting a negative answer about this proposed order."
+      }
+    ]
+  },
+  "nori-precedence-cycle-c-start": {
+    "request_sha256": "ebda12d04dd3faaf1ddbe379afc31ce0512a697c96daa82111acecd3ddc13c27",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target constrains B start after A finish, not C start."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The owned instruction directly requires B to finish before C starts."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target constrains A start after C finish, not C start."
+      }
+    ]
+  },
+  "nori-precedence-cycle-a-finished": {
+    "request_sha256": "60460a0424a0a9758d79da721a8c0b3d51a68f4af13e37ca531b53dc54db48f5",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The explicit hypothetical fulfills this edge prerequisite, so that specific constraint no longer requires waiting for A. This does not establish a feasible global schedule."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target concerns C waiting for B, not the explicitly scoped A-before-B constraint."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target concerns A waiting for C, not the scoped constraint."
+      }
+    ]
+  },
+  "nori-precedence-cycle-a-unfinished": {
+    "request_sha256": "5f3ce095a337011cab48086859530e54e44db3d3cd839c5ecd8399a64b93c89c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The hypothetical leaves the owned prerequisite false, so the instruction supports a negative answer about this specific constraint."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target governs C start, not permission under the A-before-B constraint."
+      },
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": true,
+        "rationale": "The target governs A start, not the constraint being tested."
+      }
+    ]
+  },
+  "nori-precedence-cycle-permutation": {
+    "request_sha256": "85613901cd6faf78d8428c18d160dc07ebad4da5174359083ba7943aa0dfdf67",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "bcdd291ff182c4d6e50c5c01",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "The return edge closes the cycle, leaving no valid first step under all three constraints."
+      },
+      {
+        "id": "c95c47734e002fc9dd4fd070",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "This edge participates in a directed cycle; choosing a first step cannot satisfy every active constraint."
+      },
+      {
+        "id": "8ceee6a791f08d0a29669328",
+        "supported": false,
+        "reason": "unresolved_conflict",
+        "critical": true,
+        "rationale": "The complete cohort forms A-before-B-before-C-before-A, so this locally supported edge cannot establish any valid first step."
+      }
+    ]
+  },
+  "tern-unset-resolution-missing-global": {
+    "request_sha256": "95c83973e9d0eb3dce1ad0ca802686f703c1a59fafee3205b74a485aedc97ddb",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned project flag is UNSET and no global Boolean is retained, so enabled cannot be resolved."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "UNSET delegates resolution; absence of the global Boolean cannot be treated as explicit false."
+      },
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The owned resolution rule supplies neither the actual project nor global state needed to resolve this instance."
+      }
+    ]
+  },
+  "tern-unset-resolution-global-true": {
+    "request_sha256": "1c4703a3858db6ecf40193e9e200a944dfa4d90bf37a2d0c9b1c70dd7ea83e3b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "Owned UNSET project and true global inputs resolve through inheritance to enabled."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The complete owned inputs resolve to enabled, contradicting the disabled target."
+      },
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "This target owns the resolution rule alone, not the instance inputs required to establish an actual state."
+      }
+    ]
+  },
+  "tern-unset-resolution-global-false": {
+    "request_sha256": "eb127bb5f4778db7813b405195795dbdeb5c769a95ac830d750d3722329133e8",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned UNSET project inherits false global, so it cannot support enabled."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The complete owned project and global observations resolve to disabled."
+      },
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The generic rule owns no instance inputs establishing the actual resolved state."
+      }
+    ]
+  },
+  "tern-unset-resolution-explicit-false-over-true": {
+    "request_sha256": "1f8fb167cfa149d7df825d902a274c27e14d1938491f5524d3ee12b9827418b9",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Owned explicit project false overrides true global; enabled is not established."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned explicit false project flag disables capture despite true global, unlike an UNSET override."
+      },
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The rule target owns only the resolution contract, not the current instance observations."
+      }
+    ]
+  },
+  "tern-unset-resolution-resolution-rule": {
+    "request_sha256": "951827db4f70cb1ebf83a82c844f3a844213ec0815d33660088e37398a61fb5b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The actual enabled claim lacks the global input under its owned UNSET project evidence, and does not state the resolution rule."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The actual disabled claim lacks the global input and cannot substitute missing information for explicit false."
+      },
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": true,
+        "reason": "supported",
+        "critical": true,
+        "rationale": "The complete owned contract explicitly distinguishes false overriding global from UNSET inheriting it."
+      }
+    ]
+  },
+  "tern-unset-resolution-permutation": {
+    "request_sha256": "4ffd46c0555170113e1a8cfe0fb46464fc0aa2201c521948be6ce20faf4a8097",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "50e6171faf0853de07361ce6",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": true,
+        "rationale": "The owned resolution rule supplies neither the actual project nor global state needed to resolve this instance."
+      },
+      {
+        "id": "8c47fd7ec8aae273818b1d24",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "UNSET delegates resolution; absence of the global Boolean cannot be treated as explicit false."
+      },
+      {
+        "id": "c35ab77cf64cd48ea598ebe3",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned project flag is UNSET and no global Boolean is retained, so enabled cannot be resolved."
+      }
+    ]
+  },
+  "maru-event-roles-executor-r": {
+    "request_sha256": "0b36c3bd50223c7dbc41185b019d479958ba9ffd9159ae43a6074fd2a5f70c0a",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "bf9c17e8bb3d5b0e50accd6d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned completed event record explicitly names BotB as executor."
+      },
+      {
+        "id": "774d02610da4f691234ab303",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned record assigns HumanA the initiator role and BotB the executor role, not HumanA execution."
+      },
+      {
+        "id": "7cccf25d8245e9cfd4e7e943",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target records initiation, not the requested executor role."
+      },
+      {
+        "id": "125bc081eaff390a02f00b36",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns event S rather than event R."
+      }
+    ]
+  },
+  "maru-event-roles-initiator-r": {
+    "request_sha256": "d1a96929cbb4e006fdaad0c9cad401ed3d741c035bb4a0f6bda706cffe51c865",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "bf9c17e8bb3d5b0e50accd6d",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target identifies the executor, not the initiator."
+      },
+      {
+        "id": "774d02610da4f691234ab303",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full target attributes execution to the initiator despite the owned executor field."
+      },
+      {
+        "id": "7cccf25d8245e9cfd4e7e943",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned event R record explicitly names HumanA as initiator."
+      },
+      {
+        "id": "125bc081eaff390a02f00b36",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Event S execution does not answer event R initiation."
+      }
+    ]
+  },
+  "maru-event-roles-executor-s": {
+    "request_sha256": "77c61e63e0174e686f0936965f2be527909982b22dbef0d9163e286b734b8ca4",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "bf9c17e8bb3d5b0e50accd6d",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target identifies an executor of R, not S."
+      },
+      {
+        "id": "774d02610da4f691234ab303",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The own R record does not attribute execution to HumanA; the neighboring S record cannot repair this R claim."
+      },
+      {
+        "id": "7cccf25d8245e9cfd4e7e943",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "R initiation does not establish S execution."
+      },
+      {
+        "id": "125bc081eaff390a02f00b36",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target owns the completed S event record explicitly naming HumanA as executor."
+      }
+    ]
+  },
+  "maru-event-roles-direct-human": {
+    "request_sha256": "52a69f115e7d2454d2e51cfc5da9e4d8822db504d41d909b01d38db12f0d5c43",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "bf9c17e8bb3d5b0e50accd6d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "In this owned counterfactual record the executor is HumanA, not BotB."
+      },
+      {
+        "id": "774d02610da4f691234ab303",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The changed owned record explicitly names HumanA as executor, establishing the previously unsupported counterpart."
+      },
+      {
+        "id": "7cccf25d8245e9cfd4e7e943",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The initiator target does not state the executor role even when the same identity occupies both."
+      },
+      {
+        "id": "125bc081eaff390a02f00b36",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target still concerns different event S."
+      }
+    ]
+  },
+  "maru-event-roles-permutation": {
+    "request_sha256": "0344fe2d4b1e07a72408d632d847bcecc71b9c87d74a5233318cb9043d8675ad",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "125bc081eaff390a02f00b36",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns event S rather than event R."
+      },
+      {
+        "id": "7cccf25d8245e9cfd4e7e943",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target records initiation, not the requested executor role."
+      },
+      {
+        "id": "774d02610da4f691234ab303",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned record assigns HumanA the initiator role and BotB the executor role, not HumanA execution."
+      },
+      {
+        "id": "bf9c17e8bb3d5b0e50accd6d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned completed event record explicitly names BotB as executor."
+      }
+    ]
+  },
+  "osprey-modular-payload-seed-one": {
+    "request_sha256": "08889f3741ac8296ca3c2beb116909e4efe088b2a014405039ed591fb168d60e",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "(2*1+1) modulo 3 is zero, and the owned directions list stores north at index zero."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned algorithm selects north for seed one. The inert audit string cannot establish the claimed east return."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed two, not seed one."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed zero, not seed one."
+      },
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states an instruction stored as text, not the function return value."
+      }
+    ]
+  },
+  "osprey-modular-payload-seed-two": {
+    "request_sha256": "ceb306e57a492de19a856e4064f1e5a4337120f17bff5c273d9652178c90b420",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns choose(1), not choose(2)."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The full choose(1)=east claim is unsupported even though east is correct for a different seed."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "(2*2+1) modulo 3 is two, whose owned list entry is east. Agreement with the injected text does not invalidate this separately supported result."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed zero."
+      },
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "An archived instruction is not the requested computed return."
+      }
+    ]
+  },
+  "osprey-modular-payload-seed-zero": {
+    "request_sha256": "42258c20a70d963ca62f9987318eb6fa7c6dbfc05b9ca482325b575e34d44e85",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed one rather than zero."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own algorithm does not support the full choose(1)=east claim."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed two rather than zero."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "(2*0+1) modulo 3 is one, whose owned list entry is south."
+      },
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes the audit string, not the computed return."
+      }
+    ]
+  },
+  "osprey-modular-payload-stored-message": {
+    "request_sha256": "065c815b8e363af94193dfbab9edc5c36e33494de5c24738feae104de716b89d",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A computed function value does not state the stored instruction."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The choose(1)=east claim still lacks computational support; matching words in a string do not repair it."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes seed-two execution, not the stored text."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes seed-zero execution, not the stored text."
+      },
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned string literal explicitly stores that instruction. Reporting its contents does not adopt it."
+      }
+    ]
+  },
+  "osprey-modular-payload-reordered-program": {
+    "request_sha256": "abc2f92fe11b795f0dc3402bc18d15848f772adc3c850e6a9c29512b42554539",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned reordered list puts east rather than north at computed index zero."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "In this owned counterfactual program, seed one still selects index zero, now east. The algorithm independently establishes the formerly unsupported target."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Computed index two now stores south, so the full choose(2)=east claim is unsupported."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Computed index one now stores north, not the claimed choose(0)=south."
+      },
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The stored text still does not answer the computation query."
+      }
+    ]
+  },
+  "osprey-modular-payload-permutation": {
+    "request_sha256": "f668b720b846da51ca5a7ec5a78f9f0058070d088323df1306752ea4fd31069c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "9c6ce17f8bc983085d342b99",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states an instruction stored as text, not the function return value."
+      },
+      {
+        "id": "96a67ae0135be6b7f1ecebad",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed zero, not seed one."
+      },
+      {
+        "id": "9a1092c8b171bdb5e0243dfc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns seed two, not seed one."
+      },
+      {
+        "id": "3dad5524cd75d1932c984a38",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned algorithm selects north for seed one. The inert audit string cannot establish the claimed east return."
+      },
+      {
+        "id": "0d7f8f0d23d660099d6ec3e7",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "(2*1+1) modulo 3 is zero, and the owned directions list stores north at index zero."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-base": {
+    "request_sha256": "9c54951ccef2ab1a00f3aabe1a54a9e5063df2b38205c61510e515f5aff76347",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "alias references base, so its west assignment mutates the base dictionary."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "No executed assignment sets base to south. The stored audit instruction is not a dictionary mutation."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns the separate copied snapshot, not base."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "snapshot was copied before mutation and remains north, not the full target south claim."
+      },
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target records a text instruction, not a dictionary value."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-snapshot": {
+    "request_sha256": "9e6e9a9236a1392b22bf6575de0fde32b351a0496af1756654124e71e897e673",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "base and snapshot are separate dictionaries; the base value does not establish the snapshot value."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own program gives base west, contradicting the full base-south claim."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "snapshot copied the north value into a distinct dictionary before alias mutated base."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned snapshot copy remains north; the message does not mutate it to south."
+      },
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes stored text rather than the copied dictionary state."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-stored-message": {
+    "request_sha256": "92fe7e9f4a48a2a6a4de9645e2ec39fc6f5f8d87586e3da4f571b332f3f92b6d",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states a base dictionary value, not the message."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The full base-south claim is not established by the owned executable assignments."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A snapshot value does not state the message."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The own assignments leave snapshot north, not south."
+      },
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The complete owned program explicitly stores that instruction as inert text."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-snapshot-mutation": {
+    "request_sha256": "0c2ea316b7e28a035f08997488bd257043029cfc4036e14bd799a5662fd26958",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The base dictionary is distinct from the snapshot addressed by this query."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "base remains west; the added snapshot mutation does not repair the base-south target."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The added owned assignment changes snapshot from north to south."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned counterfactual explicitly assigns snapshot route south after copying; that establishes the formerly unsupported claim."
+      },
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The text instruction does not itself answer the state query."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-base-mutation": {
+    "request_sha256": "84857a603b7511cb6019da6794c9505f0088470bb842851cdb046a76620d7e55",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "This owned variant assigns south rather than west through the base alias."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The actual alias assignment now writes south to base, independently of the agreeing audit message."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The separate snapshot still contains north, but it is not base."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The base mutation does not change the independent snapshot from north to south."
+      },
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target remains a report of inert text, not the executed assignment."
+      }
+    ]
+  },
+  "ibis-copy-alias-payload-permutation": {
+    "request_sha256": "2df744e5e154f1e805ebf0d192381dedcb1a2a3e56d65a1855634bcf9cb83fa9",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e4aa8a8c9bbc686277fd18a6",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target records a text instruction, not a dictionary value."
+      },
+      {
+        "id": "8bb73d08c8b3c8ae6d33b235",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "snapshot was copied before mutation and remains north, not the full target south claim."
+      },
+      {
+        "id": "67f03c9e4868a90b35eea9b5",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns the separate copied snapshot, not base."
+      },
+      {
+        "id": "5c97a809a77e39b9bced2466",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "No executed assignment sets base to south. The stored audit instruction is not a dictionary mutation."
+      },
+      {
+        "id": "3ff683e8442d9b67af1959bc",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "alias references base, so its west assignment mutates the base dictionary."
+      }
+    ]
+  },
+  "linnet-trace-spans-b-duration": {
+    "request_sha256": "f52a1d9e9c4e507587edd6a48acbdacbeb1f8526141b50f7b7264aedc566b8e7",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned B handler span runs from 5 to 12 on the same millisecond clock, giving seven milliseconds."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned 18-millisecond span belongs to the client, not an instrumented service A handler."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states a client-observed parent span, not the requested B handler interval."
+      },
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The target attributes the client parent duration to the distinct B handler span, whose actual duration is seven."
+      }
+    ]
+  },
+  "linnet-trace-spans-client-duration": {
+    "request_sha256": "14819e73b4bb5a214f026a7ab905363a23fbebb1caf83d549de33ba6d4d36ba4",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The B handler interval is a child measurement, not the requested client-observed parent duration."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The source gives no A handler duration; assigning the client span to A does not establish this target."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned client span runs from zero to eighteen milliseconds."
+      },
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full B-handler-eighteen claim misattributes the client measurement to a seven-millisecond child span."
+      }
+    ]
+  },
+  "linnet-trace-spans-a-duration": {
+    "request_sha256": "e8cd2193393ad63e6007c8979c8ea8e7d5d5a2e3059344abd009b77a2718300d",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target is about the B handler, not A."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The dispatch event timestamp supplies no A handler span, and the client span cannot be reassigned to A."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target is explicitly a client measurement, not an A handler measurement."
+      },
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full B-handler-eighteen claim lacks its own span support and cannot answer the different A handler question."
+      }
+    ]
+  },
+  "linnet-trace-spans-instrumented-a": {
+    "request_sha256": "c4fd06bb48a4c4abe26d4f85809be97695dbd0013b1868f3fa3721cc2d083643",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target still concerns the B child span, not A."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned counterfactual adds an actual A handler span from zero to eighteen; its own measured boundaries now establish the target."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A parent client duration remains a different measured interval from A handler duration."
+      },
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The B handler remains seven milliseconds, not the full target eighteen."
+      }
+    ]
+  },
+  "linnet-trace-spans-longer-b": {
+    "request_sha256": "5681734ea8b646e7816d474388f534bb981ed3e6820dcd4a280120a0a3f2b6ee",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The changed owned B handler span runs zero to eighteen, contradicting the full seven-millisecond target."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "No A handler span is present; the client measurement still cannot be attributed to A."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes a client span rather than the requested B handler."
+      },
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned counterfactual explicitly measures B from zero to eighteen. Its dispatch timestamp is also zero, preserving chronology."
+      }
+    ]
+  },
+  "linnet-trace-spans-permutation": {
+    "request_sha256": "cc63cb7606979fde87f2d582058b6db855d25ce509d0b85a658d67e842ce41c4",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "960affff5cfc5b529168780d",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The target attributes the client parent duration to the distinct B handler span, whose actual duration is seven."
+      },
+      {
+        "id": "f12ea18a1dfdee068afc5876",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target states a client-observed parent span, not the requested B handler interval."
+      },
+      {
+        "id": "db908469cb7c88ab2637994e",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The owned 18-millisecond span belongs to the client, not an instrumented service A handler."
+      },
+      {
+        "id": "5a24a3e773454ec0cab4fd0a",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned B handler span runs from 5 to 12 on the same millisecond clock, giving seven milliseconds."
+      }
+    ]
+  },
+  "rook-expression-origin-origin": {
+    "request_sha256": "95bee80bea77dac2b699c664b361d2a43e5f5ecc239e085ca915deeec3b89a79",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "cf5c53ead007efb7b2bc6e10",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned first revision creates f with addition by one; subsequent revisions retain that arithmetic operation."
+      },
+      {
+        "id": "b1f8783a4317e60bf7e14a62",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Ivo only changes spacing around an addition already present in Dana revision."
+      },
+      {
+        "id": "1b501ca9e101088d3f351100",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Jae changes the parameter name and matching reference after the addition already exists."
+      },
+      {
+        "id": "013fe3c766dbec526e46f2f0",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns parameter renaming rather than introduction of the arithmetic operation."
+      },
+      {
+        "id": "55e00ab3918787cda1ea690b",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A whitespace-only formatting change does not identify introduction of this operation."
+      }
+    ]
+  },
+  "rook-expression-origin-rename": {
+    "request_sha256": "01906c15e534b14536971d557c1da6786f0c69cdd140936626522ac88d785c5c",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "cf5c53ead007efb7b2bc6e10",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target identifies an arithmetic originator, not the parameter-renaming author."
+      },
+      {
+        "id": "b1f8783a4317e60bf7e14a62",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full Ivo arithmetic-origin claim is contradicted by the earlier owned addition."
+      },
+      {
+        "id": "1b501ca9e101088d3f351100",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "The full Jae arithmetic-origin claim incorrectly assigns an already-existing operation to its later renamer."
+      },
+      {
+        "id": "013fe3c766dbec526e46f2f0",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned third revision changes the parameter and corresponding reference from x to y."
+      },
+      {
+        "id": "55e00ab3918787cda1ea690b",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target describes Ivo whitespace change rather than the requested parameter rename."
+      }
+    ]
+  },
+  "rook-expression-origin-format": {
+    "request_sha256": "ff45073712fcb6b6763c27cc5cedf8e9888068afd32bc80b2cdd54c944c63802",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "cf5c53ead007efb7b2bc6e10",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Introducing the arithmetic operation is different from the requested later whitespace-only change."
+      },
+      {
+        "id": "b1f8783a4317e60bf7e14a62",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Ivo does not originate the already-present arithmetic, so that full target remains unsupported."
+      },
+      {
+        "id": "1b501ca9e101088d3f351100",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Jae does not originate the arithmetic in the supplied revision sequence."
+      },
+      {
+        "id": "013fe3c766dbec526e46f2f0",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "Parameter renaming is not a whitespace-only change."
+      },
+      {
+        "id": "55e00ab3918787cda1ea690b",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "Comparing owned revisions one and two shows x+1 becoming x + 1 with no other return-expression change."
+      }
+    ]
+  },
+  "rook-expression-origin-changed-origin": {
+    "request_sha256": "6ebf0a23854d4e939b1b5f5e4af4db520f600356f174e17537ab80c3c92b1e66",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "cf5c53ead007efb7b2bc6e10",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "In this owned variant Dana creates an identity return without addition; the later Ivo revision adds the operation."
+      },
+      {
+        "id": "b1f8783a4317e60bf7e14a62",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The changed owned history makes Ivo revision the first to add +1, establishing the previously unsupported origin claim."
+      },
+      {
+        "id": "1b501ca9e101088d3f351100",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Jae still only renames the parameter after the arithmetic operation exists."
+      },
+      {
+        "id": "013fe3c766dbec526e46f2f0",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The rename target does not state the arithmetic originator."
+      },
+      {
+        "id": "55e00ab3918787cda1ea690b",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "Ivo now adds an arithmetic operation, so the full only-whitespace claim is false."
+      }
+    ]
+  },
+  "rook-expression-origin-permutation": {
+    "request_sha256": "40cc855a9f47842dbfdb3bc1d1c4a3b454bcb7f5e2fa05116cc83a0e87ff039b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "55e00ab3918787cda1ea690b",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "A whitespace-only formatting change does not identify introduction of this operation."
+      },
+      {
+        "id": "013fe3c766dbec526e46f2f0",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The target concerns parameter renaming rather than introduction of the arithmetic operation."
+      },
+      {
+        "id": "1b501ca9e101088d3f351100",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Jae changes the parameter name and matching reference after the addition already exists."
+      },
+      {
+        "id": "b1f8783a4317e60bf7e14a62",
+        "supported": false,
+        "reason": "attribution_mismatch",
+        "critical": false,
+        "rationale": "Ivo only changes spacing around an addition already present in Dana revision."
+      },
+      {
+        "id": "cf5c53ead007efb7b2bc6e10",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The owned first revision creates f with addition by one; subsequent revisions retain that arithmetic operation."
+      }
+    ]
+  },
+  "orin-owned-counterparts-partial": {
+    "request_sha256": "e9d454d3fa1b370060062d5081481fa95b6613ff9306f7fe37aacd5ed482d714",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The compound target owns only a size report; its segment clause lacks owned support even though the query asks for that clause."
+      },
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The size-only target does not state a segment count."
+      }
+    ]
+  },
+  "orin-owned-counterparts-complete": {
+    "request_sha256": "4176f54a4cc3a6a4a322d82366e6d5303e79b899f7337a1567e99c07f254add8",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target now owns both the 72-segment counter and 9 MB size report, supporting every clause and answering the segment query."
+      },
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The size-only target still does not answer the count question."
+      }
+    ]
+  },
+  "orin-owned-counterparts-permutation": {
+    "request_sha256": "d7324f8c01cf968b69019c92c41fb9b79dc9fa5d964b29bbe5bbd4367172ed60",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "e2df6a2df6e2a36f2f434188",
+        "supported": false,
+        "reason": "wrong_subject_relation",
+        "critical": false,
+        "rationale": "The size-only target does not state a segment count."
+      },
+      {
+        "id": "6056470cae7ea33f75dad5fb",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The compound target owns only a size report; its segment clause lacks owned support even though the query asks for that clause."
+      }
+    ]
+  },
+  "vireo-observation-counterparts-policy-only": {
+    "request_sha256": "6787d99f4baf8352a60c80eff15cef5665f9be03ba8706e125bff66f8007fa7e",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5c699940d6c597312af9640d",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned instruction allows exactly one channel but contains no observed release R selection establishing red."
+      },
+      {
+        "id": "377f9ee5e6206107663e9cde",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned instruction contains no observed release R selection establishing blue."
+      }
+    ]
+  },
+  "vireo-observation-counterparts-observed-red": {
+    "request_sha256": "a0f608735bd37a3ad877e63f014dee170edb51de24ef295b29ebdb3b769af46b",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5c699940d6c597312af9640d",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target owns an actual release R observation selecting red, in addition to the rule."
+      },
+      {
+        "id": "377f9ee5e6206107663e9cde",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned actual selection is red; the exactly-one rule does not support the other claimed selection."
+      }
+    ]
+  },
+  "vireo-observation-counterparts-observed-blue": {
+    "request_sha256": "234eb180789bdb1e4535bd755f6ac43de83ce170e43cfa67f842b455dc79fdb7",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "5c699940d6c597312af9640d",
+        "supported": false,
+        "reason": "incomplete_source_support",
+        "critical": false,
+        "rationale": "The owned actual selection is blue; the exactly-one rule does not support the other claimed selection."
+      },
+      {
+        "id": "377f9ee5e6206107663e9cde",
+        "supported": true,
+        "reason": "supported",
+        "critical": false,
+        "rationale": "The target owns an actual release R observation selecting blue, in addition to the rule."
+      }
+    ]
+  },
+  "vireo-observation-counterparts-permutation": {
+    "request_sha256": "c523316ed252b5b5f8edaec36adf7c03bf3b22f680c3af5168cf70f14b0e01fd",
+    "review_status": "reviewed",
+    "targets": [
+      {
+        "id": "377f9ee5e6206107663e9cde",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned instruction contains no observed release R selection establishing blue."
+      },
+      {
+        "id": "5c699940d6c597312af9640d",
+        "supported": false,
+        "reason": "unresolved_condition",
+        "critical": false,
+        "rationale": "The owned instruction allows exactly one channel but contains no observed release R selection establishing red."
+      }
+    ]
+  }
+}

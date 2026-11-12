@@ -118,6 +118,18 @@ separate ledger. The 35 focused tests, full-frame audit and unchanged bindings
 pass. No classifier inference ran, and these repeated synthetic controls do
 not add independent learning or holdout examples or qualify latency.
 
+The [reviewed semantic coverage increment](../../benchmarks/local_memory/data/local-support-v2-coverage/README.md)
+adds 52 cases and 194 labels, giving 116 cases and 354 labels across the combined
+corpus. Training/tuning/development contain 56/31/29 cases in 11/6/6 connected
+groups. Independent review verified all new labels and permitted numerical
+recipe and backward-memory review for one bounded learning attempt; no further
+data increment is required by this review. The three added training families
+are known derivatives and add no independent group. Complete tokenizer frames
+and all prior data bindings pass. No classifier or hosted call ran. Training,
+fresh acceptance, trained timing and pilot completion remain open.
+The private 22-member, 160,630-byte archive verifies on readback; SHA-256 is
+`30254bce325a4425f0633b3d6b94fc8d370441fae090424976a9e05bf9afe113`.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
@@ -140,12 +152,11 @@ host acceptance.
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
 computational admission. Follow the separate local data/learning design by
-extending the reviewed corpus's sparse reserved categories and source-supported
-counterparts before fixing a training recipe. Mechanical boundary controls are
-closed for the explicit candidate; they are not semantic coverage. The training
-and partition preparation
-do not establish data sufficiency. Training and semantic
-grading remain unauthorized by capacity alone. Do not repeat an unchanged
+freezing one numerical recipe and reviewing its bounded backward/memory probe.
+The scoped data gate and mechanical boundary controls are closed; neither is
+semantic model acceptance. No further data increment is required before that
+recipe review. Training and semantic grading remain unauthorized by capacity
+alone. Do not repeat an unchanged
 packaging/native matrix or
 the admitted computation screen. Any further model architecture needs its own
 substantive prospective decision. The failed
