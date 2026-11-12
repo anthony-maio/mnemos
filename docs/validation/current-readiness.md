@@ -7,7 +7,17 @@ served 0.6.0 then; the local-memory candidate remains unpublished 0.7.0b1.
 
 ## Runtime and installation
 
-Newer runtime source `f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f` fixes a
+Newer source-only repair `73d4a242b27b9ff34da9bda4a1db4545045e5e65`
+[closes a service-boundary recall race](https://github.com/anthony-maio/mnemos/blob/cd46bc53/docs/validation/2026-11-11/recall-snapshot-v1.md):
+deleted, corrected or newly ineligible selections cannot reuse an earlier
+retrieval result during response assembly. SQLite responses read facts,
+evidence and source status from one assembly snapshot, and filtered context
+is recounted. All 178 targeted checks pass, including 13 new regressions;
+focused typing and formatting pass. This source is not in the private wheel
+or the native result below. Packaging and installed/native acceptance remain
+outstanding for this revision. It is not a semantic or timing pass.
+
+Installed runtime source `f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f` fixes a
 reproduced inspection race during concurrent correction/forget. Each SQLite
 inspection now reads its fact, evidence, source status and revisions from one
 snapshot. 116 distinct relevant checks pass. Two pre-existing mypy errors in

@@ -45,6 +45,7 @@ Use the candidate to evaluate explicit storage, source inspection, same-ID corre
 
 | Area | Verified state |
 | --- | --- |
+| Newer source repair | `73d4a242` fixes a concurrent correction/forget race during recall assembly; 178 targeted checks pass. This repair is not yet in the private package or its native-host validation below. |
 | Latest private package | Runtime source `f1314f6d`; 99 installed package files, 57 pinned dependencies, five installed inspection-race tests and a passing real-embedding CLI/MCP restart smoke check. This is not a published release. |
 | Native workflow | Codex v13 passed all six explicit-memory phases on `f1314f6d` with hooks disabled. The earlier Claude v8 timeout remains a failed result on its own artifact. Other hosts and the full pilot configuration remain separate requirements. |
 | Answer support | No evaluated configuration meets the quality and latency requirements. Related text and a retrieved source ID do not establish a supported answer. |
