@@ -1,6 +1,6 @@
 # Mnemos improvement work
 
-Status: resumed with user direction on November 11. Started November 6, 2026 from delivery commit `9770c00` on
+Status: active on November 12. Started November 6, 2026 from delivery commit `9770c00` on
 `wt/mnemos-improvements`. This goal resumes the work deferred on October 28.
 No release, live configuration change, or pilot completion is implied.
 
@@ -132,6 +132,14 @@ The private 22-member, 160,630-byte archive verifies on readback; SHA-256 is
 
 ## Scope and completion evidence
 
+The [full-encoder backward check](../validation/2026-11-12/local-support-backward-probe-v1.md)
+now passes after the sole code-only Windows environment repair. Four complete
+8,192-token microbatches reached all 22 layers and one finite Adam update,
+with 2.84 GiB peak reserved allocator memory and zero owned survivors.
+The first tokenizer-import failure remains archived. All numerical settings
+and prepared artifacts are unchanged. This closes the backward computation
+gate only; the one corpus runner still needs implementation, freeze and review.
+
 | Priority | Completion evidence still required | Current evidence and remaining work |
 | --- | --- | --- |
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
@@ -152,11 +160,11 @@ host acceptance.
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
 computational admission. Follow the separate local data/learning design by
-freezing one numerical recipe and reviewing its bounded backward/memory probe.
+implementing, freezing and reviewing the single 84-update corpus runner.
 The scoped data gate and mechanical boundary controls are closed; neither is
 semantic model acceptance. No further data increment is required before that
-recipe review. Training and semantic grading remain unauthorized by capacity
-alone. Do not repeat an unchanged
+recipe review. The reviewed numerical recipe and backward probe now pass;
+corpus execution still requires the exact runner review. Do not repeat an unchanged
 packaging/native matrix or
 the admitted computation screen. Any further model architecture needs its own
 substantive prospective decision. The failed
