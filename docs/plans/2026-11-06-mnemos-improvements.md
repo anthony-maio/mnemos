@@ -83,8 +83,10 @@ call took 619.25 ms; this is not a per-call deadline pass. It is the same
 untrained encoder with explicit embedding threads=1, not a new architecture,
 semantic pass, causal comparison or product-default change. Both earlier
 capacity failures and the CPU-only non-regression failure remain intact.
-Next prepare the separate grouped-data/learning plan for review. Do not train
-from this result alone or reuse the three known training groups as adequate
+The separate [local data/learning design](2026-11-11-local-support-learning-v2.md)
+now defines the next data-preparation gate. It does not authorize training:
+new independent families, source-bound labels and a reviewed numerical recipe
+are still required. Do not reuse the three known training groups as adequate
 new data. Fresh acceptance and the actual pilot remain separate obligations.
 
 ## Scope and completion evidence
@@ -108,9 +110,11 @@ host acceptance.
 
 The current installed/native artifact gap is closed for the explicit Codex
 preset. The explicitly amended resource configuration now passes warm
-computational admission. Prepare its separate grouped-data/learning plan for
-review before any training or semantic grading; the known three training
-groups are not enough. Do not repeat an unchanged packaging/native matrix or
+computational admission. Follow the separate local data/learning design by
+preparing and reviewing independent grouped data before fixing a training
+recipe; the known three training groups are not enough. Training and semantic
+grading remain unauthorized by capacity alone. Do not repeat an unchanged
+packaging/native matrix or
 the admitted computation screen. Any further model architecture needs its own
 substantive prospective decision. The failed
 Jev configuration does not authorize threshold rescue or cloud fallback.
