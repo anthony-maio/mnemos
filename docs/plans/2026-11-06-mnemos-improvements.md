@@ -44,7 +44,7 @@ packaging/native matrix. No new semantic model or timing retry is implied.
 
 Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/jev-support-screen-v1.md) completed all 44 frozen hybrid questions with 100% selected precision and no-answer abstention, but 77.78% retention/recall. It fails the original gates. Support-only p95 was 441.73 ms; complete recall and critical retention remain unmeasured. The earlier [Qwen3.5 screen](../validation/2026-11-08/qwen35-support-screen-v1.md) remains a closed failure. The November 11 direction requires local operation with optional Jev; no defaults or live configuration changed. Do not launch another support-model or threshold sweep.
 
-Latest computation evidence: [the bidirectional support screen](../validation/2026-11-11/bidirectional-support-capacity-v1.md)
+Prior component evidence: [the bidirectional support screen](../validation/2026-11-11/bidirectional-support-capacity-v1.md)
 completed 120 samples and 106 forwards, with full-length p95 of 226.21/213.99 ms.
 It fails the planned 200 ms allocation and is closed before training. That
 allocation reserved an unmeasured 300 ms; it is not the original complete
@@ -75,15 +75,27 @@ resource-budget option. This is not a full support-enabled timing result and
 does not reopen the closed resident model configuration. No retry or live
 configuration change occurred.
 
+The [explicit CPU-budget support attempt](../validation/2026-11-11/cooperative-support-capacity-v1.md)
+now passes warm computational admission at the original 500 ms p95 gate on
+all six unchanged workloads (worst p95 386.35 ms). All 300 measured calls and
+280 forwards completed with zero owned survivors and unchanged bindings. One
+call took 619.25 ms; this is not a per-call deadline pass. It is the same
+untrained encoder with explicit embedding threads=1, not a new architecture,
+semantic pass, causal comparison or product-default change. Both earlier
+capacity failures and the CPU-only non-regression failure remain intact.
+Next prepare the separate grouped-data/learning plan for review. Do not train
+from this result alone or reuse the three known training groups as adequate
+new data. Fresh acceptance and the actual pilot remain separate obligations.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
 | --- | --- | --- |
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
-| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | Local configurations remain closed failures. Optional Jev completed 44 frozen hybrid questions: 21/21 supported selections, 17/17 correct no-answer abstentions, 21/27 retention/recall and 441.73 ms support-only p95. It fails retention/recall. Required local operation, critical retention and complete timing remain unresolved. |
+| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | Evaluated semantic configurations remain closed failures. The untrained explicit-resource encoder now passes computational admission, permitting a separate reviewed learning/data plan only. Optional Jev remains a failed 44-question result with 21/27 retention/recall. No local semantic or critical-retention pass exists. |
 | 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation  | Earlier paired retrieval results remain frozen. The Qwen3.5 screen replays the same immutable support requests; it is not a new extraction or retrieval run. No passing candidate qualifies for fresh acceptance yet. |
 | 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Codex v14 passes all six phases on installed `9c326cbc`, with original-source replay suppression, 19 offline-reconstructed calls and successful cleanup. This is the explicit preset with hooks off, not full pilot or multi-fact/batch acceptance. Claude v8 remains failed on its own artifact. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
-| 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The paging experiment is closed without demonstrated native latency benefit. Current read-only ordinary recall measured p95 150.04 ms at 10,000 facts with no selector or concurrent capture; it does not replace the full support-enabled or interleaved workload. The one-thread proposal failed non-regression. Complete 500 ms support-enabled recall and 100 ms capture gates remain unmet. |
+| 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The explicit-resource untrained encoder passes warm complete computational p95 on the six full-input workloads, worst 386.35 ms, with one 619.25 ms outlier. This is not trained support or interleaved/native acceptance. The 500 ms trained support path, supported-facts-per-token evidence and 100 ms capture gate remain open. |
 | 6 | Consistent verified code/package/docs/site and explicit delivery state  | Source `9c326cbc` now has a new private wheel, 18 installed race tests, real-embedding smoke and the explicit Codex v14 pass. All 99 packaged files match source. Current documentation must use this artifact without transferring other native or full-pilot claims. Published package, private candidate, optional pilot and live website example remain distinct. No publication or live update occurred. |
 
 Keep the existing frozen scores, raw evidence and thresholds intact. Use new
@@ -95,9 +107,12 @@ host acceptance.
 ## Work order
 
 The current installed/native artifact gap is closed for the explicit Codex
-preset. Return to required local answer-support quality and complete latency;
-do not repeat an unchanged packaging or native matrix. A further semantic
-candidate needs a substantive prospective architecture decision. The failed
+preset. The explicitly amended resource configuration now passes warm
+computational admission. Prepare its separate grouped-data/learning plan for
+review before any training or semantic grading; the known three training
+groups are not enough. Do not repeat an unchanged packaging/native matrix or
+the admitted computation screen. Any further model architecture needs its own
+substantive prospective decision. The failed
 Jev configuration does not authorize threshold rescue or cloud fallback.
 
 The [November 8 convergence reset](2026-11-08-convergence-reset.md) controls

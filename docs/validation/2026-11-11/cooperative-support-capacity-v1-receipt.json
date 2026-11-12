@@ -1,0 +1,62 @@
+{
+  "status": "reconstructed",
+  "experiment_status": "passed",
+  "source_commit": "7dbca15fbdfc0a17e55bea0f8781dcf6a887808a",
+  "runtime_source_commit": "2651674553dd609ca726c9964b17310616ac14a8",
+  "embedding_threads": 1,
+  "freeze_sha256": "851b302b91d6ec90556a02a4cfab539d4e4089580b77ad752810511fa178ac2e",
+  "samples_sha256": "f3072b8358171c2760b7516bbfd6c6a0e09775f21c04eb80b2ebf81b2f046d4f",
+  "bound_files": 4490,
+  "measured": 300,
+  "warmups": 36,
+  "forwards": 280,
+  "workloads": {
+    "empty": {
+      "samples": 50,
+      "median_ms": 29.5,
+      "p95_ms": 47.52844
+    },
+    "one-short": {
+      "samples": 50,
+      "median_ms": 172.6284,
+      "p95_ms": 201.14904
+    },
+    "five-short": {
+      "samples": 50,
+      "median_ms": 181.12369999999999,
+      "p95_ms": 224.32963
+    },
+    "token-one-source": {
+      "samples": 50,
+      "median_ms": 353.1005,
+      "p95_ms": 386.35053
+    },
+    "token-eight-sources": {
+      "samples": 50,
+      "median_ms": 358.54319999999996,
+      "p95_ms": 377.665125
+    },
+    "byte-bound": {
+      "samples": 50,
+      "median_ms": 210.77195,
+      "p95_ms": 251.53922500000002
+    }
+  },
+  "owned_survivors": 0,
+  "outer_elapsed_seconds": 186.535530900117,
+  "warm_resident_only": true,
+  "maximum_measured_ms": 619.2516,
+  "measured_calls_above_500_ms": 1,
+  "semantic_quality_pass": false,
+  "training_authorized": false,
+  "default_changed": false,
+  "causal_comparison": false,
+  "source_coverage": "six fixed workloads, up to eight owned sources per fact",
+  "private_archive": {
+    "sha256": "6aa5e2e6222aacbc16c8796a3f929eb88d3fb6b8cbca3288b2c7b582ddb1a3b5",
+    "bytes": 3172311,
+    "members": 277,
+    "verified_files": 275,
+    "external_bindings": 4254
+  }
+}
