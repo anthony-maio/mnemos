@@ -1,0 +1,87 @@
+{
+  "schema": "mnemos-local-support-boundary-controls-v1",
+  "result": {
+    "status": "tokenizer_and_admission_controls_passed_not_semantic_acceptance",
+    "elapsed_seconds": 7.214535200037062,
+    "controls": 11,
+    "admitted": 7,
+    "unavailable": 4,
+    "accounting": {
+      "controls": 11,
+      "answerable_controls": 10,
+      "unavailable_answerable_controls": 4,
+      "supported_target_opportunities": 38,
+      "unavailable_supported_target_opportunities": 17,
+      "semantic_recall": null,
+      "semantic_precision": null,
+      "limits": "Availability accounting only. No model decisions, semantic abstention, critical retention or fresh acceptance were measured."
+    },
+    "frozen_bindings_unchanged": true,
+    "dependency_versions_unchanged": true,
+    "source_commit": "9130a0ff04bf9910b21b9fabeda5ff4b4d804422",
+    "tokenizer_binding": "f3548af10ef3685970b6690ceb1e47509cb8caf650084fdcc19b2b5974895c83",
+    "files": {
+      "accounting.json": "5af20a8b8c6f4e7277fb0f33c73d26989288ebe54fafa541f5051b845cbadd64",
+      "cases.json": "ea51fae9afa1a19f7a705daa1775d3f733966d813f976b466008b525e415c893",
+      "frames.json": "eb4d757162d278ded6eac5fcf150b3c70945684ff094344c17f03e5ac90eee10",
+      "freeze.json": "e148bc7c513c430c9c9ae9ebb9b61a7b3d14efe80d8147607e9f427fa9027a81",
+      "outcomes.json": "f1a0de2056eab569f5c2537ca7376766901d7e50b85bf904a8ba9b95978b5301"
+    },
+    "model_forwards": 0,
+    "hosted_calls": 0,
+    "training_ready": false,
+    "limits": "Synthetic availability controls only, outside training and semantic holdout counts. Not a timing, model-quality, live-runtime or pilot result."
+  },
+  "offline_audit": {
+    "status": "offline_control_audit_passed",
+    "controls": 11,
+    "full_frames": 7,
+    "answerable_controls": 10,
+    "supported_target_opportunities": 38,
+    "unavailable_answerable_controls": 4,
+    "unavailable_supported_target_opportunities": 17,
+    "unique_synthetic_facts": 6,
+    "model_forwards": 0,
+    "hosted_calls": 0,
+    "existing_semantic_data_unchanged": true,
+    "limitations": "Reconstructed frame fingerprints and owned synthetic support, not tokenizer re-execution or model behavior. Rejected 8193-token count relies on committed preparation assertions and frozen run evidence."
+  },
+  "independent_review": {
+    "supported_opportunities_reviewed": 38,
+    "unique_fixtures": 6,
+    "reviewed_request_file_sha256": "ea51fae9afa1a19f7a705daa1775d3f733966d813f976b466008b525e415c893",
+    "label_review_sha256": "f6ffc663faa5a6640fc9997a91756f85a6f5abad2e8bddd4b7cb3b7b49b9f604",
+    "rejected_token_overflow_retokenized": false,
+    "byte_overflow_independently_verified": true
+  },
+  "bound_source_files": {
+    "benchmarks/local_memory/local_support_v2_controls.py": "56af6d667aeb8616fe028718e0ffe243cad631efb7c0c0c1665cbde482804c3c",
+    "benchmarks/local_memory/local_support_v2_admission.py": "4ce997a3ae6cef61acb85d3bd0148c2bf60f32a371c5fdbf7e16fc39ccd89ee7",
+    "benchmarks/local_memory/bidirectional_support_capacity.py": "9008a27cd5ba9106640a7ed00c3c10491af0744eba63b8c4b58e1e3bbd2812fd",
+    "benchmarks/local_memory/joint_support_frame.py": "7beef3b9f4810822ddd0e6ce6a0b19eb3e32a9f39f893491def0275a5cc96a00",
+    "benchmarks/local_memory/joint_support_capacity.py": "29f507bd38e668121524b65497f7c3aaa7561ba90980ca55094a46ffa4b5e97f",
+    "tests/test_local_support_v2_admission.py": "7ac8bb14510e6ed9c82c5940f577beaf890f98469f70fa9bc559c6a0a43feada",
+    "tests/test_local_support_v2_controls.py": "a76d7bb9575f40019b28193102d4886d723b7efd3eeacf75e28a2a88c35bba73"
+  },
+  "dependency_version_count": 25,
+  "tests_passed": 35,
+  "test_receipt_sha256": "a58f1543d7036d66053383d2427a08c21bb02533745075c6ebec436090d241e6",
+  "private_archive": {
+    "archive_members": 21,
+    "archive_bytes": 55802,
+    "archive_sha256": "6462a834cb1cc75d5d437a7955b31364acd6c2fc95234b3bd200abaf828846ca",
+    "label_review_sha256": "f6ffc663faa5a6640fc9997a91756f85a6f5abad2e8bddd4b7cb3b7b49b9f604",
+    "verification_note": "Initial verifier used Windows separators for ZIP lookup. Existing archive bytes unchanged; normalized stored member names all verify on readback.",
+    "archive_contents": "Raw synthetic controls, full frames, observations, freeze/result/audits, review ledger, source, protocol, test receipt and process logs. Tokenizer assets and dependency bytes remain external."
+  },
+  "original_result_sha256": "556ce164e8dbcbdbf56dc212b6830227dbb0708f90e58e3c8f93f0c676a7ff71",
+  "original_freeze_sha256": "e148bc7c513c430c9c9ae9ebb9b61a7b3d14efe80d8147607e9f427fa9027a81",
+  "source": "9130a0ff04bf9910b21b9fabeda5ff4b4d804422",
+  "semantic_data_receipts": {
+    "local-support-v2-train-seed": "0244abee7c74f39576a73230c3632e6b968e354dc4d29994624669b334a7d91d",
+    "local-support-v2-partitions": "cb06604096a0fa7def3403fe20e49b7472a21263c62bf984f43515f21d3c0bac"
+  },
+  "training_ready": false,
+  "fresh_acceptance": false,
+  "live_configuration_changed": false
+}
