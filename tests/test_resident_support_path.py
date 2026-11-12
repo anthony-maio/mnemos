@@ -160,3 +160,11 @@ def test_empty_cohort_still_revalidates_authorization_after_worker():
 
     with pytest.raises(ValueError, match="revoked"):
         asyncio.run(capacity_retrieve(memory, request, infer, []))
+
+
+def test_deleted_frozen_input_records_failure_instead_of_losing_postflight(tmp_path):
+    from benchmarks.local_memory.resident_support_benchmark import check_bindings
+
+    valid, errors = check_bindings({str(tmp_path / "removed"): "a" * 64})
+    assert valid is False
+    assert errors[0]["error_type"] == "FileNotFoundError"

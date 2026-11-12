@@ -58,6 +58,17 @@ def versions():
     )
 
 
+def check_bindings(files):
+    errors = []
+    for path, expected in files.items():
+        try:
+            if sha(path) != expected:
+                errors.append(dict(path=path, error_type="sha256_mismatch"))
+        except BaseException as exc:
+            errors.append(dict(path=path, error_type=type(exc).__name__))
+    return bool(files) and not errors, errors
+
+
 def local_environment():
     env = {
         k: v
@@ -145,7 +156,10 @@ def prepare(root):
         if name == "empty":
             cohort["candidates"] = []
             request["context"] = dict(
-                user_profile_id="capacity-empty", session_id=name, host="manual"
+                user_profile_id="capacity-empty",
+                project_id="capacity-empty-project",
+                session_id=name,
+                host="manual",
             )
             request["allowed_scopes"] = ["global"]
         elif name == "one-short":
@@ -182,6 +196,14 @@ def prepare(root):
         shutil.copyfile(SOURCE / "seed.sqlite", directory / "memory.sqlite")
         registry = read(SOURCE / "scopes.json")
         registry["profiles"].append("capacity-empty")
+        registry["projects"]["capacity-empty-project"] = dict(
+            id="capacity-empty-project",
+            root=str(root / "empty-project"),
+            user_profile_id="capacity-empty",
+            enabled=True,
+            workspace_ids=[],
+            aliases=[],
+        )
         save(directory / "scopes.json", registry)
         store = SQLiteStore(str(directory / "memory.sqlite"))
         try:
@@ -469,16 +491,26 @@ def run(root):
                 asyncio.run(measure())
                 assert summary["worker_calls"] == dict(forward=140, requests=168)
             finally:
-                if service is not None:
-                    service.stop()
-                    summary["service_stopped"] = not (directory / "runtime.json").exists()
-                if process is not None:
-                    process.terminate()
-                    process.wait(timeout=15)
-                    process.stdout.close()
-                    stderr.close()
-                    summary["worker_stopped"] = process.poll() is not None
+                errors = []
+                try:
+                    if service is not None:
+                        service.stop()
+                        summary["service_stopped"] = not (directory / "runtime.json").exists()
+                except BaseException as exc:
+                    errors.append("service:" + type(exc).__name__)
+                try:
+                    if process is not None:
+                        process.terminate()
+                        process.wait(timeout=15)
+                        summary["worker_stopped"] = process.poll() is not None
+                        process.stdout.close()
+                        stderr.close()
+                except BaseException as exc:
+                    errors.append("worker:" + type(exc).__name__)
+                summary["cleanup_errors"] = errors
                 save(directory / "cleanup.json", summary)
+                if errors:
+                    raise RuntimeError("Resident cleanup failed")
             print(json.dumps(dict(block=block, completed=True)), flush=True)
         workloads = {}
         for name in NAMES:
@@ -499,11 +531,18 @@ def run(root):
     except BaseException as exc:
         record.update(error_type=type(exc).__name__, error=str(exc), active=active)
     finally:
+        unchanged, binding_errors = check_bindings(freeze["files"])
+        try:
+            native_versions_unchanged = versions() == freeze["native_versions"]
+        except BaseException as exc:
+            native_versions_unchanged = False
+            record["inventory_error_type"] = type(exc).__name__
         record.update(
             completed_measured=sum(not r["warmup"] for r in rows),
             completed_warmups=sum(r["warmup"] for r in rows),
-            bindings_unchanged=all(sha(p) == h for p, h in freeze["files"].items()),
-            native_versions_unchanged=versions() == freeze["native_versions"],
+            bindings_unchanged=unchanged,
+            binding_errors=binding_errors,
+            native_versions_unchanged=native_versions_unchanged,
         )
         if (
             not record["bindings_unchanged"]
