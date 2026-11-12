@@ -15,6 +15,7 @@ import subprocess
 import sys
 import time
 import urllib.request
+import zipfile
 
 REPO = Path(__file__).resolve().parents[2]
 MODEL_ROOT = REPO / ".venv/bidirectional-support-capacity-v1"
@@ -260,6 +261,18 @@ def prepare(root):
         finally:
             store.close()
 
+    seal(root)
+
+
+def seal(root):
+    """Verify prepared stores and freeze them before the sole support attempt."""
+    assert not (root / "freeze.json").exists() and not (root / "attempt.started").exists()
+    cases = read(root / "cases.json")
+    seed_bindings = {
+        str(SOURCE / n): sha(SOURCE / n)
+        for n in ("seed.sqlite", "scopes.json", "observations.jsonl")
+    }
+
     # Prepare real BGE retrieval and tokenizer bindings without support inference.
     async def verify():
         from mnemos.contracts import RetrievalRequest
@@ -285,8 +298,15 @@ def prepare(root):
         {str(Path(package["installed_target"]) / p): h for p, h in package["package_files"].items()}
     )
     old = read(MODEL_ROOT / "freeze.json")
-    assert all(sha(p) == h for p, h in old["files"].items())
-    files.update(old["files"])
+    historical_plan = REPO / "docs/plans/2026-11-11-bidirectional-support-design.md"
+    archive = REPO / ".venv/bidirectional-support-capacity-v1-evidence.zip"
+    with zipfile.ZipFile(archive) as evidence:
+        plan_bytes = evidence.read("frozen/docs/plans/2026-11-11-bidirectional-support-design.md")
+    assert hashlib.sha256(plan_bytes).hexdigest() == old["files"][str(historical_plan)]
+    (root / "historical-preregistration.md").write_bytes(plan_bytes)
+    prior_bindings = {p: h for p, h in old["files"].items() if Path(p) != historical_plan}
+    assert all(sha(p) == h for p, h in prior_bindings.items())
+    files.update(prior_bindings)
     files.update(
         {
             str(p): sha(p)
@@ -301,6 +321,9 @@ def prepare(root):
         package_path,
         root / "cases.json",
         root / "frames.json",
+        root / "historical-preregistration.md",
+        historical_plan,
+        archive,
         PROFILE / "profile.json",
         PROFILE / "result.json",
         REPO / "tests/test_resident_support_path.py",
@@ -564,6 +587,8 @@ if __name__ == "__main__":
     destination = Path(sys.argv[2]).resolve()
     if sys.argv[1] == "prepare":
         prepare(destination)
+    elif sys.argv[1] == "seal":
+        seal(destination)
     elif sys.argv[1] == "run":
         sys.exit(run(destination))
     else:
