@@ -1,6 +1,9 @@
 # One resident complete-path computation test
 
-Status: prospective amendment, before implementation or new model execution.
+Status: [the sole amended attempt failed](../validation/2026-11-11/resident-support-path-v1.md).
+All 300 measured recalls completed, but the two full-token p95 values were
+672.67/700.18 ms and the byte-bound p95 was 549.00 ms. This integrated
+configuration is closed. The prospective amendment below is preserved.
 
 The [component screen](../validation/2026-11-11/bidirectional-support-capacity-v1.md)
 failed its frozen 200 ms allocation. That result remains failed and its files

@@ -44,6 +44,14 @@ The [single current recall diagnostic](../validation/2026-11-11/current-recall-p
 took 99.8622 ms; it is neither a percentile nor a complete support result.
 No training or additional model sweep is authorized by this amendment.
 
+The [sole amended resident attempt](../validation/2026-11-11/resident-support-path-v1.md)
+completed all 300 measured calls but failed complete timing: full-token p95
+672.67/700.18 ms and byte-bound p95 549.00 ms. All 155 frozen bindings and both
+runtime inventories remained unchanged, with zero owned process survivors.
+The integrated configuration is closed without training or a timing retry.
+Local operation remains required and Jev remains explicitly optional. No
+candidate currently satisfies the original combined quality/timing gates.
+
 ## Scope and completion evidence
 
 | Priority | Completion evidence still required | Current evidence and remaining work |
