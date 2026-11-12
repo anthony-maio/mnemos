@@ -30,7 +30,8 @@ import struct
 import threading
 from uuid import uuid4
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, cast
 
@@ -3544,6 +3545,20 @@ class SQLiteStore(MemoryStore):
             if status == "pending":
                 result["oldest_pending_seconds"] = age
         return result
+
+    @contextmanager
+    def read_snapshot(self) -> Iterator[None]:
+        """Keep related reads on one SQLite snapshot without owning caller work."""
+        with self._lock:
+            savepoint = f"mnemos_read_{uuid4().hex}"
+            self._conn.execute(f"SAVEPOINT {savepoint}")
+            try:
+                yield
+            except BaseException:
+                self._conn.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                raise
+            finally:
+                self._conn.execute(f"RELEASE SAVEPOINT {savepoint}")
 
     def list_fact_evidence(self, fact_id: str) -> list[FactEvidence]:
         with self._lock:

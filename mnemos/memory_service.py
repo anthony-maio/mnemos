@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import nullcontext
 from datetime import datetime, timezone
 from typing import Any, Callable, Literal, TypedDict
 from uuid import uuid4
@@ -1502,32 +1503,33 @@ class LocalMemoryService:
             context = self.registry.validate_context(
                 ScopeContext.model_validate(payload["context"])
             )
-            chunk = self.engine.store.get(payload["fact_id"])
-            if chunk is None or not scope_allows(
-                chunk.metadata, context, ("project", "workspace", "global")
-            ):
-                raise FactNotFoundError("Memory not found in the requested scope")
-            evidence = [
-                {
-                    **item.model_dump(mode="json"),
-                    "original_source_status": self._original_source_status(
-                        chunk, item, context, ("project", "workspace", "global")
+            store = self.engine.store
+            with store.read_snapshot() if isinstance(store, SQLiteStore) else nullcontext():
+                chunk = store.get(payload["fact_id"])
+                if chunk is None or not scope_allows(
+                    chunk.metadata, context, ("project", "workspace", "global")
+                ):
+                    raise FactNotFoundError("Memory not found in the requested scope")
+                evidence = [
+                    {
+                        **item.model_dump(mode="json"),
+                        "original_source_status": self._original_source_status(
+                            chunk, item, context, ("project", "workspace", "global")
+                        ),
+                    }
+                    for item in store.list_fact_evidence(chunk.id)
+                ]
+                return {
+                    "schema_version": 1,
+                    "fact": chunk.model_dump(mode="json", exclude={"embedding"}),
+                    "evidence": evidence,
+                    "original_source_status": self._source_status_summary(
+                        [item["original_source_status"] for item in evidence]
                     ),
+                    "revisions": [
+                        item.model_dump(mode="json") for item in store.list_fact_revisions(chunk.id)
+                    ],
                 }
-                for item in self.engine.store.list_fact_evidence(chunk.id)
-            ]
-            return {
-                "schema_version": 1,
-                "fact": chunk.model_dump(mode="json", exclude={"embedding"}),
-                "evidence": evidence,
-                "original_source_status": self._source_status_summary(
-                    [item["original_source_status"] for item in evidence]
-                ),
-                "revisions": [
-                    item.model_dump(mode="json")
-                    for item in self.engine.store.list_fact_revisions(chunk.id)
-                ],
-            }
         if operation == "health":
             return {
                 "schema_version": 1,
