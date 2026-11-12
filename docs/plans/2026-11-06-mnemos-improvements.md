@@ -13,6 +13,14 @@ The inactive configuration is closed. Preserve the archived progress-I/O
 failure and reviewed repair. No automatic training, threshold or model sweep,
 trained timing run or unchanged native/package matrix follows this result.
 
+The [direct claim readout contract](../validation/2026-11-12/claim-span-readout-v1.md)
+now passes ten focused checks and a tokenizer-only audit of all 116 known
+requests/354 claim mappings. It preserves payload bytes and binds readout masks
+to complete claims rather than tail markers. An NFC offset error was reproduced,
+corrected and preserved. This is an inactive mechanical representation only;
+it neither explains the old failure conclusively nor demonstrates quality or
+inherited latency. No encoder inference or new training occurred.
+
 The user requires local operation with an explicit Jev option. The private
 workspace `.env` contains `TYPESAFE_API_KEY`; it must never be committed or
 printed. The [44-question optional Jev comparison](2026-11-11-local-default-optional-jev.md)
@@ -176,8 +184,10 @@ candidate failed semantics despite correct computation and export parity.
 Keep the inactive artifact, every error and both infrastructure failures.
 No automatic restart, threshold/model/data sweep, trained timing run or repeat
 of an unchanged packaging/native matrix is justified. Further support work
-requires a substantive prospective design decision grounded in the observed
-positional failure. The six-priority goal and original acceptance gates remain
+has a reviewed direct-span representation and passing mechanical contract.
+The next boundary is a separately reviewed numerical/execution design for that
+representation, grounded in the observed positional failure. No new candidate
+execution is permitted by the mechanical audit alone. The six-priority goal and original acceptance gates remain
 active; no time spent or completed computation replaces them. Local operation
 stays required, and the failed optional Jev configuration permits neither
 threshold rescue nor automatic cloud fallback.
