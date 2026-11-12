@@ -45,9 +45,8 @@ Use the candidate to evaluate explicit storage, source inspection, same-ID corre
 
 | Area | Verified state |
 | --- | --- |
-| Newer source repair | `73d4a242` fixes a concurrent correction/forget race during recall assembly; 178 targeted checks pass. This repair is not yet in the private package or its native-host validation below. |
-| Latest private package | Runtime source `f1314f6d`; 99 installed package files, 57 pinned dependencies, five installed inspection-race tests and a passing real-embedding CLI/MCP restart smoke check. This is not a published release. |
-| Native workflow | Codex v13 passed all six explicit-memory phases on `f1314f6d` with hooks disabled. The earlier Claude v8 timeout remains a failed result on its own artifact. Other hosts and the full pilot configuration remain separate requirements. |
+| Latest private package | Source `9c326cbc` includes the inspection and recall consistency repairs; 99 installed files, 57 unchanged dependency versions, 18 installed regressions and real-embedding CLI/MCP restart checks pass. This is not a published release. |
+| Native workflow | Codex v14 passed all six explicit-memory phases on `9c326cbc` with hooks disabled. The earlier Claude v8 timeout remains a failed result on its own artifact. Other hosts and the full pilot configuration remain separate requirements. |
 | Answer support | No evaluated configuration meets the quality and latency requirements. Related text and a retrieved source ID do not establish a supported answer. |
 | Capture | Durable queued status and completed fact storage are distinct. Check the original job before reporting completion; the 100 ms complete-capture target remains unmet. |
 | Pilot | The optional explicit-memory pilot was activated separately. It does not start or satisfy the original two-week pilot, and no qualifying pilot days are recorded here. |
@@ -92,7 +91,7 @@ Use Python 3.10 or newer and Git. Start in a fresh virtual environment. Clone th
 
 ```bash
 git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false clone --depth 1 --branch wt/backup-20261108-delivery https://github.com/anthony-maio/mnemos.git mnemos-preview
-git -C mnemos-preview fetch --depth 1 origin f1314f6d40477d59f6a31ecbc904c3e7a3ce5c7f
+git -C mnemos-preview fetch --depth 1 origin 9c326cbc239e41581b7754b1035bb897c281e42a
 git -c filter.lfs.process= -c filter.lfs.smudge= -c filter.lfs.required=false -C mnemos-preview checkout --detach FETCH_HEAD
 python -m pip install "./mnemos-preview[mcp]"
 python mnemos-preview/examples/restart_recall.py --output restart-recall.json
@@ -100,7 +99,7 @@ python mnemos-preview/examples/restart_recall.py --output restart-recall.json
 
 The example creates two disposable Git repositories and an isolated config, scope registry, database, and service. It stores a synthetic project convention, waits for the durable job, stops the service, starts a new process, and recalls and inspects the same fact through both CLI and real MCP stdio. It also verifies that the second project sees no fact. It stops its service and removes its temporary state on exit.
 
-The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) preserves the earlier `7d5fc277` check and captured result. The commands above select the newer `f1314f6d` runtime. Both are development evaluations, not release recommendations.
+The [public example page](https://mnemos.making-minds.ai/examples/restart-recall/) preserves the earlier `7d5fc277` check and captured result. The commands above select the newer `9c326cbc` runtime. Both are development evaluations, not release recommendations.
 
 FastEmbed downloads `BAAI/bge-small-en-v1.5` on first use (about 100 MB). Subsequent embeddings run locally. This verifies explicit persistence and scope isolation; it does not measure retrieval quality, automatic extraction, or native host behavior.
 

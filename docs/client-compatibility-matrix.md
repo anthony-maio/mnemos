@@ -3,8 +3,8 @@
 ## November 11, 2026 current state
 
 [Current readiness](validation/current-readiness.md) records the latest private
-`f1314f6d` package and the six-phase Codex v13 explicit-memory pass with hooks
-disabled. The failed Claude v8 lifecycle and earlier Codex v12 pass remain bound
+`9c326cbc` package and the six-phase Codex v14 explicit-memory pass with hooks
+disabled. Earlier Codex passes and the failed Claude v8 lifecycle remain bound
 to their own artifacts. The optional explicit-memory pilot was activated separately;
 the older inactive-proposal statements below describe their dated checkpoints.
 No full daily-use pilot, offline model inference or general cross-host acceptance
