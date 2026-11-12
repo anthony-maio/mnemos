@@ -183,6 +183,7 @@ def _build_unprefixed_embedder_from_settings(settings: AppSettings) -> Embedding
     if provider == "fastembed":
         return FastembedProvider(
             model=settings.embedding.model or "BAAI/bge-small-en-v1.5",
+            threads=settings.embedding.threads,
         )
 
     if provider == "simple":

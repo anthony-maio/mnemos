@@ -288,6 +288,10 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     if embedding_dim is not None:
         _set_nested(overrides, ("embedding", "dim"), embedding_dim)
 
+    embedding_threads = _env_int(env, "MNEMOS_EMBEDDING_THREADS")
+    if embedding_threads is not None:
+        _set_nested(overrides, ("embedding", "threads"), embedding_threads)
+
     store_type = _env_value(env, "MNEMOS_STORE_TYPE", aliases=("MNEMOS_STORAGE",))
     if store_type is not None:
         _set_nested(overrides, ("storage", "type"), store_type.lower())
@@ -464,6 +468,9 @@ class EmbeddingSettings(BaseModel):
     model: str | None = None
     dim: int = 384
     revision: str | None = None
+    # Single-request local recall should not keep an automatic CPU pool spinning.
+    # Zero explicitly restores the upstream automatic thread count for batch use.
+    threads: int = Field(default=1, strict=True, ge=0)
     query_prefix: str = Field(default="", strict=True)
     document_prefix: str = Field(default="", strict=True)
     symmetric_prefix: str = Field(default="", strict=True)

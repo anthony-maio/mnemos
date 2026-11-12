@@ -396,7 +396,11 @@ class FastembedProvider(EmbeddingProvider):
         self,
         model: str = "BAAI/bge-small-en-v1.5",
         cache_dir: str | None = None,
+        *,
+        threads: int = 1,
     ) -> None:
+        if type(threads) is not int or threads < 0:
+            raise ValueError("FastEmbed threads must be a nonnegative integer")
         try:
             from fastembed import TextEmbedding
         except ImportError as exc:
@@ -406,7 +410,8 @@ class FastembedProvider(EmbeddingProvider):
             ) from exc
 
         self.model = model
-        self._engine = TextEmbedding(model_name=model, cache_dir=cache_dir)
+        self.threads = threads
+        self._engine = TextEmbedding(model_name=model, cache_dir=cache_dir, threads=threads)
         self._dim: int | None = None
 
     @property
