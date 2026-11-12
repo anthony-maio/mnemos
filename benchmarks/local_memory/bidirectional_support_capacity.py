@@ -2,6 +2,7 @@
 
 from dataclasses import asdict, replace
 import hashlib
+import importlib.util
 import json
 import math
 from pathlib import Path
@@ -10,9 +11,19 @@ import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT))
-from benchmarks.local_memory.joint_support_capacity import request
-from benchmarks.local_memory.joint_support_frame import serialize_joint_cohort
+
+
+def _helper(name):
+    key = "bidirectional_capacity_" + name
+    spec = importlib.util.spec_from_file_location(key, Path(__file__).with_name(name + ".py"))
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[key] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+request = _helper("joint_support_capacity").request
+serialize_joint_cohort = _helper("joint_support_frame").serialize_joint_cohort
 
 REVISION = "de4ab7e77845098b7fab7f6ab9d370ddff27b19c"
 MODEL = "tasksource/ModernBERT-base-nli"
