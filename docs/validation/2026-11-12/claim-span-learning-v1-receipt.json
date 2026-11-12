@@ -1,0 +1,4335 @@
+{
+  "status": "closed_semantic_and_export_failure",
+  "source_commit": "6bfc82e20fec7eb5c6d7a8e451f8dec3df0a0800",
+  "freeze_sha256": "7ffe595c9205b3451182459e38b0c0bc3500e93de12c5a537edc52669a82138a",
+  "bound_files": 135,
+  "runtime_packages": 25,
+  "protocol": {
+    "schema": "claim-span-learning-v1",
+    "numerical_recipe_file": "local_support_v2_recipe.json",
+    "numerical_recipe_sha256": "9660b2f80ff5ba4c98d8dbfa270594bf134ee59b3aee6fa64907a768c3cf2f6a",
+    "span_audit_archive_sha256": "b7e18cf3affee2c53905eea0a648b08d8592b71825c03de3ee8a849cad577c31",
+    "representation": "claim-span-support-v1",
+    "readout": "complete_claim_mean_float32_then_shared_scalar_head",
+    "training_cases": 56,
+    "training_targets": 138,
+    "optimizer_updates": 84,
+    "training_microbatches": 336,
+    "parity_frames": 126,
+    "parity_inventory": "116_known_corpus_plus_eight_admitted_historical_controls_plus_new_exact_token_control_plus_unicode_fixture",
+    "synthetic_prelude_frame": "new-boundary:exact-token",
+    "synthetic_prelude_microbatches": 4,
+    "synthetic_prelude_optimizer_updates": 1,
+    "reset_after_prelude": "reload_original_checkpoint_and_seed_with_identical_initial_parameter_digests",
+    "initial_head_sha256": "da88e30e11194dee428b7f10f1f9fabe04fad4283641d40c0f48afb1415943b2",
+    "timeout_seconds": 600,
+    "cleanup_seconds": 10,
+    "allocator_limit_bytes": 10737418240,
+    "minimum_free_bytes": 11274289152,
+    "execution_count": 1,
+    "hosted_calls": 0,
+    "live_activation": false
+  },
+  "comparison": {
+    "parent_semantic_source": "22bbc32fd815920cf8a8f1ed65f8cd24223e7e21",
+    "byte_identical_to_parent": {
+      "training-weights.json": "420f37601b609f196ac8a697eb0b1d6a34357d197697003e5eb73048f5c4d852",
+      "epoch-orders.json": "941c0db223ac314984756f4052f5e0fed9056986e5e87a6b6264747653c5992f",
+      "schedule.json": "7272c00fd13797f9fd85ec092c8433ecfe1f3d1eb1f3b0dcbbb551f83c1b5b1a",
+      "owned-job-600.py": "701d74d6328478ff74340df109b77bf381cfb20edaab07fa127af7a198c0a04c"
+    },
+    "numerical_recipe_equal": true,
+    "representation_intervention": "Full claim pooling and span frame; same canonical request payloads and numerical optimization"
+  },
+  "result": {
+    "status": "failed",
+    "expected_updates": 84,
+    "completed_updates": 84,
+    "completed_microbatches": 336,
+    "active_update": null,
+    "corpus_training_started": true,
+    "weights_saved": true,
+    "free_before_bytes": 15806234624,
+    "total_device_bytes": 17170956288,
+    "stage": "deployment_parity",
+    "elapsed_seconds": 99.62075550016016,
+    "peak_allocated_bytes": 2812061184,
+    "peak_reserved_bytes": 3047161856,
+    "prelude_microbatch": 4,
+    "prelude_passed": true,
+    "reset_initial_parameter_digests_equal": true,
+    "initial_head_sha256": "da88e30e11194dee428b7f10f1f9fabe04fad4283641d40c0f48afb1415943b2",
+    "active_case": null,
+    "training_forward_entries": {
+      "backbone": 336,
+      "layers": [
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672,
+        672
+      ]
+    },
+    "body_changed": true,
+    "head_changed": true,
+    "error_type": "ValueError",
+    "error": "Deployment parity failed; no precision or threshold rescue",
+    "uncompleted_updates": 0,
+    "unattempted_updates": []
+  },
+  "execution": {
+    "status": "failed",
+    "bindings_unchanged": true,
+    "head_unchanged": true,
+    "versions_unchanged": true,
+    "owned_processes_stopped": true,
+    "owned_job_bound_satisfied": true,
+    "child_terminal_verified": true,
+    "elapsed_seconds": 102.08693399978802
+  },
+  "job": {
+    "status": "failed",
+    "job_assigned": true,
+    "input_delivery_started": true,
+    "exit_code": 1,
+    "error": "RuntimeError: Native command exited unsuccessfully",
+    "active_before_cleanup": 1,
+    "total_job_processes": 5,
+    "active_after_cleanup": 0,
+    "elapsed_seconds": 100.83810829976574
+  },
+  "prelude": {
+    "status": "passed",
+    "microbatches": [
+      {
+        "index": 1,
+        "tokens": 8192,
+        "loss": 0.16483421623706818,
+        "frame_sha256": "f064dcf1b404bf26b4600193c6a357fd759238b20d0580bb7cc4816ba1723c82"
+      },
+      {
+        "index": 2,
+        "tokens": 8192,
+        "loss": 0.16483421623706818,
+        "frame_sha256": "f064dcf1b404bf26b4600193c6a357fd759238b20d0580bb7cc4816ba1723c82"
+      },
+      {
+        "index": 3,
+        "tokens": 8192,
+        "loss": 0.16483421623706818,
+        "frame_sha256": "f064dcf1b404bf26b4600193c6a357fd759238b20d0580bb7cc4816ba1723c82"
+      },
+      {
+        "index": 4,
+        "tokens": 8192,
+        "loss": 0.16483421623706818,
+        "frame_sha256": "f064dcf1b404bf26b4600193c6a357fd759238b20d0580bb7cc4816ba1723c82"
+      }
+    ],
+    "gradient_activity": {
+      "unclipped_norm": 96.85138702392578,
+      "before": {
+        "embedding": 2823.4453125,
+        "classifier": 46.24604797363281,
+        "layer_0": 47506.969818115234,
+        "layer_1": 27647.267868041992,
+        "layer_2": 22350.079029083252,
+        "layer_3": 22451.54838180542,
+        "layer_4": 18005.564277648926,
+        "layer_5": 16063.083576202393,
+        "layer_6": 18470.794692993164,
+        "layer_7": 16672.326904296875,
+        "layer_8": 17848.158542633057,
+        "layer_9": 21178.50332260132,
+        "layer_10": 16670.16790008545,
+        "layer_11": 17041.469329833984,
+        "layer_12": 17366.281463623047,
+        "layer_13": 6301.872539520264,
+        "layer_14": 1894.37468624115,
+        "layer_15": 1046.945097565651,
+        "layer_16": 689.7037621736526,
+        "layer_17": 676.2248762845993,
+        "layer_18": 743.9247133731842,
+        "layer_19": 483.7678607702255,
+        "layer_20": 463.9928616285324,
+        "layer_21": 536.6324082016945
+      },
+      "after": {
+        "embedding": 29.15234798192978,
+        "classifier": 0.47749496914912015,
+        "layer_0": 490.514093875885,
+        "layer_1": 285.4607291817665,
+        "layer_2": 230.76673471927643,
+        "layer_3": 231.81442773342133,
+        "layer_4": 185.9092135131359,
+        "layer_5": 165.85290148854256,
+        "layer_6": 190.71275413036346,
+        "layer_7": 172.14340341091156,
+        "layer_8": 184.28396248817444,
+        "layer_9": 218.67009490728378,
+        "layer_10": 172.12110370397568,
+        "layer_11": 175.9548317193985,
+        "layer_12": 179.30855002999306,
+        "layer_13": 65.06744980812073,
+        "layer_14": 19.55960401892662,
+        "layer_15": 10.809810696169734,
+        "layer_16": 7.121258373372257,
+        "layer_17": 6.982087687589228,
+        "layer_18": 7.681095080450177,
+        "layer_19": 4.9949502306990325,
+        "layer_20": 4.790771432220936,
+        "layer_21": 5.540782185271382
+      }
+    },
+    "calls": {
+      "backbone": 4,
+      "layers": [
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8,
+        8
+      ]
+    },
+    "scaler": 128.0,
+    "body_changed": true,
+    "head_changed": true
+  },
+  "parity": {
+    "passed": false,
+    "max_absolute_logit_error": 0.0986328125,
+    "failures": [
+      {
+        "id": "calyx-timezone-3",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0283203125
+      },
+      {
+        "id": "lumen-vector-clocks-2",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0234375
+      },
+      {
+        "id": "lumen-vector-clocks-3",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0224609375
+      },
+      {
+        "id": "nori-precedence-cycle-a-unfinished",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.021484375
+      },
+      {
+        "id": "tern-unset-resolution-permutation",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.041015625
+      },
+      {
+        "id": "maru-event-roles-executor-s",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0302734375
+      },
+      {
+        "id": "maru-event-roles-permutation",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0224609375
+      },
+      {
+        "id": "ibis-copy-alias-payload-base",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.03125
+      },
+      {
+        "id": "ibis-copy-alias-payload-snapshot",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.033203125
+      },
+      {
+        "id": "ibis-copy-alias-payload-snapshot-mutation",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0234375
+      },
+      {
+        "id": "ibis-copy-alias-payload-permutation",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.037109375
+      },
+      {
+        "id": "linnet-trace-spans-permutation",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.029296875
+      },
+      {
+        "id": "rook-expression-origin-rename",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.021484375
+      },
+      {
+        "id": "rook-expression-origin-changed-origin",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.029296875
+      },
+      {
+        "id": "boundary:five-facts",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.021484375
+      },
+      {
+        "id": "boundary:exact-token-bound",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0693359375
+      },
+      {
+        "id": "boundary:token-overflow",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0986328125
+      },
+      {
+        "id": "new-boundary:exact-token",
+        "reason": "logit_or_decision_disagreement",
+        "max_absolute_error": 0.0947265625
+      }
+    ],
+    "cases": 126
+  },
+  "parity_details": {
+    "target_outputs": 387,
+    "threshold_flips": [],
+    "changed_selection_cases": [],
+    "above_tolerance": [
+      {
+        "id": "calyx-timezone-3",
+        "target": "d3a5884cdf674cf94de35e92",
+        "error": 0.02093505859375
+      },
+      {
+        "id": "calyx-timezone-3",
+        "target": "3a614819d38bdee7f6fded9d",
+        "error": 0.0283203125
+      },
+      {
+        "id": "lumen-vector-clocks-2",
+        "target": "2be85655a140003969339cc5",
+        "error": 0.0234375
+      },
+      {
+        "id": "lumen-vector-clocks-3",
+        "target": "61bb4b1c6e12d7a3e5027069",
+        "error": 0.0224609375
+      },
+      {
+        "id": "nori-precedence-cycle-a-unfinished",
+        "target": "c95c47734e002fc9dd4fd070",
+        "error": 0.021484375
+      },
+      {
+        "id": "tern-unset-resolution-permutation",
+        "target": "50e6171faf0853de07361ce6",
+        "error": 0.041015625
+      },
+      {
+        "id": "maru-event-roles-executor-s",
+        "target": "125bc081eaff390a02f00b36",
+        "error": 0.0302734375
+      },
+      {
+        "id": "maru-event-roles-permutation",
+        "target": "bf9c17e8bb3d5b0e50accd6d",
+        "error": 0.0224609375
+      },
+      {
+        "id": "ibis-copy-alias-payload-base",
+        "target": "3ff683e8442d9b67af1959bc",
+        "error": 0.03125
+      },
+      {
+        "id": "ibis-copy-alias-payload-snapshot",
+        "target": "8bb73d08c8b3c8ae6d33b235",
+        "error": 0.0263671875
+      },
+      {
+        "id": "ibis-copy-alias-payload-snapshot",
+        "target": "e4aa8a8c9bbc686277fd18a6",
+        "error": 0.033203125
+      },
+      {
+        "id": "ibis-copy-alias-payload-snapshot-mutation",
+        "target": "8bb73d08c8b3c8ae6d33b235",
+        "error": 0.0234375
+      },
+      {
+        "id": "ibis-copy-alias-payload-permutation",
+        "target": "67f03c9e4868a90b35eea9b5",
+        "error": 0.037109375
+      },
+      {
+        "id": "linnet-trace-spans-permutation",
+        "target": "960affff5cfc5b529168780d",
+        "error": 0.029296875
+      },
+      {
+        "id": "rook-expression-origin-rename",
+        "target": "1b501ca9e101088d3f351100",
+        "error": 0.021484375
+      },
+      {
+        "id": "rook-expression-origin-changed-origin",
+        "target": "b1f8783a4317e60bf7e14a62",
+        "error": 0.029296875
+      },
+      {
+        "id": "boundary:five-facts",
+        "target": "7f87bb012ce664d81a2f12f5",
+        "error": 0.021484375
+      },
+      {
+        "id": "boundary:exact-token-bound",
+        "target": "8ab30d52da9088e279cb4c36",
+        "error": 0.0693359375
+      },
+      {
+        "id": "boundary:exact-token-bound",
+        "target": "fd9d06aa18f644a95529eba3",
+        "error": 0.033203125
+      },
+      {
+        "id": "boundary:exact-token-bound",
+        "target": "7f87bb012ce664d81a2f12f5",
+        "error": 0.0234375
+      },
+      {
+        "id": "boundary:token-overflow",
+        "target": "8ab30d52da9088e279cb4c36",
+        "error": 0.0986328125
+      },
+      {
+        "id": "boundary:token-overflow",
+        "target": "ec1de32fe9f16a6572bd49b1",
+        "error": 0.03125
+      },
+      {
+        "id": "new-boundary:exact-token",
+        "target": "8ab30d52da9088e279cb4c36",
+        "error": 0.0947265625
+      },
+      {
+        "id": "new-boundary:exact-token",
+        "target": "ec1de32fe9f16a6572bd49b1",
+        "error": 0.0302734375
+      },
+      {
+        "id": "new-boundary:exact-token",
+        "target": "169e12947f3b98dab57e2f8c",
+        "error": 0.025390625
+      }
+    ]
+  },
+  "grades": {
+    "initial": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 3,
+          "unsupported": 8,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 0,
+          "answerable": 38,
+          "hits": 3,
+          "no_answer": 18,
+          "correct_abstention": 17,
+          "exact_cohorts": 18,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 0.2727272727272727,
+          "supported_retention": 0.075,
+          "critical_retention": 0.0,
+          "answerable_recall": 0.07894736842105263,
+          "abstention": 0.9444444444444444,
+          "exact_cohorts": 0.32142857142857145
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "aster-window-1",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [],
+            "missing": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "aster-window-2",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [],
+            "missing": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "aster-window-permutation",
+            "valid": true,
+            "expected": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "selected": [],
+            "missing": [
+              "9d15e6c8595d8e1e84cf40bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nacre-quorum-1",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [],
+            "missing": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nacre-quorum-2",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [],
+            "missing": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nacre-quorum-permutation",
+            "valid": true,
+            "expected": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "selected": [],
+            "missing": [
+              "105b0e9e4a265824eebc6a47"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "pavo-amendment-1",
+            "valid": true,
+            "expected": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "selected": [],
+            "missing": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "pavo-amendment-2",
+            "valid": true,
+            "expected": [
+              "606a559b53af39fe19838d03"
+            ],
+            "selected": [
+              "606a559b53af39fe19838d03",
+              "e7717d1318a11784f61713a1"
+            ],
+            "missing": [],
+            "unsupported": [
+              "e7717d1318a11784f61713a1"
+            ]
+          },
+          {
+            "id": "pavo-amendment-permutation",
+            "valid": true,
+            "expected": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "selected": [],
+            "missing": [
+              "e7717d1318a11784f61713a1"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vela-quotation-1",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vela-quotation-2",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vela-quotation-permutation",
+            "valid": true,
+            "expected": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "selected": [],
+            "missing": [
+              "998ed5d082b9e95580fde92f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "orin-ownership-1",
+            "valid": true,
+            "expected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "selected": [],
+            "missing": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "orin-ownership-2",
+            "valid": true,
+            "expected": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "selected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "missing": [
+              "e2df6a2df6e2a36f2f434188"
+            ],
+            "unsupported": [
+              "9de9544c4d9f017b838f969b"
+            ]
+          },
+          {
+            "id": "orin-ownership-permutation",
+            "valid": true,
+            "expected": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "selected": [],
+            "missing": [
+              "9de9544c4d9f017b838f969b"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-exclusive-1",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [],
+            "missing": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-exclusive-2",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [],
+            "missing": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-exclusive-permutation",
+            "valid": true,
+            "expected": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "selected": [],
+            "missing": [
+              "69bb1ca5aba7db68bda4e273"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "sol-delegation-1",
+            "valid": true,
+            "expected": [
+              "12abb234b208497e6914f613"
+            ],
+            "selected": [],
+            "missing": [
+              "12abb234b208497e6914f613"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "sol-delegation-permutation",
+            "valid": true,
+            "expected": [
+              "12abb234b208497e6914f613"
+            ],
+            "selected": [],
+            "missing": [
+              "12abb234b208497e6914f613"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rill-log-gap-1",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rill-log-gap-permutation",
+            "valid": true,
+            "expected": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "selected": [],
+            "missing": [
+              "74e667c49217d6f38753cd00"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "bracken-roster-2",
+            "valid": true,
+            "expected": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "selected": [],
+            "missing": [
+              "b26465925adc5ea7f861d9ea"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "petrel-payload-1",
+            "valid": true,
+            "expected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "selected": [],
+            "missing": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "petrel-payload-2",
+            "valid": true,
+            "expected": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "selected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "missing": [
+              "08263540bc38fd6a10ed723a"
+            ],
+            "unsupported": [
+              "3e015c1b23eee7c6a14f550d"
+            ]
+          },
+          {
+            "id": "petrel-payload-permutation",
+            "valid": true,
+            "expected": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "selected": [],
+            "missing": [
+              "3e015c1b23eee7c6a14f550d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "zephyr-study-1",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "ee6400cff4ef4812a14e91c4"
+            ],
+            "missing": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "unsupported": [
+              "ee6400cff4ef4812a14e91c4"
+            ]
+          },
+          {
+            "id": "zephyr-study-2",
+            "valid": true,
+            "expected": [],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "missing": [],
+            "unsupported": [
+              "a4115752ef15f0e6bbae5f4f"
+            ]
+          },
+          {
+            "id": "zephyr-study-3",
+            "valid": true,
+            "expected": [
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "a4115752ef15f0e6bbae5f4f",
+              "ee6400cff4ef4812a14e91c4"
+            ],
+            "missing": [],
+            "unsupported": [
+              "ee6400cff4ef4812a14e91c4"
+            ]
+          },
+          {
+            "id": "zephyr-study-permutation",
+            "valid": true,
+            "expected": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "selected": [
+              "ee6400cff4ef4812a14e91c4"
+            ],
+            "missing": [
+              "87e62ea727ed0e6ded422b0f",
+              "a4115752ef15f0e6bbae5f4f"
+            ],
+            "unsupported": [
+              "ee6400cff4ef4812a14e91c4"
+            ]
+          },
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-initiator-r",
+            "valid": true,
+            "expected": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "selected": [],
+            "missing": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-s",
+            "valid": true,
+            "expected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "selected": [
+              "7cccf25d8245e9cfd4e7e943"
+            ],
+            "missing": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "unsupported": [
+              "7cccf25d8245e9cfd4e7e943"
+            ]
+          },
+          {
+            "id": "maru-event-roles-direct-human",
+            "valid": true,
+            "expected": [
+              "774d02610da4f691234ab303"
+            ],
+            "selected": [],
+            "missing": [
+              "774d02610da4f691234ab303"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-permutation",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "orin-owned-counterparts-complete",
+            "valid": true,
+            "expected": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "selected": [],
+            "missing": [
+              "6056470cae7ea33f75dad5fb"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-blue",
+            "valid": true,
+            "expected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "selected": [],
+            "missing": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 5,
+          "attribution_mismatch": 3
+        },
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 1,
+          "unsupported": 3,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 0,
+          "answerable": 26,
+          "hits": 1,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 5,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.25,
+          "supported_retention": 0.037037037037037035,
+          "critical_retention": 0.0,
+          "answerable_recall": 0.038461538461538464,
+          "abstention": 1.0,
+          "exact_cohorts": 0.16129032258064516
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-1",
+            "valid": true,
+            "expected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [],
+            "missing": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "kestrel-compatibility-permutation",
+            "valid": true,
+            "expected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [],
+            "missing": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-2",
+            "valid": true,
+            "expected": [
+              "65ca80223881aa5bd37c2cf4"
+            ],
+            "selected": [
+              "0730b8180ca423f72c434d9c",
+              "65ca80223881aa5bd37c2cf4",
+              "73190589c65c4ecf5f76dfcb"
+            ],
+            "missing": [],
+            "unsupported": [
+              "0730b8180ca423f72c434d9c",
+              "73190589c65c4ecf5f76dfcb"
+            ]
+          },
+          {
+            "id": "mica-batch-joins-permutation",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-latest-three",
+            "valid": true,
+            "expected": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "selected": [],
+            "missing": [
+              "3d1c65490eb18277da0e0994"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-permutation",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-proposed-order",
+            "valid": true,
+            "expected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "selected": [],
+            "missing": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-a-finished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-a-unfinished",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-stored-message",
+            "valid": true,
+            "expected": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "selected": [],
+            "missing": [
+              "9c6ce17f8bc983085d342b99"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-permutation",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-longer-b",
+            "valid": true,
+            "expected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "selected": [],
+            "missing": [
+              "960affff5cfc5b529168780d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-permutation",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 1,
+          "incomplete_source_support": 1,
+          "attribution_mismatch": 1
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 0,
+          "unsupported": 2,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 0,
+          "answerable": 24,
+          "hits": 0,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 5,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.0,
+          "supported_retention": 0.0,
+          "critical_retention": 0.0,
+          "answerable_recall": 0.0,
+          "abstention": 1.0,
+          "exact_cohorts": 0.1724137931034483
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-3",
+            "valid": true,
+            "expected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "selected": [],
+            "missing": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-permutation",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "lumen-vector-clocks-3",
+            "valid": true,
+            "expected": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "selected": [],
+            "missing": [
+              "0640a402252a83ecacf5b524"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-permutation",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-resolution-rule",
+            "valid": true,
+            "expected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "selected": [],
+            "missing": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-stored-message",
+            "valid": true,
+            "expected": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "selected": [],
+            "missing": [
+              "e4aa8a8c9bbc686277fd18a6"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-permutation",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-rename",
+            "valid": true,
+            "expected": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "selected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "missing": [
+              "013fe3c766dbec526e46f2f0"
+            ],
+            "unsupported": [
+              "55e00ab3918787cda1ea690b"
+            ]
+          },
+          {
+            "id": "rook-expression-origin-format",
+            "valid": true,
+            "expected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "selected": [],
+            "missing": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-permutation",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "incomplete_source_support": 1,
+          "wrong_subject_relation": 1
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": false
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    },
+    "final-master": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 35,
+          "unsupported": 0,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 9,
+          "answerable": 38,
+          "hits": 33,
+          "no_answer": 18,
+          "correct_abstention": 18,
+          "exact_cohorts": 51,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 1.0,
+          "supported_retention": 0.875,
+          "critical_retention": 1.0,
+          "answerable_recall": 0.868421052631579,
+          "abstention": 1.0,
+          "exact_cohorts": 0.9107142857142857
+        },
+        "gates": {
+          "precision": true,
+          "supported_retention": false,
+          "critical_retention": true,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-s",
+            "valid": true,
+            "expected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "selected": [],
+            "missing": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-permutation",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-blue",
+            "valid": true,
+            "expected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "selected": [],
+            "missing": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {},
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 9,
+          "unsupported": 2,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 6,
+          "answerable": 26,
+          "hits": 9,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 13,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.8181818181818182,
+          "supported_retention": 0.3333333333333333,
+          "critical_retention": 0.5,
+          "answerable_recall": 0.34615384615384615,
+          "abstention": 1.0,
+          "exact_cohorts": 0.41935483870967744
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "missing": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-permutation",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-permutation",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-proposed-order",
+            "valid": true,
+            "expected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "selected": [],
+            "missing": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-permutation",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-permutation",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "attribution_mismatch": 2
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 3,
+          "unsupported": 2,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 1,
+          "answerable": 24,
+          "hits": 3,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 8,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.6,
+          "supported_retention": 0.125,
+          "critical_retention": 0.125,
+          "answerable_recall": 0.125,
+          "abstention": 1.0,
+          "exact_cohorts": 0.27586206896551724
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-3",
+            "valid": true,
+            "expected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "selected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "missing": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "unsupported": [
+              "d3a5884cdf674cf94de35e92"
+            ]
+          },
+          {
+            "id": "calyx-timezone-permutation",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-permutation",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-resolution-rule",
+            "valid": true,
+            "expected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "selected": [],
+            "missing": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-permutation",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-format",
+            "valid": true,
+            "expected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "selected": [],
+            "missing": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-permutation",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 1,
+          "incomplete_source_support": 1
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    },
+    "deployment": {
+      "train": {
+        "split": "train",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 56,
+          "invalid_or_unavailable": 0,
+          "supported": 35,
+          "unsupported": 0,
+          "expected": 40,
+          "critical_expected": 9,
+          "critical_retained": 9,
+          "answerable": 38,
+          "hits": 33,
+          "no_answer": 18,
+          "correct_abstention": 18,
+          "exact_cohorts": 51,
+          "distinct_critical_facts": 3
+        },
+        "metrics": {
+          "precision": 1.0,
+          "supported_retention": 0.875,
+          "critical_retention": 1.0,
+          "answerable_recall": 0.868421052631579,
+          "abstention": 1.0,
+          "exact_cohorts": 0.9107142857142857
+        },
+        "gates": {
+          "precision": true,
+          "supported_retention": false,
+          "critical_retention": true,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "maru-event-roles-executor-r",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-executor-s",
+            "valid": true,
+            "expected": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "selected": [],
+            "missing": [
+              "125bc081eaff390a02f00b36"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "maru-event-roles-permutation",
+            "valid": true,
+            "expected": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "selected": [],
+            "missing": [
+              "bf9c17e8bb3d5b0e50accd6d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-red",
+            "valid": true,
+            "expected": [
+              "5c699940d6c597312af9640d"
+            ],
+            "selected": [],
+            "missing": [
+              "5c699940d6c597312af9640d"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "vireo-observation-counterparts-observed-blue",
+            "valid": true,
+            "expected": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "selected": [],
+            "missing": [
+              "377f9ee5e6206107663e9cde"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {},
+        "critical_facts": {
+          "105b0e9e4a265824eebc6a47": {
+            "applicable_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "retained_cases": [
+              "nacre-quorum-1",
+              "nacre-quorum-2",
+              "nacre-quorum-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "69bb1ca5aba7db68bda4e273": {
+            "applicable_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "retained_cases": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-2",
+              "vireo-exclusive-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "9d15e6c8595d8e1e84cf40bc": {
+            "applicable_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "retained_cases": [
+              "aster-window-1",
+              "aster-window-2",
+              "aster-window-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "aster-window-1",
+              "aster-window-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nacre-quorum-1",
+              "nacre-quorum-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "pavo-amendment-1",
+              "pavo-amendment-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vela-quotation-1",
+              "vela-quotation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-ownership-1",
+              "orin-ownership-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-exclusive-1",
+              "vireo-exclusive-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "sol-delegation-1",
+              "sol-delegation-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rill-log-gap-1",
+              "rill-log-gap-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "bracken-roster-1",
+              "bracken-roster-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "petrel-payload-1",
+              "petrel-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "zephyr-study-1",
+              "zephyr-study-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "maru-event-roles-executor-r",
+              "maru-event-roles-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "orin-owned-counterparts-partial",
+              "orin-owned-counterparts-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "vireo-observation-counterparts-policy-only",
+              "vireo-observation-counterparts-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "tuning": {
+        "split": "tuning",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 31,
+          "invalid_or_unavailable": 0,
+          "supported": 9,
+          "unsupported": 2,
+          "expected": 27,
+          "critical_expected": 12,
+          "critical_retained": 6,
+          "answerable": 26,
+          "hits": 9,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 13,
+          "distinct_critical_facts": 7
+        },
+        "metrics": {
+          "precision": 0.8181818181818182,
+          "supported_retention": 0.3333333333333333,
+          "critical_retention": 0.5,
+          "answerable_recall": 0.34615384615384615,
+          "abstention": 1.0,
+          "exact_cohorts": 0.41935483870967744
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "kestrel-compatibility-2",
+            "valid": true,
+            "expected": [
+              "b4c6da2946a6060a2ff63651",
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "selected": [
+              "c045a0b307adb96d1ef0487f"
+            ],
+            "missing": [
+              "b4c6da2946a6060a2ff63651"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-1",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "mica-batch-joins-permutation",
+            "valid": true,
+            "expected": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "selected": [],
+            "missing": [
+              "0730b8180ca423f72c434d9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-known-cutoff",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-latest-seven",
+            "valid": true,
+            "expected": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "selected": [],
+            "missing": [
+              "14d6784856c8edf2d8c94c14"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "taro-bitemporal-permutation",
+            "valid": true,
+            "expected": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "selected": [],
+            "missing": [
+              "9c02a50597756745ae454a9c"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-b-start",
+            "valid": true,
+            "expected": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "selected": [],
+            "missing": [
+              "8ceee6a791f08d0a29669328"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-proposed-order",
+            "valid": true,
+            "expected": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "selected": [],
+            "missing": [
+              "bcdd291ff182c4d6e50c5c01"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "nori-precedence-cycle-c-start",
+            "valid": true,
+            "expected": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "selected": [],
+            "missing": [
+              "c95c47734e002fc9dd4fd070"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-one",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-two",
+            "valid": true,
+            "expected": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "selected": [],
+            "missing": [
+              "9a1092c8b171bdb5e0243dfc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-seed-zero",
+            "valid": true,
+            "expected": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "selected": [],
+            "missing": [
+              "96a67ae0135be6b7f1ecebad"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-reordered-program",
+            "valid": true,
+            "expected": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "selected": [],
+            "missing": [
+              "3dad5524cd75d1932c984a38"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "osprey-modular-payload-permutation",
+            "valid": true,
+            "expected": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "selected": [],
+            "missing": [
+              "0d7f8f0d23d660099d6ec3e7"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-b-duration",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-client-duration",
+            "valid": true,
+            "expected": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "selected": [],
+            "missing": [
+              "f12ea18a1dfdee068afc5876"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "linnet-trace-spans-instrumented-a",
+            "valid": true,
+            "expected": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "selected": [
+              "960affff5cfc5b529168780d"
+            ],
+            "missing": [
+              "db908469cb7c88ab2637994e"
+            ],
+            "unsupported": [
+              "960affff5cfc5b529168780d"
+            ]
+          },
+          {
+            "id": "linnet-trace-spans-permutation",
+            "valid": true,
+            "expected": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "selected": [],
+            "missing": [
+              "5a24a3e773454ec0cab4fd0a"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "attribution_mismatch": 2
+        },
+        "critical_facts": {
+          "14d6784856c8edf2d8c94c14": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-latest-seven"
+            ],
+            "unavailable_cases": []
+          },
+          "3d1c65490eb18277da0e0994": {
+            "applicable_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "retained_cases": [
+              "taro-bitemporal-latest-three"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "8ceee6a791f08d0a29669328": {
+            "applicable_cases": [
+              "nori-precedence-cycle-b-start",
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "retained_cases": [
+              "nori-precedence-cycle-a-finished",
+              "nori-precedence-cycle-a-unfinished"
+            ],
+            "missing_cases": [
+              "nori-precedence-cycle-b-start"
+            ],
+            "unavailable_cases": []
+          },
+          "9c02a50597756745ae454a9c": {
+            "applicable_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "bcdd291ff182c4d6e50c5c01": {
+            "applicable_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-proposed-order"
+            ],
+            "unavailable_cases": []
+          },
+          "c045a0b307adb96d1ef0487f": {
+            "applicable_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "retained_cases": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-2",
+              "kestrel-compatibility-permutation"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "c95c47734e002fc9dd4fd070": {
+            "applicable_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "nori-precedence-cycle-c-start"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "kestrel-compatibility-1",
+              "kestrel-compatibility-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "mica-batch-joins-1",
+              "mica-batch-joins-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "taro-bitemporal-known-cutoff",
+              "taro-bitemporal-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "nori-precedence-cycle-first",
+              "nori-precedence-cycle-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "osprey-modular-payload-seed-one",
+              "osprey-modular-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "linnet-trace-spans-b-duration",
+              "linnet-trace-spans-permutation"
+            ],
+            "consistent": false
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      },
+      "development": {
+        "split": "development",
+        "status": "diagnostic_failed",
+        "counts": {
+          "questions": 29,
+          "invalid_or_unavailable": 0,
+          "supported": 3,
+          "unsupported": 2,
+          "expected": 24,
+          "critical_expected": 8,
+          "critical_retained": 1,
+          "answerable": 24,
+          "hits": 3,
+          "no_answer": 5,
+          "correct_abstention": 5,
+          "exact_cohorts": 8,
+          "distinct_critical_facts": 4
+        },
+        "metrics": {
+          "precision": 0.6,
+          "supported_retention": 0.125,
+          "critical_retention": 0.125,
+          "answerable_recall": 0.125,
+          "abstention": 1.0,
+          "exact_cohorts": 0.27586206896551724
+        },
+        "gates": {
+          "precision": false,
+          "supported_retention": false,
+          "critical_retention": false,
+          "answerable_recall": false,
+          "abstention": true,
+          "all_observations_available": true
+        },
+        "errors": [
+          {
+            "id": "calyx-timezone-1",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-2",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "calyx-timezone-3",
+            "valid": true,
+            "expected": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "selected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "missing": [
+              "02ade02a31e56307967d2f18"
+            ],
+            "unsupported": [
+              "d3a5884cdf674cf94de35e92"
+            ]
+          },
+          {
+            "id": "calyx-timezone-permutation",
+            "valid": true,
+            "expected": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "selected": [],
+            "missing": [
+              "d3a5884cdf674cf94de35e92"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "lumen-vector-clocks-2",
+            "valid": true,
+            "expected": [
+              "2be85655a140003969339cc5"
+            ],
+            "selected": [],
+            "missing": [
+              "2be85655a140003969339cc5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-1",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "oriel-implication-2",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [
+              "f93658aa6c7ebe873a00430d"
+            ],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": [
+              "f93658aa6c7ebe873a00430d"
+            ]
+          },
+          {
+            "id": "oriel-implication-permutation",
+            "valid": true,
+            "expected": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "selected": [],
+            "missing": [
+              "e2a4b73671d4d7e5dbd3f984"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-true",
+            "valid": true,
+            "expected": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "selected": [],
+            "missing": [
+              "c35ab77cf64cd48ea598ebe3"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-global-false",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-explicit-false-over-true",
+            "valid": true,
+            "expected": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "selected": [],
+            "missing": [
+              "8c47fd7ec8aae273818b1d24"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "tern-unset-resolution-resolution-rule",
+            "valid": true,
+            "expected": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "selected": [],
+            "missing": [
+              "50e6171faf0853de07361ce6"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot",
+            "valid": true,
+            "expected": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "selected": [],
+            "missing": [
+              "67f03c9e4868a90b35eea9b5"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-snapshot-mutation",
+            "valid": true,
+            "expected": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "selected": [],
+            "missing": [
+              "8bb73d08c8b3c8ae6d33b235"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-base-mutation",
+            "valid": true,
+            "expected": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "selected": [],
+            "missing": [
+              "5c97a809a77e39b9bced2466"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "ibis-copy-alias-payload-permutation",
+            "valid": true,
+            "expected": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "selected": [],
+            "missing": [
+              "3ff683e8442d9b67af1959bc"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-origin",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-format",
+            "valid": true,
+            "expected": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "selected": [],
+            "missing": [
+              "55e00ab3918787cda1ea690b"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-changed-origin",
+            "valid": true,
+            "expected": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "selected": [],
+            "missing": [
+              "b1f8783a4317e60bf7e14a62"
+            ],
+            "unsupported": []
+          },
+          {
+            "id": "rook-expression-origin-permutation",
+            "valid": true,
+            "expected": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "selected": [],
+            "missing": [
+              "cf5c53ead007efb7b2bc6e10"
+            ],
+            "unsupported": []
+          }
+        ],
+        "false_support_by_reason": {
+          "wrong_subject_relation": 1,
+          "incomplete_source_support": 1
+        },
+        "critical_facts": {
+          "0640a402252a83ecacf5b524": {
+            "applicable_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "retained_cases": [
+              "lumen-vector-clocks-3"
+            ],
+            "missing_cases": [],
+            "unavailable_cases": []
+          },
+          "50e6171faf0853de07361ce6": {
+            "applicable_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "tern-unset-resolution-resolution-rule"
+            ],
+            "unavailable_cases": []
+          },
+          "d3a5884cdf674cf94de35e92": {
+            "applicable_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "calyx-timezone-1",
+              "calyx-timezone-2",
+              "calyx-timezone-permutation"
+            ],
+            "unavailable_cases": []
+          },
+          "e2a4b73671d4d7e5dbd3f984": {
+            "applicable_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "retained_cases": [],
+            "missing_cases": [
+              "oriel-implication-1",
+              "oriel-implication-2",
+              "oriel-implication-permutation"
+            ],
+            "unavailable_cases": []
+          }
+        },
+        "permutations": [
+          {
+            "ids": [
+              "calyx-timezone-1",
+              "calyx-timezone-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "lumen-vector-clocks-1",
+              "lumen-vector-clocks-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "oriel-implication-1",
+              "oriel-implication-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "tern-unset-resolution-missing-global",
+              "tern-unset-resolution-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "ibis-copy-alias-payload-base",
+              "ibis-copy-alias-payload-permutation"
+            ],
+            "consistent": true
+          },
+          {
+            "ids": [
+              "rook-expression-origin-origin",
+              "rook-expression-origin-permutation"
+            ],
+            "consistent": true
+          }
+        ],
+        "fresh_acceptance": false,
+        "full_retrieval_timing": false
+      }
+    }
+  },
+  "boundaries": {
+    "cases": 11,
+    "expected_supported": 38,
+    "retained_supported": 0,
+    "unavailable": 3,
+    "unavailable_supported": 12,
+    "unsupported": 0,
+    "supported_retention": 0.0,
+    "repeated_synthetic_controls": true,
+    "fresh_acceptance": false,
+    "outcomes": [
+      {
+        "id": "empty",
+        "status": "assessed",
+        "target_ids": [],
+        "frame_sha256": "7334ee68ff31925b754e24ebf9ccbc4556e84898d9b1dd27b4d703b7cbc4d28d",
+        "logits": [],
+        "selected_ids": []
+      },
+      {
+        "id": "one-fact",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ],
+        "frame_sha256": "41d8b52138a173aabfc1cc67692ec11c96b58acb70a736b5e770f626029fbb68",
+        "logits": [
+          -4.3203125
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "four-facts",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5"
+        ],
+        "frame_sha256": "ce4918ac56b531e55197f4c45472610a01becaf6f0bb6d15e0edce6d04f4b1c2",
+        "logits": [
+          -2.82421875,
+          -3.001953125,
+          -3.494140625,
+          -3.71484375
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "five-facts",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "d77a5dc0d6d4cba8233cd1eea906c2742aeb1c18de5436a22cc9bb2383ceb138",
+        "logits": [
+          -2.71875,
+          -2.638671875,
+          -3.572265625,
+          -3.462890625,
+          -3.00390625
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "eight-owned-sources",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36"
+        ],
+        "frame_sha256": "9ac3e0ce4df68e2db356e0ba8e16b5682190a64c196853ef97d57734dd8a3308",
+        "logits": [
+          -4.67578125
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "nine-owned-sources",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      },
+      {
+        "id": "exact-token-bound",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "45b4ca7a3d796b74d3b4b4f9d5241c2ce3f580794dc22404162a8b51e1e13b56",
+        "logits": [
+          -1.77734375,
+          -1.2392578125,
+          -1.0546875,
+          -1.34375,
+          -0.67822265625
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "token-overflow",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "4755d94c347dde328d64ca836bada9359a2d5f246a78d560cfcca3433895e424",
+        "logits": [
+          -1.7744140625,
+          -1.2265625,
+          -1.0400390625,
+          -1.3076171875,
+          -0.67431640625
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "exact-byte-bound",
+        "status": "assessed",
+        "target_ids": [
+          "8ab30d52da9088e279cb4c36",
+          "ec1de32fe9f16a6572bd49b1",
+          "fd9d06aa18f644a95529eba3",
+          "7f87bb012ce664d81a2f12f5",
+          "169e12947f3b98dab57e2f8c"
+        ],
+        "frame_sha256": "df2854f477336f4bfec60c939b8fcd0f1668b6bb04f1831af107f63e9d7626c0",
+        "logits": [
+          -0.8349609375,
+          -1.7890625,
+          -0.2216796875,
+          -0.740234375,
+          -0.45166015625
+        ],
+        "selected_ids": []
+      },
+      {
+        "id": "byte-overflow",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      },
+      {
+        "id": "six-facts",
+        "status": "unavailable",
+        "selected_ids": [],
+        "reason": "whole_request_exceeds_admission"
+      }
+    ]
+  },
+  "artifact_receipt": {
+    "files": {
+      "deployment\\config.json": "7da389b4a35805ef53e414036e4a927f535a8ea238eeabee0b84b31348f31925",
+      "deployment\\model.safetensors": "5ede1ad147446576061b7f534f2b7d40f778ebe1ebd49a769794761ea48d7147",
+      "deployment\\readout.json": "f843d36046d9f71e70a3fd5f4570a39792e7217f4bc9b8155d59f953a188d1cc",
+      "deployment\\recipe.json": "8919889e84e698b15141e62b1d011096a5b7767bf377722b111efa91361df2f3",
+      "deployment\\special_tokens_map.json": "ea97ecdbcc73713039d8d64dbb05e3689495c96657fbd9a18f5bed381be81049",
+      "deployment\\support-head.safetensors": "55a938bdfbc622180663ab5aa7d75fddbbaf369f8f1530d9befc78fc66238d5a",
+      "deployment\\tokenizer.json": "05c5c40d6a7c23400de4486f6cb365b9a858de6da81bdcbfe1aff016d2a2cc23",
+      "deployment\\tokenizer_config.json": "9654072f7c873161814043cf08cb5ed72f71d0b935abcd4e267935cb34352c21",
+      "final-master.safetensors": "d438c1df8e1976323feecf6d18da5912d1098c81ec50c98acdcfa8cf1b155f32"
+    },
+    "parity_passed": false,
+    "active": false
+  },
+  "archive": {
+    "archive": "claim-span-learning-v1.zip",
+    "sha256": "8bf758cf719f77be31b44cc2d52dfc97a619bbc755ad3890418798ddbc3ff5f5",
+    "bytes": 3836405,
+    "members": 102,
+    "readback_verified": true,
+    "source_commit": "6bfc82e20fec7eb5c6d7a8e451f8dec3df0a0800",
+    "freeze_sha256": "7ffe595c9205b3451182459e38b0c0bc3500e93de12c5a537edc52669a82138a",
+    "large_files": "Final master/deployment safetensors retained privately with verified hashes; excluded from this archive. Original model/runtime assets are hash-bound only."
+  },
+  "reset_evidence_limit": "Reset success is enforced and recorded by the bound runner; individual before/after backbone digests were not persisted.",
+  "independent_review": "Schedule, all partition grades, raw parity, artifact headers/hashes, source/runtime bindings and cleanup independently reconstructed without discrepancy.",
+  "live_activation": false,
+  "fresh_acceptance": false,
+  "full_retrieval_timing": false,
+  "hosted_calls": 0,
+  "pilot_days_qualified": 0
+}

@@ -4,7 +4,15 @@ Status: active on November 12. Started November 6, 2026 from delivery commit `97
 `wt/mnemos-improvements`. This goal resumes the work deferred on October 28.
 No release, live configuration change, or pilot completion is implied.
 
-Current decision: the [full-encoder learning attempt](../validation/2026-11-12/local-support-learning-v2.md)
+Current decision: the [controlled claim-span learning comparison](../validation/2026-11-12/claim-span-learning-v1.md)
+completed its disposable full-length check, reset and all 84 corpus updates,
+but failed semantic quality and export parity. Development precision is 60%,
+retention/recall and critical retention 12.5%, and abstention 100%. Export has
+25 logits above the fixed 0.02 tolerance, maximum 0.0986328125, with zero sign
+flips. Stronger training fit does not establish generalization. This inactive
+configuration is closed, with no automatic head/model/threshold/data sweep.
+
+Earlier decision: the [full-encoder learning attempt](../validation/2026-11-12/local-support-learning-v2.md)
 completed all 84 updates and passed export parity, but failed semantic quality.
 Development precision is 31.03%, supported retention/recall 37.5%, critical
 retention 50% and abstention 0%. Initial and final models select only the last
@@ -19,7 +27,8 @@ requests/354 claim mappings. It preserves payload bytes and binds readout masks
 to complete claims rather than tail markers. An NFC offset error was reproduced,
 corrected and preserved. This is an inactive mechanical representation only;
 it neither explains the old failure conclusively nor demonstrates quality or
-inherited latency. No encoder inference or new training occurred.
+inherited latency. No encoder inference or training occurred in that mechanical
+increment; the subsequent controlled learning failure is recorded above.
 
 The user requires local operation with an explicit Jev option. The private
 workspace `.env` contains `TYPESAFE_API_KEY`; it must never be committed or
@@ -164,7 +173,7 @@ after its reviewed I/O repair but failed semantics, as recorded above.
 | Priority | Completion evidence still required | Current evidence and remaining work |
 | --- | --- | --- |
 | 1 | Affected-user delivery of the graph transaction repair, preserving rollback and concurrent-client behavior  | The repair is merged through PR #8; publication remains open. PR #9 and its recorded patch artifact remain separate from canonical service delivery and require a fresh remote/release check before action. |
-| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | The full-encoder 84-update attempt completed and passed 123-frame export parity, but failed known development quality with 31.03% precision and unchanged positional selections. It is closed and inactive. Optional Jev remains a failed 44-question result with 21/27 retention/recall. No local semantic or critical-retention pass exists. |
+| 2 | Evidence-backed support with original precision, retention, abstention and complete latency gates, then fresh acceptance  | The marker and claim-span 84-update configurations are closed failures. The latter attains 60% development precision but only 12.5% recall/critical retention and fails numerical export parity on 18/126 frames. Optional Jev remains a failed 44-question result with 21/27 retention/recall. No local semantic or critical-retention pass exists. |
 | 3 | Separate extraction and retrieval evaluations on identical accepted-fact snapshots, followed by appropriate fresh evaluation  | Earlier paired retrieval results remain frozen. The Qwen3.5 screen replays the same immutable support requests; it is not a new extraction or retrieval run. No passing candidate qualifies for fresh acceptance yet. |
 | 4 | Exact installed/native configuration acceptance and actual two-week daily use  | Codex v14 passes all six phases on installed `9c326cbc`, with original-source replay suppression, 19 offline-reconstructed calls and successful cleanup. This is the explicit preset with hooks off, not full pilot or multi-fact/batch acceptance. Claude v8 remains failed on its own artifact. The optional explicit-memory pilot was activated separately; no qualifying original-pilot days are recorded. |
 | 5 | Context efficiency with supported facts per token, recall and complete timing  | Tokenizer/fallback support and lossless record paging exist. The explicit-resource untrained encoder passes warm complete computational p95 on the six full-input workloads, worst 386.35 ms, with one 619.25 ms outlier. This is not trained support or interleaved/native acceptance. The 500 ms trained support path, supported-facts-per-token evidence and 100 ms capture gate remain open. |
@@ -183,17 +192,26 @@ backward gate and single corpus execution are closed. The trained full-encoder
 candidate failed semantics despite correct computation and export parity.
 Keep the inactive artifact, every error and both infrastructure failures.
 No automatic restart, threshold/model/data sweep, trained timing run or repeat
-of an unchanged packaging/native matrix is justified. Further support work
-has a reviewed direct-span representation and passing mechanical contract.
-The next boundary is a separately reviewed numerical/execution design for that
-representation, grounded in the observed positional failure. No new candidate
-execution is permitted by the mechanical audit alone. The six-priority goal and original acceptance gates remain
+of an unchanged packaging/native matrix is justified. The direct-span
+representation now also has its completed controlled run: training fit improves,
+but reserved quality and numerical export fail. Close that candidate too.
+No minor readout/head, threshold, seed or data adjustment is justified as an
+automatic next run. Preserve the full six-priority goal and progress an
+independent required delivery blocker rather than repeat this model family.
+Next use the existing affected-user storage release handoff: verify only its
+current upstream/version/publication state and inspect the documented Desktop,
+actual-use and approval dependencies. Present the existing artifacts and
+install/rollback instructions; do not create another report or unchanged test
+matrix. Do not publish, refresh a pilot or waive the outstanding dependencies.
+The completed capture comparison remains a failure and does not justify another
+attribution run or speculative cache change. The original acceptance gates remain
 active; no time spent or completed computation replaces them. Local operation
 stays required, and the failed optional Jev configuration permits neither
 threshold rescue nor automatic cloud fallback.
 
-The [November 8 convergence reset](2026-11-08-convergence-reset.md) controls
-next work. It preserves all six priorities and all original thresholds. The
+The [November 8 convergence reset](2026-11-08-convergence-reset.md) preserves
+all six priorities and original thresholds; its historical next steps are
+superseded by the current work order above. The
 November 7 plan remains a historical decision record, but its artifact freeze,
 optional-pilot approval status and next-run instructions are superseded by the
 reset. Do not treat successful packaging or documentation work as a solution

@@ -1,5 +1,14 @@
 # Convergence reset after condition-query failure
 
+Current execution status is recorded in the
+[main plan and work order](2026-11-06-mnemos-improvements.md). The chronological
+next steps below are historical: the capture comparison completed and failed,
+and the later marker/claim-span learning configurations are closed failures.
+Use the current work order for next actions while preserving this record's
+original acceptance gates and evidence boundaries. Next advance the existing
+affected-user delivery handoff without repeating unchanged model, capture or
+package/native matrices; its Desktop, real-use and approval dependencies remain.
+
 Capture comparison packages: [both exact installed arms pass](../validation/2026-11-08/replay-ack-packages-v1.md), with 35 baseline and 39 candidate checks, identical dependency versions and only client.py/RECORD differing in wheel contents. No measured run occurred. Implement and review the runner/auditor under the [prospective two-command protocol](2026-11-08-replay-ack-comparison-v1.md), then freeze all execution inputs. Time primers as well as successors, preserve failures and verify actual overlap. Do not infer complete latency or real-workload acceptance from package qualification.
 
 Capture scheduling follow-up: [replay acknowledgement I/O](../validation/2026-11-08/replay-ack-scheduling-v1.md) is moved off the owner loop in canonical ec4a36b2. A held real SQLite commit previously blocked another loop callback; the repaired path permits it, joins outstanding I/O on repeated cancellation and preserves failed-commit replay recovery. Review and targeted checks pass. Capture still waits on its own FULL commit/shared lock; no complete latency pass follows. Next prepare exact baseline/candidate artifacts and the remaining frozen paired complete-path comparison, preserving Git/auth/privacy and all failed samples. Cache integration and new attribution runs remain excluded.
