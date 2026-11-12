@@ -10,6 +10,11 @@ Hatchling 1.33.0 backend and passed Twine. All 99 packaged runtime files match
 source and installation. Compared with the previous f1314f6d wheel, the only
 changed packaged runtime file is `mnemos/memory_service.py`.
 
+The updated README source-download commands were also executed in a fresh
+checkout. All 99 packaged source files matched the wheel byte for byte. That
+check did not install dependencies or rerun the example; the separate installed
+smoke and native attempt provide those results.
+
 The new environment is outside both repositories and every pilot installation.
 Its 57 dependency versions match the previous accepted installation. Dependency
 files were copied into a fresh empty virtual environment, with 4,243 copied
