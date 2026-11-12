@@ -28,6 +28,15 @@ with independent reconstruction of all 19 calls. This validates the explicit
 Codex preset only, not multi-fact deletion, batch review, normal hooks or the
 full pilot configuration. The prior Claude timeout remains a failed result.
 
+Newer source-only follow-up: [consistent ordinary recall](../validation/2026-11-11/recall-snapshot-v1.md)
+at canonical `73d4a242` repairs a reproduced service-boundary race after engine
+selection. Concurrent deletion/correction, authority/status/view changes and
+context recount are covered by 13 new regressions; 178 targeted checks pass.
+SQLite assembly uses one snapshot and preserves caller transactions on failure.
+The new source is not in the private `f1314f6d` wheel or its native acceptance.
+Package and validate this changed runtime before transferring installed/native
+claims. No new semantic model or timing retry is implied.
+
 Latest semantic result: [the optional Jev comparison](../validation/2026-11-11/jev-support-screen-v1.md) completed all 44 frozen hybrid questions with 100% selected precision and no-answer abstention, but 77.78% retention/recall. It fails the original gates. Support-only p95 was 441.73 ms; complete recall and critical retention remain unmeasured. The earlier [Qwen3.5 screen](../validation/2026-11-08/qwen35-support-screen-v1.md) remains a closed failure. The November 11 direction requires local operation with optional Jev; no defaults or live configuration changed. Do not launch another support-model or threshold sweep.
 
 Latest computation evidence: [the bidirectional support screen](../validation/2026-11-11/bidirectional-support-capacity-v1.md)
