@@ -22,11 +22,11 @@ def stub_fastembed(monkeypatch):
     return seen
 
 
-def test_default_local_embedding_does_not_create_an_automatic_worker_pool(monkeypatch):
+def test_default_local_embedding_preserves_upstream_automatic_allocation(monkeypatch):
     seen = stub_fastembed(monkeypatch)
     provider = FastembedProvider()
     assert provider.embed("retained source") == [1.0, 0.0]
-    assert seen[0]["threads"] == 1
+    assert seen[0]["threads"] is None
 
 
 @pytest.mark.parametrize("threads", [0, 1, 4])
@@ -37,7 +37,7 @@ def test_operator_thread_budget_reaches_the_onnx_provider(monkeypatch, threads):
     )
     provider = build_embedder_from_settings(settings)
     assert provider.embed("retained source") == [1.0, 0.0]
-    assert seen[0]["threads"] == threads
+    assert seen[0]["threads"] == (threads or None)
 
 
 @pytest.mark.parametrize("threads", [-1, True, 1.5, "4", None])

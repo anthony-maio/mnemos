@@ -468,9 +468,8 @@ class EmbeddingSettings(BaseModel):
     model: str | None = None
     dim: int = 384
     revision: str | None = None
-    # Single-request local recall should not keep an automatic CPU pool spinning.
-    # Zero explicitly restores the upstream automatic thread count for batch use.
-    threads: int = Field(default=1, strict=True, ge=0)
+    # Preserve upstream automatic allocation unless a resource budget is selected.
+    threads: int = Field(default=0, strict=True, ge=0)
     query_prefix: str = Field(default="", strict=True)
     document_prefix: str = Field(default="", strict=True)
     symmetric_prefix: str = Field(default="", strict=True)

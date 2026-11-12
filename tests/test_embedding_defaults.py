@@ -17,7 +17,7 @@ from mnemos.utils.llm import UnavailableLLMProvider
 class StubFastembedProvider(SimpleEmbeddingProvider):
     """Inspect provider selection without downloading or running an ONNX model."""
 
-    def __init__(self, model: str, *, threads: int = 1) -> None:
+    def __init__(self, model: str, *, threads: int = 0) -> None:
         super().__init__(dim=8)
         self.model = model
         self.threads = threads
@@ -55,7 +55,7 @@ def test_cli_mcp_and_service_share_fresh_embedding_defaults(
         for embedder in embedders:
             assert isinstance(embedder, StubFastembedProvider)
             assert embedder.model == "BAAI/bge-small-en-v1.5"
-            assert embedder.threads == 1
+            assert embedder.threads == 0
         assert isinstance(service_engine.llm, UnavailableLLMProvider)
     finally:
         cli_engine.store.close()
